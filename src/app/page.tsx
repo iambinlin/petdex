@@ -11,6 +11,7 @@ import { GithubIcon } from "@/components/github-icon";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetdexLogo } from "@/components/petdex-logo";
+import { SubmitCTA } from "@/components/submit-cta";
 import { TrackOnClick } from "@/components/track-on-click";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,9 @@ export default async function Home() {
             <PetdexLogo href="/" />
             <div className="hidden items-center gap-9 text-sm text-[#4f515c] md:flex">
               <a href="#gallery">Gallery</a>
-              <Link href="/submit">Submit</Link>
+              <SubmitCTA className="transition hover:text-black">
+                Submit
+              </SubmitCTA>
               <a href="/packs/manifest.json">Manifest</a>
               <a
                 href="https://github.com/crafter-station/petdex"
@@ -41,12 +44,7 @@ export default async function Home() {
               </a>
             </div>
             <div className="flex items-center gap-3">
-              <Link
-                href="/submit"
-                className="inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
-              >
-                Submit a pet
-              </Link>
+              <SubmitCTA />
               <AuthBadge />
             </div>
           </nav>
