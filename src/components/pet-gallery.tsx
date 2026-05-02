@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { Search, X } from "lucide-react";
+import { Heart, Search, TerminalSquare, X } from "lucide-react";
 
+import type { PetWithMetrics } from "@/lib/pets";
 import { petStates } from "@/lib/pet-states";
 import {
   PET_KINDS,
   PET_VIBES,
-  type PetdexPet,
   type PetKind,
   type PetVibe,
 } from "@/lib/types";
@@ -17,13 +17,23 @@ import {
 import { PetSprite } from "@/components/pet-sprite";
 
 type PetGalleryProps = {
-  pets: PetdexPet[];
+  pets: PetWithMetrics[];
+};
+
+type SortKey = "curated" | "popular" | "installed" | "alpha";
+
+const SORT_LABELS: Record<SortKey, string> = {
+  curated: "Curated",
+  popular: "Most liked",
+  installed: "Most installed",
+  alpha: "Alphabetical",
 };
 
 export function PetGallery({ pets }: PetGalleryProps) {
   const [query, setQuery] = useState("");
   const [activeKinds, setActiveKinds] = useState<Set<PetKind>>(new Set());
   const [activeVibes, setActiveVibes] = useState<Set<PetVibe>>(new Set());
+  const [sort, setSort] = useState<SortKey>("curated");
   const stateCount = petStates.length;
 
   const kindCounts = useMemo(() => countBy(pets, (p) => [p.kind]), [pets]);
@@ -32,7 +42,7 @@ export function PetGallery({ pets }: PetGalleryProps) {
   const visiblePets = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return pets.filter((pet) => {
+    const filtered = pets.filter((pet) => {
       if (activeKinds.size > 0 && !activeKinds.has(pet.kind)) return false;
 
       if (activeVibes.size > 0) {
@@ -52,7 +62,9 @@ export function PetGallery({ pets }: PetGalleryProps) {
         .toLowerCase();
       return haystack.includes(normalizedQuery);
     });
-  }, [pets, query, activeKinds, activeVibes]);
+
+    return sortPets(filtered, sort);
+  }, [pets, query, activeKinds, activeVibes, sort]);
 
   const toggleKind = (kind: PetKind) =>
     setActiveKinds((c) => toggleSet(c, kind));
@@ -79,25 +91,41 @@ export function PetGallery({ pets }: PetGalleryProps) {
             Pick a companion
           </h2>
         </div>
-        <label className="relative block w-full lg:max-w-sm">
-          <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-4 size-4 text-stone-500" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search pets, vibes"
-            className="h-12 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40"
-          />
-          {query.length > 0 ? (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Clear search"
-              className="-translate-y-1/2 absolute top-1/2 right-3 grid size-6 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
-            >
-              <X className="size-3.5" />
-            </button>
-          ) : null}
-        </label>
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto lg:max-w-md">
+          <label className="relative block w-full">
+            <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-4 size-4 text-stone-500" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search pets, vibes"
+              className="h-12 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40"
+            />
+            {query.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="-translate-y-1/2 absolute top-1/2 right-3 grid size-6 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+              >
+                <X className="size-3.5" />
+              </button>
+            ) : null}
+          </label>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            aria-label="Sort pets"
+            className="h-12 cursor-pointer rounded-full border border-black/10 bg-white px-4 pr-8 font-mono text-[11px] tracking-[0.08em] text-stone-700 outline-none transition hover:border-black/30 focus:border-black/40"
+          >
+            {(Object.entries(SORT_LABELS) as [SortKey, string][]).map(
+              ([key, label]) => (
+                <option key={key} value={key}>
+                  Sort: {label}
+                </option>
+              ),
+            )}
+          </select>
+        </div>
       </div>
 
       <div className="space-y-3 rounded-2xl border border-black/[0.08] bg-white/55 px-4 py-4 backdrop-blur md:px-5">
@@ -217,13 +245,15 @@ function FilterGroup({
 }
 
 type PetCardProps = {
-  pet: PetdexPet;
+  pet: PetWithMetrics;
   index: number;
   stateCount: number;
 };
 
 function PetCard({ pet, index, stateCount }: PetCardProps) {
   const dexNumber = String(index + 1).padStart(3, "0");
+  const { likeCount, installCount } = pet.metrics;
+  const showMetrics = likeCount > 0 || installCount > 0;
 
   return (
     <Link
@@ -287,6 +317,40 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
             ))}
           </div>
         ) : null}
+
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/[0.05] pt-3">
+          {pet.submittedBy ? (
+            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+              {pet.submittedBy.imageUrl ? (
+                // biome-ignore lint/performance/noImgElement: external avatar URLs
+                <img
+                  src={pet.submittedBy.imageUrl}
+                  alt=""
+                  className="size-4 rounded-full ring-1 ring-black/10"
+                />
+              ) : null}
+              by {pet.submittedBy.name}
+            </span>
+          ) : (
+            <span />
+          )}
+          {showMetrics ? (
+            <span className="flex items-center gap-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+              {likeCount > 0 ? (
+                <span className="inline-flex items-center gap-1">
+                  <Heart className="size-3" />
+                  {compactNumber(likeCount)}
+                </span>
+              ) : null}
+              {installCount > 0 ? (
+                <span className="inline-flex items-center gap-1">
+                  <TerminalSquare className="size-3" />
+                  {compactNumber(installCount)}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+        </div>
       </div>
     </Link>
   );
@@ -310,4 +374,47 @@ function toggleSet<T>(set: Set<T>, value: T): Set<T> {
   if (next.has(value)) next.delete(value);
   else next.add(value);
   return next;
+}
+
+function sortPets(
+  pets: PetWithMetrics[],
+  key: SortKey,
+): PetWithMetrics[] {
+  const arr = [...pets];
+  switch (key) {
+    case "popular":
+      arr.sort(
+        (a, b) =>
+          b.metrics.likeCount - a.metrics.likeCount ||
+          a.displayName.localeCompare(b.displayName),
+      );
+      break;
+    case "installed":
+      arr.sort(
+        (a, b) =>
+          b.metrics.installCount - a.metrics.installCount ||
+          a.displayName.localeCompare(b.displayName),
+      );
+      break;
+    case "alpha":
+      arr.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      break;
+    case "curated":
+    default:
+      // Curated featured first, then community by displayName.
+      arr.sort((a, b) => {
+        const fa = a.featured ? 0 : 1;
+        const fb = b.featured ? 0 : 1;
+        if (fa !== fb) return fa - fb;
+        return a.displayName.localeCompare(b.displayName);
+      });
+      break;
+  }
+  return arr;
+}
+
+function compactNumber(n: number): string {
+  if (n < 1000) return n.toString();
+  if (n < 10_000) return `${(n / 1000).toFixed(1)}k`;
+  return `${Math.round(n / 1000)}k`;
 }

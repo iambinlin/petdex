@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { auth } from "@clerk/nextjs/server";
+import { and, eq } from "drizzle-orm";
 import { ArrowLeft, FileJson, Images, Sparkles } from "lucide-react";
 
+import { db, schema } from "@/lib/db/client";
+import { getMetricsForSlug } from "@/lib/db/metrics";
 import { getCuratedPets, getPet } from "@/lib/pets";
 
 import { DownloadActions } from "@/components/download-actions";
 import { InstallCommand } from "@/components/install-command";
+import { LikeButton } from "@/components/like-button";
 import { PetStateViewer } from "@/components/pet-state-viewer";
+import { SubmittedBy } from "@/components/submitted-by";
 
 type PageProps = {
   params: Promise<{
@@ -48,6 +54,19 @@ export default async function PetPage({ params }: PageProps) {
     notFound();
   }
 
+  const { userId } = await auth();
+  const metrics = await getMetricsForSlug(slug);
+  const initialLiked = userId
+    ? Boolean(
+        await db.query.petLikes.findFirst({
+          where: and(
+            eq(schema.petLikes.userId, userId),
+            eq(schema.petLikes.petSlug, slug),
+          ),
+        }),
+      )
+    : false;
+
   return (
     <main className="min-h-screen bg-[#f7f8ff]">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-8 md:px-8 md:py-12">
@@ -70,20 +89,35 @@ export default async function PetPage({ params }: PageProps) {
             <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-700">
               {pet.description}
             </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <LikeButton
+                slug={pet.slug}
+                initialCount={metrics.likeCount}
+                initialLiked={initialLiked}
+                signedIn={Boolean(userId)}
+              />
+              <span className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase">
+                {metrics.installCount} installs · {metrics.zipDownloadCount} zip
+                downloads
+              </span>
+            </div>
           </div>
 
-          <div className="glass-panel rounded-2xl p-5">
-            <p className="text-sm font-semibold text-stone-950">Traits</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {pet.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea]"
-                >
-                  {tag}
-                </span>
-              ))}
+          <div className="flex flex-col gap-4">
+            <div className="glass-panel rounded-2xl p-5">
+              <p className="text-sm font-semibold text-stone-950">Traits</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {pet.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea]"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
+            {pet.submittedBy ? <SubmittedBy credit={pet.submittedBy} /> : null}
           </div>
         </header>
 

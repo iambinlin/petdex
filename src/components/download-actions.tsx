@@ -1,3 +1,6 @@
+"use client";
+
+import { track } from "@vercel/analytics";
 import { Download, Package } from "lucide-react";
 
 import { getPetPackPath } from "@/lib/downloads";
@@ -12,6 +15,13 @@ export function DownloadActions({
   pet,
   compact = false,
 }: DownloadActionsProps) {
+  function handleZip() {
+    track("zip_downloaded", { slug: pet.slug });
+    void fetch(`/api/pets/${pet.slug}/track-zip`, { method: "POST" }).catch(
+      () => {},
+    );
+  }
+
   return (
     <div
       className={
@@ -29,6 +39,7 @@ export function DownloadActions({
       <a
         href={getPetPackPath(pet.slug)}
         download
+        onClick={handleZip}
         className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
       >
         <Download className="size-4" />

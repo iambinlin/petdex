@@ -51,7 +51,13 @@ export function PetSubmitForm() {
     kind: "idle",
   });
 
-  const { startUpload } = useUploadThing("petPackUploader");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const { startUpload } = useUploadThing("petPackUploader", {
+    onUploadError(err) {
+      setUploadError(err.message || err.code || "Upload failed");
+      console.error("[uploadthing]", err);
+    },
+  });
 
   useEffect(() => {
     return () => {
@@ -189,16 +195,20 @@ export function PetSubmitForm() {
     );
 
     setSubmission({ kind: "uploading", step: "uploading" });
+    setUploadError(null);
 
     const uploaded = await startUpload([zipFile, spriteFile, petJsonFile]);
     if (!uploaded || uploaded.length < 3) {
       track("pet_submission_failed", {
         pet_id: parsed.petId,
         stage: "upload",
+        reason: uploadError ?? "unknown",
       });
       setSubmission({
         kind: "error",
-        message: "Upload failed. Try again.",
+        message: uploadError
+          ? `Upload failed: ${uploadError}`
+          : "Upload failed. Try again.",
       });
       return;
     }

@@ -6,6 +6,9 @@ const f = createUploadthing();
 
 export const ourFileRouter = {
   petPackUploader: f({
+    "application/zip": { maxFileSize: "8MB", maxFileCount: 1 },
+    "image/webp": { maxFileSize: "8MB", maxFileCount: 1 },
+    "application/json": { maxFileSize: "1MB", maxFileCount: 1 },
     blob: { maxFileSize: "8MB", maxFileCount: 3 },
   })
     .middleware(async () => {
