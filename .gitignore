@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local generation artifacts
+.hatch-batches/
+.hatch-import/
+.hatch-runs/
+batches/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
