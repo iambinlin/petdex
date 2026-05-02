@@ -2,10 +2,13 @@ import Link from "next/link";
 
 import { Download } from "lucide-react";
 
+import { GithubIcon } from "@/components/github-icon";
+
 import { getAllPetsPackPath } from "@/lib/downloads";
 import { petStates } from "@/lib/pet-states";
 import { getPets } from "@/lib/pets";
 
+import { AuthBadge } from "@/components/auth-badge";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetdexLogo } from "@/components/petdex-logo";
@@ -25,13 +28,25 @@ export default function Home() {
               <a href="#gallery">Gallery</a>
               <Link href="/submit">Submit</Link>
               <a href="/packs/manifest.json">Manifest</a>
+              <a
+                href="https://github.com/crafter-station/petdex"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 transition hover:text-black"
+              >
+                <GithubIcon className="size-4" />
+                GitHub
+              </a>
             </div>
-            <Link
-              href="/submit"
-              className="inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
-            >
-              Submit a pet
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/submit"
+                className="inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
+              >
+                Submit a pet
+              </Link>
+              <AuthBadge />
+            </div>
           </nav>
 
           <div className="mt-12 flex flex-col items-center text-center md:mt-16">
