@@ -29,9 +29,7 @@ export type PetdexPet = {
   description: string;
   spritesheetPath: string;
   petJsonPath: string;
-  /** Absolute URL to the pet's zip pack. For curated pets resolves to
-   *  `/packs/<slug>.zip` at render time; for community pets it's the R2/UT
-   *  URL stored in the DB. */
+  /** R2 URL to the pet's zip pack (always set after the curated backfill). */
   zipUrl?: string;
   approvalState: ApprovalState;
   featured?: boolean;

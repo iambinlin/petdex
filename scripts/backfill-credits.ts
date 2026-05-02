@@ -8,12 +8,9 @@
 // Idempotent: only updates rows where credit_name IS NULL by default.
 // Pass --force to overwrite all.
 
-import { eq, isNull, or } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 
-import { pets as curatedPets } from "../src/data/pets.generated";
 import { db, schema } from "../src/lib/db/client";
-
-const CURATED_SLUGS = new Set(curatedPets.map((p) => p.slug));
 
 const args = new Set(process.argv.slice(2));
 const DRY = args.has("--dry");
@@ -99,11 +96,17 @@ function buildCredit(user: ClerkUser): {
 }
 
 async function main() {
+  // Curated pets carry their own credit baked in by the curated backfill,
+  // so we only patch community submissions (featured = false).
+  const baseWhere = eq(schema.submittedPets.featured, false);
   const where = FORCE
-    ? undefined
-    : or(
-        isNull(schema.submittedPets.creditName),
-        eq(schema.submittedPets.creditName, ""),
+    ? baseWhere
+    : and(
+        baseWhere,
+        or(
+          isNull(schema.submittedPets.creditName),
+          eq(schema.submittedPets.creditName, ""),
+        ),
       );
 
   const rows = await db
@@ -119,13 +122,6 @@ async function main() {
   const cache = new Map<string, ClerkUser | null>();
 
   for (const row of rows) {
-    if (CURATED_SLUGS.has(row.slug)) {
-      console.log(
-        `  ${row.slug.padEnd(22)} -> SKIP (curated, credit lives in metadata.json)`,
-      );
-      continue;
-    }
-
     let user = cache.get(row.ownerId);
     if (user === undefined) {
       user = await fetchClerkUser(row.ownerId);

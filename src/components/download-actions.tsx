@@ -3,7 +3,6 @@
 import { track } from "@vercel/analytics";
 import { Download, Package } from "lucide-react";
 
-import { getPetPackPath } from "@/lib/downloads";
 import type { PetdexPet } from "@/lib/types";
 
 type DownloadActionsProps = {
@@ -36,17 +35,19 @@ export function DownloadActions({
           Download pack
         </div>
       ) : null}
-      <a
-        href={pet.zipUrl || getPetPackPath(pet.slug)}
-        download
-        target={pet.zipUrl ? "_blank" : undefined}
-        rel={pet.zipUrl ? "noreferrer" : undefined}
-        onClick={handleZip}
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
-      >
-        <Download className="size-4" />
-        Download ZIP
-      </a>
+      {pet.zipUrl ? (
+        <a
+          href={pet.zipUrl}
+          download
+          target="_blank"
+          rel="noreferrer"
+          onClick={handleZip}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
+        >
+          <Download className="size-4" />
+          Download ZIP
+        </a>
+      ) : null}
       <a
         href={pet.spritesheetPath}
         download

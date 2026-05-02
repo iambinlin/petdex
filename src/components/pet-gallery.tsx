@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Heart, Loader2, Search, TerminalSquare, X } from "lucide-react";
+import {
+  ChevronDown,
+  Heart,
+  Loader2,
+  Search,
+  TerminalSquare,
+  X,
+} from "lucide-react";
 
 import type { PetWithMetrics } from "@/lib/pets";
 import { petStates } from "@/lib/pet-states";
@@ -161,13 +168,13 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
           </h2>
         </div>
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto lg:max-w-md">
-          <label className="relative block w-full">
+          <label className="relative block w-full sm:flex-1">
             <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-4 size-4 text-stone-500" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search pets, vibes"
-              className="h-12 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40"
+              className="h-11 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40"
             />
             {query.length > 0 ? (
               <button
@@ -180,20 +187,23 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
               </button>
             ) : null}
           </label>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            aria-label="Sort pets"
-            className="h-12 cursor-pointer rounded-full border border-black/10 bg-white px-4 pr-8 font-mono text-[11px] tracking-[0.08em] text-stone-700 outline-none transition hover:border-black/30 focus:border-black/40"
-          >
-            {(Object.entries(SORT_LABELS) as [SortKey, string][]).map(
-              ([key, label]) => (
-                <option key={key} value={key}>
-                  Sort: {label}
-                </option>
-              ),
-            )}
-          </select>
+          <div className="relative shrink-0">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              aria-label="Sort pets"
+              className="h-11 w-full cursor-pointer appearance-none rounded-full border border-black/10 bg-white pr-9 pl-4 text-sm text-stone-900 outline-none transition hover:border-black/30 focus:border-black/40 sm:w-auto sm:min-w-[170px]"
+            >
+              {(Object.entries(SORT_LABELS) as [SortKey, string][]).map(
+                ([key, label]) => (
+                  <option key={key} value={key}>
+                    Sort: {label}
+                  </option>
+                ),
+              )}
+            </select>
+            <ChevronDown className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 size-4 text-stone-500" />
+          </div>
         </div>
       </div>
 
