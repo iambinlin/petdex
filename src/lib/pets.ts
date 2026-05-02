@@ -94,6 +94,7 @@ function submissionToPet(
     description: row.description,
     spritesheetPath: row.spritesheetUrl,
     petJsonPath: row.petJsonUrl,
+    zipUrl: row.zipUrl,
     approvalState: "approved",
     kind: row.kind,
     vibes: (row.vibes as PetdexPet["vibes"]) ?? [],

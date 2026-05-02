@@ -4,6 +4,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
+import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
 import { getCuratedPet } from "@/lib/pets";
 import { submitRatelimit } from "@/lib/ratelimit";
@@ -29,12 +30,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const limit = await submitRatelimit.limit(userId);
+  // Admins bypass rate limit (e.g. Hunter doing bulk uploads).
+  const skipLimit = isAdmin(userId);
+  const limit = skipLimit
+    ? { success: true, reset: 0 }
+    : await submitRatelimit.limit(userId);
   if (!limit.success) {
     return NextResponse.json(
       {
         error: "rate_limited",
-        message: "Limit reached: 3 submissions / 24h. Try again tomorrow.",
+        message: "Limit reached: 10 submissions / 24h. Try again tomorrow.",
         retryAfter: limit.reset,
       },
       { status: 429 },

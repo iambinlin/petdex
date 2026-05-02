@@ -10,7 +10,11 @@ export type PetVibe =
   | "focused"
   | "mischievous"
   | "heroic"
-  | "edgy";
+  | "edgy"
+  | "mystical"
+  | "wholesome"
+  | "chaotic"
+  | "melancholic";
 
 export type PetCredit = {
   name: string;
@@ -25,6 +29,10 @@ export type PetdexPet = {
   description: string;
   spritesheetPath: string;
   petJsonPath: string;
+  /** Absolute URL to the pet's zip pack. For curated pets resolves to
+   *  `/packs/<slug>.zip` at render time; for community pets it's the R2/UT
+   *  URL stored in the DB. */
+  zipUrl?: string;
   approvalState: ApprovalState;
   featured?: boolean;
   kind: PetKind;
@@ -48,4 +56,8 @@ export const PET_VIBES: PetVibe[] = [
   "mischievous",
   "heroic",
   "edgy",
+  "mystical",
+  "wholesome",
+  "chaotic",
+  "melancholic",
 ];

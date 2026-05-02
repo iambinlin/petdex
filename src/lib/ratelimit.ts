@@ -5,7 +5,7 @@ const redis = Redis.fromEnv();
 
 export const submitRatelimit = new Ratelimit({
   redis,
-  limiter: Ratelimit.slidingWindow(3, "24 h"),
+  limiter: Ratelimit.slidingWindow(10, "24 h"),
   prefix: "petdex:submit",
   analytics: true,
 });
