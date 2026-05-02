@@ -28,10 +28,10 @@ async function main() {
 
   await writeFile(path.join(publicDir, "apple-icon.png"), iconPng);
   await writeFile(path.join(publicDir, "icon.png"), iconPng);
-  await writeFile(
-    path.join(publicDir, "favicon.ico"),
-    createIco(faviconEntries),
-  );
+  const ico = createIco(faviconEntries);
+  await writeFile(path.join(publicDir, "favicon.ico"), ico);
+  // Next 16 prefers app/favicon.ico over public/favicon.ico
+  await writeFile(path.join(root, "src", "app", "favicon.ico"), ico);
   await writeFile(
     path.join(publicDir, "og.png"),
     await createOg(markSvg, 1200, 630),
