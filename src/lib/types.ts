@@ -8,7 +8,15 @@ export type PetVibe =
   | "playful"
   | "cheerful"
   | "focused"
-  | "mischievous";
+  | "mischievous"
+  | "heroic"
+  | "edgy";
+
+export type PetCredit = {
+  name: string;
+  url?: string;
+  imageUrl?: string;
+};
 
 export type PetdexPet = {
   id: string;
@@ -22,6 +30,7 @@ export type PetdexPet = {
   kind: PetKind;
   vibes: PetVibe[];
   tags: string[];
+  submittedBy?: PetCredit;
   importedAt: string;
   qa: {
     contactSheetPath?: string;
@@ -37,4 +46,6 @@ export const PET_VIBES: PetVibe[] = [
   "cheerful",
   "focused",
   "mischievous",
+  "heroic",
+  "edgy",
 ];

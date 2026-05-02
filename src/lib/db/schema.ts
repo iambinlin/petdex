@@ -1,9 +1,11 @@
 import { sql } from "drizzle-orm";
 import {
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -33,6 +35,9 @@ export const submittedPets = pgTable(
     status: approvalStatus("status").notNull().default("pending"),
     ownerId: text("owner_id").notNull(),
     ownerEmail: text("owner_email"),
+    creditName: text("credit_name"),
+    creditUrl: text("credit_url"),
+    creditImage: text("credit_image"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -47,5 +52,33 @@ export const submittedPets = pgTable(
   }),
 );
 
+export const petLikes = pgTable(
+  "pet_likes",
+  {
+    userId: text("user_id").notNull(),
+    petSlug: text("pet_slug").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.userId, table.petSlug] }),
+    slugIdx: index("pet_likes_slug_idx").on(table.petSlug),
+  }),
+);
+
+export const petMetrics = pgTable("pet_metrics", {
+  petSlug: text("pet_slug").primaryKey(),
+  installCount: integer("install_count").notNull().default(0),
+  zipDownloadCount: integer("zip_download_count").notNull().default(0),
+  likeCount: integer("like_count").notNull().default(0),
+  lastInstalledAt: timestamp("last_installed_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export type SubmittedPet = typeof submittedPets.$inferSelect;
 export type NewSubmittedPet = typeof submittedPets.$inferInsert;
+export type PetLike = typeof petLikes.$inferSelect;
+export type PetMetric = typeof petMetrics.$inferSelect;
