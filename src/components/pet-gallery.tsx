@@ -369,7 +369,7 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
 
   return (
     <article
-      className={`group relative flex flex-col rounded-3xl border bg-white/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
+      className={`group relative rounded-3xl border bg-white/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
           ? "border-[#6478f6]/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-black/10 shadow-sm shadow-blue-950/5"
@@ -378,106 +378,109 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
       <Link
         href={href}
         aria-label={`Open ${pet.displayName}`}
-        className="absolute inset-0 z-0 rounded-3xl"
-      />
-
-      <div className="relative z-20 flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pb-3">
-        <span className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
-          No. {dexNumber}
-        </span>
-        <div className="flex items-center gap-2">
+        className="flex flex-col rounded-3xl"
+      >
+        <div className="flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pr-12 pb-3">
+          <span className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
+            No. {dexNumber}
+          </span>
           {pet.featured ? (
             <span className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
               ★ Featured
             </span>
           ) : null}
-          <PetActionMenu
-            pet={{
-              slug: pet.slug,
-              displayName: pet.displayName,
-              zipUrl: pet.zipUrl,
-              description: pet.description,
-            }}
-          />
         </div>
-      </div>
 
-      <div
-        className="relative z-0 flex items-center justify-center overflow-hidden px-5 py-6"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
-        }}
-      >
-        <PetSprite
-          src={pet.spritesheetPath}
-          cycleStates
-          scale={0.7}
-          label={`${pet.displayName} animated`}
-        />
-        <span className="pointer-events-none absolute right-5 bottom-2 font-mono text-[10px] tracking-[0.22em] text-stone-400 uppercase">
-          {stateCount} states
-        </span>
-      </div>
-
-      <div className="relative z-0 flex flex-col gap-2 rounded-b-3xl border-t border-black/[0.06] px-5 py-4">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-lg font-semibold tracking-tight text-stone-950">
-            {pet.displayName}
-          </h3>
-          <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
-            {pet.kind}
+        <div
+          className="relative flex items-center justify-center overflow-hidden px-5 py-6"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
+          }}
+        >
+          <PetSprite
+            src={pet.spritesheetPath}
+            cycleStates
+            scale={0.7}
+            label={`${pet.displayName} animated`}
+          />
+          <span className="pointer-events-none absolute right-5 bottom-2 font-mono text-[10px] tracking-[0.22em] text-stone-400 uppercase">
+            {stateCount} states
           </span>
         </div>
-        <p className="line-clamp-2 text-sm leading-6 text-stone-600">
-          {pet.description}
-        </p>
-        {pet.vibes.length > 0 ? (
-          <div className="mt-1 flex flex-wrap gap-1.5">
-            {pet.vibes.map((vibe) => (
-              <span
-                key={vibe}
-                className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
-              >
-                #{vibe}
-              </span>
-            ))}
-          </div>
-        ) : null}
 
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/[0.05] pt-3">
-          {pet.submittedBy ? (
-            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
-              {pet.submittedBy.imageUrl ? (
-                // biome-ignore lint/performance/noImgElement: external avatar URLs
-                <img
-                  src={pet.submittedBy.imageUrl}
-                  alt=""
-                  className="size-4 rounded-full ring-1 ring-black/10"
-                />
-              ) : null}
-              by {pet.submittedBy.name}
+        <div className="flex flex-col gap-2 rounded-b-3xl border-t border-black/[0.06] px-5 py-4">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-lg font-semibold tracking-tight text-stone-950">
+              {pet.displayName}
+            </h3>
+            <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
+              {pet.kind}
             </span>
-          ) : (
-            <span />
-          )}
-          {showMetrics ? (
-            <span className="flex items-center gap-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
-              {likeCount > 0 ? (
-                <span className="inline-flex items-center gap-1">
-                  <Heart className="size-3" />
-                  {compactNumber(likeCount)}
+          </div>
+          <p className="line-clamp-2 text-sm leading-6 text-stone-600">
+            {pet.description}
+          </p>
+          {pet.vibes.length > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {pet.vibes.map((vibe) => (
+                <span
+                  key={vibe}
+                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
+                >
+                  #{vibe}
                 </span>
-              ) : null}
-              {installCount > 0 ? (
-                <span className="inline-flex items-center gap-1">
-                  <TerminalSquare className="size-3" />
-                  {compactNumber(installCount)}
-                </span>
-              ) : null}
-            </span>
+              ))}
+            </div>
           ) : null}
+
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/[0.05] pt-3">
+            {pet.submittedBy ? (
+              <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+                {pet.submittedBy.imageUrl ? (
+                  // biome-ignore lint/performance/noImgElement: external avatar URLs
+                  <img
+                    src={pet.submittedBy.imageUrl}
+                    alt=""
+                    className="size-4 rounded-full ring-1 ring-black/10"
+                  />
+                ) : null}
+                by {pet.submittedBy.name}
+              </span>
+            ) : (
+              <span />
+            )}
+            {showMetrics ? (
+              <span className="flex items-center gap-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+                {likeCount > 0 ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Heart className="size-3" />
+                    {compactNumber(likeCount)}
+                  </span>
+                ) : null}
+                {installCount > 0 ? (
+                  <span className="inline-flex items-center gap-1">
+                    <TerminalSquare className="size-3" />
+                    {compactNumber(installCount)}
+                  </span>
+                ) : null}
+              </span>
+            ) : null}
+          </div>
         </div>
+      </Link>
+
+      {/* Action menu lives outside the Link so its clicks don't navigate.
+          Absolute-positioned to overlap the featured badge corner. */}
+      <div className="absolute top-3 right-4 z-20">
+        <PetActionMenu
+          pet={{
+            slug: pet.slug,
+            displayName: pet.displayName,
+            zipUrl: pet.zipUrl,
+            description: pet.description,
+          }}
+        />
       </div>
     </article>
   );
