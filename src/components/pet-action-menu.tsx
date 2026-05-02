@@ -119,12 +119,15 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
       ? "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-stone-700 transition hover:border-black/30"
       : "inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white/90 text-stone-600 transition hover:border-black/30 hover:text-black";
 
-  // Detail menu opens downward, card menu opens upward (cards live in the
-  // grid with little space below).
+  // Both variants open downward — the trigger lives in the top of its row,
+  // so down has more room than up. Card variant aligns the menu's right
+  // edge to the trigger's right edge (cards are wide). Detail variant
+  // aligns the menu's left edge to the trigger so the menu opens to the
+  // right and doesn't get clipped by the viewport's left edge.
   const menuPositionClassName =
     variant === "detail"
-      ? "absolute right-0 top-full mt-2"
-      : "absolute right-0 bottom-full mb-2";
+      ? "absolute left-0 top-full mt-2"
+      : "absolute right-0 top-full mt-2";
 
   return (
     <div
@@ -165,7 +168,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
       {open ? (
         <div
           role="menu"
-          className={`${menuPositionClassName} z-30 w-60 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15`}
+          className={`${menuPositionClassName} z-50 w-60 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15`}
         >
           <div className="flex items-center justify-between border-b border-black/[0.06] px-3 py-2">
             <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">

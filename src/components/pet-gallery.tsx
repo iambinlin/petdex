@@ -369,7 +369,7 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
+      className={`group relative flex flex-col rounded-3xl border bg-white/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
           ? "border-[#6478f6]/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-black/10 shadow-sm shadow-blue-950/5"
@@ -378,10 +378,10 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
       <Link
         href={href}
         aria-label={`Open ${pet.displayName}`}
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 rounded-3xl"
       />
 
-      <div className="relative z-10 flex items-center justify-between border-b border-black/[0.06] px-5 pt-4 pb-3">
+      <div className="relative z-20 flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pb-3">
         <span className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
           No. {dexNumber}
         </span>
@@ -403,7 +403,7 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
       </div>
 
       <div
-        className="relative z-0 flex items-center justify-center px-5 py-6"
+        className="relative z-0 flex items-center justify-center overflow-hidden px-5 py-6"
         style={{
           background:
             "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
@@ -420,7 +420,7 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
         </span>
       </div>
 
-      <div className="relative z-0 flex flex-col gap-2 border-t border-black/[0.06] px-5 py-4">
+      <div className="relative z-0 flex flex-col gap-2 rounded-b-3xl border-t border-black/[0.06] px-5 py-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-lg font-semibold tracking-tight text-stone-950">
             {pet.displayName}
