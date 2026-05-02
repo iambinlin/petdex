@@ -69,13 +69,15 @@ export async function POST(req: Request) {
   }
 
   if (
-    body.spritesheetWidth !== REQUIRED_DIMS.width ||
-    body.spritesheetHeight !== REQUIRED_DIMS.height
+    !body.spritesheetWidth ||
+    !body.spritesheetHeight ||
+    body.spritesheetWidth < 256 ||
+    body.spritesheetHeight < 256
   ) {
     return NextResponse.json(
       {
         error: "invalid_spritesheet",
-        message: `Spritesheet must be ${REQUIRED_DIMS.width}x${REQUIRED_DIMS.height}.`,
+        message: `Spritesheet seems too small. Got ${body.spritesheetWidth}x${body.spritesheetHeight}, expected at least 256x256 (ideal 1536x1872).`,
         got: { width: body.spritesheetWidth, height: body.spritesheetHeight },
       },
       { status: 400 },

@@ -93,10 +93,16 @@ export function PetSubmitForm() {
       const buf = await zipFile.arrayBuffer();
       const zip = await JSZip.loadAsync(buf);
       const petJsonEntry = zip.file("pet.json");
-      const spriteEntry = zip.file("spritesheet.webp");
+      const spriteEntry =
+        zip.file("spritesheet.webp") ?? zip.file("spritesheet.png");
       const issues: string[] = [];
       if (!petJsonEntry) issues.push("Missing pet.json in zip.");
-      if (!spriteEntry) issues.push("Missing spritesheet.webp in zip.");
+      if (!spriteEntry) {
+        const fileNames = Object.keys(zip.files);
+        issues.push(
+          `Missing spritesheet.webp (or spritesheet.png) in zip. Found: ${fileNames.slice(0, 5).join(", ")}`,
+        );
+      }
 
       const petJsonString = petJsonEntry
         ? await petJsonEntry.async("string")
@@ -122,9 +128,14 @@ export function PetSubmitForm() {
       let height = 0;
       if (spritesheetUrl) {
         ({ width, height } = await measureImage(spritesheetUrl));
-        if (width !== REQUIRED.width || height !== REQUIRED.height) {
+        // Hard reject only on truly broken/empty images; otherwise let server
+        // canonicalize. The original 1536×1872 is the ideal but Codex generates
+        // varied sizes. We display the dims so the user knows what they shipped.
+        if (width === 0 || height === 0) {
+          issues.push("Spritesheet image is unreadable.");
+        } else if (width < 256 || height < 256) {
           issues.push(
-            `Spritesheet must be ${REQUIRED.width}×${REQUIRED.height}, got ${width}×${height}.`,
+            `Spritesheet seems too small (${width}×${height}). Use an 8×9 frame grid (recommended 1536×1872).`,
           );
         }
       }
@@ -160,12 +171,17 @@ export function PetSubmitForm() {
         track("pet_pack_validated", {
           pet_id: petId,
           size_kb: Math.round(zipFile.size / 1024),
+          width,
+          height,
         });
       } else {
         track("pet_pack_validation_failed", {
           pet_id: petId,
           issue_count: issues.length,
-          first_issue: issues[0] ?? "unknown",
+          first_issue: (issues[0] ?? "unknown").slice(0, 80),
+          width,
+          height,
+          file_count: Object.keys(zip.files).length,
         });
       }
     } finally {
@@ -314,8 +330,8 @@ export function PetSubmitForm() {
           <code className="rounded bg-white/70 px-1 py-0.5">
             spritesheet.webp
           </code>{" "}
-          ({REQUIRED.width}×{REQUIRED.height}). Validation runs locally before
-          upload.
+          (or .png). Recommended {REQUIRED.width}×{REQUIRED.height}, an 8×9
+          frame grid. Validation runs locally before upload.
         </span>
         {!isLoaded ? null : !isSignedIn ? (
           <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100/70 px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-amber-900 uppercase">
