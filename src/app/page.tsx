@@ -1,65 +1,118 @@
-import Image from "next/image";
+import Link from "next/link";
+
+import { Download } from "lucide-react";
+
+import { getAllPetsPackPath } from "@/lib/downloads";
+import { petStates } from "@/lib/pet-states";
+import { getPets } from "@/lib/pets";
+
+import { PetGallery } from "@/components/pet-gallery";
+import { PetSprite } from "@/components/pet-sprite";
+import { PetdexLogo } from "@/components/petdex-logo";
 
 export default function Home() {
+  const pets = getPets();
+  const featured = pets.filter((pet) => pet.featured);
+  const heroPets = (featured.length > 0 ? featured : pets).slice(0, 6);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+      <section className="petdex-cloud relative overflow-hidden">
+        <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
+          <nav className="flex items-center justify-between gap-4">
+            <PetdexLogo href="/" />
+            <div className="hidden items-center gap-9 text-sm text-[#4f515c] md:flex">
+              <a href="#gallery">Gallery</a>
+              <Link href="/submit">Submit</Link>
+              <a href="/packs/manifest.json">Manifest</a>
+            </div>
+            <Link
+              href="/submit"
+              className="inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
+              Submit a pet
+            </Link>
+          </nav>
+
+          <div className="mt-12 flex flex-col items-center text-center md:mt-16">
+            <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+              The Codex pet index
+            </p>
+            <h1 className="mt-3 text-[48px] leading-[0.98] font-semibold tracking-tight md:text-[80px]">
+              Petdex
+            </h1>
+            <p className="mt-5 max-w-xl text-balance text-base leading-7 text-[#202127] md:text-lg">
+              A public gallery of animated pets for Codex.{" "}
+              <span className="text-stone-500">
+                {petStates.length} states each. Drop in, animate, ship.
+              </span>
+            </p>
+          </div>
+
+          <HeroPetParade pets={heroPets} />
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href={getAllPetsPackPath()}
+              download
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-medium text-white transition hover:bg-black/85"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <Download className="size-4" />
+              Download all pets
+            </a>
+            <Link
+              href="#gallery"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white"
+            >
+              Browse gallery
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </section>
+
+      <section
+        id="gallery"
+        className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-12 md:px-8 md:py-16"
+      >
+        {pets.length > 0 ? <PetGallery pets={pets} /> : null}
+      </section>
+    </main>
+  );
+}
+
+type HeroPetParadeProps = {
+  pets: ReturnType<typeof getPets>;
+};
+
+function HeroPetParade({ pets }: HeroPetParadeProps) {
+  if (pets.length === 0) return null;
+
+  return (
+    <div className="mt-10 flex flex-wrap items-end justify-center gap-3 md:gap-5">
+      {pets.map((pet, index) => {
+        const tilt = index % 2 === 0 ? "rotate-[-3deg]" : "rotate-[3deg]";
+        const lift = index % 3 === 1 ? "translate-y-1" : "-translate-y-1";
+
+        return (
+          <Link
+            key={pet.slug}
+            href={`/pets/${pet.slug}`}
+            aria-label={`Open ${pet.displayName}`}
+            className={`group relative flex flex-col items-center rounded-2xl border border-white/70 bg-white/55 px-3 pt-3 pb-2 shadow-lg shadow-blue-900/10 backdrop-blur-md transition hover:-translate-y-1 hover:bg-white ${tilt} ${lift}`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <PetSprite
+              src={pet.spritesheetPath}
+              cycleStates
+              cycleIntervalMs={1500}
+              scale={0.55}
+              label={`${pet.displayName} animated`}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <span className="mt-1 font-mono text-[10px] tracking-[0.18em] text-stone-700 uppercase">
+              {pet.displayName}
+            </span>
+          </Link>
+        );
+      })}
     </div>
   );
 }
