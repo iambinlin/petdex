@@ -6,6 +6,7 @@ import { ArrowLeft, FileJson, Images, Sparkles } from "lucide-react";
 import { getPet, getPets } from "@/lib/pets";
 
 import { DownloadActions } from "@/components/download-actions";
+import { InstallCommand } from "@/components/install-command";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 
 type PageProps = {
@@ -86,6 +87,7 @@ export default async function PetPage({ params }: PageProps) {
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
 
         <section className="grid gap-4 lg:grid-cols-3">
+          <InstallCommand slug={pet.slug} displayName={pet.displayName} />
           <DownloadActions pet={pet} />
           <InfoCard title="Package" icon={<FileJson className="size-4" />}>
             <p>
