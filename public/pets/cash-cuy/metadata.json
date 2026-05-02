@@ -8,7 +8,7 @@
   "approvalState": "approved",
   "kind": "creature",
   "vibes": ["playful", "cheerful"],
-  "tags": ["codex-pet", "cuy", "money", "magic", "peru"],
+  "tags": ["cuy", "money", "magic", "peru"],
   "importedAt": "2026-05-02T08:11:08.332Z",
   "qa": {
     "contactSheetPath": "/pets/cash-cuy/contact-sheet.png"
