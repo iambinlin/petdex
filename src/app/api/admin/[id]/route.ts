@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
@@ -61,6 +62,54 @@ export async function PATCH(
 
   if (!row) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  // Notify owner — silent fail
+  if (row.ownerEmail && process.env.RESEND_API_KEY) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const from = process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
+      const url = `https://petdex.crafter.run/pets/${row.slug}`;
+      const installCmd = `curl -sSf https://petdex.crafter.run/install/${row.slug} | sh`;
+
+      if (row.status === "approved") {
+        await resend.emails.send({
+          from,
+          to: row.ownerEmail,
+          subject: `${row.displayName} is live on Petdex`,
+          text: [
+            `Your pet "${row.displayName}" is now live on Petdex.`,
+            "",
+            `Page:    ${url}`,
+            "",
+            "Anyone can install it with:",
+            `  ${installCmd}`,
+            "",
+            "Thanks for shipping a pet,",
+            "Petdex",
+          ].join("\n"),
+        });
+      } else if (row.status === "rejected") {
+        await resend.emails.send({
+          from,
+          to: row.ownerEmail,
+          subject: `Your Petdex submission needs changes — ${row.displayName}`,
+          text: [
+            `Hey, your pet "${row.displayName}" wasn't approved this round.`,
+            "",
+            row.rejectionReason
+              ? `Reason: ${row.rejectionReason}`
+              : "No reason was provided. Feel free to iterate and resubmit.",
+            "",
+            "You can submit a revised version at https://petdex.crafter.run/submit",
+            "",
+            "Petdex",
+          ].join("\n"),
+        });
+      }
+    } catch {
+      /* silent */
+    }
   }
 
   return NextResponse.json({ ok: true, status: row.status });
