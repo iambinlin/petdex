@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useUser } from "@clerk/nextjs";
-import { generateReactHelpers } from "@uploadthing/react";
 import { track } from "@vercel/analytics";
 import JSZip from "jszip";
 import {
@@ -18,9 +17,6 @@ import {
 } from "lucide-react";
 
 import { petStates } from "@/lib/pet-states";
-import type { OurFileRouter } from "@/lib/uploadthing";
-
-const { useUploadThing } = generateReactHelpers<OurFileRouter>();
 
 type ParsedPet = {
   petId: string;
@@ -57,23 +53,7 @@ export function PetSubmitForm() {
   });
 
   const uploadErrorRef = useRef<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const { startUpload } = useUploadThing("petPackUploader", {
-    onUploadError(err) {
-      const msg =
-        err.message ||
-        (err as { cause?: { message?: string } }).cause?.message ||
-        err.code ||
-        "Upload failed";
-      uploadErrorRef.current = msg;
-      setUploadError(msg);
-      console.error("[uploadthing]", err);
-      track("pet_uploadthing_error", {
-        message: msg.slice(0, 120),
-        code: err.code ?? "unknown",
-      });
-    },
-  });
+  const [, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -308,35 +288,87 @@ export function PetSubmitForm() {
     setUploadError(null);
     uploadErrorRef.current = null;
 
-    const uploaded = await startUpload([zipFile, spriteFile, petJsonFile]);
-    if (!uploaded || uploaded.length < 3) {
-      const reason = uploadErrorRef.current ?? "unknown";
+    // ── R2 presigned PUT flow (replaces UploadThing) ──────────────────────
+    let zipUrl: string;
+    let spritesheetUrl: string;
+    let petJsonUrl: string;
+
+    try {
+      const presignRes = await fetch("/api/r2/presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slugHint: slugify(parsed.petId),
+          files: [
+            {
+              role: "zip",
+              contentType: "application/zip",
+              size: zipFile.size,
+            },
+            {
+              role: "sprite",
+              contentType: spriteMime,
+              size: spriteFile.size,
+            },
+            {
+              role: "petjson",
+              contentType: "application/json",
+              size: petJsonFile.size,
+            },
+          ],
+        }),
+      });
+
+      if (!presignRes.ok) {
+        const data = (await presignRes.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        throw new Error(
+          data.message ?? data.error ?? `presign ${presignRes.status}`,
+        );
+      }
+
+      const presignData = (await presignRes.json()) as {
+        files: Array<{
+          role: "zip" | "sprite" | "petjson";
+          uploadUrl: string;
+          publicUrl: string;
+        }>;
+      };
+
+      const byRole = new Map(presignData.files.map((f) => [f.role, f]));
+      const zipSlot = byRole.get("zip");
+      const spriteSlot = byRole.get("sprite");
+      const petJsonSlot = byRole.get("petjson");
+      if (!zipSlot || !spriteSlot || !petJsonSlot) {
+        throw new Error("presign response missing slots");
+      }
+
+      const puts = await Promise.all([
+        putToR2(zipSlot.uploadUrl, zipFile, "application/zip"),
+        putToR2(spriteSlot.uploadUrl, spriteFile, spriteMime),
+        putToR2(petJsonSlot.uploadUrl, petJsonFile, "application/json"),
+      ]);
+      const failed = puts.find((r) => !r.ok);
+      if (failed) {
+        throw new Error(`R2 PUT ${failed.status} ${failed.statusText}`);
+      }
+
+      zipUrl = zipSlot.publicUrl;
+      spritesheetUrl = spriteSlot.publicUrl;
+      petJsonUrl = petJsonSlot.publicUrl;
+    } catch (err) {
+      const reason = (err as Error).message ?? "unknown";
       track("pet_submission_failed", {
         pet_id: parsed.petId,
         stage: "upload",
         reason: reason.slice(0, 120),
-        files_count: uploaded?.length ?? 0,
       });
       setSubmission({
         kind: "error",
-        message:
-          reason === "unknown"
-            ? "Upload failed. Try again."
-            : `Upload failed: ${reason}`,
+        message: `Upload failed: ${reason}`,
       });
-      return;
-    }
-
-    const zipResult = uploaded.find((u) => u.name === parsed.zipFileName);
-    const spriteResult = uploaded.find(
-      (u) =>
-        u.name.endsWith("-spritesheet.webp") ||
-        u.name.endsWith("-spritesheet.png"),
-    );
-    const petJsonResult = uploaded.find((u) => u.name.endsWith("-pet.json"));
-
-    if (!zipResult || !spriteResult || !petJsonResult) {
-      setSubmission({ kind: "error", message: "Upload incomplete." });
       return;
     }
 
@@ -346,9 +378,9 @@ export function PetSubmitForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        zipUrl: zipResult.serverData?.url ?? zipResult.ufsUrl,
-        spritesheetUrl: spriteResult.serverData?.url ?? spriteResult.ufsUrl,
-        petJsonUrl: petJsonResult.serverData?.url ?? petJsonResult.ufsUrl,
+        zipUrl,
+        spritesheetUrl,
+        petJsonUrl,
         displayName: parsed.displayName,
         description: parsed.description,
         petId: parsed.petId,
@@ -695,6 +727,18 @@ function measureImage(url: string): Promise<{ width: number; height: number }> {
       resolve({ width: img.naturalWidth, height: img.naturalHeight });
     img.onerror = () => resolve({ width: 0, height: 0 });
     img.src = url;
+  });
+}
+
+async function putToR2(
+  url: string,
+  body: Blob,
+  contentType: string,
+): Promise<Response> {
+  return fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body,
   });
 }
 
