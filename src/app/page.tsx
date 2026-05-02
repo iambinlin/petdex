@@ -2,16 +2,16 @@ import Link from "next/link";
 
 import { Download } from "lucide-react";
 
-import { GithubIcon } from "@/components/github-icon";
-
 import { getAllPetsPackPath } from "@/lib/downloads";
 import { petStates } from "@/lib/pet-states";
 import { getPets } from "@/lib/pets";
 
 import { AuthBadge } from "@/components/auth-badge";
+import { GithubIcon } from "@/components/github-icon";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetdexLogo } from "@/components/petdex-logo";
+import { TrackOnClick } from "@/components/track-on-click";
 
 export default function Home() {
   const pets = getPets();
@@ -67,14 +67,16 @@ export default function Home() {
           <HeroPetParade pets={heroPets} />
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <a
+            <TrackOnClick
+              event="pack_downloaded"
+              payload={{ scope: "all" }}
               href={getAllPetsPackPath()}
               download
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-medium text-white transition hover:bg-black/85"
             >
               <Download className="size-4" />
               Download all pets
-            </a>
+            </TrackOnClick>
             <Link
               href="#gallery"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white"

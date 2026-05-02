@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useUser } from "@clerk/nextjs";
 import { generateReactHelpers } from "@uploadthing/react";
+import { track } from "@vercel/analytics";
 import JSZip from "jszip";
 import {
   AlertTriangle,
@@ -147,6 +148,19 @@ export function PetSubmitForm() {
         spritesheetHeight: height,
         issues,
       });
+
+      if (issues.length === 0) {
+        track("pet_pack_validated", {
+          pet_id: petId,
+          size_kb: Math.round(zipFile.size / 1024),
+        });
+      } else {
+        track("pet_pack_validation_failed", {
+          pet_id: petId,
+          issue_count: issues.length,
+          first_issue: issues[0] ?? "unknown",
+        });
+      }
     } finally {
       setIsReading(false);
     }
@@ -156,6 +170,7 @@ export function PetSubmitForm() {
     if (!parsed || parsed.issues.length > 0) return;
     if (!isSignedIn) return;
 
+    track("pet_submission_started", { pet_id: parsed.petId });
     setSubmission({ kind: "uploading", step: "validating" });
 
     const zipFile = new File([parsed.zipBlob], parsed.zipFileName, {
@@ -176,6 +191,10 @@ export function PetSubmitForm() {
 
     const uploaded = await startUpload([zipFile, spriteFile, petJsonFile]);
     if (!uploaded || uploaded.length < 3) {
+      track("pet_submission_failed", {
+        pet_id: parsed.petId,
+        stage: "upload",
+      });
       setSubmission({
         kind: "error",
         message: "Upload failed. Try again.",
@@ -216,6 +235,12 @@ export function PetSubmitForm() {
         message?: string;
         error?: string;
       };
+      track("pet_submission_failed", {
+        pet_id: parsed.petId,
+        stage: "register",
+        error_code: data.error ?? "unknown",
+        status: res.status,
+      });
       setSubmission({
         kind: "error",
         message:
@@ -228,6 +253,10 @@ export function PetSubmitForm() {
     }
 
     const data = (await res.json()) as { slug: string };
+    track("pet_submission_succeeded", {
+      pet_id: parsed.petId,
+      slug: data.slug,
+    });
     setSubmission({
       kind: "success",
       slug: data.slug,
