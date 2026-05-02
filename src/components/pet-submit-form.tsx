@@ -291,7 +291,7 @@ export function PetSubmitForm() {
           upload.
         </span>
         <span className="mt-4 inline-flex items-center gap-2 text-xs text-[#5d5d66]">
-          Packages live in
+          Pet assets live in
           <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono">
             {PETS_DIR}
           </code>
