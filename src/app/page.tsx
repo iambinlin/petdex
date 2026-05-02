@@ -11,6 +11,7 @@ import {
 } from "@/lib/pets";
 
 import { CommandLine } from "@/components/command-line";
+import { JsonLd } from "@/components/json-ld";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
@@ -19,6 +20,8 @@ import { TrackOnClick } from "@/components/track-on-click";
 
 export const dynamic = "force-dynamic";
 
+const SITE_URL = "https://petdex.crafter.run";
+
 export default async function Home() {
   const [heroPets, totalPets, initialSearch] = await Promise.all([
     getFeaturedPetsWithMetrics(6),
@@ -26,8 +29,46 @@ export default async function Home() {
     searchPets({ sort: "curated" }),
   ]);
 
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "Petdex",
+      url: `${SITE_URL}/`,
+      description:
+        "Public gallery of animated pixel pets for the Codex CLI. Install one with a single command.",
+      publisher: {
+        "@type": "Organization",
+        name: "Crafter Station",
+        url: "https://crafter.run",
+      },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE_URL}/?q={search_term_string}#gallery`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "Featured Codex pets",
+      numberOfItems: heroPets.length,
+      itemListElement: heroPets.map((pet, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${SITE_URL}/pets/${pet.slug}`,
+        name: pet.displayName,
+      })),
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+      <JsonLd data={jsonLd} />
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
@@ -40,7 +81,10 @@ export default async function Home() {
               Petdex
             </h1>
             <p className="mt-5 max-w-xl text-balance text-base leading-7 text-[#202127] md:text-lg">
-              A public gallery of animated pets for Codex.
+              The public gallery of animated pixel pets for the{" "}
+              <strong>Codex CLI</strong>. Browse {totalPets}+ open-source
+              companions, preview their states, and install one with a single
+              command.
             </p>
             <CommandLine
               command="npx petdex install boba"

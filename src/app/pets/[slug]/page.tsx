@@ -10,11 +10,14 @@ import { getPet, getStaticPetSlugs } from "@/lib/pets";
 
 import { DownloadActions } from "@/components/download-actions";
 import { InstallCommand } from "@/components/install-command";
+import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SubmittedBy } from "@/components/submitted-by";
+
+const SITE_URL = "https://petdex.crafter.run";
 
 type PageProps = {
   params: Promise<{
@@ -36,13 +39,47 @@ export async function generateMetadata({ params }: PageProps) {
 
   if (!pet) {
     return {
-      title: "Pet not found - Petdex",
+      title: "Pet not found",
+      robots: { index: false, follow: false },
     };
   }
 
+  const title = `${pet.displayName} — Animated Codex pet`;
+  const description = `Install ${pet.displayName} for the Codex CLI: ${pet.description} One command, animated pixel art, ${pet.tags.slice(0, 3).join(" + ") || "open source"}.`;
+  const url = `${SITE_URL}/pets/${pet.slug}`;
+
   return {
-    title: `${pet.displayName} - Petdex`,
-    description: pet.description,
+    title,
+    description,
+    alternates: { canonical: `/pets/${pet.slug}` },
+    keywords: [
+      pet.displayName,
+      `${pet.displayName} Codex pet`,
+      `${pet.displayName} pixel pet`,
+      "Codex CLI pet",
+      ...pet.tags.slice(0, 4),
+      ...pet.vibes.slice(0, 2),
+    ],
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "article",
+      images: [
+        {
+          url: pet.spritesheetPath,
+          width: 1024,
+          height: 1024,
+          alt: `${pet.displayName} spritesheet`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [pet.spritesheetPath],
+    },
   };
 }
 
@@ -67,8 +104,71 @@ export default async function PetPage({ params }: PageProps) {
       )
     : false;
 
+  const url = `${SITE_URL}/pets/${pet.slug}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
+      "@id": `${url}#pet`,
+      name: pet.displayName,
+      description: pet.description,
+      url,
+      image: pet.spritesheetPath,
+      keywords: [...pet.tags, ...pet.vibes].join(", "),
+      genre: pet.kind,
+      datePublished: pet.importedAt,
+      isPartOf: { "@type": "WebSite", "@id": `${SITE_URL}/#website` },
+      ...(pet.submittedBy
+        ? {
+            creator: {
+              "@type": "Person",
+              name: pet.submittedBy.name,
+              ...(pet.submittedBy.url ? { url: pet.submittedBy.url } : {}),
+              ...(pet.submittedBy.imageUrl
+                ? { image: pet.submittedBy.imageUrl }
+                : {}),
+            },
+          }
+        : {}),
+      ...(metrics.likeCount > 0
+        ? {
+            interactionStatistic: {
+              "@type": "InteractionCounter",
+              interactionType: "https://schema.org/LikeAction",
+              userInteractionCount: metrics.likeCount,
+            },
+          }
+        : {}),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Petdex",
+          item: SITE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Pets",
+          item: `${SITE_URL}/#gallery`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: pet.displayName,
+          item: url,
+        },
+      ],
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-[#f7f8ff]">
+      <JsonLd data={jsonLd} />
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
