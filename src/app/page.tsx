@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 
 import { getAllPetsPackPath } from "@/lib/downloads";
-import { petStates } from "@/lib/pet-states";
 import { getPetsWithMetrics } from "@/lib/pets";
 
+import { CommandLine } from "@/components/command-line";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
@@ -33,11 +33,13 @@ export default async function Home() {
               Petdex
             </h1>
             <p className="mt-5 max-w-xl text-balance text-base leading-7 text-[#202127] md:text-lg">
-              A public gallery of animated pets for Codex.{" "}
-              <span className="text-stone-500">
-                {petStates.length} states each. Drop in, animate, ship.
-              </span>
+              A public gallery of animated pets for Codex.
             </p>
+            <CommandLine
+              command="npx petdex install boba"
+              source="hero"
+              className="mt-5 w-full max-w-sm"
+            />
           </div>
 
           <HeroPetParade pets={heroPets} />
@@ -58,6 +60,12 @@ export default async function Home() {
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white"
             >
               Browse gallery
+            </Link>
+            <Link
+              href="/docs"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white"
+            >
+              CLI docs
             </Link>
           </div>
         </div>
