@@ -65,20 +65,12 @@ export async function generateMetadata({ params }: PageProps) {
       description,
       url,
       type: "article",
-      images: [
-        {
-          url: pet.spritesheetPath,
-          width: 1024,
-          height: 1024,
-          alt: `${pet.displayName} spritesheet`,
-        },
-      ],
+      // images auto-injected from app/pets/[slug]/opengraph-image.tsx
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [pet.spritesheetPath],
     },
   };
 }

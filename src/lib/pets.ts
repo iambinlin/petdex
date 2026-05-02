@@ -86,6 +86,16 @@ export async function getAllApprovedPets(): Promise<PetdexPet[]> {
   return rows.map(rowToPet);
 }
 
+export async function getApprovedPetsWithMetrics(): Promise<PetWithMetrics[]> {
+  const pets = await getAllApprovedPets();
+  if (pets.length === 0) return [];
+  const metrics = await getAllMetrics();
+  return pets.map((p) => ({
+    ...p,
+    metrics: metrics.get(p.slug) ?? EMPTY_METRICS,
+  }));
+}
+
 export async function getApprovedPetCount(): Promise<number> {
   const rows = await db
     .select({ slug: schema.submittedPets.slug })
