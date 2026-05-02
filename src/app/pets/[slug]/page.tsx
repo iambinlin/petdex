@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
-import { FileJson, Images, Sparkles } from "lucide-react";
+import { FileJson, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
@@ -75,7 +75,7 @@ export default async function PetPage({ params }: PageProps) {
       </section>
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
 
-        <header className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
+        <header className="grid gap-6 lg:grid-cols-[1fr_460px] lg:items-start">
           <div>
             <p className="text-sm font-semibold tracking-[0.18em] text-cyan-700 uppercase">
               {pet.featured ? "Featured Petdex entry" : "Petdex entry"}
@@ -98,12 +98,8 @@ export default async function PetPage({ params }: PageProps) {
                 downloads
               </span>
             </div>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="glass-panel rounded-2xl p-5">
-              <p className="text-sm font-semibold text-stone-950">Traits</p>
-              <div className="mt-4 flex flex-wrap gap-2">
+            {pet.tags.length > 0 ? (
+              <div className="mt-6 flex flex-wrap gap-2">
                 {pet.tags.map((tag) => (
                   <span
                     key={tag}
@@ -113,41 +109,33 @@ export default async function PetPage({ params }: PageProps) {
                   </span>
                 ))}
               </div>
-            </div>
-            {pet.submittedBy ? <SubmittedBy credit={pet.submittedBy} /> : null}
+            ) : null}
           </div>
+
+          <InstallCommand slug={pet.slug} displayName={pet.displayName} />
         </header>
 
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <InstallCommand slug={pet.slug} displayName={pet.displayName} />
+          {pet.submittedBy ? (
+            <SubmittedBy credit={pet.submittedBy} />
+          ) : (
+            <InfoCard title="Submission" icon={<Sparkles className="size-4" />}>
+              <p>Curated entry.</p>
+              <p>Updated {new Date(pet.importedAt).toLocaleDateString()}</p>
+            </InfoCard>
+          )}
           <DownloadActions pet={pet} />
           <InfoCard title="Package" icon={<FileJson className="size-4" />}>
             <p>
               <span className="font-medium text-stone-950">pet.json:</span>{" "}
-              {pet.petJsonPath}
+              <span className="break-all">{pet.petJsonPath}</span>
             </p>
             <p>
               <span className="font-medium text-stone-950">spritesheet:</span>{" "}
-              {pet.spritesheetPath}
+              <span className="break-all">{pet.spritesheetPath}</span>
             </p>
-          </InfoCard>
-          <InfoCard title="Preview" icon={<Images className="size-4" />}>
-            {pet.qa.contactSheetPath ? (
-              <a
-                href={pet.qa.contactSheetPath}
-                className="font-medium text-black underline underline-offset-4"
-              >
-                Open contact sheet
-              </a>
-            ) : (
-              <p>Contact sheet coming soon.</p>
-            )}
-          </InfoCard>
-          <InfoCard title="Share" icon={<Sparkles className="size-4" />}>
-            <p>Public Petdex page for sharing this companion.</p>
-            <p>Updated {new Date(pet.importedAt).toLocaleDateString()}</p>
           </InfoCard>
         </section>
       </section>
