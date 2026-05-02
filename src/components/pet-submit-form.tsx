@@ -46,6 +46,7 @@ export function PetSubmitForm() {
   const { isSignedIn, isLoaded } = useUser();
   const [parsed, setParsed] = useState<ParsedPet | null>(null);
   const [isReading, setIsReading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [submission, setSubmission] = useState<SubmissionResult>({
     kind: "idle",
   });
@@ -266,7 +267,26 @@ export function PetSubmitForm() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-      <label className="glass-panel flex min-h-80 cursor-pointer flex-col items-center justify-center rounded-3xl p-8 text-center transition hover:bg-white/80">
+      <label
+        className={`glass-panel flex min-h-80 cursor-pointer flex-col items-center justify-center rounded-3xl p-8 text-center transition hover:bg-white/80 ${
+          isDragging ? "bg-white/90 ring-2 ring-black/40 ring-offset-2" : ""
+        }`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+          if (!isDragging) setIsDragging(true);
+        }}
+        onDragLeave={(event) => {
+          if (event.currentTarget.contains(event.relatedTarget as Node | null))
+            return;
+          setIsDragging(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          void handleFiles(event.dataTransfer.files);
+        }}
+      >
         <input
           type="file"
           multiple={false}
