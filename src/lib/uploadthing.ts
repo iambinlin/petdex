@@ -4,11 +4,10 @@ import { UploadThingError } from "uploadthing/server";
 
 const f = createUploadthing();
 
+// Single "blob" route with maxFileCount=3 catches all three files
+// (zip + sprite + pet.json) without per-mime matcher confusion in UT v7.
 export const ourFileRouter = {
   petPackUploader: f({
-    "application/zip": { maxFileSize: "8MB", maxFileCount: 1 },
-    "image/webp": { maxFileSize: "8MB", maxFileCount: 1 },
-    "application/json": { maxFileSize: "1MB", maxFileCount: 1 },
     blob: { maxFileSize: "8MB", maxFileCount: 3 },
   })
     .middleware(async () => {

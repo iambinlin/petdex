@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useUser } from "@clerk/nextjs";
 import { generateReactHelpers } from "@uploadthing/react";
@@ -54,11 +54,22 @@ export function PetSubmitForm() {
     kind: "idle",
   });
 
+  const uploadErrorRef = useRef<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const { startUpload } = useUploadThing("petPackUploader", {
     onUploadError(err) {
-      setUploadError(err.message || err.code || "Upload failed");
+      const msg =
+        err.message ||
+        (err as { cause?: { message?: string } }).cause?.message ||
+        err.code ||
+        "Upload failed";
+      uploadErrorRef.current = msg;
+      setUploadError(msg);
       console.error("[uploadthing]", err);
+      track("pet_uploadthing_error", {
+        message: msg.slice(0, 120),
+        code: err.code ?? "unknown",
+      });
     },
   });
 
@@ -215,19 +226,23 @@ export function PetSubmitForm() {
 
     setSubmission({ kind: "uploading", step: "uploading" });
     setUploadError(null);
+    uploadErrorRef.current = null;
 
     const uploaded = await startUpload([zipFile, spriteFile, petJsonFile]);
     if (!uploaded || uploaded.length < 3) {
+      const reason = uploadErrorRef.current ?? "unknown";
       track("pet_submission_failed", {
         pet_id: parsed.petId,
         stage: "upload",
-        reason: uploadError ?? "unknown",
+        reason: reason.slice(0, 120),
+        files_count: uploaded?.length ?? 0,
       });
       setSubmission({
         kind: "error",
-        message: uploadError
-          ? `Upload failed: ${uploadError}`
-          : "Upload failed. Try again.",
+        message:
+          reason === "unknown"
+            ? "Upload failed. Try again."
+            : `Upload failed: ${reason}`,
       });
       return;
     }
