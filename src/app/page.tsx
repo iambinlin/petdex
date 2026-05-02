@@ -11,6 +11,7 @@ import { GithubIcon } from "@/components/github-icon";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetdexLogo } from "@/components/petdex-logo";
+import { SponsorButton } from "@/components/sponsor-button";
 import { SubmitCTA } from "@/components/submit-cta";
 import { TrackOnClick } from "@/components/track-on-click";
 
@@ -42,6 +43,7 @@ export default async function Home() {
                 <GithubIcon className="size-4" />
                 GitHub
               </a>
+              <SponsorButton variant="nav" />
             </div>
             <div className="flex items-center gap-3">
               <SubmitCTA />
@@ -115,6 +117,7 @@ export default async function Home() {
             >
               GitHub
             </a>
+            <SponsorButton variant="inline" />
           </div>
         </div>
       </footer>

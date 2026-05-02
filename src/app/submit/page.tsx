@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { AuthBadge } from "@/components/auth-badge";
 import { GithubIcon } from "@/components/github-icon";
 import { PetSubmitForm } from "@/components/pet-submit-form";
+import { SponsorButton } from "@/components/sponsor-button";
 
 export const metadata = {
   title: "Submit a pet - Petdex",
@@ -33,6 +34,7 @@ export default function SubmitPage() {
               <GithubIcon className="size-4" />
               GitHub
             </a>
+            <SponsorButton />
             <AuthBadge />
           </div>
         </div>
