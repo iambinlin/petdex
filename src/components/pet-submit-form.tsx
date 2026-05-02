@@ -69,7 +69,12 @@ export function PetSubmitForm() {
 
     try {
       const items = [...files];
-      const fromFolder = items.some((f) => Boolean(f.webkitRelativePath));
+      // True folder upload has a "/" inside webkitRelativePath
+      // (e.g. "boba/pet.json"). A single dropped file via webkitGetAsEntry
+      // gets stamped with just its filename, so we treat that as zip mode.
+      const fromFolder = items.some(
+        (f) => f.webkitRelativePath && f.webkitRelativePath.includes("/"),
+      );
       const source: "folder" | "zip" = fromFolder ? "folder" : "zip";
 
       let petJsonString = "";
@@ -166,12 +171,24 @@ export function PetSubmitForm() {
         const spriteEntry = webpEntry ?? pngEntry;
         spritesheetExt = webpEntry ? "webp" : "png";
 
-        if (!petJsonEntry) issues.push("Missing pet.json in zip.");
-        if (!spriteEntry) {
-          const fileNames = Object.keys(zip.files);
+        // Detect "petdex-approved.zip" — the all-pets bundle, not a single pet.
+        const allFiles = Object.keys(zip.files);
+        const looksLikeBundle =
+          !petJsonEntry &&
+          allFiles.some((p) => p.includes("/pet.json")) &&
+          allFiles.length > 4;
+
+        if (looksLikeBundle) {
           issues.push(
-            `Missing spritesheet.webp (or .png) in zip. Found: ${fileNames.slice(0, 5).join(", ")}`,
+            "This looks like the all-pets bundle (petdex-approved.zip). Submit a single pet folder or its individual zip instead.",
           );
+        } else {
+          if (!petJsonEntry) issues.push("Missing pet.json at zip root.");
+          if (!spriteEntry) {
+            issues.push(
+              `Missing spritesheet.webp (or .png) at zip root. Found: ${allFiles.slice(0, 5).join(", ")}`,
+            );
+          }
         }
 
         petJsonString = petJsonEntry ? await petJsonEntry.async("string") : "";
