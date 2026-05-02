@@ -13,6 +13,8 @@
     "build-packs": "bun scripts/build-packs.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1041.0",
+    "@aws-sdk/s3-request-presigner": "^3.1041.0",
     "@clerk/nextjs": "^7.3.0",
     "@neondatabase/serverless": "^1.1.0",
     "@uploadthing/react": "^7.3.3",

@@ -5,6 +5,8 @@ const isProtected = createRouteMatcher([
   "/submit/(.*)",
   "/api/submit",
   "/api/submit/(.*)",
+  "/api/r2",
+  "/api/r2/(.*)",
   "/admin",
   "/admin/(.*)",
   "/api/admin",
