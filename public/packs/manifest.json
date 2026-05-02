@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-02T07:50:48.201Z",
+  "generatedAt": "2026-05-02T08:12:59.891Z",
   "pets": [
     {
       "slug": "boba",
@@ -20,6 +20,11 @@
       "slug": "cache-capy",
       "displayName": "Cache Capy",
       "packPath": "/packs/cache-capy.zip"
+    },
+    {
+      "slug": "cash-cuy",
+      "displayName": "Cash Cuy",
+      "packPath": "/packs/cash-cuy.zip"
     },
     {
       "slug": "cosmo",
