@@ -13,8 +13,10 @@ import { PetSprite } from "@/components/pet-sprite";
 import { PetdexLogo } from "@/components/petdex-logo";
 import { TrackOnClick } from "@/components/track-on-click";
 
-export default function Home() {
-  const pets = getPets();
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const pets = await getPets();
   const featured = pets.filter((pet) => pet.featured);
   const heroPets = (featured.length > 0 ? featured : pets).slice(0, 6);
 
@@ -98,7 +100,7 @@ export default function Home() {
 }
 
 type HeroPetParadeProps = {
-  pets: ReturnType<typeof getPets>;
+  pets: Awaited<ReturnType<typeof getPets>>;
 };
 
 function HeroPetParade({ pets }: HeroPetParadeProps) {

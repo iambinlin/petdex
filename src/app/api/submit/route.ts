@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
-import { getPet } from "@/lib/pets";
+import { getCuratedPet } from "@/lib/pets";
 import { submitRatelimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
@@ -152,7 +152,7 @@ function slugify(value: string): string {
 
 async function resolveUniqueSlug(base: string): Promise<string> {
   const isTaken = async (candidate: string): Promise<boolean> => {
-    if (getPet(candidate)) return true;
+    if (getCuratedPet(candidate)) return true;
     const row = await db.query.submittedPets.findFirst({
       where: eq(schema.submittedPets.slug, candidate),
     });

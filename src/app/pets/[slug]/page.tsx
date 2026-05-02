@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { ArrowLeft, FileJson, Images, Sparkles } from "lucide-react";
 
-import { getPet, getPets } from "@/lib/pets";
+import { getCuratedPets, getPet } from "@/lib/pets";
 
 import { DownloadActions } from "@/components/download-actions";
 import { InstallCommand } from "@/components/install-command";
@@ -15,15 +15,18 @@ type PageProps = {
   }>;
 };
 
+export const dynamicParams = true;
+export const revalidate = 60;
+
 export function generateStaticParams() {
-  return getPets().map((pet) => ({
+  return getCuratedPets().map((pet) => ({
     slug: pet.slug,
   }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const pet = getPet(slug);
+  const pet = await getPet(slug);
 
   if (!pet) {
     return {
@@ -39,7 +42,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function PetPage({ params }: PageProps) {
   const { slug } = await params;
-  const pet = getPet(slug);
+  const pet = await getPet(slug);
 
   if (!pet) {
     notFound();

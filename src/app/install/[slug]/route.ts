@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
-import { getPets } from "@/lib/pets";
+import { getCuratedPet } from "@/lib/pets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function GET(
   const { slug } = await ctx.params;
   const origin = new URL(req.url).origin;
 
-  const curated = getPets().find((p) => p.slug === slug);
+  const curated = getCuratedPet(slug);
 
   let petJsonUrl: string;
   let spritesheetUrl: string;
