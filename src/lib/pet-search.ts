@@ -3,10 +3,19 @@
 // facets are computed via grouped queries the DB can answer with the GIN
 // indexes on `vibes` / `tags`.
 
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import {
+  type SQL,
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
-import { getMetricsBySlugs } from "@/lib/db/metrics";
 import type { PetWithMetrics } from "@/lib/pets";
 import { rowToPet } from "@/lib/pets";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
@@ -74,11 +83,26 @@ export async function searchPets(
 
   const where = and(...filters);
 
-  // page slice
-  const orderBy = orderForSort(sortKey);
+  // LEFT JOIN pet_metrics so 'popular' / 'installed' sorts can use real
+  // counts in SQL. coalesce-to-0 keeps pets without a metrics row last.
+  const installCountSql = sql<number>`coalesce(${schema.petMetrics.installCount}, 0)`;
+  const likeCountSql = sql<number>`coalesce(${schema.petMetrics.likeCount}, 0)`;
+  const zipDownloadCountSql = sql<number>`coalesce(${schema.petMetrics.zipDownloadCount}, 0)`;
+
+  const orderBy = orderForSort(sortKey, installCountSql, likeCountSql);
+
   const pageRows = await db
-    .select()
+    .select({
+      pet: schema.submittedPets,
+      installCount: installCountSql,
+      likeCount: likeCountSql,
+      zipDownloadCount: zipDownloadCountSql,
+    })
     .from(schema.submittedPets)
+    .leftJoin(
+      schema.petMetrics,
+      eq(schema.petMetrics.petSlug, schema.submittedPets.slug),
+    )
     .where(where)
     .orderBy(...orderBy)
     .offset(cursor)
@@ -87,15 +111,12 @@ export async function searchPets(
   const hasNext = pageRows.length > limit;
   const slice = hasNext ? pageRows.slice(0, limit) : pageRows;
 
-  const slugs = slice.map((r) => r.slug);
-  const metrics = slugs.length ? await getMetricsBySlugs(slugs) : new Map();
-
   const pets: PetWithMetrics[] = slice.map((row) => ({
-    ...rowToPet(row),
-    metrics: metrics.get(row.slug) ?? {
-      installCount: 0,
-      zipDownloadCount: 0,
-      likeCount: 0,
+    ...rowToPet(row.pet),
+    metrics: {
+      installCount: row.installCount ?? 0,
+      likeCount: row.likeCount ?? 0,
+      zipDownloadCount: row.zipDownloadCount ?? 0,
     },
   }));
 
@@ -118,16 +139,16 @@ export async function searchPets(
   };
 }
 
-function orderForSort(key: SortKey) {
+function orderForSort(
+  key: SortKey,
+  installCountSql: SQL<number>,
+  likeCountSql: SQL<number>,
+) {
   switch (key) {
     case "popular":
-      // We don't have likeCount on submitted_pets — sort by like count via a
-      // join is overkill at our scale. Instead order by displayName as a
-      // stable fallback after popular lookups land in the front-end.
-      // (popular sort is implemented client-side after the slice arrives.)
-      return [asc(schema.submittedPets.displayName)];
+      return [desc(likeCountSql), asc(schema.submittedPets.displayName)];
     case "installed":
-      return [asc(schema.submittedPets.displayName)];
+      return [desc(installCountSql), asc(schema.submittedPets.displayName)];
     case "alpha":
       return [asc(schema.submittedPets.displayName)];
     case "curated":
