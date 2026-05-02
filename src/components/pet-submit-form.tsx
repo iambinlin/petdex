@@ -752,11 +752,29 @@ async function putToR2(
   body: Blob,
   contentType: string,
 ): Promise<Response> {
-  return fetch(url, {
-    method: "PUT",
-    headers: { "Content-Type": contentType },
-    body,
-  });
+  // R2 expects exactly the Content-Type we presigned with. We retry once on
+  // transient network failures (Wi-Fi blip, CORS preflight race) before
+  // surfacing a 'Failed to fetch' to the user.
+  const attempts = [0, 700];
+  let lastErr: unknown;
+  for (const delay of attempts) {
+    if (delay > 0) {
+      await new Promise((r) => setTimeout(r, delay));
+    }
+    try {
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body,
+      });
+      return res;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw new Error(
+    `R2 PUT network error: ${(lastErr as Error)?.message ?? "unknown"} (size=${body.size}, type=${contentType})`,
+  );
 }
 
 function slugify(value: string): string {
