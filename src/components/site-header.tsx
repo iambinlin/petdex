@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { Show } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
 
 import { AuthBadge } from "@/components/auth-badge";
@@ -48,6 +49,11 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           <Link href="/docs" className="transition hover:text-black">
             Docs
           </Link>
+          <Show when="signed-in">
+            <Link href="/my-pets" className="transition hover:text-black">
+              My pets
+            </Link>
+          </Show>
           <a href="/api/manifest" className="transition hover:text-black">
             Manifest
           </a>
@@ -110,6 +116,11 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             <MobileLink href="/docs" onClick={() => setOpen(false)}>
               Docs
             </MobileLink>
+            <Show when="signed-in">
+              <MobileLink href="/my-pets" onClick={() => setOpen(false)}>
+                My pets
+              </MobileLink>
+            </Show>
             <MobileLink href="/api/manifest" onClick={() => setOpen(false)}>
               Manifest
             </MobileLink>
