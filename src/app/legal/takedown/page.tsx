@@ -1,8 +1,6 @@
-import Link from "next/link";
-
-import { ArrowLeft } from "lucide-react";
-
 import { GithubIcon } from "@/components/github-icon";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 
 export const metadata = {
   title: "Takedown — Petdex",
@@ -17,16 +15,10 @@ export default function TakedownPage() {
 
   return (
     <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
-      <section className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-10 md:px-8 md:py-14">
-        <div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-2 text-sm font-medium text-black backdrop-blur transition hover:bg-white"
-          >
-            <ArrowLeft className="size-4" />
-            Back to gallery
-          </Link>
-        </div>
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
+        <SiteHeader />
+      </section>
+      <section className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
 
         <header>
           <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
@@ -80,11 +72,12 @@ export default function TakedownPage() {
           Open takedown request
         </a>
 
-        <footer className="border-t border-black/10 pt-6 text-xs text-stone-500">
+        <p className="border-t border-black/10 pt-6 text-xs text-stone-500">
           By submitting to Petdex you confirm you have rights to the artwork or
           are creating fan content. Petdex acts on good-faith takedown requests.
-        </footer>
+        </p>
       </section>
+      <SiteFooter />
     </main>
   );
 }

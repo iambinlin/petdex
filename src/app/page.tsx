@@ -6,13 +6,10 @@ import { getAllPetsPackPath } from "@/lib/downloads";
 import { petStates } from "@/lib/pet-states";
 import { getPetsWithMetrics } from "@/lib/pets";
 
-import { AuthBadge } from "@/components/auth-badge";
-import { GithubIcon } from "@/components/github-icon";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
-import { PetdexLogo } from "@/components/petdex-logo";
-import { SponsorButton } from "@/components/sponsor-button";
-import { SubmitCTA } from "@/components/submit-cta";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { TrackOnClick } from "@/components/track-on-click";
 
 export const dynamic = "force-dynamic";
@@ -26,30 +23,7 @@ export default async function Home() {
     <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
-          <nav className="flex items-center justify-between gap-4">
-            <PetdexLogo href="/" />
-            <div className="hidden items-center gap-9 text-sm text-[#4f515c] md:flex">
-              <a href="#gallery">Gallery</a>
-              <SubmitCTA className="transition hover:text-black">
-                Submit
-              </SubmitCTA>
-              <a href="/packs/manifest.json">Manifest</a>
-              <a
-                href="https://github.com/crafter-station/petdex"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 transition hover:text-black"
-              >
-                <GithubIcon className="size-4" />
-                GitHub
-              </a>
-              <SponsorButton variant="nav" />
-            </div>
-            <div className="flex items-center gap-3">
-              <SubmitCTA />
-              <AuthBadge />
-            </div>
-          </nav>
+          <SiteHeader />
 
           <div className="mt-12 flex flex-col items-center text-center md:mt-16">
             <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
@@ -96,31 +70,7 @@ export default async function Home() {
         {pets.length > 0 ? <PetGallery pets={pets} /> : null}
       </section>
 
-      <footer className="mx-auto w-full max-w-7xl px-5 py-10 md:px-8">
-        <div className="flex flex-col items-start justify-between gap-3 border-t border-black/10 pt-6 text-xs text-stone-500 md:flex-row md:items-center">
-          <p>
-            Pets are user-submitted fan art. Petdex does not claim rights to any
-            underlying IP.
-          </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link
-              href="/legal/takedown"
-              className="underline underline-offset-4 transition hover:text-black"
-            >
-              Takedown
-            </Link>
-            <a
-              href="https://github.com/crafter-station/petdex"
-              target="_blank"
-              rel="noreferrer"
-              className="underline underline-offset-4 transition hover:text-black"
-            >
-              GitHub
-            </a>
-            <SponsorButton variant="inline" />
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

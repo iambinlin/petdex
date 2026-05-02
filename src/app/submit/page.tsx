@@ -1,43 +1,21 @@
 import Link from "next/link";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowRight, Hammer } from "lucide-react";
 
-import { AuthBadge } from "@/components/auth-badge";
-import { GithubIcon } from "@/components/github-icon";
 import { PetSubmitForm } from "@/components/pet-submit-form";
-import { SponsorButton } from "@/components/sponsor-button";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 
 export const metadata = {
-  title: "Submit a pet - Petdex",
+  title: "Submit a pet — Petdex",
   description: "Upload and validate a Codex pet package for Petdex.",
 };
 
 export default function SubmitPage() {
   return (
     <main className="petdex-cloud relative min-h-screen overflow-hidden bg-[#f7f8ff]">
-      <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-8 md:px-8 md:py-12">
-        <div className="flex items-center justify-between gap-3">
-          <Link
-            href="/"
-            className="inline-flex w-fit items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-2 text-sm font-medium text-black backdrop-blur transition hover:bg-white"
-          >
-            <ArrowLeft className="size-4" />
-            Back to gallery
-          </Link>
-          <div className="flex items-center gap-3">
-            <a
-              href="https://github.com/crafter-station/petdex"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-3 py-2 text-sm font-medium text-black backdrop-blur transition hover:bg-white"
-            >
-              <GithubIcon className="size-4" />
-              GitHub
-            </a>
-            <SponsorButton />
-            <AuthBadge />
-          </div>
-        </div>
+      <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-5 pb-12 md:px-8 md:py-5 md:pb-16">
+        <SiteHeader hideSubmitCta />
 
         <header className="max-w-3xl">
           <p className="text-sm font-medium text-[#6478f6]">Submit</p>
@@ -48,6 +26,14 @@ export default function SubmitPage() {
             Share a Codex-compatible animated pet package. Petdex checks the
             files locally, previews the sprite, and prepares the submission.
           </p>
+          <Link
+            href="/create"
+            className="mt-5 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-4 py-2 text-sm font-medium text-stone-700 backdrop-blur transition hover:bg-white hover:text-black"
+          >
+            <Hammer className="size-4" />
+            Don't have a pet yet? Hatch one in Codex
+            <ArrowRight className="size-4" />
+          </Link>
         </header>
 
         <PetSubmitForm />
@@ -64,6 +50,8 @@ export default function SubmitPage() {
           .
         </p>
       </section>
+
+      <SiteFooter />
     </main>
   );
 }

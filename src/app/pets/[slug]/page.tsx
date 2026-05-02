@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
-import { ArrowLeft, FileJson, Images, Sparkles } from "lucide-react";
+import { FileJson, Images, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
@@ -13,6 +12,8 @@ import { DownloadActions } from "@/components/download-actions";
 import { InstallCommand } from "@/components/install-command";
 import { LikeButton } from "@/components/like-button";
 import { PetStateViewer } from "@/components/pet-state-viewer";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { SubmittedBy } from "@/components/submitted-by";
 
 type PageProps = {
@@ -69,14 +70,10 @@ export default async function PetPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#f7f8ff]">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-8 md:px-8 md:py-12">
-        <Link
-          href="/"
-          className="inline-flex w-fit items-center gap-2 rounded-full border border-black/10 bg-white/80 px-3 py-2 text-sm font-medium text-black backdrop-blur transition hover:border-black/30"
-        >
-          <ArrowLeft className="size-4" />
-          Back to gallery
-        </Link>
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
+        <SiteHeader />
+      </section>
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
 
         <header className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
           <div>
@@ -154,6 +151,7 @@ export default async function PetPage({ params }: PageProps) {
           </InfoCard>
         </section>
       </section>
+      <SiteFooter />
     </main>
   );
 }
