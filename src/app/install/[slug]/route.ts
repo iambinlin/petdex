@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
+import { incrementInstallCount } from "@/lib/db/metrics";
 import { getCuratedPet } from "@/lib/pets";
 
 export const runtime = "nodejs";
@@ -40,13 +41,17 @@ export async function GET(
     displayName = submitted.displayName;
   }
 
+  // Fire-and-forget metric increment (don't block the script response)
+  void incrementInstallCount(slug).catch(() => {});
+
   return new Response(
     installScript({ slug, displayName, petJsonUrl, spritesheetUrl }),
     {
       status: 200,
       headers: {
         "Content-Type": "text/x-shellscript; charset=utf-8",
-        "Cache-Control": "public, max-age=300",
+        // Short cache so install counts feel real-time
+        "Cache-Control": "public, max-age=30",
       },
     },
   );

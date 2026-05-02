@@ -94,6 +94,7 @@ export async function POST(req: Request) {
     user?.emailAddresses?.[0]?.emailAddress ??
     user?.primaryEmailAddress?.emailAddress ??
     null;
+  const credit = buildCreditFromClerk(user);
 
   const id = `pet_${crypto.randomUUID().replace(/-/g, "").slice(0, 22)}`;
 
@@ -111,6 +112,9 @@ export async function POST(req: Request) {
     status: "pending",
     ownerId: userId,
     ownerEmail,
+    creditName: credit.name,
+    creditUrl: credit.url,
+    creditImage: credit.imageUrl,
   });
 
   // Notify owner email (Resend) — silent fail if not configured
@@ -148,6 +152,43 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
+}
+
+type ClerkUser = Awaited<ReturnType<typeof currentUser>>;
+
+function buildCreditFromClerk(user: ClerkUser): {
+  name: string | null;
+  url: string | null;
+  imageUrl: string | null;
+} {
+  if (!user) return { name: null, url: null, imageUrl: null };
+
+  const username = user.username?.trim() || null;
+  const first = user.firstName?.trim() || null;
+  const last = user.lastName?.trim() || null;
+  const fallbackName =
+    username ?? (first ? `${first}${last ? ` ${last[0]}.` : ""}` : "Anonymous");
+
+  const externalAccounts =
+    (user as { externalAccounts?: Array<{ provider?: string; username?: string }> })
+      .externalAccounts ?? [];
+  let url: string | null = null;
+  for (const acc of externalAccounts) {
+    if (!acc.username) continue;
+    if (acc.provider === "oauth_x" || acc.provider === "oauth_twitter") {
+      url = `https://x.com/${acc.username}`;
+      break;
+    }
+    if (acc.provider === "oauth_github") {
+      url = `https://github.com/${acc.username}`;
+    }
+  }
+
+  return {
+    name: fallbackName,
+    url,
+    imageUrl: user.imageUrl || null,
+  };
 }
 
 async function resolveUniqueSlug(base: string): Promise<string> {
