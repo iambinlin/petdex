@@ -12,9 +12,8 @@ import {
   X,
 } from "lucide-react";
 
-import { petStates } from "@/lib/pet-states";
-
 import type { SubmittedPet } from "@/lib/db/schema";
+import { petStates } from "@/lib/pet-states";
 
 type AdminReviewRowProps = {
   pet: SubmittedPet;
@@ -125,7 +124,11 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
             disabled={busy}
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-emerald-600 px-4 text-xs font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
           >
-            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+            {busy ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Check className="size-3.5" />
+            )}
             Approve
           </button>
           <button

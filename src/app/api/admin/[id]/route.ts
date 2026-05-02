@@ -40,7 +40,12 @@ export async function PATCH(
   const now = new Date();
   const update =
     body.action === "approve"
-      ? { status: "approved" as const, approvedAt: now, rejectedAt: null, rejectionReason: null }
+      ? {
+          status: "approved" as const,
+          approvedAt: now,
+          rejectedAt: null,
+          rejectionReason: null,
+        }
       : {
           status: "rejected" as const,
           rejectedAt: now,

@@ -58,7 +58,14 @@ function PetdexMark({ className }: { className?: string }) {
         </linearGradient>
       </defs>
 
-      <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#petdex-body)" />
+      <rect
+        x="4"
+        y="4"
+        width="56"
+        height="56"
+        rx="16"
+        fill="url(#petdex-body)"
+      />
 
       <g fill="#ffffff">
         <rect x="22" y="20" width="6" height="6" />
