@@ -525,9 +525,21 @@ export function PetSubmitForm() {
             />
 
             {submission.kind === "error" ? (
-              <p className="rounded-2xl bg-rose-50 p-3 text-sm text-rose-900">
-                {submission.message}
-              </p>
+              <div className="space-y-2 rounded-2xl bg-rose-50 p-3 text-sm text-rose-900">
+                <p>{submission.message}</p>
+                <p className="text-xs leading-5 text-rose-800/80">
+                  Stuck?{" "}
+                  <a
+                    href={buildIssueUrl(parsed, submission.message)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium underline underline-offset-4 hover:text-rose-950"
+                  >
+                    Open a GitHub issue with your assets
+                  </a>{" "}
+                  and Hunter will upload it manually.
+                </p>
+              </div>
             ) : null}
 
             {submission.kind === "success" ? (
@@ -693,6 +705,36 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
+}
+
+function buildIssueUrl(
+  parsed: ParsedPet | null,
+  message: string | undefined,
+): string {
+  const title = parsed?.displayName
+    ? `[Submit fail] ${parsed.displayName}`
+    : "[Submit fail] Petdex upload";
+  const body = [
+    "Submission failed via the web upload. Attaching pet folder/zip below.",
+    "",
+    "**Pet name:** " + (parsed?.displayName ?? "—"),
+    "**Pet id:** " + (parsed?.petId ?? "—"),
+    "**Sprite size:** " +
+      (parsed?.spritesheetWidth
+        ? `${parsed.spritesheetWidth}×${parsed.spritesheetHeight}`
+        : "—"),
+    "**Source:** " + (parsed?.source ?? "—"),
+    "**Error:** " + (message ?? "Unknown"),
+    "",
+    "<!-- drag and drop your pet folder zipped here -->",
+  ].join("\n");
+
+  const params = new URLSearchParams({
+    title,
+    body,
+    labels: "submit-fallback",
+  });
+  return `https://github.com/crafter-station/petdex/issues/new?${params.toString()}`;
 }
 
 // Resolve a DataTransfer to a flat FileList-like array. If the user dropped a
