@@ -23,10 +23,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
         <Link href="/create" className="transition hover:text-black">
           Create
         </Link>
-        <a
-          href="/packs/manifest.json"
-          className="transition hover:text-black"
-        >
+        <a href="/api/manifest" className="transition hover:text-black">
           Manifest
         </a>
         <a
