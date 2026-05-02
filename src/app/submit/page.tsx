@@ -49,6 +49,18 @@ export default function SubmitPage() {
         </header>
 
         <PetSubmitForm />
+
+        <p className="max-w-3xl text-xs leading-5 text-stone-500">
+          By submitting, you confirm you have rights to the artwork or are
+          creating fan content. Rights holders can request removal via our{" "}
+          <Link
+            href="/legal/takedown"
+            className="underline underline-offset-4 hover:text-black"
+          >
+            takedown notice
+          </Link>
+          .
+        </p>
       </section>
     </main>
   );
