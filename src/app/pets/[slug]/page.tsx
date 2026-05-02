@@ -8,10 +8,10 @@ import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
 import { getPet, getStaticPetSlugs } from "@/lib/pets";
 
-import { DownloadActions } from "@/components/download-actions";
 import { InstallCommand } from "@/components/install-command";
 import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
+import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -184,6 +184,15 @@ export default async function PetPage({ params }: PageProps) {
                 initialLiked={initialLiked}
                 signedIn={Boolean(userId)}
               />
+              <PetActionMenu
+                pet={{
+                  slug: pet.slug,
+                  displayName: pet.displayName,
+                  zipUrl: pet.zipUrl,
+                  description: pet.description,
+                }}
+                variant="detail"
+              />
               <span className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase">
                 {metrics.installCount} installs · {metrics.zipDownloadCount} zip
                 downloads
@@ -208,7 +217,7 @@ export default async function PetPage({ params }: PageProps) {
 
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
 
-        <section className="grid gap-4 lg:grid-cols-3">
+        <section className="grid gap-4 lg:grid-cols-2">
           {pet.submittedBy ? (
             <SubmittedBy credit={pet.submittedBy} />
           ) : (
@@ -217,7 +226,6 @@ export default async function PetPage({ params }: PageProps) {
               <p>Updated {new Date(pet.importedAt).toLocaleDateString()}</p>
             </InfoCard>
           )}
-          <DownloadActions pet={pet} />
           <InfoCard title="Package" icon={<FileJson className="size-4" />}>
             <p>
               <span className="font-medium text-stone-950">pet.json:</span>{" "}

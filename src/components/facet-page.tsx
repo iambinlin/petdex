@@ -10,6 +10,7 @@ import type { PetWithMetrics } from "@/lib/pets";
 import { petStates } from "@/lib/pet-states";
 
 import { CommandLine } from "@/components/command-line";
+import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -112,26 +113,40 @@ function PetCard({
   const showMetrics = likeCount > 0 || installCount > 0;
 
   return (
-    <Link
-      href={`/pets/${pet.slug}`}
+    <article
       className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
           ? "border-[#6478f6]/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-black/10 shadow-sm shadow-blue-950/5"
       }`}
     >
-      <div className="relative flex items-center justify-between border-b border-black/[0.06] px-5 pt-4 pb-3">
+      <Link
+        href={`/pets/${pet.slug}`}
+        aria-label={`Open ${pet.displayName}`}
+        className="absolute inset-0 z-0"
+      />
+      <div className="relative z-10 flex items-center justify-between border-b border-black/[0.06] px-5 pt-4 pb-3">
         <span className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
           No. {dexNumber}
         </span>
-        {pet.featured ? (
-          <span className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
-            ★ Featured
-          </span>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {pet.featured ? (
+            <span className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
+              ★ Featured
+            </span>
+          ) : null}
+          <PetActionMenu
+            pet={{
+              slug: pet.slug,
+              displayName: pet.displayName,
+              zipUrl: pet.zipUrl,
+              description: pet.description,
+            }}
+          />
+        </div>
       </div>
       <div
-        className="relative flex items-center justify-center px-5 py-6"
+        className="relative z-0 flex items-center justify-center px-5 py-6"
         style={{
           background:
             "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
@@ -147,7 +162,7 @@ function PetCard({
           {stateCount} states
         </span>
       </div>
-      <div className="flex flex-col gap-2 border-t border-black/[0.06] px-5 py-4">
+      <div className="relative z-0 flex flex-col gap-2 border-t border-black/[0.06] px-5 py-4">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-lg font-semibold tracking-tight text-stone-950">
             {pet.displayName}
@@ -176,6 +191,6 @@ function PetCard({
           </div>
         ) : null}
       </div>
-    </Link>
+    </article>
   );
 }
