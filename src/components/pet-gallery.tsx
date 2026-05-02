@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Heart, Search, TerminalSquare, X } from "lucide-react";
+import { Heart, Loader2, Search, TerminalSquare, X } from "lucide-react";
 
 import type { PetWithMetrics } from "@/lib/pets";
 import { petStates } from "@/lib/pet-states";
@@ -16,8 +16,21 @@ import {
 
 import { PetSprite } from "@/components/pet-sprite";
 
-type PetGalleryProps = {
+type Facets = {
+  kinds: Record<string, number>;
+  vibes: Record<string, number>;
+};
+
+type SearchPayload = {
   pets: PetWithMetrics[];
+  total: number;
+  nextCursor: number | null;
+  facets: Facets;
+};
+
+type PetGalleryProps = {
+  initial: SearchPayload;
+  totalPets: number;
 };
 
 type SortKey = "curated" | "popular" | "installed" | "alpha";
@@ -29,42 +42,98 @@ const SORT_LABELS: Record<SortKey, string> = {
   alpha: "Alphabetical",
 };
 
-export function PetGallery({ pets }: PetGalleryProps) {
+const PAGE_SIZE = 24;
+
+export function PetGallery({ initial, totalPets }: PetGalleryProps) {
   const [query, setQuery] = useState("");
   const [activeKinds, setActiveKinds] = useState<Set<PetKind>>(new Set());
   const [activeVibes, setActiveVibes] = useState<Set<PetVibe>>(new Set());
   const [sort, setSort] = useState<SortKey>("curated");
+
+  const [pets, setPets] = useState<PetWithMetrics[]>(initial.pets);
+  const [total, setTotal] = useState<number>(initial.total);
+  const [nextCursor, setNextCursor] = useState<number | null>(
+    initial.nextCursor,
+  );
+  const [facets, setFacets] = useState<Facets>(initial.facets);
+  const [loadingPage, setLoadingPage] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const requestSeq = useRef(0);
   const stateCount = petStates.length;
 
-  const kindCounts = useMemo(() => countBy(pets, (p) => [p.kind]), [pets]);
-  const vibeCounts = useMemo(() => countBy(pets, (p) => p.vibes), [pets]);
+  const buildParams = useCallback(
+    (cursor: number) => {
+      const p = new URLSearchParams();
+      const trimmed = query.trim();
+      if (trimmed) p.set("q", trimmed);
+      if (activeKinds.size > 0)
+        p.set("kinds", [...activeKinds].join(","));
+      if (activeVibes.size > 0)
+        p.set("vibes", [...activeVibes].join(","));
+      if (sort !== "curated") p.set("sort", sort);
+      if (cursor > 0) p.set("cursor", String(cursor));
+      p.set("limit", String(PAGE_SIZE));
+      return p;
+    },
+    [query, activeKinds, activeVibes, sort],
+  );
 
-  const visiblePets = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    const filtered = pets.filter((pet) => {
-      if (activeKinds.size > 0 && !activeKinds.has(pet.kind)) return false;
-
-      if (activeVibes.size > 0) {
-        const has = pet.vibes.some((v) => activeVibes.has(v));
-        if (!has) return false;
+  // Re-fetch on filter / sort / query changes (debounced for the query).
+  useEffect(() => {
+    const seq = ++requestSeq.current;
+    setLoadingPage(true);
+    const handle = window.setTimeout(async () => {
+      try {
+        const params = buildParams(0);
+        const res = await fetch(`/api/pets/search?${params}`);
+        const data = (await res.json()) as SearchPayload;
+        if (seq !== requestSeq.current) return;
+        setPets(data.pets);
+        setTotal(data.total);
+        setNextCursor(data.nextCursor);
+        setFacets(data.facets);
+      } catch {
+        // soft-fail: keep whatever's already on screen
+      } finally {
+        if (seq === requestSeq.current) setLoadingPage(false);
       }
+    }, 250);
+    return () => window.clearTimeout(handle);
+  }, [buildParams]);
 
-      if (!normalizedQuery) return true;
-      const haystack = [
-        pet.displayName,
-        pet.description,
-        pet.kind,
-        ...pet.vibes,
-        ...pet.tags,
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalizedQuery);
-    });
+  const loadMore = useCallback(async () => {
+    if (nextCursor == null || loadingMore || loadingPage) return;
+    const seq = requestSeq.current;
+    setLoadingMore(true);
+    try {
+      const params = buildParams(nextCursor);
+      const res = await fetch(`/api/pets/search?${params}`);
+      const data = (await res.json()) as SearchPayload;
+      if (seq !== requestSeq.current) return;
+      setPets((prev) => [...prev, ...data.pets]);
+      setNextCursor(data.nextCursor);
+      setTotal(data.total);
+    } catch {
+      // ignore, sentinel will retry on next intersect
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore, loadingPage, buildParams]);
 
-    return sortPets(filtered, sort);
-  }, [pets, query, activeKinds, activeVibes, sort]);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: "400px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loadMore]);
 
   const toggleKind = (kind: PetKind) =>
     setActiveKinds((c) => toggleSet(c, kind));
@@ -85,7 +154,7 @@ export function PetGallery({ pets }: PetGalleryProps) {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="font-mono text-xs tracking-[0.18em] text-[#6478f6] uppercase">
-            Gallery — {pets.length} pets
+            Gallery — {totalPets} pets
           </p>
           <h2 className="mt-2 text-3xl font-medium tracking-tight text-black md:text-5xl">
             Pick a companion
@@ -132,22 +201,22 @@ export function PetGallery({ pets }: PetGalleryProps) {
         <FilterGroup
           label="Kind"
           options={PET_KINDS}
-          counts={kindCounts}
+          counts={facets.kinds}
           active={activeKinds}
           onToggle={(v) => toggleKind(v as PetKind)}
         />
         <FilterGroup
           label="Vibe"
           options={PET_VIBES}
-          counts={vibeCounts}
+          counts={facets.vibes}
           active={activeVibes}
           onToggle={(v) => toggleVibe(v as PetVibe)}
         />
         {filtersActive ? (
           <div className="flex items-center justify-between gap-3 border-t border-black/[0.06] pt-3">
             <span className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase">
-              {visiblePets.length} match
-              {visiblePets.length === 1 ? "" : "es"}
+              {total} match
+              {total === 1 ? "" : "es"}
             </span>
             <button
               type="button"
@@ -160,8 +229,12 @@ export function PetGallery({ pets }: PetGalleryProps) {
         ) : null}
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {visiblePets.map((pet, index) => (
+      <div
+        className={`grid gap-5 md:grid-cols-2 xl:grid-cols-3 ${
+          loadingPage ? "opacity-60 transition" : ""
+        }`}
+      >
+        {pets.map((pet, index) => (
           <PetCard
             key={pet.slug}
             pet={pet}
@@ -171,7 +244,7 @@ export function PetGallery({ pets }: PetGalleryProps) {
         ))}
       </div>
 
-      {visiblePets.length === 0 ? (
+      {pets.length === 0 && !loadingPage ? (
         <div className="rounded-2xl border border-dashed border-black/15 bg-white/70 p-10 text-center">
           <p className="text-sm font-medium text-stone-950">
             No pets match this view.
@@ -187,6 +260,33 @@ export function PetGallery({ pets }: PetGalleryProps) {
           ) : null}
         </div>
       ) : null}
+
+      {nextCursor != null ? (
+        <div
+          ref={sentinelRef}
+          className="flex items-center justify-center py-8"
+          aria-hidden="true"
+        >
+          {loadingMore ? (
+            <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase">
+              <Loader2 className="size-3.5 animate-spin" />
+              Loading more
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={loadMore}
+              className="rounded-full border border-black/10 bg-white px-4 py-2 font-mono text-[11px] tracking-[0.12em] text-stone-700 uppercase transition hover:border-black/30"
+            >
+              Load more
+            </button>
+          )}
+        </div>
+      ) : pets.length > 0 ? (
+        <p className="py-6 text-center font-mono text-[10px] tracking-[0.22em] text-stone-400 uppercase">
+          End of gallery — {total} shown
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -194,7 +294,7 @@ export function PetGallery({ pets }: PetGalleryProps) {
 type FilterGroupProps = {
   label: string;
   options: readonly string[];
-  counts: Map<string, number>;
+  counts: Record<string, number>;
   active: Set<string>;
   onToggle: (value: string) => void;
 };
@@ -213,7 +313,7 @@ function FilterGroup({
       </p>
       <div className="flex flex-wrap gap-1.5">
         {options.map((value) => {
-          const count = counts.get(value) ?? 0;
+          const count = counts[value] ?? 0;
           if (count === 0) return null;
           const isActive = active.has(value);
           return (
@@ -356,61 +456,11 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
   );
 }
 
-function countBy<T>(
-  items: T[],
-  key: (item: T) => string[],
-): Map<string, number> {
-  const map = new Map<string, number>();
-  for (const item of items) {
-    for (const k of key(item)) {
-      map.set(k, (map.get(k) ?? 0) + 1);
-    }
-  }
-  return map;
-}
-
 function toggleSet<T>(set: Set<T>, value: T): Set<T> {
   const next = new Set(set);
   if (next.has(value)) next.delete(value);
   else next.add(value);
   return next;
-}
-
-function sortPets(
-  pets: PetWithMetrics[],
-  key: SortKey,
-): PetWithMetrics[] {
-  const arr = [...pets];
-  switch (key) {
-    case "popular":
-      arr.sort(
-        (a, b) =>
-          b.metrics.likeCount - a.metrics.likeCount ||
-          a.displayName.localeCompare(b.displayName),
-      );
-      break;
-    case "installed":
-      arr.sort(
-        (a, b) =>
-          b.metrics.installCount - a.metrics.installCount ||
-          a.displayName.localeCompare(b.displayName),
-      );
-      break;
-    case "alpha":
-      arr.sort((a, b) => a.displayName.localeCompare(b.displayName));
-      break;
-    case "curated":
-    default:
-      // Curated featured first, then community by displayName.
-      arr.sort((a, b) => {
-        const fa = a.featured ? 0 : 1;
-        const fb = b.featured ? 0 : 1;
-        if (fa !== fb) return fa - fb;
-        return a.displayName.localeCompare(b.displayName);
-      });
-      break;
-  }
-  return arr;
 }
 
 function compactNumber(n: number): string {

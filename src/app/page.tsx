@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Download } from "lucide-react";
 
 import { getAllPetsPackPath } from "@/lib/downloads";
+import { searchPets } from "@/lib/pet-search";
 import { getPetsWithMetrics } from "@/lib/pets";
 
 import { CommandLine } from "@/components/command-line";
@@ -18,6 +19,7 @@ export default async function Home() {
   const pets = await getPetsWithMetrics();
   const featured = pets.filter((pet) => pet.featured);
   const heroPets = (featured.length > 0 ? featured : pets).slice(0, 6);
+  const initialSearch = searchPets(pets, { sort: "curated" });
 
   return (
     <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
@@ -75,7 +77,9 @@ export default async function Home() {
         id="gallery"
         className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-12 md:px-8 md:py-16"
       >
-        {pets.length > 0 ? <PetGallery pets={pets} /> : null}
+        {pets.length > 0 ? (
+          <PetGallery initial={initialSearch} totalPets={pets.length} />
+        ) : null}
       </section>
 
       <SiteFooter />
