@@ -1,28 +1,17 @@
 import { NextResponse } from "next/server";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
-import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
-import { db, schema } from "@/lib/db/client";
-import { getCuratedPet } from "@/lib/pets";
 import { submitRatelimit } from "@/lib/ratelimit";
+import {
+  persistSubmission,
+  type SubmissionInput,
+  type SubmissionPrincipal,
+  validateSubmission,
+} from "@/lib/submissions";
 
 export const runtime = "nodejs";
-
-type SubmitBody = {
-  zipUrl: string;
-  spritesheetUrl: string;
-  petJsonUrl: string;
-  displayName: string;
-  description: string;
-  petId: string;
-  spritesheetWidth: number;
-  spritesheetHeight: number;
-};
-
-const REQUIRED_DIMS = { width: 1536, height: 1872 } as const;
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -30,7 +19,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // Admins bypass rate limit (e.g. Hunter doing bulk uploads).
   const skipLimit = isAdmin(userId);
   const limit = skipLimit
     ? { success: true, reset: 0 }
@@ -46,139 +34,23 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: SubmitBody;
+  let body: SubmissionInput;
   try {
-    body = (await req.json()) as SubmitBody;
+    body = (await req.json()) as SubmissionInput;
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const requiredFields = [
-    "zipUrl",
-    "spritesheetUrl",
-    "petJsonUrl",
-    "displayName",
-    "description",
-    "petId",
-    "spritesheetWidth",
-    "spritesheetHeight",
-  ] as const;
-
-  for (const field of requiredFields) {
-    if (!body[field]) {
-      return NextResponse.json(
-        { error: "missing_field", field },
-        { status: 400 },
-      );
-    }
+  const validation = validateSubmission(body);
+  if (validation && !validation.ok) {
+    const { status, ...rest } = validation;
+    return NextResponse.json(rest, { status });
   }
-
-  if (
-    !body.spritesheetWidth ||
-    !body.spritesheetHeight ||
-    body.spritesheetWidth < 256 ||
-    body.spritesheetHeight < 256
-  ) {
-    return NextResponse.json(
-      {
-        error: "invalid_spritesheet",
-        message: `Spritesheet seems too small. Got ${body.spritesheetWidth}x${body.spritesheetHeight}, expected at least 256x256 (ideal 1536x1872).`,
-        got: { width: body.spritesheetWidth, height: body.spritesheetHeight },
-      },
-      { status: 400 },
-    );
-  }
-
-  const requestedSlug = slugify(body.petId || body.displayName);
-  if (!requestedSlug) {
-    return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
-  }
-
-  const slug = await resolveUniqueSlug(requestedSlug);
 
   const user = await currentUser();
-  const ownerEmail =
-    user?.emailAddresses?.[0]?.emailAddress ??
-    user?.primaryEmailAddress?.emailAddress ??
-    null;
-  const credit = buildCreditFromClerk(user);
-
-  const id = `pet_${crypto.randomUUID().replace(/-/g, "").slice(0, 22)}`;
-
-  await db.insert(schema.submittedPets).values({
-    id,
-    slug,
-    displayName: body.displayName.trim().slice(0, 60),
-    description: body.description.trim().slice(0, 280),
-    spritesheetUrl: body.spritesheetUrl,
-    petJsonUrl: body.petJsonUrl,
-    zipUrl: body.zipUrl,
-    kind: "creature",
-    vibes: [],
-    tags: [],
-    status: "pending",
-    ownerId: userId,
-    ownerEmail,
-    creditName: credit.name,
-    creditUrl: credit.url,
-    creditImage: credit.imageUrl,
-  });
-
-  // Notify owner email (Resend) — silent fail if not configured
-  const resendKey = process.env.RESEND_API_KEY;
-  const ownerNotify = process.env.PETDEX_OWNER_EMAIL;
-  if (resendKey && ownerNotify) {
-    try {
-      const resend = new Resend(resendKey);
-      await resend.emails.send({
-        from: "Petdex <petdex@notifications.crafter.run>",
-        to: ownerNotify,
-        subject: `New pet submission: ${body.displayName}`,
-        text: [
-          `Pet: ${body.displayName} (${slug})`,
-          `From: ${ownerEmail ?? userId}`,
-          "",
-          body.description,
-          "",
-          `Sprite: ${body.spritesheetUrl}`,
-          `Zip:    ${body.zipUrl}`,
-        ].join("\n"),
-      });
-    } catch {
-      /* silent */
-    }
-  }
-
-  return NextResponse.json({ ok: true, id, slug }, { status: 201 });
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-}
-
-type ClerkUser = Awaited<ReturnType<typeof currentUser>>;
-
-function buildCreditFromClerk(user: ClerkUser): {
-  name: string | null;
-  url: string | null;
-  imageUrl: string | null;
-} {
-  if (!user) return { name: null, url: null, imageUrl: null };
-
-  const username = user.username?.trim() || null;
-  const first = user.firstName?.trim() || null;
-  const last = user.lastName?.trim() || null;
-  const fallbackName =
-    username ?? (first ? `${first}${last ? ` ${last[0]}.` : ""}` : "Anonymous");
-
   const externalAccounts =
-    (user as { externalAccounts?: Array<{ provider?: string; username?: string }> })
-      .externalAccounts ?? [];
+    (user as { externalAccounts?: Array<{ provider?: string; username?: string }> } | null)
+      ?.externalAccounts ?? [];
   let url: string | null = null;
   for (const acc of externalAccounts) {
     if (!acc.username) continue;
@@ -186,34 +58,30 @@ function buildCreditFromClerk(user: ClerkUser): {
       url = `https://x.com/${acc.username}`;
       break;
     }
-    if (acc.provider === "oauth_github") {
+    if (acc.provider === "oauth_github" && !url) {
       url = `https://github.com/${acc.username}`;
     }
   }
 
-  return {
-    name: fallbackName,
+  const principal: SubmissionPrincipal = {
+    userId,
+    email:
+      user?.emailAddresses?.[0]?.emailAddress ??
+      user?.primaryEmailAddress?.emailAddress ??
+      null,
+    username: user?.username ?? null,
+    imageUrl: user?.imageUrl ?? null,
+    firstName: user?.firstName ?? null,
+    lastName: user?.lastName ?? null,
     url,
-    imageUrl: user.imageUrl || null,
-  };
-}
-
-async function resolveUniqueSlug(base: string): Promise<string> {
-  const isTaken = async (candidate: string): Promise<boolean> => {
-    if (getCuratedPet(candidate)) return true;
-    const row = await db.query.submittedPets.findFirst({
-      where: eq(schema.submittedPets.slug, candidate),
-    });
-    return Boolean(row);
   };
 
-  if (!(await isTaken(base))) return base;
-
-  for (let i = 2; i <= 99; i++) {
-    const candidate = `${base}-${i}`.slice(0, 40);
-    if (!(await isTaken(candidate))) return candidate;
+  const result = await persistSubmission(body, principal);
+  if (!result.ok) {
+    const { status, ...rest } = result;
+    return NextResponse.json(rest, { status });
   }
-
-  // last resort: append short random hex
-  return `${base.slice(0, 32)}-${crypto.randomUUID().slice(0, 6)}`;
+  return NextResponse.json({ ok: true, id: result.id, slug: result.slug }, {
+    status: 201,
+  });
 }
