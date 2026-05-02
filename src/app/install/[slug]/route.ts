@@ -79,10 +79,13 @@ function installScript(args: {
     `curl -fsSL -o "$PET_DIR/pet.json" '${petJsonUrl}'`,
     `curl -fsSL -o "$PET_DIR/spritesheet.webp" '${spritesheetUrl}'`,
     "",
-    `echo "Installed: ${displayName}"`,
-    'echo "Path:      $PET_DIR"',
+    `echo "✓ Installed: ${displayName}"`,
+    'echo "  Path: $PET_DIR"',
     'echo ""',
-    'echo "Restart Codex to see your new pet."',
+    'echo "Activate it inside Codex:"',
+    'echo "  Settings → Appearance → Pets → select your pet"',
+    'echo ""',
+    'echo "Then use /pet inside Codex to wake or tuck it away."',
     "",
   ].join("\n");
 }

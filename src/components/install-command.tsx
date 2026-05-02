@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { track } from "@vercel/analytics";
-import { Check, Copy, Terminal } from "lucide-react";
+import { Check, Copy, MousePointerClick, Terminal } from "lucide-react";
 
 type InstallCommandProps = {
   slug: string;
@@ -29,8 +29,7 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
   return (
     <div className="rounded-2xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
       <div className="flex items-center gap-2 text-sm font-semibold text-stone-950">
-        <Terminal className="size-4" />
-        Install in Codex
+        <Terminal className="size-4" />1. Install
       </div>
       <p className="mt-2 text-xs leading-5 text-stone-500">
         Drops the pet pack into <code>~/.codex/pets/{slug}/</code>.
@@ -52,6 +51,27 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
           )}
         </button>
       </div>
+
+      <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-stone-950">
+        <MousePointerClick className="size-4" />2. Activate in Codex
+      </div>
+      <ol className="mt-2 space-y-1 text-xs leading-5 text-stone-600">
+        <li>
+          Open Codex →{" "}
+          <span className="font-mono text-stone-800">Settings</span> →{" "}
+          <span className="font-mono text-stone-800">Appearance</span> →{" "}
+          <span className="font-mono text-stone-800">Pets</span>
+        </li>
+        <li>
+          Find <strong className="text-stone-800">{displayName}</strong> under{" "}
+          <span className="font-mono text-stone-800">Custom pets</span> and
+          click <span className="font-mono text-stone-800">Select</span>.
+        </li>
+        <li>
+          Use <code className="rounded bg-stone-100 px-1.5 py-0.5">/pet</code>{" "}
+          inside Codex to wake or tuck it away.
+        </li>
+      </ol>
     </div>
   );
 }
