@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
+import { classifyPet } from "@/lib/auto-tag";
 import { db, schema } from "@/lib/db/client";
 
 export const runtime = "nodejs";
@@ -109,6 +110,30 @@ export async function PATCH(
 
   if (!row) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  // Auto-tag freshly-approved pets that are still on the default empty state.
+  // Best effort — failures don't block the approve, the pet just stays
+  // un-tagged and the manual `bun scripts/auto-tag.ts` can backfill later.
+  if (body.action === "approve") {
+    const needsTagging =
+      ((row.tags as string[]) ?? []).length === 0 ||
+      ((row.vibes as string[]) ?? []).length === 0;
+    if (needsTagging) {
+      const cls = await classifyPet(row.displayName, row.description);
+      if (cls) {
+        const [tagged] = await db
+          .update(schema.submittedPets)
+          .set({ kind: cls.kind, vibes: cls.vibes, tags: cls.tags })
+          .where(eq(schema.submittedPets.id, row.id))
+          .returning();
+        if (tagged) {
+          row.kind = tagged.kind;
+          row.vibes = tagged.vibes;
+          row.tags = tagged.tags;
+        }
+      }
+    }
   }
 
   // Notify owner only on status change (approve/reject), not pure edits.
