@@ -21,9 +21,9 @@ export const pets: PetdexPet[] = [
       "cozy"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T06:48:36.386Z",
     "qa": {
@@ -48,9 +48,9 @@ export const pets: PetdexPet[] = [
       "cozy"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T06:48:36.441Z",
     "qa": {
@@ -75,9 +75,9 @@ export const pets: PetdexPet[] = [
       "coding"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T05:50:43.053Z",
     "qa": {
@@ -102,9 +102,9 @@ export const pets: PetdexPet[] = [
       "calm"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T06:13:26.116Z",
     "qa": {
@@ -131,9 +131,9 @@ export const pets: PetdexPet[] = [
       "peru"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T08:11:08.332Z",
     "qa": {
@@ -160,9 +160,9 @@ export const pets: PetdexPet[] = [
       "cheerful"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T04:13:44.032Z",
     "qa": {}
@@ -187,9 +187,9 @@ export const pets: PetdexPet[] = [
       "purple"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T04:50:35.397Z",
     "qa": {
@@ -217,9 +217,9 @@ export const pets: PetdexPet[] = [
       "web"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T07:37:04.708Z",
     "qa": {}
@@ -242,9 +242,9 @@ export const pets: PetdexPet[] = [
       "cozy"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T06:50:07.952Z",
     "qa": {
@@ -269,9 +269,9 @@ export const pets: PetdexPet[] = [
       "art"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T06:13:26.163Z",
     "qa": {
@@ -296,9 +296,9 @@ export const pets: PetdexPet[] = [
       "scroll"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T06:13:26.208Z",
     "qa": {
@@ -324,9 +324,9 @@ export const pets: PetdexPet[] = [
       "cute"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T06:48:36.531Z",
     "qa": {
@@ -353,9 +353,9 @@ export const pets: PetdexPet[] = [
       "magic"
     ],
     "submittedBy": {
-      "name": "Hunter",
+      "name": "railly",
       "url": "https://x.com/raillyhugo",
-      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+      "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ2l0aHViL2ltZ18zREEzd05BNjR5YWlBNWNSVEtKckYycDdiWWUifQ"
     },
     "importedAt": "2026-05-02T09:10:09.930Z",
     "qa": {
