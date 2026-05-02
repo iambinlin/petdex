@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
+import { getPet } from "@/lib/pets";
 import { submitRatelimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
@@ -81,23 +82,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const slug = slugify(body.petId || body.displayName);
-  if (!slug) {
+  const requestedSlug = slugify(body.petId || body.displayName);
+  if (!requestedSlug) {
     return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
   }
 
-  const conflict = await db.query.submittedPets.findFirst({
-    where: eq(schema.submittedPets.slug, slug),
-  });
-  if (conflict) {
-    return NextResponse.json(
-      {
-        error: "slug_taken",
-        message: `A pet named "${slug}" was already submitted.`,
-      },
-      { status: 409 },
-    );
-  }
+  const slug = await resolveUniqueSlug(requestedSlug);
 
   const user = await currentUser();
   const ownerEmail =
@@ -158,4 +148,24 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
+}
+
+async function resolveUniqueSlug(base: string): Promise<string> {
+  const isTaken = async (candidate: string): Promise<boolean> => {
+    if (getPet(candidate)) return true;
+    const row = await db.query.submittedPets.findFirst({
+      where: eq(schema.submittedPets.slug, candidate),
+    });
+    return Boolean(row);
+  };
+
+  if (!(await isTaken(base))) return base;
+
+  for (let i = 2; i <= 99; i++) {
+    const candidate = `${base}-${i}`.slice(0, 40);
+    if (!(await isTaken(candidate))) return candidate;
+  }
+
+  // last resort: append short random hex
+  return `${base.slice(0, 32)}-${crypto.randomUUID().slice(0, 6)}`;
 }
