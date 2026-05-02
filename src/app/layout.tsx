@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://petdex.dev"),
+  metadataBase: new URL("https://petdex.crafter.run"),
   title: "Petdex - Codex Pet Gallery",
   description:
     "Browse, preview, download, and submit animated Codex digital pets.",
