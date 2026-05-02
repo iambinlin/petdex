@@ -8,8 +8,19 @@
   "approvalState": "approved",
   "featured": true,
   "kind": "object",
-  "vibes": ["cheerful"],
-  "tags": ["sweet", "object-pet", "cute"],
+  "vibes": [
+    "cheerful"
+  ],
+  "tags": [
+    "sweet",
+    "object-pet",
+    "cute"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T06:48:36.531Z",
   "qa": {
     "contactSheetPath": "/pets/scoop/contact-sheet.png"

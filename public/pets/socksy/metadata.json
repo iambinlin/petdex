@@ -7,8 +7,21 @@
   "petJsonPath": "/pets/socksy/pet.json",
   "approvalState": "approved",
   "kind": "character",
-  "vibes": ["cozy", "cheerful"],
-  "tags": ["elf", "sock", "loyal", "magic"],
+  "vibes": [
+    "cozy",
+    "cheerful"
+  ],
+  "tags": [
+    "elf",
+    "sock",
+    "loyal",
+    "magic"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T09:10:09.930Z",
   "qa": {
     "contactSheetPath": "/pets/socksy/contact-sheet.png"

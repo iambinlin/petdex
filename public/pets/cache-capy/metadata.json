@@ -7,8 +7,19 @@
   "petJsonPath": "/pets/cache-capy/pet.json",
   "approvalState": "approved",
   "kind": "creature",
-  "vibes": ["calm"],
-  "tags": ["capybara", "cache", "calm"],
+  "vibes": [
+    "calm"
+  ],
+  "tags": [
+    "capybara",
+    "cache",
+    "calm"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T06:13:26.116Z",
   "qa": {
     "contactSheetPath": "/pets/cache-capy/contact-sheet.png"

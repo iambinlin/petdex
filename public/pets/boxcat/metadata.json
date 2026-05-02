@@ -7,8 +7,19 @@
   "petJsonPath": "/pets/boxcat/pet.json",
   "approvalState": "approved",
   "kind": "creature",
-  "vibes": ["cozy"],
-  "tags": ["cat", "box", "cozy"],
+  "vibes": [
+    "cozy"
+  ],
+  "tags": [
+    "cat",
+    "box",
+    "cozy"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T06:48:36.441Z",
   "qa": {
     "contactSheetPath": "/pets/boxcat/contact-sheet.png"

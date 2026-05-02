@@ -7,8 +7,19 @@
   "petJsonPath": "/pets/pixel-panda/pet.json",
   "approvalState": "approved",
   "kind": "creature",
-  "vibes": ["playful"],
-  "tags": ["panda", "pixel", "art"],
+  "vibes": [
+    "playful"
+  ],
+  "tags": [
+    "panda",
+    "pixel",
+    "art"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T06:13:26.163Z",
   "qa": {
     "contactSheetPath": "/pets/pixel-panda/contact-sheet.png"

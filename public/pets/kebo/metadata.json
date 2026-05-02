@@ -8,8 +8,20 @@
   "approvalState": "approved",
   "featured": true,
   "kind": "creature",
-  "vibes": ["focused", "cheerful"],
-  "tags": ["koala", "fintech", "purple"],
+  "vibes": [
+    "focused",
+    "cheerful"
+  ],
+  "tags": [
+    "koala",
+    "fintech",
+    "purple"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T04:50:35.397Z",
   "qa": {
     "contactSheetPath": "/pets/kebo/contact-sheet.png"

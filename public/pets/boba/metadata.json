@@ -8,8 +8,20 @@
   "approvalState": "approved",
   "featured": true,
   "kind": "creature",
-  "vibes": ["cozy", "playful"],
-  "tags": ["otter", "drink", "cozy"],
+  "vibes": [
+    "cozy",
+    "playful"
+  ],
+  "tags": [
+    "otter",
+    "drink",
+    "cozy"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T06:48:36.386Z",
   "qa": {
     "contactSheetPath": "/pets/boba/contact-sheet.png"

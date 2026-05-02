@@ -8,8 +8,20 @@
   "approvalState": "approved",
   "featured": true,
   "kind": "character",
-  "vibes": ["cheerful"],
-  "tags": ["astronaut", "space", "yellow", "cheerful"],
+  "vibes": [
+    "cheerful"
+  ],
+  "tags": [
+    "astronaut",
+    "space",
+    "yellow",
+    "cheerful"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T04:13:44.032Z",
   "qa": {}
 }

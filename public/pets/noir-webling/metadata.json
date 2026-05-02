@@ -8,8 +8,21 @@
   "approvalState": "approved",
   "featured": true,
   "kind": "creature",
-  "vibes": ["focused", "mischievous"],
-  "tags": ["noir", "detective", "monochrome", "web"],
+  "vibes": [
+    "focused",
+    "mischievous"
+  ],
+  "tags": [
+    "noir",
+    "detective",
+    "monochrome",
+    "web"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T07:37:04.708Z",
   "qa": {}
 }

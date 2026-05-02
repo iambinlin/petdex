@@ -7,8 +7,21 @@
   "petJsonPath": "/pets/cash-cuy/pet.json",
   "approvalState": "approved",
   "kind": "creature",
-  "vibes": ["playful", "cheerful"],
-  "tags": ["cuy", "money", "magic", "peru"],
+  "vibes": [
+    "playful",
+    "cheerful"
+  ],
+  "tags": [
+    "cuy",
+    "money",
+    "magic",
+    "peru"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T08:11:08.332Z",
   "qa": {
     "contactSheetPath": "/pets/cash-cuy/contact-sheet.png"

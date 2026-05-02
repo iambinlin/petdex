@@ -7,8 +7,19 @@
   "petJsonPath": "/pets/prompt-penguin/pet.json",
   "approvalState": "approved",
   "kind": "creature",
-  "vibes": ["focused"],
-  "tags": ["penguin", "prompt", "scroll"],
+  "vibes": [
+    "focused"
+  ],
+  "tags": [
+    "penguin",
+    "prompt",
+    "scroll"
+  ],
+  "submittedBy": {
+    "name": "Hunter",
+    "url": "https://x.com/raillyhugo",
+    "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+  },
   "importedAt": "2026-05-02T06:13:26.208Z",
   "qa": {
     "contactSheetPath": "/pets/prompt-penguin/contact-sheet.png"

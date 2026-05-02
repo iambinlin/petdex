@@ -20,6 +20,11 @@ export const pets: PetdexPet[] = [
       "drink",
       "cozy"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T06:48:36.386Z",
     "qa": {
       "contactSheetPath": "/pets/boba/contact-sheet.png"
@@ -42,6 +47,11 @@ export const pets: PetdexPet[] = [
       "box",
       "cozy"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T06:48:36.441Z",
     "qa": {
       "contactSheetPath": "/pets/boxcat/contact-sheet.png"
@@ -64,6 +74,11 @@ export const pets: PetdexPet[] = [
       "keyboard",
       "coding"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T05:50:43.053Z",
     "qa": {
       "contactSheetPath": "/pets/byte-bunny/contact-sheet.png"
@@ -86,6 +101,11 @@ export const pets: PetdexPet[] = [
       "cache",
       "calm"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T06:13:26.116Z",
     "qa": {
       "contactSheetPath": "/pets/cache-capy/contact-sheet.png"
@@ -110,6 +130,11 @@ export const pets: PetdexPet[] = [
       "magic",
       "peru"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T08:11:08.332Z",
     "qa": {
       "contactSheetPath": "/pets/cash-cuy/contact-sheet.png"
@@ -134,6 +159,11 @@ export const pets: PetdexPet[] = [
       "yellow",
       "cheerful"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T04:13:44.032Z",
     "qa": {}
   },
@@ -156,6 +186,11 @@ export const pets: PetdexPet[] = [
       "fintech",
       "purple"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T04:50:35.397Z",
     "qa": {
       "contactSheetPath": "/pets/kebo/contact-sheet.png"
@@ -181,6 +216,11 @@ export const pets: PetdexPet[] = [
       "monochrome",
       "web"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T07:37:04.708Z",
     "qa": {}
   },
@@ -201,6 +241,11 @@ export const pets: PetdexPet[] = [
       "snacks",
       "cozy"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T06:50:07.952Z",
     "qa": {
       "contactSheetPath": "/pets/nukey/contact-sheet.png"
@@ -223,6 +268,11 @@ export const pets: PetdexPet[] = [
       "pixel",
       "art"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T06:13:26.163Z",
     "qa": {
       "contactSheetPath": "/pets/pixel-panda/contact-sheet.png"
@@ -245,6 +295,11 @@ export const pets: PetdexPet[] = [
       "prompt",
       "scroll"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T06:13:26.208Z",
     "qa": {
       "contactSheetPath": "/pets/prompt-penguin/contact-sheet.png"
@@ -268,6 +323,11 @@ export const pets: PetdexPet[] = [
       "object-pet",
       "cute"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T06:48:36.531Z",
     "qa": {
       "contactSheetPath": "/pets/scoop/contact-sheet.png"
@@ -292,6 +352,11 @@ export const pets: PetdexPet[] = [
       "loyal",
       "magic"
     ],
+    "submittedBy": {
+      "name": "Hunter",
+      "url": "https://x.com/raillyhugo",
+      "imageUrl": "https://avatars.githubusercontent.com/u/64886477?v=4"
+    },
     "importedAt": "2026-05-02T09:10:09.930Z",
     "qa": {
       "contactSheetPath": "/pets/socksy/contact-sheet.png"
