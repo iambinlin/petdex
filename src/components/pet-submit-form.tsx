@@ -29,11 +29,13 @@ type ParsedPet = {
   zipBlob: Blob;
   zipFileName: string;
   spritesheetBlob: Blob;
+  spritesheetExt: "webp" | "png";
   petJsonString: string;
   spritesheetUrl: string;
   spritesheetWidth: number;
   spritesheetHeight: number;
   issues: string[];
+  source: "folder" | "zip";
 };
 
 type SubmissionResult =
@@ -86,45 +88,120 @@ export function PetSubmitForm() {
     setParsed(null);
 
     try {
-      const zipFile = [...files].find((f) => f.name.endsWith(".zip"));
-      if (!zipFile) {
-        setParsed({
-          petId: "missing-zip",
-          displayName: "Missing files",
-          description: "Upload a ZIP containing pet.json and spritesheet.webp.",
-          zipBlob: new Blob(),
-          zipFileName: "",
-          spritesheetBlob: new Blob(),
-          petJsonString: "",
-          spritesheetUrl: "",
-          spritesheetWidth: 0,
-          spritesheetHeight: 0,
-          issues: ["Upload a ZIP file."],
-        });
-        return;
-      }
+      const items = [...files];
+      const fromFolder = items.some((f) => Boolean(f.webkitRelativePath));
+      const source: "folder" | "zip" = fromFolder ? "folder" : "zip";
 
-      const buf = await zipFile.arrayBuffer();
-      const zip = await JSZip.loadAsync(buf);
-      const petJsonEntry = zip.file("pet.json");
-      const spriteEntry =
-        zip.file("spritesheet.webp") ?? zip.file("spritesheet.png");
+      let petJsonString = "";
+      let spritesheetBlob: Blob = new Blob();
+      let spritesheetExt: "webp" | "png" = "webp";
+      let zipBlob: Blob = new Blob();
+      let zipFileName = "";
+      let petIdFromName = "untitled";
       const issues: string[] = [];
-      if (!petJsonEntry) issues.push("Missing pet.json in zip.");
-      if (!spriteEntry) {
-        const fileNames = Object.keys(zip.files);
-        issues.push(
-          `Missing spritesheet.webp (or spritesheet.png) in zip. Found: ${fileNames.slice(0, 5).join(", ")}`,
-        );
+
+      if (fromFolder) {
+        // ── Folder upload path ──────────────────────────────────────────
+        const findByBase = (...names: string[]) => {
+          for (const name of names) {
+            const hit = items.find(
+              (f) =>
+                f.name === name ||
+                f.webkitRelativePath?.endsWith(`/${name}`) ||
+                f.webkitRelativePath === name,
+            );
+            if (hit) return hit;
+          }
+          return undefined;
+        };
+
+        const petFile = findByBase("pet.json");
+        const spriteWebp = findByBase("spritesheet.webp");
+        const spritePng = findByBase("spritesheet.png");
+        const spriteFile = spriteWebp ?? spritePng;
+        spritesheetExt = spriteWebp ? "webp" : "png";
+
+        if (!petFile) issues.push("Folder is missing pet.json.");
+        if (!spriteFile) {
+          const present = items
+            .slice(0, 6)
+            .map((f) => f.webkitRelativePath || f.name)
+            .join(", ");
+          issues.push(
+            `Folder is missing spritesheet.webp (or .png). Found: ${present}`,
+          );
+        }
+
+        if (petFile) {
+          petJsonString = await petFile.text();
+        }
+        if (spriteFile) {
+          spritesheetBlob = spriteFile;
+        }
+
+        // Derive pet id from top-level folder name (boba/pet.json → "boba")
+        const firstPath =
+          petFile?.webkitRelativePath || spriteFile?.webkitRelativePath || "";
+        const folderName = firstPath.split("/")[0] || "untitled";
+        petIdFromName = folderName;
+
+        // Build a fresh zip in memory so server flow stays unchanged.
+        if (petFile && spriteFile) {
+          const zip = new JSZip();
+          zip.file("pet.json", petJsonString);
+          zip.file(`spritesheet.${spritesheetExt}`, spritesheetBlob);
+          zipBlob = await zip.generateAsync({
+            type: "blob",
+            compression: "DEFLATE",
+          });
+          zipFileName = `${folderName}.zip`;
+        }
+      } else {
+        // ── ZIP upload path (legacy) ────────────────────────────────────
+        const zipFile = items.find((f) => f.name.endsWith(".zip"));
+        if (!zipFile) {
+          setParsed({
+            petId: "missing",
+            displayName: "Missing files",
+            description: "Drop a folder or a ZIP with pet.json + spritesheet.",
+            zipBlob: new Blob(),
+            zipFileName: "",
+            spritesheetBlob: new Blob(),
+            spritesheetExt: "webp",
+            petJsonString: "",
+            spritesheetUrl: "",
+            spritesheetWidth: 0,
+            spritesheetHeight: 0,
+            issues: ["Drop a pet folder or a .zip file."],
+            source: "zip",
+          });
+          return;
+        }
+
+        const buf = await zipFile.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+        const petJsonEntry = zip.file("pet.json");
+        const webpEntry = zip.file("spritesheet.webp");
+        const pngEntry = zip.file("spritesheet.png");
+        const spriteEntry = webpEntry ?? pngEntry;
+        spritesheetExt = webpEntry ? "webp" : "png";
+
+        if (!petJsonEntry) issues.push("Missing pet.json in zip.");
+        if (!spriteEntry) {
+          const fileNames = Object.keys(zip.files);
+          issues.push(
+            `Missing spritesheet.webp (or .png) in zip. Found: ${fileNames.slice(0, 5).join(", ")}`,
+          );
+        }
+
+        petJsonString = petJsonEntry ? await petJsonEntry.async("string") : "";
+        spritesheetBlob = spriteEntry ? await spriteEntry.async("blob") : new Blob();
+        zipBlob = new Blob([buf], { type: "application/zip" });
+        zipFileName = zipFile.name;
+        petIdFromName = zipFile.name.replace(/\.zip$/i, "");
       }
 
-      const petJsonString = petJsonEntry
-        ? await petJsonEntry.async("string")
-        : "";
-      const spritesheetBlob = spriteEntry
-        ? await spriteEntry.async("blob")
-        : new Blob();
-
+      // ── Common: parse pet.json, validate sprite dims ──────────────────
       let petJson: Record<string, unknown> = {};
       if (petJsonString) {
         try {
@@ -142,9 +219,6 @@ export function PetSubmitForm() {
       let height = 0;
       if (spritesheetUrl) {
         ({ width, height } = await measureImage(spritesheetUrl));
-        // Hard reject only on truly broken/empty images; otherwise let server
-        // canonicalize. The original 1536×1872 is the ideal but Codex generates
-        // varied sizes. We display the dims so the user knows what they shipped.
         if (width === 0 || height === 0) {
           issues.push("Spritesheet image is unreadable.");
         } else if (width < 256 || height < 256) {
@@ -165,37 +239,41 @@ export function PetSubmitForm() {
       const petId =
         typeof petJson.id === "string" && petJson.id.trim()
           ? petJson.id.trim()
-          : zipFile.name.replace(/\.zip$/i, "");
+          : petIdFromName;
 
       setParsed({
         petId,
         displayName,
         description,
-        zipBlob: new Blob([buf], { type: "application/zip" }),
-        zipFileName: zipFile.name,
+        zipBlob,
+        zipFileName,
         spritesheetBlob,
+        spritesheetExt,
         petJsonString,
         spritesheetUrl,
         spritesheetWidth: width,
         spritesheetHeight: height,
         issues,
+        source,
       });
 
       if (issues.length === 0) {
         track("pet_pack_validated", {
           pet_id: petId,
-          size_kb: Math.round(zipFile.size / 1024),
+          size_kb: Math.round(zipBlob.size / 1024),
           width,
           height,
+          source,
         });
       } else {
         track("pet_pack_validation_failed", {
           pet_id: petId,
           issue_count: issues.length,
           first_issue: (issues[0] ?? "unknown").slice(0, 80),
+          source,
           width,
           height,
-          file_count: Object.keys(zip.files).length,
+          file_count: items.length,
         });
       }
     } finally {
@@ -213,10 +291,12 @@ export function PetSubmitForm() {
     const zipFile = new File([parsed.zipBlob], parsed.zipFileName, {
       type: "application/zip",
     });
+    const spriteMime =
+      parsed.spritesheetExt === "png" ? "image/png" : "image/webp";
     const spriteFile = new File(
       [parsed.spritesheetBlob],
-      `${slugify(parsed.petId)}-spritesheet.webp`,
-      { type: "image/webp" },
+      `${slugify(parsed.petId)}-spritesheet.${parsed.spritesheetExt}`,
+      { type: spriteMime },
     );
     const petJsonFile = new File(
       [parsed.petJsonString],
@@ -248,8 +328,10 @@ export function PetSubmitForm() {
     }
 
     const zipResult = uploaded.find((u) => u.name === parsed.zipFileName);
-    const spriteResult = uploaded.find((u) =>
-      u.name.endsWith("-spritesheet.webp"),
+    const spriteResult = uploaded.find(
+      (u) =>
+        u.name.endsWith("-spritesheet.webp") ||
+        u.name.endsWith("-spritesheet.png"),
     );
     const petJsonResult = uploaded.find((u) => u.name.endsWith("-pet.json"));
 
@@ -311,9 +393,9 @@ export function PetSubmitForm() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-      <label
-        className={`glass-panel flex min-h-80 cursor-pointer flex-col items-center justify-center rounded-3xl p-8 text-center transition hover:bg-white/80 ${
-          isDragging ? "bg-white/90 ring-2 ring-black/40 ring-offset-2" : ""
+      <div
+        className={`glass-panel flex min-h-80 flex-col items-center justify-center rounded-3xl p-8 text-center transition ${
+          isDragging ? "bg-white/95 ring-2 ring-black/40 ring-offset-2" : ""
         }`}
         onDragOver={(event) => {
           event.preventDefault();
@@ -328,35 +410,65 @@ export function PetSubmitForm() {
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
-          void handleFiles(event.dataTransfer.files);
+          void readDataTransfer(event.dataTransfer).then((files) => {
+            if (files.length > 0) void handleFiles(files);
+          });
         }}
       >
-        <input
-          type="file"
-          multiple={false}
-          accept=".zip"
-          className="sr-only"
-          onChange={(event) => void handleFiles(event.target.files)}
-        />
         <span className="grid size-16 place-items-center rounded-2xl bg-black text-white">
           <Upload className="size-7" />
         </span>
         <span className="mt-6 text-2xl font-medium">Upload a pet package</span>
         <span className="mt-3 max-w-md text-sm leading-6 text-[#5d5d66]">
-          Drop a ZIP with{" "}
+          Drop a folder or a ZIP with{" "}
           <code className="rounded bg-white/70 px-1 py-0.5">pet.json</code> and{" "}
           <code className="rounded bg-white/70 px-1 py-0.5">
             spritesheet.webp
           </code>{" "}
-          (or .png). Recommended {REQUIRED.width}×{REQUIRED.height}, an 8×9
-          frame grid. Validation runs locally before upload.
+          (or .png). Recommended {REQUIRED.width}×{REQUIRED.height}, 8×9 frame
+          grid.
         </span>
+
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85">
+            <Upload className="size-3.5" />
+            Pick folder
+            <input
+              type="file"
+              {...({ webkitdirectory: "" } as Record<string, string>)}
+              {...({ directory: "" } as Record<string, string>)}
+              multiple
+              className="sr-only"
+              onChange={(event) =>
+                void handleFiles(event.target.files).then(() => {
+                  // Allow re-picking the same folder
+                  event.target.value = "";
+                })
+              }
+            />
+          </label>
+          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-4 text-xs font-medium text-black transition hover:bg-white">
+            <FileArchive className="size-3.5" />
+            Pick .zip
+            <input
+              type="file"
+              accept=".zip"
+              className="sr-only"
+              onChange={(event) =>
+                void handleFiles(event.target.files).then(() => {
+                  event.target.value = "";
+                })
+              }
+            />
+          </label>
+        </div>
+
         {!isLoaded ? null : !isSignedIn ? (
           <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100/70 px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-amber-900 uppercase">
             Sign in to submit
           </span>
         ) : null}
-      </label>
+      </div>
 
       <aside className="rounded-3xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
         <div className="flex items-center gap-2 text-sm font-medium text-black">
@@ -581,4 +693,73 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
+}
+
+// Resolve a DataTransfer to a flat FileList-like array. If the user dropped a
+// folder, recursively walks it via webkitGetAsEntry and stamps each File with
+// `webkitRelativePath` so handleFiles() can detect folder mode and find files
+// by their basename.
+async function readDataTransfer(dt: DataTransfer): Promise<FileList> {
+  const items = Array.from(dt.items);
+  const hasEntry = items.some((it) => "webkitGetAsEntry" in it);
+
+  if (!hasEntry) {
+    return dt.files;
+  }
+
+  const collected: File[] = [];
+  await Promise.all(
+    items.map(async (item) => {
+      const entry = (
+        item as DataTransferItem & {
+          webkitGetAsEntry?: () => FileSystemEntry | null;
+        }
+      ).webkitGetAsEntry?.();
+      if (!entry) {
+        const f = item.getAsFile?.();
+        if (f) collected.push(f);
+        return;
+      }
+      await walkEntry(entry, "", collected);
+    }),
+  );
+
+  // Build a synthetic FileList from the collected array
+  const dt2 = new DataTransfer();
+  for (const f of collected) dt2.items.add(f);
+  return dt2.files;
+}
+
+async function walkEntry(
+  entry: FileSystemEntry,
+  prefix: string,
+  out: File[],
+): Promise<void> {
+  if (entry.isFile) {
+    const fileEntry = entry as FileSystemFileEntry;
+    const file = await new Promise<File>((resolve, reject) =>
+      fileEntry.file(resolve, reject),
+    );
+    // Patch webkitRelativePath so the handler treats this as folder-mode
+    const path = `${prefix}${entry.name}`;
+    Object.defineProperty(file, "webkitRelativePath", {
+      value: path,
+      writable: false,
+      configurable: true,
+    });
+    out.push(file);
+    return;
+  }
+  if (entry.isDirectory) {
+    const dirEntry = entry as FileSystemDirectoryEntry;
+    const reader = dirEntry.createReader();
+    const entries = await new Promise<FileSystemEntry[]>((resolve, reject) =>
+      reader.readEntries(resolve, reject),
+    );
+    await Promise.all(
+      entries.map((child) =>
+        walkEntry(child, `${prefix}${entry.name}/`, out),
+      ),
+    );
+  }
 }
