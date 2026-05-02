@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-02T08:12:59.891Z",
+  "generatedAt": "2026-05-02T09:11:12.044Z",
   "pets": [
     {
       "slug": "boba",
@@ -60,6 +60,11 @@
       "slug": "scoop",
       "displayName": "Scoop",
       "packPath": "/packs/scoop.zip"
+    },
+    {
+      "slug": "socksy",
+      "displayName": "Socksy",
+      "packPath": "/packs/socksy.zip"
     }
   ]
 }
