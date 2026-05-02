@@ -6,7 +6,7 @@ import { FileJson, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
-import { getCuratedPets, getPet } from "@/lib/pets";
+import { getPet, getStaticPetSlugs } from "@/lib/pets";
 
 import { DownloadActions } from "@/components/download-actions";
 import { InstallCommand } from "@/components/install-command";
@@ -25,10 +25,9 @@ type PageProps = {
 export const dynamicParams = true;
 export const revalidate = 60;
 
-export function generateStaticParams() {
-  return getCuratedPets().map((pet) => ({
-    slug: pet.slug,
-  }));
+export async function generateStaticParams() {
+  const slugs = await getStaticPetSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {

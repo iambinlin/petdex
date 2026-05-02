@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
-import { getCuratedPet } from "@/lib/pets";
 
 export type ResolvedPet = {
   slug: string;
@@ -13,18 +12,8 @@ export type ResolvedPet = {
 
 export async function resolveInstallablePet(
   slug: string,
-  origin: string,
+  _origin: string,
 ): Promise<ResolvedPet | null> {
-  const curated = getCuratedPet(slug);
-  if (curated) {
-    return {
-      slug,
-      displayName: curated.displayName,
-      petJsonUrl: `${origin}${curated.petJsonPath}`,
-      spritesheetUrl: `${origin}${curated.spritesheetPath}`,
-      spriteExt: curated.spritesheetPath.endsWith(".png") ? "png" : "webp",
-    };
-  }
   const submitted = await db.query.submittedPets.findFirst({
     where: eq(schema.submittedPets.slug, slug),
   });

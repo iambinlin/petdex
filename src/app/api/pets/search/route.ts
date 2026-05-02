@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { getPetsWithMetrics } from "@/lib/pets";
 import {
   SEARCH_LIMITS,
   type SortKey,
@@ -42,8 +41,7 @@ export async function GET(req: Request): Promise<Response> {
     SEARCH_LIMITS.DEFAULT_LIMIT,
   );
 
-  const all = await getPetsWithMetrics();
-  const result = searchPets(all, { q, kinds, vibes, sort, cursor, limit });
+  const result = await searchPets({ q, kinds, vibes, sort, cursor, limit });
 
   return NextResponse.json(result, {
     headers: {

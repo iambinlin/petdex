@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   jsonb,
@@ -32,6 +33,7 @@ export const submittedPets = pgTable(
     kind: petKind("kind").notNull().default("creature"),
     vibes: jsonb("vibes").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
     tags: jsonb("tags").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    featured: boolean("featured").notNull().default(false),
     status: approvalStatus("status").notNull().default("pending"),
     ownerId: text("owner_id").notNull(),
     ownerEmail: text("owner_email"),
@@ -49,6 +51,19 @@ export const submittedPets = pgTable(
     statusIdx: index("submitted_pets_status_idx").on(table.status),
     ownerIdx: index("submitted_pets_owner_idx").on(table.ownerId),
     slugUnique: uniqueIndex("submitted_pets_slug_unique").on(table.slug),
+    statusFeaturedNameIdx: index("submitted_pets_status_featured_name_idx").on(
+      table.status,
+      table.featured,
+      table.displayName,
+    ),
+    statusKindIdx: index("submitted_pets_status_kind_idx").on(
+      table.status,
+      table.kind,
+    ),
+    vibesGinIdx: index("submitted_pets_vibes_gin_idx")
+      .using("gin", table.vibes),
+    tagsGinIdx: index("submitted_pets_tags_gin_idx")
+      .using("gin", table.tags),
   }),
 );
 

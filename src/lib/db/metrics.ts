@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 
 import { db, schema } from "./client";
 
@@ -57,6 +57,25 @@ export type Metrics = {
 
 export async function getAllMetrics(): Promise<Map<string, Metrics>> {
   const rows = await db.select().from(schema.petMetrics);
+  const map = new Map<string, Metrics>();
+  for (const row of rows) {
+    map.set(row.petSlug, {
+      installCount: row.installCount,
+      zipDownloadCount: row.zipDownloadCount,
+      likeCount: row.likeCount,
+    });
+  }
+  return map;
+}
+
+export async function getMetricsBySlugs(
+  slugs: string[],
+): Promise<Map<string, Metrics>> {
+  if (slugs.length === 0) return new Map();
+  const rows = await db
+    .select()
+    .from(schema.petMetrics)
+    .where(inArray(schema.petMetrics.petSlug, slugs));
   const map = new Map<string, Metrics>();
   for (const row of rows) {
     map.set(row.petSlug, {

@@ -8,7 +8,6 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
-import { getCuratedPet } from "@/lib/pets";
 
 export type SubmissionPrincipal = {
   userId: string;
@@ -183,7 +182,6 @@ export function slugify(value: string): string {
 
 export async function resolveUniqueSlug(base: string): Promise<string> {
   const isTaken = async (candidate: string): Promise<boolean> => {
-    if (getCuratedPet(candidate)) return true;
     const row = await db.query.submittedPets.findFirst({
       where: eq(schema.submittedPets.slug, candidate),
     });

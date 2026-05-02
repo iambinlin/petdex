@@ -1,38 +1,34 @@
-import { pets as curated } from "@/data/pets.generated";
-import { db, schema } from "@/lib/db/client";
-import { type Metrics, getAllMetrics, getMetricsForSlug } from "@/lib/db/metrics";
-import type { PetdexPet } from "@/lib/types";
+// All pets — curated and community — live in Postgres after the curated
+// backfill (scripts/backfill-curated-to-db.ts). The old `pets.generated.ts`
+// JSON dump is only consulted by that backfill script; the rest of the app
+// reads from the DB.
 
 import { and, eq } from "drizzle-orm";
 
+import { db, schema } from "@/lib/db/client";
+import {
+  type Metrics,
+  getAllMetrics,
+  getMetricsForSlug,
+} from "@/lib/db/metrics";
+import type { PetdexPet, PetKind, PetVibe } from "@/lib/types";
+
 export type PetWithMetrics = PetdexPet & { metrics: Metrics };
 
-export function getCuratedPets(): PetdexPet[] {
-  return curated;
-}
+const EMPTY_METRICS: Metrics = {
+  installCount: 0,
+  zipDownloadCount: 0,
+  likeCount: 0,
+};
 
-export function getCuratedPet(slug: string): PetdexPet | undefined {
-  return curated.find((pet) => pet.slug === slug);
-}
-
-export async function getPets(): Promise<PetdexPet[]> {
-  const approved = await fetchApprovedSubmissions();
-  // Curated first, then community submissions sorted by displayName
-  approved.sort((a, b) => a.displayName.localeCompare(b.displayName));
-  return [...curated, ...approved];
-}
-
-export async function getPetsWithMetrics(): Promise<PetWithMetrics[]> {
-  const [pets, metrics] = await Promise.all([getPets(), getAllMetrics()]);
-  const empty: Metrics = {
-    installCount: 0,
-    zipDownloadCount: 0,
-    likeCount: 0,
-  };
-  return pets.map((pet) => ({
-    ...pet,
-    metrics: metrics.get(pet.slug) ?? empty,
-  }));
+export async function getPet(slug: string): Promise<PetdexPet | undefined> {
+  const row = await db.query.submittedPets.findFirst({
+    where: and(
+      eq(schema.submittedPets.slug, slug),
+      eq(schema.submittedPets.status, "approved"),
+    ),
+  });
+  return row ? rowToPet(row) : undefined;
 }
 
 export async function getPetWithMetrics(
@@ -44,39 +40,61 @@ export async function getPetWithMetrics(
   return { ...pet, metrics };
 }
 
-export async function getPet(slug: string): Promise<PetdexPet | undefined> {
-  const curatedHit = getCuratedPet(slug);
-  if (curatedHit) return curatedHit;
-
-  const row = await db.query.submittedPets.findFirst({
-    where: and(
-      eq(schema.submittedPets.slug, slug),
-      eq(schema.submittedPets.status, "approved"),
-    ),
-  });
-  if (!row) return undefined;
-  return submissionToPet(row);
+/** Returns curated/featured slugs for `generateStaticParams`. We only
+ *  pre-render featured pets at build time; everything else is rendered
+ *  on-demand and revalidated. */
+export async function getStaticPetSlugs(): Promise<string[]> {
+  const rows = await db
+    .select({ slug: schema.submittedPets.slug })
+    .from(schema.submittedPets)
+    .where(
+      and(
+        eq(schema.submittedPets.status, "approved"),
+        eq(schema.submittedPets.featured, true),
+      ),
+    );
+  return rows.map((r) => r.slug);
 }
 
-export async function getPetStats() {
-  const approved = await fetchApprovedSubmissions();
-  return {
-    total: curated.length + approved.length,
-    approved:
-      curated.filter((pet) => pet.approvalState === "approved").length +
-      approved.length,
-  };
+export async function getFeaturedPetsWithMetrics(
+  limit = 6,
+): Promise<PetWithMetrics[]> {
+  const rows = await db
+    .select()
+    .from(schema.submittedPets)
+    .where(
+      and(
+        eq(schema.submittedPets.status, "approved"),
+        eq(schema.submittedPets.featured, true),
+      ),
+    )
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+  const metrics = await getAllMetrics();
+  return rows.map((row) => ({
+    ...rowToPet(row),
+    metrics: metrics.get(row.slug) ?? EMPTY_METRICS,
+  }));
 }
 
-async function fetchApprovedSubmissions(): Promise<PetdexPet[]> {
+export async function getAllApprovedPets(): Promise<PetdexPet[]> {
   const rows = await db
     .select()
     .from(schema.submittedPets)
     .where(eq(schema.submittedPets.status, "approved"));
-  return rows.map(submissionToPet);
+  return rows.map(rowToPet);
 }
 
-function submissionToPet(
+export async function getApprovedPetCount(): Promise<number> {
+  const rows = await db
+    .select({ slug: schema.submittedPets.slug })
+    .from(schema.submittedPets)
+    .where(eq(schema.submittedPets.status, "approved"));
+  return rows.length;
+}
+
+export function rowToPet(
   row: typeof schema.submittedPets.$inferSelect,
 ): PetdexPet {
   const submittedBy = row.creditName
@@ -96,8 +114,9 @@ function submissionToPet(
     petJsonPath: row.petJsonUrl,
     zipUrl: row.zipUrl,
     approvalState: "approved",
-    kind: row.kind,
-    vibes: (row.vibes as PetdexPet["vibes"]) ?? [],
+    featured: row.featured,
+    kind: row.kind as PetKind,
+    vibes: (row.vibes as PetVibe[]) ?? [],
     tags: (row.tags as string[]) ?? [],
     submittedBy,
     importedAt: row.approvedAt?.toISOString() ?? row.createdAt.toISOString(),
