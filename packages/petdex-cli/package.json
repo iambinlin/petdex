@@ -1,0 +1,37 @@
+{
+  "name": "petdex",
+  "version": "0.1.0",
+  "description": "CLI for Petdex — install, browse, and submit Codex pets from your terminal.",
+  "homepage": "https://petdex.crafter.run",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crafter-station/petdex",
+    "directory": "packages/petdex-cli"
+  },
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "petdex": "./dist/petdex.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bun build ./bin/petdex.ts --target=node --outfile=./dist/petdex.js --minify",
+    "postbuild": "node -e 'const f=\"./dist/petdex.js\";const fs=require(\"fs\");const c=fs.readFileSync(f,\"utf8\");if(!c.startsWith(\"#!\")){fs.writeFileSync(f,\"#!/usr/bin/env node\\n\"+c)}fs.chmodSync(f,0o755)'",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.11.0",
+    "jszip": "^3.10.1",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0"
+  }
+}
