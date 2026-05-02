@@ -8,7 +8,9 @@ import { track } from "@vercel/analytics";
 import JSZip from "jszip";
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
+  Copy,
   FileArchive,
   Loader2,
   Send,
@@ -41,6 +43,7 @@ type SubmissionResult =
   | { kind: "success"; slug: string; displayName: string };
 
 const REQUIRED = { width: 1536, height: 1872 } as const;
+const PETS_DIR = "~/.codex/pets";
 
 export function PetSubmitForm() {
   const { isSignedIn, isLoaded } = useUser();
@@ -333,6 +336,13 @@ export function PetSubmitForm() {
           (or .png). Recommended {REQUIRED.width}×{REQUIRED.height}, an 8×9
           frame grid. Validation runs locally before upload.
         </span>
+        <span className="mt-4 inline-flex items-center gap-2 text-xs text-[#5d5d66]">
+          Pet assets live in
+          <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono">
+            {PETS_DIR}
+          </code>
+          <CopyPathButton path={PETS_DIR} />
+        </span>
         {!isLoaded ? null : !isSignedIn ? (
           <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100/70 px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-amber-900 uppercase">
             Sign in to submit
@@ -415,6 +425,28 @@ export function PetSubmitForm() {
         )}
       </aside>
     </div>
+  );
+}
+
+function CopyPathButton({ path }: { path: string }) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <button
+      type="button"
+      aria-label={copied ? "Path copied" : "Copy path to clipboard"}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void navigator.clipboard.writeText(path);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      }}
+      className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-[#3a3a44] transition hover:bg-white"
+    >
+      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      {copied ? "Copied" : "Copy"}
+    </button>
   );
 }
 
