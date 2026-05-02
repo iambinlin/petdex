@@ -1,6 +1,7 @@
 "use client";
 
 import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Sparkles } from "lucide-react";
 
 export function AuthBadge() {
   return (
@@ -22,7 +23,15 @@ export function AuthBadge() {
               avatarBox: "size-9 rounded-full ring-1 ring-black/10",
             },
           }}
-        />
+        >
+          <UserButton.MenuItems>
+            <UserButton.Link
+              label="My pets"
+              labelIcon={<Sparkles className="size-4" />}
+              href="/my-pets"
+            />
+          </UserButton.MenuItems>
+        </UserButton>
       </Show>
     </>
   );
