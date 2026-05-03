@@ -4,6 +4,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, eq, ne } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
+import { claimRatelimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -48,6 +49,14 @@ export async function POST(req: Request): Promise<Response> {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const lim = await claimRatelimit.limit(userId);
+  if (!lim.success) {
+    return NextResponse.json(
+      { error: "rate_limited", retryAfter: lim.reset },
+      { status: 429 },
+    );
   }
 
   let body: { id?: string };

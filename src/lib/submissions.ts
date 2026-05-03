@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
+import { isAllowedAssetUrl } from "@/lib/url-allowlist";
 
 export type SubmissionPrincipal = {
   userId: string;
@@ -82,8 +83,26 @@ export function validateSubmission(
       got: { width: body.spritesheetWidth, height: body.spritesheetHeight },
     };
   }
+  // Reject any URL outside the allowlist. Without this, a malicious
+  // submission could land javascript:, attacker.com, or LAN IPs into the
+  // pet detail page (XSS) and the install script (RCE on every viewer who
+  // pipes it through sh).
+  for (const field of ASSET_URL_FIELDS) {
+    if (!isAllowedAssetUrl(body[field])) {
+      return {
+        ok: false,
+        status: 400,
+        error: "invalid_asset_url",
+        field,
+        message: `${field} must be hosted on the petdex R2 bucket.`,
+      };
+    }
+  }
   return null;
 }
+
+const ASSET_URL_FIELDS: ReadonlyArray<"zipUrl" | "spritesheetUrl" | "petJsonUrl"> =
+  ["zipUrl", "spritesheetUrl", "petJsonUrl"];
 
 /** Persist a submission. Caller is responsible for authn/ratelimit.
  *  Slug collisions get suffixed (boba -> boba-2) by resolveUniqueSlug.

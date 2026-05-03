@@ -8,6 +8,7 @@ import { ImageResponse } from "next/og";
 import sharp from "sharp";
 
 import { getPet } from "@/lib/pets";
+import { isAllowedAssetUrl } from "@/lib/url-allowlist";
 
 export const runtime = "nodejs";
 export const contentType = "image/png";
@@ -257,10 +258,20 @@ export default async function Image({
 }
 
 async function loadFirstFrameAsDataUrl(url: string): Promise<string | null> {
+  // Defensive SSRF guard. Even though pet.spritesheetPath comes from the DB,
+  // the row was originally populated from a user submission. A row predating
+  // the validateSubmission allowlist could still have an external URL, and
+  // we'd happily fetch it server-side from a Vercel runtime that may sit on
+  // an internal network with metadata endpoints. Refuse anything that isn't
+  // on our R2 / UT host allowlist.
+  if (!isAllowedAssetUrl(url)) {
+    console.warn("[og] blocked off-allowlist sprite url");
+    return null;
+  }
   try {
     // No `cache: "force-cache"` — sprites are >2MB and Next's data cache caps
     // at 2MB. R2 + the route's own ISR handle caching at the CDN edge.
-    const res = await fetch(url);
+    const res = await fetch(url, { redirect: "error" });
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
 

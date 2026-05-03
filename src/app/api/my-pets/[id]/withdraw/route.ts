@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
+import { withdrawRatelimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,14 @@ export async function POST(
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const lim = await withdrawRatelimit.limit(userId);
+  if (!lim.success) {
+    return NextResponse.json(
+      { error: "rate_limited", retryAfter: lim.reset },
+      { status: 429 },
+    );
   }
 
   const { id } = await ctx.params;
