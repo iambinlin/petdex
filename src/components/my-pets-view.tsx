@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import {
   AlertTriangle,
   CheckCircle2,
   Clock,
   Heart,
+  Mail,
   Plus,
   TerminalSquare,
   Trash2,
@@ -60,11 +61,17 @@ export function MyPetsView({ submissions }: { submissions: Submission[] }) {
   }, [submissions, tab]);
 
   if (submissions.length === 0) {
-    return <EmptyState />;
+    return (
+      <>
+        <ClaimableBanner />
+        <EmptyState />
+      </>
+    );
   }
 
   return (
     <div className="space-y-8">
+      <ClaimableBanner />
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
           My submissions
@@ -381,6 +388,133 @@ function TabButton({
         {count}
       </span>
     </button>
+  );
+}
+
+type Claimable = {
+  id: string;
+  slug: string;
+  displayName: string;
+  status: "pending" | "approved" | "rejected";
+};
+
+function ClaimableBanner() {
+  const [pets, setPets] = useState<Claimable[] | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [claiming, setClaiming] = useState<string | null>(null);
+  const [claimed, setClaimed] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/my-pets/claim");
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          pets: Claimable[];
+          email?: string;
+        };
+        if (cancelled) return;
+        setPets(data.pets);
+        setEmail(data.email ?? null);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const claim = async (id: string) => {
+    setError(null);
+    setClaiming(id);
+    try {
+      const res = await fetch("/api/my-pets/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.message ?? data.error ?? "claim_failed");
+        return;
+      }
+      setClaimed((prev) => new Set(prev).add(id));
+    } catch {
+      setError("network_error");
+    } finally {
+      setClaiming(null);
+    }
+  };
+
+  if (!pets || pets.length === 0 || dismissed) return null;
+  const remaining = pets.filter((p) => !claimed.has(p.id));
+  if (remaining.length === 0) {
+    return (
+      <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5 text-sm text-emerald-900">
+        Claimed. Refresh to see them in your list.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-3xl border border-amber-200 bg-amber-50/60 p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-800 ring-1 ring-amber-200">
+          <Mail className="size-4" />
+        </span>
+        <div className="flex-1 space-y-2">
+          <p className="text-sm font-semibold text-amber-900">
+            We found {remaining.length} pet
+            {remaining.length === 1 ? "" : "s"} on this email from a previous
+            account
+          </p>
+          <p className="text-sm leading-6 text-amber-900/80">
+            {email ? <span className="font-mono">{email}</span> : "Your verified email"}{" "}
+            owns these. Claim to move them to your current account so you
+            can manage and re-submit edits.
+          </p>
+          <ul className="mt-2 space-y-2">
+            {remaining.map((pet) => (
+              <li
+                key={pet.id}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-white/80 px-3 py-2"
+              >
+                <div className="flex items-center gap-2 text-sm text-stone-800">
+                  <span className="font-semibold">{pet.displayName}</span>
+                  <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+                    {pet.status}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => claim(pet.id)}
+                  disabled={claiming !== null}
+                  className="inline-flex h-8 items-center rounded-full bg-amber-900 px-3 text-xs font-medium text-amber-50 transition hover:bg-amber-800 disabled:opacity-50"
+                >
+                  {claiming === pet.id ? "Claiming…" : "Claim"}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {error ? (
+            <p className="font-mono text-[10px] tracking-[0.12em] text-rose-700 uppercase">
+              {error}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setDismissed(true)}
+            className="mt-1 text-xs font-medium text-amber-900/60 transition hover:text-amber-900"
+          >
+            Not mine, dismiss
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

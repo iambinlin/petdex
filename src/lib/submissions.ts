@@ -85,7 +85,10 @@ export function validateSubmission(
   return null;
 }
 
-/** Persist a submission. Caller is responsible for authn/ratelimit. */
+/** Persist a submission. Caller is responsible for authn/ratelimit.
+ *  Slug collisions get suffixed (boba -> boba-2) by resolveUniqueSlug.
+ *  Re-claiming pets from a deleted account uses an opt-in flow at
+ *  /my-pets, not silent transfer at submit time. */
 export async function persistSubmission(
   body: SubmissionInput,
   principal: SubmissionPrincipal,
