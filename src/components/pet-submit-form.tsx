@@ -362,14 +362,30 @@ export function PetSubmitForm() {
         throw new Error("presign response missing slots");
       }
 
-      const puts = await Promise.all([
-        putToR2(zipSlot.uploadUrl, zipFile, "application/zip"),
-        putToR2(spriteSlot.uploadUrl, spriteFile, spriteMime),
-        putToR2(petJsonSlot.uploadUrl, petJsonFile, "application/json"),
-      ]);
-      const failed = puts.find((r) => !r.ok);
-      if (failed) {
-        throw new Error(`R2 PUT ${failed.status} ${failed.statusText}`);
+      // Serialize the three R2 PUTs instead of Promise.all-ing them.
+      // Three concurrent uploads of 2-3MB sprites saturate flaky / mobile
+      // links and one of them aborts mid-flight. The reports in
+      // crafter-station/petdex#22-#51 all hit "Failed to fetch" on the
+      // parallel upload path. Sequential is slower but completes.
+      const slots: Array<{
+        role: "petjson" | "sprite" | "zip";
+        slot: { uploadUrl: string; publicUrl: string };
+        body: Blob;
+        ct: string;
+      }> = [
+        // petjson first — smallest, validates auth/CORS/presign quickly.
+        { role: "petjson", slot: petJsonSlot, body: petJsonFile, ct: "application/json" },
+        { role: "sprite", slot: spriteSlot, body: spriteFile, ct: spriteMime },
+        { role: "zip", slot: zipSlot, body: zipFile, ct: "application/zip" },
+      ];
+
+      for (const { role, slot, body, ct } of slots) {
+        const res = await putToR2(slot.uploadUrl, body, ct);
+        if (!res.ok) {
+          throw new Error(
+            `R2 PUT ${role} ${res.status} ${res.statusText} (${body.size} bytes)`,
+          );
+        }
       }
 
       zipUrl = zipSlot.publicUrl;
@@ -752,29 +768,48 @@ async function putToR2(
   body: Blob,
   contentType: string,
 ): Promise<Response> {
-  // R2 expects exactly the Content-Type we presigned with. We retry once on
-  // transient network failures (Wi-Fi blip, CORS preflight race) before
-  // surfacing a 'Failed to fetch' to the user.
-  const attempts = [0, 700];
-  let lastErr: unknown;
-  for (const delay of attempts) {
-    if (delay > 0) {
-      await new Promise((r) => setTimeout(r, delay));
-    }
+  // Three retries with exponential backoff. fetch() throws a generic
+  // "Failed to fetch" with no diagnostic on network drop, so we wrap it
+  // in XMLHttpRequest which gives us status / abort detection.
+  const delays = [0, 800, 2000];
+  let lastErr: Error | null = null;
+  for (const delay of delays) {
+    if (delay > 0) await new Promise((r) => setTimeout(r, delay));
     try {
-      const res = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": contentType },
-        body,
-      });
-      return res;
+      return await xhrPut(url, body, contentType);
     } catch (err) {
-      lastErr = err;
+      lastErr = err as Error;
     }
   }
   throw new Error(
-    `R2 PUT network error: ${(lastErr as Error)?.message ?? "unknown"} (size=${body.size}, type=${contentType})`,
+    `R2 PUT network error: ${lastErr?.message ?? "unknown"} (size=${body.size}, type=${contentType})`,
   );
+}
+
+function xhrPut(
+  url: string,
+  body: Blob,
+  contentType: string,
+): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url, true);
+    xhr.setRequestHeader("Content-Type", contentType);
+    xhr.timeout = 60_000; // 60s for a 3MB sprite is generous.
+    xhr.onload = () => {
+      // Construct a Response-like object the caller already expects.
+      resolve(
+        new Response(xhr.responseText, {
+          status: xhr.status,
+          statusText: xhr.statusText,
+        }),
+      );
+    };
+    xhr.onerror = () => reject(new Error("xhr network error"));
+    xhr.ontimeout = () => reject(new Error("xhr timeout"));
+    xhr.onabort = () => reject(new Error("xhr aborted"));
+    xhr.send(body);
+  });
 }
 
 function slugify(value: string): string {
