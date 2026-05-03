@@ -1,5 +1,5 @@
-import { spawn } from "node:child_process";
-import { readFile, readdir, stat } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import path from "node:path";
 
 import * as p from "@clack/prompts";
@@ -22,7 +22,7 @@ const auth = new ClerkCliAuth({
   keychainService: "petdex-cli",
 });
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -147,17 +147,86 @@ async function cmdInstall(args: string[]) {
     p.cancel(`Usage: ${pc.cyan("petdex install <slug>")}`);
     process.exit(1);
   }
-  const url = `${PETDEX_URL}/install/${slug}`;
-  console.log(pc.dim(`fetching ${url}`));
-  await runShellPipe(["sh", "-c", `curl -sSf ${shellEscape(url)} | sh`]);
+
+  // Cross-platform install implemented in Node. Earlier versions piped a
+  // POSIX shell script through `sh`, which crashed on Windows where there is
+  // no `sh` (#10 from kayotimoteo). Now we just resolve the asset URLs from
+  // /api/manifest and write the files ourselves — same end result, works
+  // identically on macOS, Linux, and Windows.
+  const s = p.spinner();
+  s.start(`Resolving ${slug}`);
+
+  let pet: {
+    slug: string;
+    displayName: string;
+    spritesheetUrl: string;
+    petJsonUrl: string;
+  };
+  try {
+    const manifestRes = await fetch(`${PETDEX_URL}/api/manifest`);
+    if (!manifestRes.ok) {
+      s.stop(pc.red("failed"));
+      throw new Error(`manifest fetch ${manifestRes.status}`);
+    }
+    const data = (await manifestRes.json()) as {
+      pets: Array<{
+        slug: string;
+        displayName: string;
+        spritesheetUrl: string;
+        petJsonUrl: string;
+      }>;
+    };
+    const found = data.pets.find((p) => p.slug === slug);
+    if (!found) {
+      s.stop(pc.red("not found"));
+      p.cancel(
+        `No pet with slug ${pc.bold(slug)}. Try ${pc.cyan("petdex list")} to see what's available.`,
+      );
+      process.exit(1);
+    }
+    pet = found;
+  } catch (err) {
+    s.stop(pc.red("failed"));
+    throw err;
+  }
+
+  const petDir = path.join(homedir(), ".codex", "pets", slug);
+  s.message(`Downloading to ${petDir}`);
+
+  await mkdir(petDir, { recursive: true });
+
+  const ext = pet.spritesheetUrl.endsWith(".png") ? "png" : "webp";
+  await Promise.all([
+    download(pet.petJsonUrl, path.join(petDir, "pet.json")),
+    download(pet.spritesheetUrl, path.join(petDir, `spritesheet.${ext}`)),
+  ]);
+
+  // Fire-and-forget install metric so the gallery counter ticks up.
+  void fetch(`${PETDEX_URL}/install/${slug}`, { method: "GET" }).catch(
+    () => {},
+  );
+
+  s.stop(`Installed ${pc.cyan(pet.displayName)}`);
+
   p.note(
     [
-      `Activate inside Codex:`,
-      `  ${pc.cyan("Settings → Appearance → Pets")} → select ${pc.bold(slug)}`,
+      `Path: ${pc.dim(petDir)}`,
+      "",
+      "Activate inside Codex:",
+      `  ${pc.cyan("Settings → Appearance → Pets")} → select ${pc.bold(pet.displayName)}`,
       `Then ${pc.cyan("/pet")} inside Codex to wake or tuck it away.`,
     ].join("\n"),
     "Next steps",
   );
+}
+
+async function download(url: string, dest: string): Promise<void> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`download ${url} → ${res.status}`);
+  }
+  const buf = Buffer.from(await res.arrayBuffer());
+  await writeFile(dest, buf);
 }
 
 async function cmdList() {
@@ -533,21 +602,6 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
-}
-
-function shellEscape(value: string): string {
-  return `'${value.replace(/'/g, "'\\''")}'`;
-}
-
-function runShellPipe(cmd: string[]): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const child = spawn(cmd[0], cmd.slice(1), { stdio: "inherit" });
-    child.on("error", reject);
-    child.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`shell exit ${code}`));
-    });
-  });
 }
 
 function parseImageDims(buf: Buffer): { width: number; height: number } {
