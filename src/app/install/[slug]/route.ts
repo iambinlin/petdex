@@ -6,6 +6,7 @@ import {
   powershellNotFoundScript,
   resolveInstallablePet,
 } from "@/lib/install-script";
+import { installCounterRatelimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,8 +53,17 @@ export async function GET(
     });
   }
 
-  // Fire-and-forget metric increment (don't block the script response)
-  void incrementInstallCount(slug).catch(() => {});
+  // Fire-and-forget metric increment (don't block the script response).
+  // We rate-limit by IP first so a bash loop can't inflate any pet's
+  // install count to game the 'Most installed' sort.
+  void (async () => {
+    const xff = req.headers.get("x-forwarded-for") ?? "";
+    const ip = xff.split(",")[0]?.trim() || "anon";
+    const { success } = await installCounterRatelimit.limit(ip);
+    if (success) {
+      await incrementInstallCount(slug).catch(() => {});
+    }
+  })();
 
   const body =
     platform === "ps1" ? powershellInstallScript(pet) : posixInstallScript(pet);

@@ -23,6 +23,7 @@ import {
 
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetSprite } from "@/components/pet-sprite";
+import { isAllowedAvatarUrl } from "@/lib/url-allowlist";
 
 type Facets = {
   kinds: Record<string, number>;
@@ -437,8 +438,9 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/[0.05] pt-3">
             {pet.submittedBy ? (
               <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
-                {pet.submittedBy.imageUrl ? (
-                  // biome-ignore lint/performance/noImgElement: external avatar URLs
+                {pet.submittedBy.imageUrl &&
+                isAllowedAvatarUrl(pet.submittedBy.imageUrl) ? (
+                  // biome-ignore lint/performance/noImgElement: avatar allowlisted above
                   <img
                     src={pet.submittedBy.imageUrl}
                     alt=""

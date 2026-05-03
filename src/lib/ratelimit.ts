@@ -25,3 +25,26 @@ export const claimRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(20, "1 h"),
   prefix: "petdex:claim",
 });
+
+// Public install-counter increments. Generous because a real user might
+// install dozens of pets, but caps obvious automation. Keyed by IP.
+export const installCounterRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "1 h"),
+  prefix: "petdex:install-count",
+});
+
+// Zip-download tracker. Same shape as install-count.
+export const trackZipRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "1 h"),
+  prefix: "petdex:track-zip",
+});
+
+// Likes — generous so legit users browsing the gallery never hit the cap,
+// but stops a 100-account brigade from inflating one pet to the top.
+export const likeRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(60, "1 h"),
+  prefix: "petdex:like",
+});

@@ -112,12 +112,26 @@ function validate(obj: unknown): Classification | null {
         t.length > 0 &&
         t.length <= 30 &&
         ![
+          // Generic / redundant — every pet is one of these.
           "pet",
           "codex",
           "creature",
           "character",
           "object",
           "animated",
+          // Status / authority words an attacker could prompt-inject the
+          // model into emitting to fake legitimacy in the gallery.
+          "featured",
+          "official",
+          "verified",
+          "staff",
+          "admin",
+          "petdex",
+          "approved",
+          "sponsored",
+          // Content-warning words we don't surface as discovery tags.
+          "nsfw",
+          "nsfl",
         ].includes(t),
     )
     .slice(0, 5);

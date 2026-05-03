@@ -5,6 +5,7 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { setLikeCount } from "@/lib/db/metrics";
+import { likeRatelimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,22 @@ export async function POST(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  const lim = await likeRatelimit.limit(userId);
+  if (!lim.success) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   const { slug } = await ctx.params;
+  if (!/^[a-z0-9-]{1,60}$/.test(slug)) {
+    return NextResponse.json({ error: "invalid_slug" }, { status: 400 });
+  }
+  const pet = await db.query.submittedPets.findFirst({
+    where: eq(schema.submittedPets.slug, slug),
+    columns: { slug: true, status: true },
+  });
+  if (!pet || pet.status !== "approved") {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
 
   const existing = await db.query.petLikes.findFirst({
     where: and(

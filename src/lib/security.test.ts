@@ -10,7 +10,11 @@ import {
   posixNotFoundScript,
 } from "@/lib/install-script";
 import { validateSubmission } from "@/lib/submissions";
-import { isAllowedAssetUrl } from "@/lib/url-allowlist";
+import {
+  isAllowedAssetUrl,
+  isAllowedAvatarUrl,
+  isSafeExternalUrl,
+} from "@/lib/url-allowlist";
 
 const BASE_INPUT = {
   zipUrl:
@@ -176,6 +180,50 @@ describe("powershellInstallScript", () => {
     // doubled (i.e. "''; Remove-Item" or further escaped), never as a
     // bare apostrophe followed by a command.
     expect(script).not.toMatch(/[^']'\s*;\s*Remove-Item/);
+  });
+});
+
+describe("isAllowedAvatarUrl", () => {
+  it("allows clerk and known socials", () => {
+    expect(isAllowedAvatarUrl("https://img.clerk.com/eyJ...")).toBe(true);
+    expect(
+      isAllowedAvatarUrl(
+        "https://avatars.githubusercontent.com/u/12345?v=4",
+      ),
+    ).toBe(true);
+    expect(
+      isAllowedAvatarUrl(
+        "https://storage.googleapis.com/avatars/x.png",
+      ),
+    ).toBe(true);
+  });
+  it("rejects attacker-controlled host (tracking pixel)", () => {
+    expect(isAllowedAvatarUrl("https://evil.com/track.gif")).toBe(false);
+  });
+  it("rejects javascript: / data:", () => {
+    expect(isAllowedAvatarUrl("javascript:alert(1)")).toBe(false);
+    expect(isAllowedAvatarUrl("data:image/png;base64,...")).toBe(false);
+  });
+});
+
+describe("isSafeExternalUrl", () => {
+  it("allows random https sites with hostnames", () => {
+    expect(isSafeExternalUrl("https://github.com/x")).toBe(true);
+    expect(isSafeExternalUrl("https://example.com/profile")).toBe(true);
+  });
+  it("rejects http", () => {
+    expect(isSafeExternalUrl("http://github.com/x")).toBe(false);
+  });
+  it("rejects javascript: and data:", () => {
+    expect(isSafeExternalUrl("javascript:alert(1)")).toBe(false);
+    expect(isSafeExternalUrl("data:text/html,<script>")).toBe(false);
+  });
+  it("rejects bare IPs", () => {
+    expect(isSafeExternalUrl("https://10.0.0.1/")).toBe(false);
+    expect(isSafeExternalUrl("https://192.168.1.1/")).toBe(false);
+  });
+  it("rejects localhost", () => {
+    expect(isSafeExternalUrl("https://localhost/foo")).toBe(false);
   });
 });
 

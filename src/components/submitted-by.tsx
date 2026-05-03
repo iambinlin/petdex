@@ -1,13 +1,21 @@
 import type { PetCredit } from "@/lib/types";
+import { isAllowedAvatarUrl, isSafeExternalUrl } from "@/lib/url-allowlist";
 
 type SubmittedByProps = {
   credit: PetCredit;
 };
 
 export function SubmittedBy({ credit }: SubmittedByProps) {
+  // Render the avatar only if it's on the allowlist. Falls back to a letter
+  // tile so unsafe URLs never become tracking pixels for visitors.
+  const showAvatar = credit.imageUrl && isAllowedAvatarUrl(credit.imageUrl);
+  // Same for the profile link — block anything that isn't https:// to a
+  // real hostname so a malicious credit can't reverse-tab-nab visitors.
+  const showLink = credit.url && isSafeExternalUrl(credit.url);
+
   const inner = (
     <>
-      {credit.imageUrl ? (
+      {showAvatar ? (
         // biome-ignore lint/performance/noImgElement: external avatar URL
         <img
           src={credit.imageUrl}
@@ -30,12 +38,12 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
     </>
   );
 
-  if (credit.url) {
+  if (showLink) {
     return (
       <a
         href={credit.url}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur transition hover:border-black/30 hover:bg-white"
       >
         {inner}

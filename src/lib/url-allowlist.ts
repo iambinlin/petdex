@@ -63,3 +63,69 @@ export class AssetUrlError extends Error {
 export function listAllowedHosts(): string[] {
   return [...ALLOWED_HOSTS];
 }
+
+// Avatar / credit-image allowlist. Clerk hosts user avatars; google
+// storage is the legacy backing store for some old credit_image rows.
+const ALLOWED_AVATAR_HOSTS = new Set<string>([
+  "img.clerk.com",
+  "images.clerk.dev",
+  "storage.googleapis.com",
+  "avatars.githubusercontent.com",
+  "pbs.twimg.com",
+]);
+
+export function isAllowedAvatarUrl(raw: string | null | undefined): boolean {
+  if (!raw) return false;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  return ALLOWED_AVATAR_HOSTS.has(url.host);
+}
+
+// Credit URLs are profile links (X, GitHub, etc.). Anything else (random
+// website) is allowed but flagged for the admin queue.
+const ALLOWED_CREDIT_HOSTS = new Set<string>([
+  "github.com",
+  "x.com",
+  "twitter.com",
+  "linkedin.com",
+  "bsky.app",
+  "mastodon.social",
+  "youtube.com",
+]);
+
+export function isWellKnownCreditUrl(
+  raw: string | null | undefined,
+): boolean {
+  if (!raw) return false;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  return ALLOWED_CREDIT_HOSTS.has(url.host);
+}
+
+// Strict format check for any credit_url we accept at all. Refuses
+// javascript:, data:, mailto:, custom schemes, http://, IP literals.
+export function isSafeExternalUrl(raw: string | null | undefined): boolean {
+  if (!raw) return false;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  // Block bare IPs.
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(url.hostname)) return false;
+  // Block localhost / lan.
+  if (url.hostname === "localhost") return false;
+  return true;
+}
