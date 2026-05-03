@@ -5,6 +5,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 import { db, schema } from "@/lib/db/client";
+import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,8 @@ const ratelimit = redis
   : null;
 
 export async function POST(req: Request): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
   const { userId } = await auth();
 
   // 5 submissions per hour per IP / per user.

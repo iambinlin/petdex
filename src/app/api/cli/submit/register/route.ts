@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 
 import { verifyCliBearer } from "@/lib/cli-auth";
+import { cliVerifyRatelimit } from "@/lib/ratelimit";
 import {
   persistSubmission,
   type SubmissionInput,
@@ -16,7 +17,17 @@ import {
 
 export const runtime = "nodejs";
 
+function clientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for") ?? "";
+  return xff.split(",")[0]?.trim() || "anon";
+}
+
 export async function POST(req: Request): Promise<Response> {
+  const verifyLim = await cliVerifyRatelimit.limit(clientIp(req));
+  if (!verifyLim.success) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   const principal = await verifyCliBearer(req.headers.get("authorization"));
   if (!principal) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

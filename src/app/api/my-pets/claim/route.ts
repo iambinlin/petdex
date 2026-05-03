@@ -5,6 +5,7 @@ import { and, eq, ne } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { claimRatelimit } from "@/lib/ratelimit";
+import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,9 @@ export async function GET(): Promise<Response> {
 // POST — claim a single pet by id. Same checks as the listing query, plus
 // the explicit user click serves as confirmation.
 export async function POST(req: Request): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

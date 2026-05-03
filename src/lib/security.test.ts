@@ -183,6 +183,57 @@ describe("powershellInstallScript", () => {
   });
 });
 
+describe("isSameOrigin (CSRF guard)", () => {
+  const { isSameOrigin } = require("@/lib/same-origin") as typeof import("@/lib/same-origin");
+
+  function reqWith(headers: Record<string, string>): Request {
+    return new Request("https://petdex.crafter.run/api/x", {
+      method: "POST",
+      headers,
+    });
+  }
+
+  it("allows same-origin browser POST", () => {
+    expect(
+      isSameOrigin(reqWith({ origin: "https://petdex.crafter.run" })),
+    ).toBe(true);
+  });
+
+  it("allows localhost dev", () => {
+    expect(isSameOrigin(reqWith({ origin: "http://localhost:3000" })))
+      .toBe(true);
+  });
+
+  it("blocks attacker.com cross-origin POST", () => {
+    expect(isSameOrigin(reqWith({ origin: "https://evil.com" })))
+      .toBe(false);
+  });
+
+  it("blocks origin null (e.g. data: pages)", () => {
+    expect(isSameOrigin(reqWith({ origin: "null" }))).toBe(false);
+  });
+
+  it("uses Sec-Fetch-Site fallback when Origin missing", () => {
+    expect(
+      isSameOrigin(reqWith({ "sec-fetch-site": "same-origin" })),
+    ).toBe(true);
+    expect(
+      isSameOrigin(reqWith({ "sec-fetch-site": "cross-site" })),
+    ).toBe(false);
+  });
+
+  it("allows non-browser callers (no Origin, no Sec-Fetch)", () => {
+    // curl, server-to-server fetch — they auth via bearer instead.
+    expect(isSameOrigin(reqWith({ "user-agent": "curl/8.0" }))).toBe(true);
+  });
+
+  it("allows Vercel preview subdomain", () => {
+    expect(
+      isSameOrigin(reqWith({ origin: "https://petdex-abc123.vercel.app" })),
+    ).toBe(true);
+  });
+});
+
 describe("isAllowedAvatarUrl", () => {
   it("allows clerk and known socials", () => {
     expect(isAllowedAvatarUrl("https://img.clerk.com/eyJ...")).toBe(true);

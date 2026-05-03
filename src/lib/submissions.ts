@@ -145,13 +145,19 @@ export async function persistSubmission(
   const resendKey = process.env.RESEND_API_KEY;
   const ownerNotify = process.env.PETDEX_OWNER_EMAIL;
   if (resendKey && ownerNotify) {
+    // SMTP header injection defense — strip control chars from anything
+    // that could end up in a header. The Resend SDK probably escapes, but
+    // we don't trust user-controlled fields anywhere near a header.
+    const safeName = body.displayName
+      .replace(/[\r\n\t]+/g, " ")
+      .slice(0, 80);
     void (async () => {
       try {
         const resend = new Resend(resendKey);
         await resend.emails.send({
           from: "Petdex <petdex@notifications.crafter.run>",
           to: ownerNotify,
-          subject: `New pet submission: ${body.displayName}`,
+          subject: `New pet submission: ${safeName}`,
           text: [
             `Pet: ${body.displayName} (${slug})`,
             `From: ${principal.email ?? principal.userId}`,

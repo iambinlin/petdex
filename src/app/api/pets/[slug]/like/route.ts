@@ -6,15 +6,19 @@ import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db/client";
 import { setLikeCount } from "@/lib/db/metrics";
 import { likeRatelimit } from "@/lib/ratelimit";
+import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
 type Params = { slug: string };
 
 export async function POST(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<Params> },
 ): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

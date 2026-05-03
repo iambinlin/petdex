@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/admin";
 import { verifyCliBearer } from "@/lib/cli-auth";
 import { presignPut } from "@/lib/r2";
-import { submitRatelimit } from "@/lib/ratelimit";
+import { cliVerifyRatelimit, submitRatelimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -22,7 +22,20 @@ type Body = {
   spritesheetExt?: "webp" | "png";
 };
 
+function clientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for") ?? "";
+  return xff.split(",")[0]?.trim() || "anon";
+}
+
 export async function POST(req: Request): Promise<Response> {
+  // Pre-auth rate limit by IP. Without this a bash loop with random
+  // bearer tokens forces /oauth/userinfo lookups that burn Clerk quota
+  // even though every one is rejected as 401.
+  const verifyLim = await cliVerifyRatelimit.limit(clientIp(req));
+  if (!verifyLim.success) {
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  }
+
   const principal = await verifyCliBearer(req.headers.get("authorization"));
   if (!principal) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

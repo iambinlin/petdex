@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { isAdmin } from "@/lib/admin";
 import { classifyPet } from "@/lib/auto-tag";
 import { db, schema } from "@/lib/db/client";
+import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,9 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<Params> },
 ): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const { userId } = await auth();
   if (!isAdmin(userId)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });

@@ -4,6 +4,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 
 import { isAdmin } from "@/lib/admin";
 import { submitRatelimit } from "@/lib/ratelimit";
+import { requireSameOrigin } from "@/lib/same-origin";
 import {
   persistSubmission,
   type SubmissionInput,
@@ -14,6 +15,9 @@ import {
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

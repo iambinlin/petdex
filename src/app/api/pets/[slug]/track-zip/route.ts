@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db/client";
 import { incrementZipDownloadCount } from "@/lib/db/metrics";
 import { trackZipRatelimit } from "@/lib/ratelimit";
+import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,9 @@ export async function POST(
   req: Request,
   ctx: { params: Promise<Params> },
 ): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   // Anyone, signed-in or not, can hit this endpoint — but we cap by IP
   // and require the slug to actually exist. Without these, a bash loop
   // can inflate any pet's zip-download counter and pollute pet_metrics

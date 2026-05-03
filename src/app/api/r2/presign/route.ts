@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@clerk/nextjs/server";
 
+import { isAdmin } from "@/lib/admin";
 import { presignPut } from "@/lib/r2";
+import { presignRatelimit } from "@/lib/ratelimit";
+import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
@@ -24,9 +27,25 @@ type AskedFile = {
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(req: Request): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  // Cap loop attacks that would otherwise burn R2 storage with orphan
+  // PUT URLs. Admins skip the limit since the curated backfill needs to
+  // burst-presign every featured pet.
+  if (!isAdmin(userId)) {
+    const lim = await presignRatelimit.limit(userId);
+    if (!lim.success) {
+      return NextResponse.json(
+        { error: "rate_limited", retryAfter: lim.reset },
+        { status: 429 },
+      );
+    }
   }
 
   let body: { files?: AskedFile[]; slugHint?: string };

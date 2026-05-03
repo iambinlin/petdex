@@ -48,3 +48,20 @@ export const likeRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(60, "1 h"),
   prefix: "petdex:like",
 });
+
+// R2 presign requests. Without this, a logged-in attacker can request
+// thousands of presigned PUT URLs in a loop and waste R2 storage cost
+// even if they never call /api/submit/register afterwards.
+export const presignRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, "1 h"),
+  prefix: "petdex:presign",
+});
+
+// CLI bearer verification by IP — stops blind floods of bogus tokens
+// burning Clerk userinfo quota.
+export const cliVerifyRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(120, "1 m"),
+  prefix: "petdex:cli-verify",
+});
