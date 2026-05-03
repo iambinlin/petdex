@@ -8,6 +8,7 @@ import { isAdmin } from "@/lib/admin";
 import { classifyPet } from "@/lib/auto-tag";
 import { db, schema } from "@/lib/db/client";
 import { requireSameOrigin } from "@/lib/same-origin";
+import { refreshSimilarityFor } from "@/lib/similarity";
 
 export const runtime = "nodejs";
 
@@ -138,6 +139,12 @@ export async function PATCH(
         }
       }
     }
+    // Fire-and-forget similarity refresh so the next admin queue load
+    // can match this pet against everything else. Logs warning on
+    // failure; never blocks the approve response.
+    void refreshSimilarityFor(row.id).catch((err) => {
+      console.warn("[approve] similarity refresh failed:", err);
+    });
   }
 
   // Notify owner only on status change (approve/reject), not pure edits.

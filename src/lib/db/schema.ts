@@ -34,6 +34,13 @@ export const submittedPets = pgTable(
     vibes: jsonb("vibes").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
     tags: jsonb("tags").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
     featured: boolean("featured").notNull().default(false),
+    // 64-bit dHash of the first idle frame as a 16-char hex string. Used
+    // for fast perceptual-similarity dedup at admin review time.
+    dhash: text("dhash"),
+    // OpenAI text-embedding-3-small (1536 dims) over displayName +
+    // description + tags. Drizzle has no first-class pgvector type yet,
+    // so we keep it as `unknown` here and cast at the query boundary.
+    // The actual column is declared via ALTER TABLE in scripts/.
     status: approvalStatus("status").notNull().default("pending"),
     ownerId: text("owner_id").notNull(),
     ownerEmail: text("owner_email"),

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import {
+  AlertTriangle,
   Check,
   Clock,
   ExternalLink,
@@ -12,6 +13,7 @@ import {
   Slash,
   X,
 } from "lucide-react";
+import Link from "next/link";
 
 import type { SubmittedPet } from "@/lib/db/schema";
 import { petStates } from "@/lib/pet-states";
@@ -273,6 +275,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
           </>
         ) : null}
       </div>
+      <SimilarPanel petId={pet.id} status={status} />
     </article>
   );
 }
@@ -333,6 +336,154 @@ function SpritePreview({ src }: { src: string }) {
           }
         />
       </div>
+    </div>
+  );
+}
+
+// SimilarPanel — calls /api/admin/similar/<id> on mount and renders a
+// strip of similar pets so the admin can spot dupes (visual or
+// semantic) before approving. Collapsed by default; auto-expands when
+// at least one match is "very similar" (visual distance <= 6).
+type SimilarMatch = {
+  id: string;
+  slug: string;
+  displayName: string;
+  status: string;
+  featured: boolean;
+  spritesheetUrl: string;
+  visualDistance: number | null;
+  semanticScore: number | null;
+};
+
+function SimilarPanel({ petId, status }: { petId: string; status: string }) {
+  const [matches, setMatches] = useState<SimilarMatch[] | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/admin/similar/${petId}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { matches: SimilarMatch[] };
+        if (cancelled) return;
+        setMatches(data.matches);
+        // Auto-expand when there's a near-identical visual hit.
+        const strong = data.matches.find(
+          (m) => m.visualDistance != null && m.visualDistance <= 6,
+        );
+        if (strong) setOpen(true);
+      } catch {
+        /* ignore — admin still sees the rest of the row */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [petId]);
+
+  if (!matches || matches.length === 0) return null;
+
+  // Status filter: rejected pets aren't worth highlighting at admin time.
+  if (status === "rejected") return null;
+
+  const strongest = matches[0];
+  const tone = (() => {
+    if (
+      strongest.visualDistance != null &&
+      strongest.visualDistance <= 6
+    ) {
+      return {
+        bg: "bg-rose-50",
+        border: "border-rose-200",
+        text: "text-rose-900",
+        label: "Possible duplicate",
+      };
+    }
+    if (
+      strongest.visualDistance != null &&
+      strongest.visualDistance <= 14
+    ) {
+      return {
+        bg: "bg-amber-50",
+        border: "border-amber-200",
+        text: "text-amber-900",
+        label: "Looks similar",
+      };
+    }
+    return {
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      text: "text-blue-900",
+      label: "Same character?",
+    };
+  })();
+
+  return (
+    <div
+      className={`md:col-span-3 mt-2 rounded-xl border ${tone.bg} ${tone.border} px-3 py-2`}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`flex w-full items-center justify-between gap-2 text-left ${tone.text}`}
+      >
+        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.18em] uppercase">
+          <AlertTriangle className="size-3.5" />
+          {tone.label} ({matches.length})
+        </span>
+        <span className="text-[10px] opacity-70">
+          {open ? "Hide" : "Show"}
+        </span>
+      </button>
+      {open ? (
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {matches.map((m) => (
+            <Link
+              key={m.id}
+              href={`/pets/${m.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col gap-1 rounded-lg border border-black/10 bg-white p-2 transition hover:border-black/30"
+            >
+              <div className="aspect-square overflow-hidden rounded-md bg-stone-100">
+                {/* biome-ignore lint/performance/noImgElement: admin-only sprite preview */}
+                <img
+                  src={m.spritesheetUrl}
+                  alt={m.displayName}
+                  className="size-full object-cover"
+                  style={{ imageRendering: "pixelated" }}
+                />
+              </div>
+              <div className="flex items-center gap-1 truncate text-[11px] font-medium text-stone-900">
+                {m.featured ? "★ " : ""}
+                {m.displayName}
+              </div>
+              <div className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-tight text-stone-500">
+                <span
+                  className={
+                    m.status === "approved"
+                      ? "text-emerald-700"
+                      : "text-amber-700"
+                  }
+                >
+                  {m.status}
+                </span>
+                {m.visualDistance != null ? (
+                  <span title="dHash hamming distance">
+                    · v:{m.visualDistance}
+                  </span>
+                ) : null}
+                {m.semanticScore != null ? (
+                  <span title="cosine similarity">
+                    · s:{m.semanticScore.toFixed(2)}
+                  </span>
+                ) : null}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
