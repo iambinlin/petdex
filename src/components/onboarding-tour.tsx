@@ -17,9 +17,9 @@ type Step = {
   placement?: "top" | "bottom" | "left" | "right";
 };
 
-const STEPS: Step[] = [
+const ALL_STEPS: Step[] = [
   {
-    selector: 'a[href="/about"], a[href="/api/manifest"]',
+    selector: 'a[href="/#gallery"], a[href="/api/manifest"]',
     eyebrow: "What's new",
     title: "Petdex is now an index, not a list",
     body: "Browse 100+ animated companions, filter by vibe or kind, share any pet with one click. We'll show you the new bits in 30 seconds.",
@@ -43,7 +43,7 @@ const STEPS: Step[] = [
     selector: 'a[href="/my-pets"]',
     eyebrow: "Track",
     title: "Your submissions live here",
-    body: "Sign in and head to My pets to see every submission's status. Withdraw pending ones, see install / like counts on approved ones.",
+    body: "Head to My pets to see every submission's status. Withdraw pending ones, see install and like counts on approved ones.",
     placement: "bottom",
   },
 ];
@@ -54,15 +54,24 @@ export function OnboardingTour() {
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  const [steps, setSteps] = useState<Step[]>(ALL_STEPS);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-open on first visit. Respects users who closed the dialog.
+  // We also drop steps whose target isn't in the DOM (e.g. /my-pets is hidden
+  // for signed-out users) so the tour never highlights the wrong element.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const seen = window.localStorage.getItem(STORAGE_KEY);
     if (seen === "1") return;
-    // Don't show until DOM has had a chance to mount the targets.
-    const t = window.setTimeout(() => setActive(true), 1200);
+    const t = window.setTimeout(() => {
+      const visible = ALL_STEPS.filter(
+        (s) => document.querySelector(s.selector) !== null,
+      );
+      if (visible.length === 0) return;
+      setSteps(visible);
+      setActive(true);
+    }, 1200);
     return () => window.clearTimeout(t);
   }, []);
 
@@ -77,8 +86,8 @@ export function OnboardingTour() {
   useEffect(() => {
     if (!active) return;
     const measure = () => {
-      const target = STEPS[step]
-        ? document.querySelector(STEPS[step].selector)
+      const target = steps[step]
+        ? document.querySelector(steps[step].selector)
         : null;
       if (!target) {
         setRect(null);
@@ -125,7 +134,7 @@ export function OnboardingTour() {
   });
 
   const next = () => {
-    if (step < STEPS.length - 1) setStep((s) => s + 1);
+    if (step < steps.length - 1) setStep((s) => s + 1);
     else close();
   };
   const prev = () => {
@@ -134,7 +143,7 @@ export function OnboardingTour() {
 
   if (!active) return null;
 
-  const current = STEPS[step];
+  const current = steps[step];
   const padding = 8;
 
   // Build the tooltip placement. If we don't have a rect (target not in DOM),
@@ -226,7 +235,7 @@ export function OnboardingTour() {
             {current.eyebrow}
             <span className="text-stone-300">·</span>
             <span className="text-stone-500">
-              {step + 1}/{STEPS.length}
+              {step + 1}/{steps.length}
             </span>
           </div>
           <button
@@ -271,7 +280,7 @@ export function OnboardingTour() {
               onClick={next}
               className="inline-flex h-9 items-center rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85"
             >
-              {step === STEPS.length - 1 ? "Done" : "Next"}
+              {step === steps.length - 1 ? "Done" : "Next"}
             </button>
           </div>
         </div>
