@@ -401,6 +401,7 @@ type Claimable = {
 function ClaimableBanner() {
   const [pets, setPets] = useState<Claimable[] | null>(null);
   const [email, setEmail] = useState<string | null>(null);
+  const [githubUrl, setGithubUrl] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [claimed, setClaimed] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -414,11 +415,13 @@ function ClaimableBanner() {
         if (!res.ok) return;
         const data = (await res.json()) as {
           pets: Claimable[];
-          email?: string;
+          email?: string | null;
+          githubUrl?: string | null;
         };
         if (cancelled) return;
         setPets(data.pets);
         setEmail(data.email ?? null);
+        setGithubUrl(data.githubUrl ?? null);
       } catch {
         /* ignore */
       }
@@ -469,12 +472,18 @@ function ClaimableBanner() {
         <div className="flex-1 space-y-2">
           <p className="text-sm font-semibold text-amber-900">
             We found {remaining.length} pet
-            {remaining.length === 1 ? "" : "s"} on this email from a previous
-            account
+            {remaining.length === 1 ? "" : "s"} that look like yours
           </p>
           <p className="text-sm leading-6 text-amber-900/80">
-            {email ? <span className="font-mono">{email}</span> : "Your verified email"}{" "}
-            owns these. Claim to move them to your current account so you
+            Matched via{" "}
+            {email ? <span className="font-mono">{email}</span> : null}
+            {email && githubUrl ? " or " : null}
+            {githubUrl ? (
+              <span className="font-mono">
+                {githubUrl.replace("https://", "")}
+              </span>
+            ) : null}
+            . Click claim to move each one to your current account so you
             can manage and re-submit edits.
           </p>
           <ul className="mt-2 space-y-2">

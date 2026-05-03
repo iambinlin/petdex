@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, or } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { claimRatelimit } from "@/lib/ratelimit";
@@ -9,10 +9,18 @@ import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
+type ClaimIdentity = {
+  email: string | null;
+  githubUrl: string | null;
+};
+
 // GET — list pets that look claimable for the signed-in user. A pet is
-// claimable when:
-//   - its owner_email equals the user's verified primary email
-//   - its owner_id differs from the user's current Clerk userId
+// claimable when its current owner is *not* the signed-in user AND one of:
+//   - its owner_email equals the user's verified primary email (the
+//     normal path: a deleted-then-re-created Clerk account)
+//   - its credit_url matches the user's verified GitHub OAuth profile
+//     (the rescue path: petdex admin recovered a failed submission and
+//     credited the original GitHub author by URL).
 // We never auto-transfer on submit. The user has to opt in here.
 export async function GET(): Promise<Response> {
   const { userId } = await auth();
@@ -20,9 +28,17 @@ export async function GET(): Promise<Response> {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const verifiedEmail = await getVerifiedPrimaryEmail(userId);
-  if (!verifiedEmail) {
+  const ident = await getClaimIdentity(userId);
+  if (!ident.email && !ident.githubUrl) {
     return NextResponse.json({ pets: [] });
+  }
+
+  const filters = [];
+  if (ident.email) {
+    filters.push(eq(schema.submittedPets.ownerEmail, ident.email));
+  }
+  if (ident.githubUrl) {
+    filters.push(eq(schema.submittedPets.creditUrl, ident.githubUrl));
   }
 
   const rows = await db
@@ -36,12 +52,16 @@ export async function GET(): Promise<Response> {
     .from(schema.submittedPets)
     .where(
       and(
-        eq(schema.submittedPets.ownerEmail, verifiedEmail),
         ne(schema.submittedPets.ownerId, userId),
+        filters.length === 1 ? filters[0] : or(...filters),
       ),
     );
 
-  return NextResponse.json({ pets: rows, email: verifiedEmail });
+  return NextResponse.json({
+    pets: rows,
+    email: ident.email,
+    githubUrl: ident.githubUrl,
+  });
 }
 
 // POST — claim a single pet by id. Same checks as the listing query, plus
@@ -74,12 +94,13 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: "missing_id" }, { status: 400 });
   }
 
-  const verifiedEmail = await getVerifiedPrimaryEmail(userId);
-  if (!verifiedEmail) {
+  const ident = await getClaimIdentity(userId);
+  if (!ident.email && !ident.githubUrl) {
     return NextResponse.json(
       {
-        error: "email_not_verified",
-        message: "Verify your primary email in Clerk before claiming pets.",
+        error: "no_verified_identity",
+        message:
+          "Sign in with a verified email or a GitHub account before claiming.",
       },
       { status: 403 },
     );
@@ -94,36 +115,65 @@ export async function POST(req: Request): Promise<Response> {
   if (row.ownerId === userId) {
     return NextResponse.json({ ok: true, alreadyOwned: true });
   }
-  if (
-    !row.ownerEmail ||
-    row.ownerEmail.toLowerCase() !== verifiedEmail.toLowerCase()
-  ) {
+
+  const emailMatch =
+    !!row.ownerEmail &&
+    !!ident.email &&
+    row.ownerEmail.toLowerCase() === ident.email;
+  const githubMatch =
+    !!row.creditUrl && !!ident.githubUrl && row.creditUrl === ident.githubUrl;
+
+  if (!emailMatch && !githubMatch) {
     return NextResponse.json(
-      { error: "email_mismatch" },
+      { error: "identity_mismatch" },
       { status: 403 },
     );
   }
 
+  // When claiming via GitHub match (admin rescue path), also rewrite
+  // the owner_email so the pet behaves like a normal user-owned row.
+  const update: Partial<typeof schema.submittedPets.$inferInsert> = {
+    ownerId: userId,
+  };
+  if (githubMatch && !emailMatch && ident.email) {
+    update.ownerEmail = ident.email;
+  }
+
   await db
     .update(schema.submittedPets)
-    .set({ ownerId: userId })
+    .set(update)
     .where(eq(schema.submittedPets.id, id));
 
   return NextResponse.json({ ok: true, slug: row.slug });
 }
 
-async function getVerifiedPrimaryEmail(
-  userId: string,
-): Promise<string | null> {
+async function getClaimIdentity(userId: string): Promise<ClaimIdentity> {
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
+
+    let email: string | null = null;
     const primaryId = user.primaryEmailAddressId;
     const addr = user.emailAddresses.find((e) => e.id === primaryId);
-    if (!addr) return null;
-    if (addr.verification?.status !== "verified") return null;
-    return addr.emailAddress.toLowerCase();
+    if (addr && addr.verification?.status === "verified") {
+      email = addr.emailAddress.toLowerCase();
+    }
+
+    let githubUrl: string | null = null;
+    for (const acc of user.externalAccounts ?? []) {
+      if (acc.provider !== "oauth_github") continue;
+      const v =
+        (acc as { verification?: { status?: string } }).verification?.status;
+      if (v && v !== "verified") continue;
+      const username = (acc as { username?: string }).username?.trim();
+      if (username) {
+        githubUrl = `https://github.com/${username}`;
+        break;
+      }
+    }
+
+    return { email, githubUrl };
   } catch {
-    return null;
+    return { email: null, githubUrl: null };
   }
 }
