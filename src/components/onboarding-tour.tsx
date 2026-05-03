@@ -1,0 +1,281 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { Sparkles, X } from "lucide-react";
+
+const STORAGE_KEY = "petdex_tour_seen_v1";
+
+type Step = {
+  /** CSS selector pointing at the element to highlight. The first match wins. */
+  selector: string;
+  /** Emoji-free eyebrow above the title. */
+  eyebrow: string;
+  title: string;
+  body: string;
+  /** Where to anchor the tooltip relative to the highlighted target. */
+  placement?: "top" | "bottom" | "left" | "right";
+};
+
+const STEPS: Step[] = [
+  {
+    selector: 'a[href="/about"], a[href="/api/manifest"]',
+    eyebrow: "What's new",
+    title: "Petdex is now an index, not a list",
+    body: "Browse 100+ animated companions, filter by vibe or kind, share any pet with one click. We'll show you the new bits in 30 seconds.",
+    placement: "bottom",
+  },
+  {
+    selector: '[aria-label^="More actions for"]',
+    eyebrow: "Share",
+    title: "Action menu on every card",
+    body: "Three dots open Copy install, Copy link, Share to X / LinkedIn, Download ZIP. No more hopping pages just to grab the install command.",
+    placement: "bottom",
+  },
+  {
+    selector: 'a[href^="/vibe/"], a[href^="/kind/"]',
+    eyebrow: "Discover",
+    title: "Filter by vibe or kind",
+    body: "Looking for cozy companions or focused workmates? The chips above the gallery deep-link to dedicated landing pages with related collections.",
+    placement: "bottom",
+  },
+  {
+    selector: 'a[href="/my-pets"]',
+    eyebrow: "Track",
+    title: "Your submissions live here",
+    body: "Sign in and head to My pets to see every submission's status. Withdraw pending ones, see install / like counts on approved ones.",
+    placement: "bottom",
+  },
+];
+
+type Rect = { top: number; left: number; width: number; height: number };
+
+export function OnboardingTour() {
+  const [active, setActive] = useState(false);
+  const [step, setStep] = useState(0);
+  const [rect, setRect] = useState<Rect | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-open on first visit. Respects users who closed the dialog.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const seen = window.localStorage.getItem(STORAGE_KEY);
+    if (seen === "1") return;
+    // Don't show until DOM has had a chance to mount the targets.
+    const t = window.setTimeout(() => setActive(true), 1200);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const close = useCallback(() => {
+    setActive(false);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(STORAGE_KEY, "1");
+    }
+  }, []);
+
+  // Compute the highlight rect for the current step. Re-measures on resize.
+  useEffect(() => {
+    if (!active) return;
+    const measure = () => {
+      const target = STEPS[step]
+        ? document.querySelector(STEPS[step].selector)
+        : null;
+      if (!target) {
+        setRect(null);
+        return;
+      }
+      const r = (target as HTMLElement).getBoundingClientRect();
+      // Scroll into view if off-screen.
+      if (r.top < 60 || r.top > window.innerHeight - 60) {
+        (target as HTMLElement).scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+      const fresh = (target as HTMLElement).getBoundingClientRect();
+      setRect({
+        top: fresh.top,
+        left: fresh.left,
+        width: fresh.width,
+        height: fresh.height,
+      });
+    };
+    // Measure now + after layout settles after smooth scroll.
+    measure();
+    const t = window.setTimeout(measure, 350);
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure);
+    };
+  }, [active, step]);
+
+  // Esc closes.
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
+
+  const next = () => {
+    if (step < STEPS.length - 1) setStep((s) => s + 1);
+    else close();
+  };
+  const prev = () => {
+    if (step > 0) setStep((s) => s - 1);
+  };
+
+  if (!active) return null;
+
+  const current = STEPS[step];
+  const padding = 8;
+
+  // Build the tooltip placement. If we don't have a rect (target not in DOM),
+  // we still show the tooltip centered as a generic announcement.
+  const tooltipStyle: React.CSSProperties = (() => {
+    if (!rect) {
+      return {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+      };
+    }
+    const placement = current.placement ?? "bottom";
+    if (placement === "bottom") {
+      return {
+        position: "fixed",
+        top: rect.top + rect.height + padding + 6,
+        left: Math.max(
+          16,
+          Math.min(
+            rect.left + rect.width / 2 - 180,
+            (typeof window !== "undefined" ? window.innerWidth : 1280) - 360,
+          ),
+        ),
+      };
+    }
+    if (placement === "top") {
+      return {
+        position: "fixed",
+        bottom:
+          (typeof window !== "undefined" ? window.innerHeight : 800) -
+          rect.top +
+          padding +
+          6,
+        left: Math.max(
+          16,
+          Math.min(
+            rect.left + rect.width / 2 - 180,
+            (typeof window !== "undefined" ? window.innerWidth : 1280) - 360,
+          ),
+        ),
+      };
+    }
+    return {
+      position: "fixed",
+      top: rect.top,
+      left: rect.left + rect.width + padding,
+    };
+  })();
+
+  return (
+    <>
+      {/* Dimmed backdrop with cutout for the highlighted element. We use a
+          big inset box-shadow trick rather than SVG masks to keep this
+          dependency-free and work on any browser. */}
+      <div
+        className="pointer-events-auto fixed inset-0 z-[55]"
+        onClick={close}
+        aria-hidden="true"
+      >
+        {rect ? (
+          <div
+            className="pointer-events-none absolute rounded-2xl ring-2 ring-[#5266ea] transition-all duration-200"
+            style={{
+              top: rect.top - padding,
+              left: rect.left - padding,
+              width: rect.width + padding * 2,
+              height: rect.height + padding * 2,
+              boxShadow: "0 0 0 9999px rgba(15, 23, 42, 0.42)",
+            }}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-slate-900/40" />
+        )}
+      </div>
+
+      <div
+        ref={tooltipRef}
+        role="dialog"
+        aria-label="Petdex feature tour"
+        style={tooltipStyle}
+        className="z-[60] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-black/10 bg-white shadow-2xl shadow-blue-950/25"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-black/[0.06] px-4 py-3">
+          <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-[#5266ea] uppercase">
+            <Sparkles className="size-3.5" />
+            {current.eyebrow}
+            <span className="text-stone-300">·</span>
+            <span className="text-stone-500">
+              {step + 1}/{STEPS.length}
+            </span>
+          </div>
+          <button
+            type="button"
+            aria-label="Skip tour"
+            onClick={close}
+            className="grid size-7 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="px-4 py-4">
+          <h2 className="text-base font-semibold text-stone-950">
+            {current.title}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-stone-600">
+            {current.body}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-t border-black/[0.06] bg-[#f7f8ff] px-4 py-3">
+          <button
+            type="button"
+            onClick={close}
+            className="text-xs font-medium text-stone-500 transition hover:text-stone-800"
+          >
+            Skip
+          </button>
+          <div className="flex items-center gap-2">
+            {step > 0 ? (
+              <button
+                type="button"
+                onClick={prev}
+                className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3.5 text-xs font-medium text-stone-700 transition hover:border-black/30"
+              >
+                Back
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={next}
+              className="inline-flex h-9 items-center rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85"
+            >
+              {step === STEPS.length - 1 ? "Done" : "Next"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

@@ -124,7 +124,7 @@ export default async function Home() {
 
       <section
         id="gallery"
-        className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-12 md:px-8 md:py-16"
+        className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-5 py-12 md:px-8 md:py-16"
       >
         {totalPets > 0 ? (
           <PetGallery initial={initialSearch} totalPets={totalPets} />

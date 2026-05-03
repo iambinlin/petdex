@@ -3,6 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
+
+import { FeedbackWidget } from "@/components/feedback-widget";
+import { OnboardingTour } from "@/components/onboarding-tour";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -90,6 +94,8 @@ export default function RootLayout({
       >
         <body className="min-h-full flex flex-col">
           {children}
+          <FeedbackWidget />
+          <OnboardingTour />
           <Analytics />
         </body>
       </html>

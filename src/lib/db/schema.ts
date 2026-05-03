@@ -93,7 +93,35 @@ export const petMetrics = pgTable("pet_metrics", {
     .defaultNow(),
 });
 
+export const feedbackKind = pgEnum("feedback_kind", [
+  "suggestion",
+  "bug",
+  "praise",
+  "other",
+]);
+
+export const feedback = pgTable(
+  "feedback",
+  {
+    id: text("id").primaryKey(),
+    kind: feedbackKind("kind").notNull().default("suggestion"),
+    message: text("message").notNull(),
+    email: text("email"),
+    pageUrl: text("page_url"),
+    userAgent: text("user_agent"),
+    userId: text("user_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    createdAtIdx: index("feedback_created_at_idx").on(table.createdAt),
+    userIdx: index("feedback_user_idx").on(table.userId),
+  }),
+);
+
 export type SubmittedPet = typeof submittedPets.$inferSelect;
 export type NewSubmittedPet = typeof submittedPets.$inferInsert;
 export type PetLike = typeof petLikes.$inferSelect;
 export type PetMetric = typeof petMetrics.$inferSelect;
+export type Feedback = typeof feedback.$inferSelect;

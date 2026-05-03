@@ -241,7 +241,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
       </div>
 
       <div
-        className={`grid gap-5 md:grid-cols-2 xl:grid-cols-3 ${
+        className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-5 ${
           loadingPage ? "opacity-60 transition" : ""
         }`}
       >
