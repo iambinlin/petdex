@@ -58,10 +58,18 @@ export function OnboardingTour() {
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-open on first visit. Respects users who closed the dialog.
-  // We also drop steps whose target isn't in the DOM (e.g. /my-pets is hidden
+  // Drops steps whose target isn't in the DOM (e.g. /my-pets is hidden
   // for signed-out users) so the tour never highlights the wrong element.
+  // Skip outside the homepage / gallery — the steps reference the
+  // gallery's action menu and vibe chips, which don't apply on pet
+  // detail pages or owner dashboards and look out of place there.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const path = window.location.pathname;
+    const isHomePath =
+      path === "/" ||
+      /^\/(en|es|zh)\/?$/.test(path);
+    if (!isHomePath) return;
     const seen = window.localStorage.getItem(STORAGE_KEY);
     if (seen === "1") return;
     const t = window.setTimeout(() => {

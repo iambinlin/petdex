@@ -18,6 +18,10 @@ const OPENAI_DELAY_MS = 200;
 const ELEVENLABS_DELAY_MS = 1200;
 const ELEVENLABS_MAX_IN_FLIGHT = 2;
 const MIN_FILE_BYTES = 5 * 1024;
+const ELEVENLABS_MAX_PROMPT_CHARS = 450;
+const MIN_ACCEPTABLE_LUFS = -17;
+const MAX_ACCEPTABLE_LUFS = -15;
+const MAX_RENDER_ATTEMPTS = 3;
 const RETRY_BACKOFF_MS = [4000, 10000, 30000] as const;
 
 const SOUND_BRIEF_SYSTEM_PROMPT =
@@ -169,7 +173,7 @@ export async function buildSoundBrief(
   }
 
   return {
-    promptForElevenLabs: parsed.promptForElevenLabs.trim(),
+    promptForElevenLabs: fitElevenLabsPrompt(parsed.promptForElevenLabs),
     rationale: parsed.rationale.trim(),
     duration: clamp(parsed.duration, 1.8, 2.8),
   };
@@ -192,29 +196,75 @@ export async function processPetSound(
   }
 
   const tmpRoot = await mkdtemp(path.join(tmpdir(), "petdex-sound-"));
-  const rawPath = path.join(tmpRoot, `${pet.slug}.raw.mp3`);
-  const normalizedPath = path.join(tmpRoot, `${pet.slug}.sound.mp3`);
 
   try {
-    const rawBytes = await generateElevenLabsAudio(
-      brief,
-      options.workerKey ?? pet.slug,
-      options.elevenLabsLimiter ?? defaultElevenLabsLimiter,
-    );
-    await writeFile(rawPath, rawBytes);
+    let bestCandidate:
+      | { normalizedPath: string; sizeBytes: number; lufs: number }
+      | undefined;
 
-    await normalizeAudio(rawPath, normalizedPath);
-    await rm(rawPath, { force: true });
-
-    const normalizedStats = await stat(normalizedPath);
-    if (normalizedStats.size <= MIN_FILE_BYTES) {
-      throw new Error(
-        `normalized_file_too_small:${normalizedStats.size.toString()}`,
+    for (let attempt = 1; attempt <= MAX_RENDER_ATTEMPTS; attempt += 1) {
+      const rawPath = path.join(tmpRoot, `${pet.slug}.${attempt}.raw.mp3`);
+      const normalizedPath = path.join(
+        tmpRoot,
+        `${pet.slug}.${attempt}.sound.mp3`,
       );
+      const rawBytes = await generateElevenLabsAudio(
+        brief,
+        options.workerKey ?? pet.slug,
+        options.elevenLabsLimiter ?? defaultElevenLabsLimiter,
+      );
+      await writeFile(rawPath, rawBytes);
+
+      await normalizeAudio(rawPath, normalizedPath);
+      await rm(rawPath, { force: true });
+
+      const normalizedStats = await stat(normalizedPath);
+      if (normalizedStats.size <= MIN_FILE_BYTES) {
+        await rm(normalizedPath, { force: true });
+        throw new Error(
+          `normalized_file_too_small:${normalizedStats.size.toString()}`,
+        );
+      }
+
+      const lufs = await measureIntegratedLufs(normalizedPath);
+      const candidate = {
+        normalizedPath,
+        sizeBytes: normalizedStats.size,
+        lufs,
+      };
+
+      if (
+        !bestCandidate ||
+        Math.abs(candidate.lufs + 16) < Math.abs(bestCandidate.lufs + 16)
+      ) {
+        if (bestCandidate) {
+          await rm(bestCandidate.normalizedPath, { force: true });
+        }
+        bestCandidate = candidate;
+      } else {
+        await rm(normalizedPath, { force: true });
+      }
+
+      if (lufs >= MIN_ACCEPTABLE_LUFS && lufs <= MAX_ACCEPTABLE_LUFS) {
+        break;
+      }
+    }
+
+    if (!bestCandidate) {
+      throw new Error("sound_generation_failed_without_output");
+    }
+
+    if (
+      bestCandidate.lufs < MIN_ACCEPTABLE_LUFS ||
+      bestCandidate.lufs > MAX_ACCEPTABLE_LUFS
+    ) {
+      await rm(bestCandidate.normalizedPath, { force: true });
+      throw new Error(`lufs_out_of_range:${bestCandidate.lufs.toFixed(1)}`);
     }
 
     const key = `pets/${pet.slug}/sound.mp3`;
-    const body = await readFile(normalizedPath);
+    const body = await readFile(bestCandidate.normalizedPath);
+
     await r2.send(
       new PutObjectCommand({
         Bucket: R2_BUCKET,
@@ -231,14 +281,12 @@ export async function processPetSound(
       .set({ soundUrl })
       .where(eq(schema.submittedPets.slug, pet.slug));
 
-    const lufs = await measureIntegratedLufs(normalizedPath);
-
     return {
       slug: pet.slug,
       brief,
       soundUrl,
-      sizeBytes: normalizedStats.size,
-      lufs,
+      sizeBytes: bestCandidate.sizeBytes,
+      lufs: bestCandidate.lufs,
     };
   } finally {
     await rm(tmpRoot, { recursive: true, force: true });
@@ -333,8 +381,10 @@ async function normalizeAudio(rawPath: string, normalizedPath: string) {
 }
 
 async function measureIntegratedLufs(audioPath: string): Promise<number> {
+  let stderr = "";
+
   try {
-    await execFileAsync(ffmpegPath(), [
+    const output = await execFileAsync(ffmpegPath(), [
       "-i",
       audioPath,
       "-af",
@@ -343,19 +393,20 @@ async function measureIntegratedLufs(audioPath: string): Promise<number> {
       "null",
       "-",
     ]);
-    throw new Error("missing_ebur128_output");
+    stderr = output.stderr;
   } catch (error) {
-    const stderr =
+    stderr =
       error && typeof error === "object" && "stderr" in error
         ? String(error.stderr)
-        : "";
-    const matches = [...stderr.matchAll(/I:\s*(-?\d+(?:\.\d+)?)\s*LUFS/g)];
-    const value = matches.at(-1)?.[1];
-    if (!value) {
-      throw new Error("unable_to_parse_lufs");
-    }
-    return Number.parseFloat(value);
+        : stderr;
   }
+
+  const matches = [...stderr.matchAll(/I:\s*(-?\d+(?:\.\d+)?)\s*LUFS/g)];
+  const value = matches.at(-1)?.[1];
+  if (!value) {
+    throw new Error("unable_to_parse_lufs");
+  }
+  return Number.parseFloat(value);
 }
 
 function requireEnv(name: string): string {
@@ -390,6 +441,29 @@ function getDetailCode(body: string) {
   } catch {
     return undefined;
   }
+}
+
+function fitElevenLabsPrompt(prompt: string) {
+  const suffix = "No human voice, no humming, no music bed.";
+  const compact = prompt.replace(/\s+/g, " ").trim();
+  const withoutSuffix = compact
+    .replace(/no human voice, no humming, no music bed\.?/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.,;:\s]+$/g, "");
+
+  const composed = `${withoutSuffix}. ${suffix}`.trim();
+  if (composed.length <= ELEVENLABS_MAX_PROMPT_CHARS) {
+    return composed;
+  }
+
+  const reserve = suffix.length + 2;
+  const clipped = withoutSuffix
+    .slice(0, Math.max(0, ELEVENLABS_MAX_PROMPT_CHARS - reserve))
+    .trim()
+    .replace(/[.,;:\s]+$/g, "");
+
+  return `${clipped}. ${suffix}`.slice(0, ELEVENLABS_MAX_PROMPT_CHARS);
 }
 
 export class TimeGate {

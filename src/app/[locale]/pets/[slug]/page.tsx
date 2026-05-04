@@ -305,162 +305,183 @@ export default async function PetPage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-background">
       <JsonLd data={jsonLd} />
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
+
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
+        <nav
+          aria-label="Dex navigation"
+          className="flex items-center justify-between gap-3"
+        >
+          <DexNavPill pet={prevPet} direction="prev" />
+          <DexNavPill pet={nextPet} direction="next" />
+        </nav>
       </section>
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
-        <header className="grid gap-6 lg:grid-cols-[1fr_460px] lg:items-start">
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <DexNavPill pet={prevPet} direction="prev" />
-              <DexNavPill pet={nextPet} direction="next" />
-            </div>
-            <p className="text-sm font-semibold tracking-[0.18em] text-brand uppercase">
-              {pet.featured ? "Featured Petdex entry" : "Petdex entry"}
+
+      {/* Hero: dex eyebrow + title side-by-side with a smaller stat strip,
+          description below, like a Pokédex entry. The state viewer comes
+          right after — the actual product (the animated sprite) lives
+          above the fold, not buried below the install column. */}
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 pb-12 md:px-8 md:pb-16">
+        <header className="flex flex-col gap-5">
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+            <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
+              {pet.featured ? "Featured" : "Petdex entry"}
             </p>
-            <h1 className="mt-3 text-5xl font-semibold text-foreground md:text-7xl">
-              {pet.displayName}
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-2">
-              {pet.description}
+            {currentDexNumber != null ? (
+              <p className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
+                No. {formatDexNumber(currentDexNumber)}
+              </p>
+            ) : null}
+            <p className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
+              {pet.kind}
             </p>
+          </div>
+          <h1 className="text-5xl font-semibold tracking-tight text-foreground md:text-6xl">
+            {pet.displayName}
+          </h1>
+          <p className="max-w-3xl text-lg leading-8 text-muted-2">
+            {pet.description}
+          </p>
 
-            {ownerCredit ? (
-              <div className="mt-6 max-w-md">
-                <SubmittedBy credit={ownerCredit} />
-                {/* Discovered = an admin imported this on the author's
-                    behalf. Only nudge anonymous viewers — claiming
-                    requires a sign-in flow that already-signed-in users
-                    can trigger themselves from /my-pets if it's theirs. */}
-                {ownerRow?.source === "discover" && !userId ? (
-                  <ClaimCTA
-                    petName={pet.displayName}
-                    authorLabel={ownerCredit.name}
-                    githubUrl={
-                      ownerCredit.externals.find((e) => e.provider === "github")
-                        ?.url ?? null
-                    }
-                  />
-                ) : null}
-              </div>
-            ) : null}
-
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <LikeButton
-                slug={pet.slug}
-                initialCount={metrics.likeCount}
-                initialLiked={initialLiked}
-                signedIn={Boolean(userId)}
+          <div className="flex flex-wrap items-center gap-3">
+            <LikeButton
+              slug={pet.slug}
+              initialCount={metrics.likeCount}
+              initialLiked={initialLiked}
+              signedIn={Boolean(userId)}
+            />
+            {pet.soundUrl ? (
+              <PetSoundButton
+                soundUrl={pet.soundUrl}
+                displayName={pet.displayName}
+                labelPrefix="Play signature sound for"
               />
-              {pet.soundUrl ? (
-                <PetSoundButton
-                  soundUrl={pet.soundUrl}
-                  displayName={pet.displayName}
-                  labelPrefix="Play signature sound for"
-                />
-              ) : null}
-              <PetActionMenu
-                pet={{
-                  slug: pet.slug,
-                  displayName: pet.displayName,
-                  zipUrl: pet.zipUrl,
-                  description: pet.description,
-                }}
-                variant="detail"
-              />
-              <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
-                {metrics.installCount} installs · {metrics.zipDownloadCount} zip
-                downloads
-              </span>
-            </div>
-            {pet.tags.length > 0 ? (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {pet.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-brand dark:bg-brand-tint-dark"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
             ) : null}
-
-            {ownerEditState ? (
-              <div className="mt-6">
-                <OwnerEditPanel
-                  petId={ownerEditState.petId}
-                  slug={pet.slug}
-                  currentDisplayName={pet.displayName}
-                  currentDescription={pet.description}
-                  currentTags={ownerEditState.currentTags}
-                  initialPending={ownerEditState.pending}
-                  initialRejection={ownerEditState.lastRejection}
-                />
-              </div>
-            ) : null}
+            <PetActionMenu
+              pet={{
+                slug: pet.slug,
+                displayName: pet.displayName,
+                zipUrl: pet.zipUrl,
+                description: pet.description,
+              }}
+              variant="detail"
+            />
+            <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+              {metrics.installCount} installs · {metrics.zipDownloadCount}{" "}
+              downloads
+            </span>
           </div>
 
-          <div className="space-y-4">
-            <InstallCommand slug={pet.slug} displayName={pet.displayName} />
-            <InfoCard title="Dex Stats" icon={<Sparkles className="size-4" />}>
-              <div className="flex items-center justify-center">
-                <PetRadar {...stats} />
-              </div>
-            </InfoCard>
-
-            {variants.length > 0 ? (
-              <section className="rounded-3xl border border-border-base bg-surface/76 p-4 shadow-sm shadow-blue-950/5 backdrop-blur md:p-5">
-                <div>
-                  <p className="font-mono text-[11px] tracking-[0.18em] text-brand uppercase">
-                    Variants of this character
-                  </p>
-                  <p className="mt-1 text-sm text-muted-2">
-                    Other approved pets with closely matching sprite shapes.
-                  </p>
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {variants.map((variant) => (
-                    <Link
-                      key={variant.slug}
-                      href={`/pets/${variant.slug}`}
-                      className="group flex items-center gap-3 rounded-2xl border border-border-base bg-background/70 p-3 transition hover:-translate-y-0.5 hover:border-brand/35 hover:bg-background"
-                    >
-                      <div className="shrink-0 rounded-2xl border border-border-base bg-surface p-2">
-                        <PetSprite
-                          src={variant.spritesheetUrl}
-                          scale={0.45}
-                          label={`${variant.displayName} animated`}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground transition group-hover:text-brand">
-                          {variant.displayName}
-                        </p>
-                        <p className="mt-1 font-mono text-[11px] tracking-[0.16em] text-muted-3 uppercase">
-                          #{formatDexNumber(variant.dexNumber)}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-          </div>
+          {pet.tags.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {pet.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-brand dark:bg-brand-tint-dark"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </header>
 
+        {/* The animated sprite is the product. Promote it above the
+            install column and the secondary panels. */}
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
 
+        {/* Two-column lockup: install command (the conversion action) on
+            the left, secondary metadata (owner + claim CTA) on the right.
+            Stats radar + variants live below in their own row so the
+            install never gets pushed out of the first viewport. */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+          <InstallCommand slug={pet.slug} displayName={pet.displayName} />
+
+          {ownerCredit ? (
+            <div className="space-y-3">
+              <SubmittedBy credit={ownerCredit} />
+              {ownerRow?.source === "discover" && !userId ? (
+                <ClaimCTA
+                  petName={pet.displayName}
+                  authorLabel={ownerCredit.name}
+                  githubUrl={
+                    ownerCredit.externals.find((e) => e.provider === "github")
+                      ?.url ?? null
+                  }
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Secondary panels — radar + variants. Side-by-side on desktop,
+            stacked on mobile. Both are nice-to-haves, neither is
+            mission-critical, so they can live below the fold. */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <InfoCard title="Dex stats" icon={<Sparkles className="size-4" />}>
+            <div className="flex items-center justify-center py-2">
+              <PetRadar {...stats} />
+            </div>
+          </InfoCard>
+
+          {variants.length > 0 ? (
+            <section className="rounded-2xl border border-border-base bg-surface/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Sparkles className="size-4" />
+                Variants of this character
+              </div>
+              <p className="mt-2 text-sm text-muted-2">
+                Other approved pets with closely matching sprite shapes.
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {variants.map((variant) => (
+                  <Link
+                    key={variant.slug}
+                    href={`/pets/${variant.slug}`}
+                    className="group flex items-center gap-3 rounded-2xl border border-border-base bg-background/70 p-3 transition hover:-translate-y-0.5 hover:border-brand/35 hover:bg-background"
+                  >
+                    <div className="shrink-0 rounded-2xl border border-border-base bg-surface p-2">
+                      <PetSprite
+                        src={variant.spritesheetUrl}
+                        scale={0.45}
+                        label={`${variant.displayName} animated`}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground transition group-hover:text-brand">
+                        {variant.displayName}
+                      </p>
+                      <p className="mt-1 font-mono text-[11px] tracking-[0.16em] text-muted-3 uppercase">
+                        #{formatDexNumber(variant.dexNumber)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </div>
+
+        {ownerEditState ? (
+          <OwnerEditPanel
+            petId={ownerEditState.petId}
+            slug={pet.slug}
+            currentDisplayName={pet.displayName}
+            currentDescription={pet.description}
+            currentTags={ownerEditState.currentTags}
+            initialPending={ownerEditState.pending}
+            initialRejection={ownerEditState.lastRejection}
+          />
+        ) : null}
+
         {!ownerCredit ? (
-          <section className="grid gap-4 lg:grid-cols-2">
-            <InfoCard title="Submission" icon={<Sparkles className="size-4" />}>
-              <p>Curated entry.</p>
-              <p>Updated {new Date(pet.importedAt).toLocaleDateString()}</p>
-            </InfoCard>
-          </section>
+          <InfoCard title="Submission" icon={<Sparkles className="size-4" />}>
+            <p>Curated entry.</p>
+            <p>Updated {new Date(pet.importedAt).toLocaleDateString()}</p>
+          </InfoCard>
         ) : null}
       </section>
+
       <SiteFooter />
     </main>
   );
