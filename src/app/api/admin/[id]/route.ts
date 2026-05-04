@@ -8,10 +8,13 @@ import { isAdmin } from "@/lib/admin";
 import { classifyPet } from "@/lib/auto-tag";
 import { classifyColorFamily, extractDominantColor } from "@/lib/color-extract";
 import { db, schema } from "@/lib/db/client";
+import { renderSubmissionApprovedEmail } from "@/lib/email-templates/submission-approved";
+import { renderSubmissionRejectedEmail } from "@/lib/email-templates/submission-rejected";
 import { createNotification } from "@/lib/notifications";
 import { getApprovedPetMissingSoundBySlug, processPetSound } from "@/lib/pet-sound";
 import { requireSameOrigin } from "@/lib/same-origin";
 import { refreshSimilarityFor } from "@/lib/similarity";
+import { getPreferredLocaleForUser } from "@/lib/user-locale";
 
 export const runtime = "nodejs";
 
@@ -210,50 +213,31 @@ export async function PATCH(
       const resend = new Resend(process.env.RESEND_API_KEY);
       const from =
         process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
-      const url = `https://petdex.crafter.run/pets/${row.slug}`;
-      const installCmd = `curl -sSf https://petdex.crafter.run/install/${row.slug} | sh`;
+      const locale = await getPreferredLocaleForUser(row.ownerId);
 
       if (row.status === "approved") {
+        const email = renderSubmissionApprovedEmail(locale, {
+          petName: row.displayName,
+          petSlug: row.slug,
+        });
         await resend.emails.send({
           from,
           to: row.ownerEmail,
-          subject: `${row.displayName} is live on Petdex`,
-          text: [
-            `${row.displayName} just went live on Petdex.`,
-            "",
-            `Page:    ${url}`,
-            "",
-            "Install command (anyone):",
-            `  ${installCmd}`,
-            "",
-            "A few things you can do now:",
-            "- Tweak the name, description or tags from the pet page",
-            "  (any change goes through a quick re-approval)",
-            "- Pin it on your public profile so it shows up first:",
-            "  https://petdex.crafter.run/my-pets",
-            "- Share the install command — every install is tracked",
-            "  on your profile.",
-            "",
-            "Thanks for shipping a pet,",
-            "Petdex",
-          ].join("\n"),
+          subject: email.subject,
+          html: email.html,
+          text: email.text,
         });
       } else if (row.status === "rejected") {
+        const email = renderSubmissionRejectedEmail(locale, {
+          petName: row.displayName,
+          reason: row.rejectionReason,
+        });
         await resend.emails.send({
           from,
           to: row.ownerEmail,
-          subject: `Your Petdex submission needs changes — ${row.displayName}`,
-          text: [
-            `Hey, your pet "${row.displayName}" wasn't approved this round.`,
-            "",
-            row.rejectionReason
-              ? `Reason: ${row.rejectionReason}`
-              : "No reason was provided. Feel free to iterate and resubmit.",
-            "",
-            "You can submit a revised version at https://petdex.crafter.run/submit",
-            "",
-            "Petdex",
-          ].join("\n"),
+          subject: email.subject,
+          html: email.html,
+          text: email.text,
         });
       }
     } catch {
