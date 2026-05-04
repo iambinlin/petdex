@@ -480,14 +480,14 @@ export function PetSubmitForm() {
           });
         }}
       >
-        <span className="grid size-16 place-items-center rounded-2xl bg-black text-white dark:bg-stone-100">
+        <span className="grid size-16 place-items-center rounded-2xl bg-inverse text-on-inverse">
           <Upload className="size-7" />
         </span>
-        <span className="mt-6 text-2xl font-medium">Upload a pet package</span>
-        <span className="mt-3 max-w-md text-sm leading-6 text-[#5d5d66]">
+        <span className="mt-6 text-2xl font-medium text-foreground">Upload a pet package</span>
+        <span className="mt-3 max-w-md text-sm leading-6 text-muted-2">
           Drop a folder or a ZIP with{" "}
-          <code className="rounded bg-white/70 px-1 py-0.5 dark:bg-stone-900/70">pet.json</code> and{" "}
-          <code className="rounded bg-white/70 px-1 py-0.5 dark:bg-stone-900/70">
+          <code className="rounded bg-surface-muted px-1 py-0.5">pet.json</code> and{" "}
+          <code className="rounded bg-surface-muted px-1 py-0.5">
             spritesheet.webp
           </code>{" "}
           (or .png). Recommended {REQUIRED.width}×{REQUIRED.height}, 8×9 frame
@@ -495,7 +495,7 @@ export function PetSubmitForm() {
         </span>
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200">
+          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover">
             <Upload className="size-3.5" />
             Pick folder
             <input
@@ -512,7 +512,7 @@ export function PetSubmitForm() {
               }
             />
           </label>
-          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-4 text-xs font-medium text-black transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-100 dark:hover:bg-stone-800">
+          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-base bg-surface/70 px-4 text-xs font-medium text-foreground transition hover:bg-surface">
             <FileArchive className="size-3.5" />
             Pick .zip
             <input
@@ -529,20 +529,20 @@ export function PetSubmitForm() {
         </div>
 
         {!isLoaded ? null : !isSignedIn ? (
-          <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100/70 px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-amber-900 uppercase dark:text-amber-300">
+          <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-chip-warning-bg px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-chip-warning-fg uppercase">
             Sign in to submit
           </span>
         ) : null}
       </div>
 
-      <aside className="rounded-3xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
-        <div className="flex items-center gap-2 text-sm font-medium text-black dark:text-stone-100">
+      <aside className="rounded-3xl border border-border-base bg-surface/80 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <FileArchive className="size-4" />
           Submission check
         </div>
 
         {isReading ? (
-          <p className="mt-6 inline-flex items-center gap-2 text-sm text-[#5d5d66]">
+          <p className="mt-6 inline-flex items-center gap-2 text-sm text-muted-2">
             <Loader2 className="size-3.5 animate-spin" />
             Reading package...
           </p>
@@ -553,7 +553,7 @@ export function PetSubmitForm() {
             ) : null}
             <div>
               <h2 className="text-xl font-medium">{parsed.displayName}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#5d5d66]">
+              <p className="mt-2 text-sm leading-6 text-muted-2">
                 {parsed.description}
               </p>
               {parsed.spritesheetWidth ? (
@@ -615,14 +615,14 @@ export function PetSubmitForm() {
             ) : null}
           </div>
         ) : (
-          <p className="mt-6 text-sm leading-6 text-[#5d5d66]">
+          <p className="mt-6 text-sm leading-6 text-muted-2">
             Packages stay local until you confirm. Petdex checks the manifest
             and sprite dimensions before upload.
           </p>
         )}
       </aside>
 
-      <p className="col-span-full inline-flex flex-wrap items-center gap-2 text-xs text-[#5d5d66]">
+      <p className="col-span-full inline-flex flex-wrap items-center gap-2 text-xs text-muted-2">
         Pet assets live in
         <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono dark:bg-stone-900/70">
           {PETS_DIR}

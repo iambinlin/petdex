@@ -313,6 +313,12 @@ input {
   backdrop-filter: blur(18px);
 }
 
+.dark .glass-panel {
+  background: rgb(30 30 38 / 0.68);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.4);
+}
+
 .pet-sprite-frame {
   --pet-scale: 1;
   width: calc(192px * var(--pet-scale));
