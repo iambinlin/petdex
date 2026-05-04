@@ -12,7 +12,7 @@
   "metadata": {
     "root": {
       "titleDefault": "Petdex — 适用于 Codex 的动画伙伴",
-      "titleTemplate": "{title} | Petdex",
+      "titleTemplate": "%s | Petdex",
       "description": "Petdex 是面向 Codex 的公共动画伙伴图库。浏览开源伙伴，预览它们的动画，并用一条命令安装。",
       "description__fixme": true,
       "ogTitle": "Petdex — 适用于 Codex 的动画伙伴",
