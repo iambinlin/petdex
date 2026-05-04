@@ -1,5 +1,7 @@
 export type ApprovalState = "approved" | "needs-review" | "needs-repair";
 
+import type { ColorFamily } from "@/lib/color-extract";
+
 export type PetKind = "creature" | "object" | "character";
 
 export type PetVibe =
@@ -38,6 +40,8 @@ export type PetdexPet = {
   kind: PetKind;
   vibes: PetVibe[];
   tags: string[];
+  dominantColor: string | null;
+  colorFamily: ColorFamily | null;
   submittedBy?: PetCredit;
   /**
    * How the pet entered the catalog. 'submit' = uploaded through the

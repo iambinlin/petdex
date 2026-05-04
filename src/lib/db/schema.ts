@@ -44,6 +44,8 @@ export const submittedPets = pgTable(
     kind: petKind("kind").notNull().default("creature"),
     vibes: jsonb("vibes").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
     tags: jsonb("tags").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    dominantColor: text("dominant_color"),
+    colorFamily: text("color_family"),
     featured: boolean("featured").notNull().default(false),
     // 64-bit dHash of the first idle frame as a 16-char hex string. Used
     // for fast perceptual-similarity dedup at admin review time.
@@ -72,7 +74,9 @@ export const submittedPets = pgTable(
     pendingDisplayName: text("pending_display_name"),
     pendingDescription: text("pending_description"),
     pendingTags: jsonb("pending_tags").$type<string[] | null>(),
-    pendingSubmittedAt: timestamp("pending_submitted_at", { withTimezone: true }),
+    pendingSubmittedAt: timestamp("pending_submitted_at", {
+      withTimezone: true,
+    }),
     pendingRejectionReason: text("pending_rejection_reason"),
   },
   (table) => ({
@@ -91,10 +95,11 @@ export const submittedPets = pgTable(
     pendingEditIdx: index("submitted_pets_pending_edit_idx").on(
       table.pendingSubmittedAt,
     ),
-    vibesGinIdx: index("submitted_pets_vibes_gin_idx")
-      .using("gin", table.vibes),
-    tagsGinIdx: index("submitted_pets_tags_gin_idx")
-      .using("gin", table.tags),
+    vibesGinIdx: index("submitted_pets_vibes_gin_idx").using(
+      "gin",
+      table.vibes,
+    ),
+    tagsGinIdx: index("submitted_pets_tags_gin_idx").using("gin", table.tags),
   }),
 );
 

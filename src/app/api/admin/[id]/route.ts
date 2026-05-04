@@ -6,6 +6,7 @@ import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
 import { classifyPet } from "@/lib/auto-tag";
+import { classifyColorFamily, extractDominantColor } from "@/lib/color-extract";
 import { db, schema } from "@/lib/db/client";
 import { createNotification } from "@/lib/notifications";
 import { requireSameOrigin } from "@/lib/same-origin";
@@ -113,10 +114,7 @@ export async function PATCH(
   const update = { ...editPatch, ...statusPatch };
 
   if (Object.keys(update).length === 0) {
-    return NextResponse.json(
-      { error: "nothing_to_update" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "nothing_to_update" }, { status: 400 });
   }
 
   const [row] = await db
@@ -157,11 +155,29 @@ export async function PATCH(
     void refreshSimilarityFor(row.id).catch((err) => {
       console.warn("[approve] similarity refresh failed:", err);
     });
+
+    if (!row.dominantColor) {
+      void (async () => {
+        try {
+          const dominantColor = await extractDominantColor(row.spritesheetUrl);
+          if (!dominantColor) return;
+
+          await db
+            .update(schema.submittedPets)
+            .set({
+              dominantColor,
+              colorFamily: classifyColorFamily(dominantColor),
+            })
+            .where(eq(schema.submittedPets.id, row.id));
+        } catch (e) {
+          console.error("color extract failed", e);
+        }
+      })();
+    }
   }
 
   // Notify owner only on status change (approve/reject), not pure edits.
-  const shouldNotify =
-    body.action === "approve" || body.action === "reject";
+  const shouldNotify = body.action === "approve" || body.action === "reject";
 
   // In-app notification (best-effort). Independent of email so muted
   // inboxes still see the bell.
@@ -174,17 +190,15 @@ export async function PATCH(
         petName: row.displayName,
         ...(row.rejectionReason ? { reason: row.rejectionReason } : {}),
       },
-      href:
-        row.status === "approved"
-          ? `/pets/${row.slug}`
-          : "/my-pets",
+      href: row.status === "approved" ? `/pets/${row.slug}` : "/my-pets",
     }).catch(() => {});
   }
 
   if (shouldNotify && row.ownerEmail && process.env.RESEND_API_KEY) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
-      const from = process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
+      const from =
+        process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
       const url = `https://petdex.crafter.run/pets/${row.slug}`;
       const installCmd = `curl -sSf https://petdex.crafter.run/install/${row.slug} | sh`;
 

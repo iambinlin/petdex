@@ -2,8 +2,8 @@ import { cache } from "react";
 
 import { and, eq, isNotNull, ne } from "drizzle-orm";
 
-import { getDexNumberMap } from "@/lib/dex";
 import { db, schema } from "@/lib/db/client";
+import { getDexNumberMap } from "@/lib/dex";
 
 export const VARIANT_DISTANCE_THRESHOLD = 14;
 export const VARIANT_MAX_RESULTS = 6;
@@ -56,13 +56,19 @@ export const getVariantsFor = cache(
     const dexMap = await getDexNumberMap();
 
     return rows
-      .map((row) => ({
-        slug: row.slug,
-        displayName: row.displayName,
-        spritesheetUrl: row.spritesheetUrl,
-        distance: hammingDistance(selfHash, row.dhash!),
-        dexNumber: dexMap.get(row.slug) ?? null,
-      }))
+      .flatMap((row) =>
+        row.dhash
+          ? [
+              {
+                slug: row.slug,
+                displayName: row.displayName,
+                spritesheetUrl: row.spritesheetUrl,
+                distance: hammingDistance(selfHash, row.dhash),
+                dexNumber: dexMap.get(row.slug) ?? null,
+              },
+            ]
+          : [],
+      )
       .filter((row) => row.distance <= VARIANT_DISTANCE_THRESHOLD)
       .sort((a, b) => a.distance - b.distance)
       .slice(0, VARIANT_MAX_RESULTS);

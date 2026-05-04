@@ -7,9 +7,9 @@ import { and, eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import {
-  type Metrics,
   getAllMetrics,
   getMetricsForSlug,
+  type Metrics,
 } from "@/lib/db/metrics";
 import type { PetdexPet, PetKind, PetVibe } from "@/lib/types";
 
@@ -128,6 +128,8 @@ export function rowToPet(
     kind: row.kind as PetKind,
     vibes: (row.vibes as PetVibe[]) ?? [],
     tags: (row.tags as string[]) ?? [],
+    dominantColor: row.dominantColor,
+    colorFamily: row.colorFamily as PetdexPet["colorFamily"],
     submittedBy,
     source: row.source,
     approvedAt: row.approvedAt?.toISOString() ?? null,
