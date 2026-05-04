@@ -645,7 +645,7 @@
     "eyebrow": "State viewer",
     "frames": "{count} frames",
     "rowFrames": "Row {row} - {count} frames",
-    "animationLabel": "{name} {state} animation",
+    "animationLabel": "{petName} {state} animation",
     "states": {
       "idle": {
         "label": "Idle",

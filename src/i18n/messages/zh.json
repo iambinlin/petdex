@@ -779,7 +779,7 @@
     "eyebrow": "状态查看器",
     "frames": "{count} 帧",
     "rowFrames": "第 {row} 行 - {count} 帧",
-    "animationLabel": "{name} {state} 动画",
+    "animationLabel": "{petName} {state} 动画",
     "states": {
       "idle": {
         "label": "待机",
