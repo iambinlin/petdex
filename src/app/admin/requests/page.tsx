@@ -1,11 +1,5 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { sql } from "drizzle-orm";
 
-import { auth } from "@clerk/nextjs/server";
-import { eq, sql } from "drizzle-orm";
-import { ArrowLeft } from "lucide-react";
-
-import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
 
 export const metadata = {
@@ -16,9 +10,6 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function AdminRequestsPage() {
-  const { userId } = await auth();
-  if (!isAdmin(userId)) notFound();
-
   const rows = await db
     .select({
       id: schema.petRequests.id,
@@ -40,61 +31,46 @@ export default async function AdminRequestsPage() {
   const dismissed = rows.filter((r) => r.status === "dismissed");
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
-      <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-8 md:px-8 md:py-12">
-        <div className="flex items-center justify-between gap-3">
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-2 text-sm font-medium text-black backdrop-blur transition hover:bg-white"
-          >
-            <ArrowLeft className="size-4" />
-            Back to review queue
-          </Link>
-          <span className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase">
-            Admin · {rows.length} requests
-          </span>
-        </div>
+    <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
+      <header>
+        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+          Community wishlist
+        </p>
+        <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
+          Pet requests
+        </h1>
+        <p className="mt-3 text-sm text-stone-600">
+          {open.length} open · {fulfilled.length} fulfilled ·{" "}
+          {dismissed.length} dismissed
+        </p>
+      </header>
 
-        <header>
-          <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
-            Community wishlist
-          </p>
-          <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
-            Pet requests
-          </h1>
-          <p className="mt-3 text-sm text-stone-600">
-            {open.length} open · {fulfilled.length} fulfilled ·{" "}
-            {dismissed.length} dismissed
-          </p>
-        </header>
+      {open.length > 0 ? (
+        <Section title="Open" count={open.length}>
+          {open.map((r) => (
+            <RequestRow key={r.id} request={r} />
+          ))}
+        </Section>
+      ) : (
+        <Empty>No open requests right now.</Empty>
+      )}
 
-        {open.length > 0 ? (
-          <Section title="Open" count={open.length}>
-            {open.map((r) => (
-              <RequestRow key={r.id} request={r} />
-            ))}
-          </Section>
-        ) : (
-          <Empty>No open requests right now.</Empty>
-        )}
+      {fulfilled.length > 0 ? (
+        <Section title="Fulfilled" count={fulfilled.length}>
+          {fulfilled.map((r) => (
+            <RequestRow key={r.id} request={r} />
+          ))}
+        </Section>
+      ) : null}
 
-        {fulfilled.length > 0 ? (
-          <Section title="Fulfilled" count={fulfilled.length}>
-            {fulfilled.map((r) => (
-              <RequestRow key={r.id} request={r} />
-            ))}
-          </Section>
-        ) : null}
-
-        {dismissed.length > 0 ? (
-          <Section title="Dismissed" count={dismissed.length}>
-            {dismissed.map((r) => (
-              <RequestRow key={r.id} request={r} />
-            ))}
-          </Section>
-        ) : null}
-      </section>
-    </main>
+      {dismissed.length > 0 ? (
+        <Section title="Dismissed" count={dismissed.length}>
+          {dismissed.map((r) => (
+            <RequestRow key={r.id} request={r} />
+          ))}
+        </Section>
+      ) : null}
+    </section>
   );
 }
 

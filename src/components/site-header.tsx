@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Show } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
 
 import { AuthBadge } from "@/components/auth-badge";
-import { GithubIcon } from "@/components/github-icon";
+import { GithubStarsLink } from "@/components/github-stars-link";
 import { PetdexLogo } from "@/components/petdex-logo";
-import { SponsorButton } from "@/components/sponsor-button";
 import { SubmitCTA } from "@/components/submit-cta";
 
 type SiteHeaderProps = {
@@ -39,31 +37,20 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
       <nav className="flex items-center justify-between gap-3">
         <PetdexLogo href="/" />
 
-        <div className="hidden items-center gap-9 text-sm text-[#4f515c] md:flex">
+        <div className="hidden items-center gap-7 text-sm text-[#4f515c] md:flex">
           <Link href="/#gallery" className="transition hover:text-black">
             Gallery
           </Link>
           <Link href="/create" className="transition hover:text-black">
             Create
           </Link>
-          <Show when="signed-in">
-            <Link href="/my-pets" className="transition hover:text-black">
-              My pets
-            </Link>
-          </Show>
+          <Link href="/requests" className="transition hover:text-black">
+            Requests
+          </Link>
           <a href="/api/manifest" className="transition hover:text-black">
             Manifest
           </a>
-          <a
-            href="https://github.com/crafter-station/petdex"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 transition hover:text-black"
-          >
-            <GithubIcon className="size-4" />
-            GitHub
-          </a>
-          <SponsorButton variant="nav" />
+          <GithubStarsLink />
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -110,33 +97,16 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             <MobileLink href="/create" onClick={() => setOpen(false)}>
               Create
             </MobileLink>
-            <Show when="signed-in">
-              <MobileLink href="/my-pets" onClick={() => setOpen(false)}>
-                My pets
-              </MobileLink>
-            </Show>
+            <MobileLink href="/requests" onClick={() => setOpen(false)}>
+              Requests
+            </MobileLink>
             <MobileLink href="/api/manifest" onClick={() => setOpen(false)}>
               Manifest
             </MobileLink>
-            <a
-              href="https://github.com/crafter-station/petdex"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 rounded-2xl px-4 py-3 transition hover:bg-white"
-              onClick={() => setOpen(false)}
-            >
-              <GithubIcon className="size-5" />
-              GitHub
-            </a>
-            <a
-              href="https://github.com/sponsors/Railly"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 rounded-2xl px-4 py-3 text-rose-700 transition hover:bg-rose-50"
-              onClick={() => setOpen(false)}
-            >
-              ♥ Sponsor
-            </a>
+            <GithubStarsLink
+              size="mobile"
+              className="rounded-2xl px-4 py-3 hover:bg-white"
+            />
           </nav>
 
           {!hideSubmitCta ? (
