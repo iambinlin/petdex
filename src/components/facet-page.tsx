@@ -129,11 +129,6 @@ export function PetCard({
           <span className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
             No. {dexNumber}
           </span>
-          {pet.featured ? (
-            <span className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
-              ★ Featured
-            </span>
-          ) : null}
         </div>
         <div
           className="relative flex items-center justify-center overflow-hidden px-5 py-6"
@@ -154,8 +149,17 @@ export function PetCard({
         </div>
         <div className="flex flex-col gap-2 rounded-b-3xl border-t border-black/[0.06] px-5 py-4">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-lg font-semibold tracking-tight text-stone-950">
-              {pet.displayName}
+            <h3 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold tracking-tight text-stone-950">
+              <span className="truncate">{pet.displayName}</span>
+              {pet.featured ? (
+                <span
+                  aria-label="Featured"
+                  title="Featured"
+                  className="font-mono text-[10px] text-[#5266ea]"
+                >
+                  ★
+                </span>
+              ) : null}
             </h3>
             <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
               {pet.kind}
