@@ -58,18 +58,18 @@ export default function DocsPage() {
             <h1 className="text-5xl font-medium tracking-tight md:text-6xl">
               Docs
             </h1>
-            <p className="max-w-2xl text-lg leading-8 text-stone-700 dark:text-stone-300">
+            <p className="max-w-2xl text-lg leading-8 text-muted-2">
               The Petdex CLI lets you install, browse, and submit Codex pets
               from your terminal. Authentication is OAuth 2.0 + PKCE through
-              Clerk. Tokens persist in your OS keychain. Same auth works
-              across <code className="text-sm">npx</code> and global installs.
+              Clerk. Tokens persist in your OS keychain. Same auth works across{" "}
+              <code className="text-sm">npx</code> and global installs.
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <a
                 href={NPM_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:hover:border-white/30"
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-border-base bg-surface px-4 text-sm font-medium transition hover:border-border-strong"
               >
                 npmjs.com/petdex
                 <ArrowRight className="size-4" />
@@ -78,7 +78,7 @@ export default function DocsPage() {
                 href={REPO_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:hover:border-white/30"
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-border-base bg-surface px-4 text-sm font-medium transition hover:border-border-strong"
               >
                 <GithubIcon className="size-4" />
                 Repo
@@ -124,8 +124,7 @@ export default function DocsPage() {
 
             <h3 className="font-semibold">Casual / one-off</h3>
             <p>
-              Use <code>npx</code>. No setup, package is cached after first
-              run.
+              Use <code>npx</code>. No setup, package is cached after first run.
             </p>
             <CommandLine
               command="npx petdex install boba"
@@ -135,8 +134,7 @@ export default function DocsPage() {
 
             <h3 className="font-semibold">Power user</h3>
             <p>
-              Install globally for instant invocation and easier muscle
-              memory.
+              Install globally for instant invocation and easier muscle memory.
             </p>
             <CommandLine
               command="npm install -g petdex"
@@ -155,19 +153,18 @@ export default function DocsPage() {
 
           <Section id="authenticate" title="Authenticate">
             <p>
-              Sign in once, then any command that needs auth (e.g. submit)
-              works seamlessly.
+              Sign in once, then any command that needs auth (e.g. submit) works
+              seamlessly.
             </p>
             <CommandLine
               command="npx petdex login"
               source="docs-auth-login"
               className="w-full max-w-xl"
             />
-            <p className="text-sm text-stone-600 dark:text-stone-400">
-              The flow is OAuth 2.0 + PKCE: the CLI opens your browser, you
-              sign in with Clerk on{" "}
-              <code>accounts.petdex.crafter.run</code>, and the browser
-              redirects to a one-shot localhost listener with the
+            <p className="text-sm text-muted-2">
+              The flow is OAuth 2.0 + PKCE: the CLI opens your browser, you sign
+              in with Clerk on <code>accounts.petdex.crafter.run</code>, and the
+              browser redirects to a one-shot localhost listener with the
               authorization code. The CLI exchanges it for a token set and
               stores it in the keychain. No secrets touch disk.
             </p>
@@ -194,8 +191,8 @@ export default function DocsPage() {
               <code>petdex list</code>
             </h3>
             <p>
-              Print every approved pet with credit. Useful for discovery
-              before installing.
+              Print every approved pet with credit. Useful for discovery before
+              installing.
             </p>
             <CommandLine
               command="npx petdex list"
@@ -209,7 +206,9 @@ export default function DocsPage() {
             <p>
               Drop a pet into <code>~/.codex/pets/&lt;slug&gt;/</code>.
               Equivalent to{" "}
-              <code>curl -sSf https://petdex.crafter.run/install/&lt;slug&gt; | sh</code>
+              <code>
+                curl -sSf https://petdex.crafter.run/install/&lt;slug&gt; | sh
+              </code>
               .
             </p>
             <CommandLine
@@ -222,10 +221,9 @@ export default function DocsPage() {
               <code>petdex submit &lt;path&gt;</code>
             </h3>
             <p>
-              Publish your pet(s) to the gallery. The CLI accepts three
-              shapes:
+              Publish your pet(s) to the gallery. The CLI accepts three shapes:
             </p>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
+            <ul className="ml-6 list-disc space-y-1 text-muted-2">
               <li>
                 <strong>Single folder</strong>:{" "}
                 <code>petdex submit ~/.codex/pets/boba</code>
@@ -235,14 +233,13 @@ export default function DocsPage() {
                 <code>petdex submit ~/Downloads/boba.zip</code>
               </li>
               <li>
-                <strong>Bulk</strong>:{" "}
-                <code>petdex submit ~/.codex/pets</code>: every direct
-                subfolder is treated as its own pet
+                <strong>Bulk</strong>: <code>petdex submit ~/.codex/pets</code>:
+                every direct subfolder is treated as its own pet
               </li>
             </ul>
             <p>
-              Bulk mode shows a progress spinner per pet and a final summary
-              of failures. Slugs auto-deduplicate so you'll never get a "slug
+              Bulk mode shows a progress spinner per pet and a final summary of
+              failures. Slugs auto-deduplicate so you'll never get a "slug
               taken" rebote.
             </p>
 
@@ -258,7 +255,7 @@ export default function DocsPage() {
               command. Here's the full lifecycle:
             </p>
 
-            <ol className="ml-6 list-decimal space-y-3 text-stone-700 dark:text-stone-300">
+            <ol className="ml-6 list-decimal space-y-3 text-muted-2">
               <li>
                 <strong>Create.</strong> In Codex Desktop, install the{" "}
                 <strong>Hatch Pet</strong> skill and run <code>/pet</code>.
@@ -273,8 +270,8 @@ export default function DocsPage() {
                 .
               </li>
               <li>
-                <strong>Sign in.</strong>{" "}
-                <code>npx petdex login</code> if you haven't.
+                <strong>Sign in.</strong> <code>npx petdex login</code> if you
+                haven't.
               </li>
               <li>
                 <strong>Submit.</strong>{" "}
@@ -282,16 +279,14 @@ export default function DocsPage() {
                 bulk all at once with the parent dir.
               </li>
               <li>
-                <strong>Wait for review.</strong> Submissions land as
-                "pending" in the admin queue. You'll receive a Resend email
-                when approved or rejected (if rejected, the reason is
-                included).
+                <strong>Wait for review.</strong> Submissions land as "pending"
+                in the admin queue. You'll receive a Resend email when approved
+                or rejected (if rejected, the reason is included).
               </li>
               <li>
                 <strong>Anyone can install your pet.</strong> Once approved,
-                share{" "}
-                <code>npx petdex install &lt;your-slug&gt;</code> with anyone
-               . They get your pet in their <code>~/.codex/pets/</code>{" "}
+                share <code>npx petdex install &lt;your-slug&gt;</code> with
+                anyone . They get your pet in their <code>~/.codex/pets/</code>{" "}
                 instantly.
               </li>
             </ol>
@@ -312,24 +307,23 @@ export default function DocsPage() {
 
           <Section id="validation" title="Validation rules">
             <p>The server enforces these rules; the CLI checks locally too.</p>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
+            <ul className="ml-6 list-disc space-y-1 text-muted-2">
               <li>
-                <code>pet.json</code> and{" "}
-                <code>spritesheet.webp</code> (or <code>.png</code>) must be
-                at the root of the folder/zip.
+                <code>pet.json</code> and <code>spritesheet.webp</code> (or{" "}
+                <code>.png</code>) must be at the root of the folder/zip.
               </li>
               <li>
                 Spritesheet ≥ 256×256. Recommended <strong>1536×1872</strong>{" "}
                 (8×9 frame grid).
               </li>
               <li>
-                Rate limit:{" "}
-                <strong>10 submissions / 24h per user</strong>. Admins bypass.
+                Rate limit: <strong>10 submissions / 24h per user</strong>.
+                Admins bypass.
               </li>
               <li>
-                Slugs auto-deduplicate (<code>boba</code> →{" "}
-                <code>boba-2</code> → <code>boba-3</code> → …). You always get
-                a successful submission.
+                Slugs auto-deduplicate (<code>boba</code> → <code>boba-2</code>{" "}
+                → <code>boba-3</code> → …). You always get a successful
+                submission.
               </li>
               <li>
                 Identity (userId, email, credit) comes from the verified OAuth
@@ -339,9 +333,9 @@ export default function DocsPage() {
           </Section>
 
           <Section id="failure" title="Failure modes">
-            <div className="overflow-x-auto rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-stone-900">
+            <div className="overflow-x-auto rounded-2xl border border-border-base bg-surface">
               <table className="w-full min-w-[520px] text-sm">
-                <thead className="border-b border-black/10 bg-stone-50 dark:border-white/10 dark:bg-stone-900">
+                <thead className="border-b border-border-base bg-surface-muted">
                   <tr>
                     <Th>Symptom</Th>
                     <Th>Cause</Th>
@@ -406,15 +400,14 @@ export default function DocsPage() {
               Petdex ships a Claude Code / Codex CLI / Cursor compatible{" "}
               <strong>skill</strong> at{" "}
               <code>.claude/skills/petdex/SKILL.md</code>. Compatible agents
-              load it automatically and learn{" "}
-              <em>when</em> and <em>how</em> to call the CLI on your behalf.
+              load it automatically and learn <em>when</em> and <em>how</em> to
+              call the CLI on your behalf.
             </p>
 
             <h3 className="mt-6 font-semibold">What this enables</h3>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
+            <ul className="ml-6 list-disc space-y-1 text-muted-2">
               <li>
-                Say{" "}
-                <em>"install something cozy for my Codex"</em> in any agent
+                Say <em>"install something cozy for my Codex"</em> in any agent
                 tool. It runs <code>petdex list</code>, suggests Boba/Boxcat,
                 installs your pick, and reminds you to activate via{" "}
                 <strong>Settings → Appearance → Pets</strong>.
@@ -444,16 +437,16 @@ export default function DocsPage() {
             />
             <p>
               Other agent tools can load the same SKILL.md from the repo. The
-              file is plain markdown with. No agent-specific
-              syntax beyond <code>allowed-tools</code>.
+              file is plain markdown with. No agent-specific syntax beyond{" "}
+              <code>allowed-tools</code>.
             </p>
 
             <h3 className="mt-6 font-semibold">Build your own skill on top</h3>
             <p>
-              The CLI is the executable surface; the skill is the cognitive
-              one. If you build a derivative skill (e.g. one that auto-tags
-              new pets or curates a daily digest), you can use the Petdex
-              skill as a reference. Read it directly:
+              The CLI is the executable surface; the skill is the cognitive one.
+              If you build a derivative skill (e.g. one that auto-tags new pets
+              or curates a daily digest), you can use the Petdex skill as a
+              reference. Read it directly:
             </p>
             <p>
               <a
@@ -474,7 +467,7 @@ export default function DocsPage() {
               only need to override env vars if you're testing against a
               non-production deployment.
             </p>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
+            <ul className="ml-6 list-disc space-y-1 text-muted-2">
               <li>
                 <code>PETDEX_URL</code>: base URL, default{" "}
                 <code>https://petdex.crafter.run</code>
@@ -484,16 +477,16 @@ export default function DocsPage() {
                 <code>https://clerk.petdex.crafter.run</code>
               </li>
               <li>
-                <code>CLERK_OAUTH_CLIENT_ID</code>: public client id (baked
-                into the CLI binary)
+                <code>CLERK_OAUTH_CLIENT_ID</code>: public client id (baked into
+                the CLI binary)
               </li>
             </ul>
           </Section>
 
           <Section id="contribute" title="Contribute">
-            <ul className="space-y-3 text-stone-700 dark:text-stone-300">
+            <ul className="space-y-3 text-muted-2">
               <li className="flex items-start gap-2">
-                <Check className="mt-1 size-4 shrink-0 text-stone-500 dark:text-stone-400" />
+                <Check className="mt-1 size-4 shrink-0 text-muted-3" />
                 <span>
                   PRs welcome at{" "}
                   <a
@@ -507,7 +500,7 @@ export default function DocsPage() {
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="mt-1 size-4 shrink-0 text-stone-500 dark:text-stone-400" />
+                <Check className="mt-1 size-4 shrink-0 text-muted-3" />
                 <span>
                   Bug reports and feature requests:{" "}
                   <a
@@ -521,7 +514,7 @@ export default function DocsPage() {
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="mt-1 size-4 shrink-0 text-stone-500 dark:text-stone-400" />
+                <Check className="mt-1 size-4 shrink-0 text-muted-3" />
                 <span>
                   Sponsor on{" "}
                   <a
@@ -547,7 +540,7 @@ export default function DocsPage() {
 
 function NavHeader({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-3 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase first:mt-0 dark:text-stone-400">
+    <p className="mt-3 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase first:mt-0">
       {children}
     </p>
   );
@@ -563,7 +556,7 @@ function NavLink({
   return (
     <a
       href={href}
-      className="rounded px-2 py-1 text-stone-700 transition hover:bg-white hover:text-black dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+      className="rounded px-2 py-1 text-muted-2 transition hover:bg-white hover:text-foreground dark:hover:bg-stone-800"
     >
       {children}
     </a>
@@ -584,7 +577,7 @@ function Section({
       <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
         {title}
       </h2>
-      <div className="space-y-4 text-base leading-7 text-stone-700 dark:text-stone-300">
+      <div className="space-y-4 text-base leading-7 text-muted-2">
         {children}
       </div>
     </section>
@@ -601,7 +594,7 @@ function Callout({ children }: { children: React.ReactNode }) {
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-2 text-left font-mono text-[10px] tracking-[0.18em] text-stone-600 uppercase dark:text-stone-400">
+    <th className="px-4 py-2 text-left font-mono text-[10px] tracking-[0.18em] text-muted-2 uppercase">
       {children}
     </th>
   );
@@ -621,8 +614,8 @@ function Tr({
       <td className="px-4 py-3 align-top font-mono text-xs text-rose-700 dark:text-rose-300">
         {sym}
       </td>
-      <td className="px-4 py-3 align-top text-stone-700 dark:text-stone-300">{cause}</td>
-      <td className="px-4 py-3 align-top text-stone-800 dark:text-stone-200">{fix}</td>
+      <td className="px-4 py-3 align-top text-muted-2">{cause}</td>
+      <td className="px-4 py-3 align-top text-foreground">{fix}</td>
     </tr>
   );
 }

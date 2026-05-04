@@ -9,6 +9,7 @@ import { getMetricsForSlug } from "@/lib/db/metrics";
 import { resolveOwnerCreditFor } from "@/lib/owner-credit";
 import { getPet, getStaticPetSlugs } from "@/lib/pets";
 
+import { ClaimCTA } from "@/components/claim-cta";
 import { InstallCommand } from "@/components/install-command";
 import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
@@ -17,7 +18,6 @@ import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { ClaimCTA } from "@/components/claim-cta";
 import { SubmittedBy } from "@/components/submitted-by";
 
 const SITE_URL = "https://petdex.crafter.run";
@@ -122,20 +122,18 @@ export default async function PetPage({ params }: PageProps) {
       })
     : null;
 
-  let ownerEditState:
-    | {
-        isOwner: boolean;
-        petId: string;
-        currentTags: string[];
-        pending: {
-          displayName: string | null;
-          description: string | null;
-          tags: string[] | null;
-          submittedAt: string | null;
-        } | null;
-        lastRejection: string | null;
-      }
-    | null = null;
+  let ownerEditState: {
+    isOwner: boolean;
+    petId: string;
+    currentTags: string[];
+    pending: {
+      displayName: string | null;
+      description: string | null;
+      tags: string[] | null;
+      submittedAt: string | null;
+    } | null;
+    lastRejection: string | null;
+  } | null = null;
   if (userId && ownerRow && ownerRow.ownerId === userId) {
     const hasPending = Boolean(ownerRow.pendingSubmittedAt);
     ownerEditState = {
@@ -178,9 +176,7 @@ export default async function PetPage({ params }: PageProps) {
               ...(ownerCredit.externals[0]
                 ? { url: ownerCredit.externals[0].url }
                 : {}),
-              ...(ownerCredit.imageUrl
-                ? { image: ownerCredit.imageUrl }
-                : {}),
+              ...(ownerCredit.imageUrl ? { image: ownerCredit.imageUrl } : {}),
             },
           }
         : {}),
@@ -227,16 +223,15 @@ export default async function PetPage({ params }: PageProps) {
         <SiteHeader />
       </section>
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
-
         <header className="grid gap-6 lg:grid-cols-[1fr_460px] lg:items-start">
           <div>
-            <p className="text-sm font-semibold tracking-[0.18em] text-cyan-700 uppercase">
+            <p className="text-sm font-semibold tracking-[0.18em] text-brand uppercase">
               {pet.featured ? "Featured Petdex entry" : "Petdex entry"}
             </p>
-            <h1 className="mt-3 text-5xl font-semibold text-stone-950 md:text-7xl dark:text-stone-100">
+            <h1 className="mt-3 text-5xl font-semibold text-foreground md:text-7xl">
               {pet.displayName}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-700 dark:text-stone-300">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-2">
               {pet.description}
             </p>
 
@@ -251,9 +246,8 @@ export default async function PetPage({ params }: PageProps) {
                     petName={pet.displayName}
                     authorLabel={ownerCredit.name}
                     githubUrl={
-                      ownerCredit.externals.find(
-                        (e) => e.provider === "github",
-                      )?.url ?? null
+                      ownerCredit.externals.find((e) => e.provider === "github")
+                        ?.url ?? null
                     }
                   />
                 ) : null}
@@ -276,7 +270,7 @@ export default async function PetPage({ params }: PageProps) {
                 }}
                 variant="detail"
               />
-              <span className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+              <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
                 {metrics.installCount} installs · {metrics.zipDownloadCount} zip
                 downloads
               </span>
@@ -338,12 +332,12 @@ function InfoCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
-      <div className="flex items-center gap-2 text-sm font-semibold text-stone-950 dark:text-stone-100">
+    <div className="rounded-2xl border border-border-base bg-surface/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
         {icon}
         {title}
       </div>
-      <div className="mt-4 space-y-2 break-words text-sm leading-6 text-stone-600 dark:text-stone-400">
+      <div className="mt-4 space-y-2 break-words text-sm leading-6 text-muted-2">
         {children}
       </div>
     </div>

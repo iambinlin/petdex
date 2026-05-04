@@ -52,7 +52,7 @@ export default async function MyFeedbackThreadPage({
         <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 pt-10 pb-12 md:px-8 md:pt-14">
           <Link
             href="/my-feedback"
-            className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+            className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase hover:text-stone-900 dark:hover:text-stone-100"
           >
             ← All threads
           </Link>

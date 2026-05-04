@@ -31,10 +31,10 @@ export default function CreatePage() {
             Hatch a pet in Codex
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-2">
-            Codex ships a built-in skill called{" "}
-            <strong>Hatch Pet</strong> that generates a fully animated
-            companion (9 states, 1536×1872) from a short description. Five
-            minutes from idea to a sprite that lives in your editor.
+            Codex ships a built-in skill called <strong>Hatch Pet</strong> that
+            generates a fully animated companion (9 states, 1536×1872) from a
+            short description. Five minutes from idea to a sprite that lives in
+            your editor.
           </p>
         </header>
 
@@ -45,9 +45,8 @@ export default function CreatePage() {
             title="Get the Hatch Pet skill"
           >
             <p>
-              Open Codex →{" "}
-              <span className="font-mono">Skills</span> in the top navbar →
-              find <strong>Hatch Pet</strong> → install.
+              Open Codex → <span className="font-mono">Skills</span> in the top
+              navbar → find <strong>Hatch Pet</strong> → install.
             </p>
           </Step>
 
@@ -58,14 +57,14 @@ export default function CreatePage() {
           >
             <p>
               In Codex chat, type{" "}
-              <code className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs dark:bg-stone-800">
+              <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
                 /pet
               </code>
               . Describe the pet you want (an idea, a vibe, a thing on your
               desk). The skill generates the spritesheet and animations
               automatically.
             </p>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
+            <p className="text-xs text-muted-3">
               Tip: specifics travel further. "A tiny sock-elf with green eyes"
               beats "a creature".
             </p>
@@ -78,15 +77,13 @@ export default function CreatePage() {
           >
             <p>
               Restart Codex, then go to{" "}
-              <span className="font-mono">
-                Settings → Appearance → Pets
-              </span>{" "}
+              <span className="font-mono">Settings → Appearance → Pets</span>{" "}
               and click <strong>Select</strong> on your new pet under{" "}
               <span className="font-mono">Custom pets</span>.
             </p>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
+            <p className="text-xs text-muted-3">
               Use{" "}
-              <code className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs dark:bg-stone-800">
+              <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
                 /pet
               </code>{" "}
               afterwards to wake or tuck it away.
@@ -100,13 +97,13 @@ export default function CreatePage() {
           >
             <p>
               The pet lives at{" "}
-              <code className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs dark:bg-stone-800">
+              <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
                 ~/.codex/pets/&lt;name&gt;
               </code>
               . Drag that folder (or its zip) to{" "}
               <Link
                 href="/submit"
-                className="font-medium underline underline-offset-4 hover:text-black dark:hover:text-stone-100"
+                className="font-medium underline underline-offset-4 hover:text-foreground"
               >
                 /submit
               </Link>{" "}
@@ -115,14 +112,14 @@ export default function CreatePage() {
           </Step>
         </ol>
 
-        <div className="rounded-3xl border border-black/10 bg-white/76 p-6 backdrop-blur md:p-8 dark:border-white/10 dark:bg-stone-900/76">
+        <div className="rounded-3xl border border-border-base bg-surface/76 p-6 backdrop-blur md:p-8">
           <h2 className="text-lg font-semibold tracking-tight">
             What makes a great pet
           </h2>
-          <ul className="mt-3 space-y-2 text-sm leading-6 text-stone-700 dark:text-stone-300">
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-2">
             <li>
-              <strong>Specific over generic.</strong> "A bubble-tea otter"
-              beats "an otter".
+              <strong>Specific over generic.</strong> "A bubble-tea otter" beats
+              "an otter".
             </li>
             <li>
               <strong>Twist a job, role, or object.</strong> Paperclip
@@ -141,16 +138,16 @@ export default function CreatePage() {
 
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-black/10 bg-white/85 p-6 backdrop-blur dark:border-white/10">
           <div>
-            <p className="text-base font-semibold text-stone-950 dark:text-stone-100">
+            <p className="text-base font-semibold text-foreground">
               Already have a pet?
             </p>
-            <p className="text-sm text-stone-600 dark:text-stone-400">
+            <p className="text-sm text-muted-2">
               Drop the folder or zip and we'll publish it.
             </p>
           </div>
           <Link
             href="/submit"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
           >
             Submit your pet
             <ArrowRight className="size-4" />
@@ -175,19 +172,17 @@ function Step({
   children: React.ReactNode;
 }) {
   return (
-    <li className="flex flex-col gap-2 rounded-3xl border border-black/10 bg-white/76 p-5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
+    <li className="flex flex-col gap-2 rounded-3xl border border-border-base bg-surface/76 p-5 backdrop-blur">
       <div className="flex items-center gap-2">
-        <span className="grid size-6 place-items-center rounded-full bg-black font-mono text-[11px] text-white dark:bg-stone-100">
+        <span className="grid size-6 place-items-center rounded-full bg-inverse font-mono text-[11px] text-on-inverse">
           {n}
         </span>
-        <span className="inline-flex items-center gap-1.5 text-sm font-semibold tracking-tight text-stone-950 dark:text-stone-100">
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold tracking-tight text-foreground">
           {icon}
           {title}
         </span>
       </div>
-      <div className="space-y-2 text-sm leading-6 text-stone-700 dark:text-stone-300">
-        {children}
-      </div>
+      <div className="space-y-2 text-sm leading-6 text-muted-2">{children}</div>
     </li>
   );
 }

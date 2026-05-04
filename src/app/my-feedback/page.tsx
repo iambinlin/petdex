@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
-import { desc, eq, inArray, sql as dsql } from "drizzle-orm";
+import { desc, sql as dsql, eq, inArray } from "drizzle-orm";
 import { Bug, Heart, Lightbulb, MessageSquare } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
@@ -26,22 +26,22 @@ const KIND_META: Record<
 > = {
   suggestion: {
     label: "Suggest",
-    tone: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/60",
+    tone: "bg-chip-warning-bg text-chip-warning-fg ring-chip-warning-fg/20",
     icon: <Lightbulb className="size-3.5" />,
   },
   bug: {
     label: "Bug",
-    tone: "bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800/60",
+    tone: "bg-chip-danger-bg text-chip-danger-fg ring-chip-danger-fg/20",
     icon: <Bug className="size-3.5" />,
   },
   praise: {
     label: "Praise",
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
+    tone: "bg-chip-success-bg text-chip-success-fg ring-chip-success-fg/20",
     icon: <Heart className="size-3.5" />,
   },
   other: {
     label: "Other",
-    tone: "bg-stone-50 text-stone-900 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-700",
+    tone: "bg-surface-muted text-stone-900 ring-stone-200 dark:text-stone-200 dark:ring-stone-700",
     icon: <MessageSquare className="size-3.5" />,
   },
 };
@@ -85,9 +85,7 @@ export default async function MyFeedbackPage({
       .select({
         feedbackId: schema.feedbackReplies.feedbackId,
         latestAt: dsql<Date>`MAX(${schema.feedbackReplies.createdAt})`,
-        latestAdminAt: dsql<
-          Date | null
-        >`MAX(${schema.feedbackReplies.createdAt}) FILTER (WHERE ${schema.feedbackReplies.authorKind} = 'admin')`,
+        latestAdminAt: dsql<Date | null>`MAX(${schema.feedbackReplies.createdAt}) FILTER (WHERE ${schema.feedbackReplies.authorKind} = 'admin')`,
         // Pick the body of the most recent admin reply via a window
         // function we order by createdAt desc inside the FILTER. Postgres
         // doesn't have FILTER on string_agg easily, so we use a simpler
@@ -126,7 +124,8 @@ export default async function MyFeedbackPage({
     // when both are set, or no admin reply at all).
     const latest = agg?.latestAt ?? null;
     const waiting =
-      !replied || (latest && lastAdminAt && new Date(latest) > new Date(lastAdminAt));
+      !replied ||
+      (latest && lastAdminAt && new Date(latest) > new Date(lastAdminAt));
     return { row, agg, unread, replied, waiting: Boolean(waiting) };
   });
 
@@ -169,120 +168,117 @@ export default async function MyFeedbackPage({
         <SiteHeader />
       </section>
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-20 md:px-8">
-          <header className="space-y-3">
-            <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-              Threads
-            </p>
-            <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
-              My feedback
-            </h1>
-            <p className="text-sm text-stone-600 dark:text-stone-400">
-              Conversations with the Petdex team about feedback you've sent.
-            </p>
-            {decorated.length > 0 ? (
-              <MyFeedbackFilters
-                counts={counts}
-                defaultFilter={defaultFilter}
-              />
-            ) : null}
-          </header>
+        <header className="space-y-3">
+          <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
+            Threads
+          </p>
+          <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
+            My feedback
+          </h1>
+          <p className="text-sm text-muted-2">
+            Conversations with the Petdex team about feedback you've sent.
+          </p>
+          {decorated.length > 0 ? (
+            <MyFeedbackFilters counts={counts} defaultFilter={defaultFilter} />
+          ) : null}
+        </header>
 
-          {decorated.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
-              You haven't sent any feedback yet. Use the Feedback button to
-              share thoughts.
-            </div>
-          ) : visible.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
-              No threads in this view.
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {visible.map(({ row: r, agg, unread, replied, waiting }) => {
-                const meta = KIND_META[r.kind] ?? KIND_META.other;
-                const lastAdminAt = agg?.latestAdminAt ?? null;
-                const lastAdminBody = agg?.latestAdminBody ?? null;
-                const replyCount = agg?.replyCount ?? 0;
+        {decorated.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-stone-600 dark:text-stone-400">
+            You haven't sent any feedback yet. Use the Feedback button to share
+            thoughts.
+          </div>
+        ) : visible.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
+            No threads in this view.
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {visible.map(({ row: r, agg, unread, replied, waiting }) => {
+              const meta = KIND_META[r.kind] ?? KIND_META.other;
+              const lastAdminAt = agg?.latestAdminAt ?? null;
+              const lastAdminBody = agg?.latestAdminBody ?? null;
+              const replyCount = agg?.replyCount ?? 0;
 
-                return (
-                  <li key={r.id}>
-                    <Link
-                      href={`/my-feedback/${r.id}`}
-                      className={`block rounded-2xl border p-4 transition hover:bg-white ${
-                        unread
-                          ? "border-brand/40 bg-white shadow-[0_0_0_1px_rgba(82,102,234,0.18),0_18px_45px_-26px_rgba(82,102,234,0.4)]"
-                          : "border-black/10 bg-white/80 hover:border-black/30 dark:border-white/10 dark:bg-stone-900/80 dark:hover:border-white/30"
-            }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${meta.tone}`}
-                            >
-                              {meta.icon}
-                              {meta.label}
+              return (
+                <li key={r.id}>
+                  <Link
+                    href={`/my-feedback/${r.id}`}
+                    className={`block rounded-2xl border p-4 transition hover:bg-white ${
+                      unread
+                        ? "border-brand/40 bg-white shadow-[0_0_0_1px_rgba(82,102,234,0.18),0_18px_45px_-26px_rgba(82,102,234,0.4)]"
+                        : "border-black/10 bg-surface/80 hover:border-black/30 dark:border-white/10 dark:hover:border-white/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${meta.tone}`}
+                          >
+                            {meta.icon}
+                            {meta.label}
+                          </span>
+                          {unread ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-white uppercase">
+                              New reply
                             </span>
-                            {unread ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-white uppercase">
-                                New reply
-                              </span>
-                            ) : replied ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900 uppercase ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
-                                Replied
-                              </span>
-                            ) : waiting ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-amber-900 uppercase ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300">
-                                Waiting
-                              </span>
-                            ) : null}
-                            <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
-                              {new Date(r.createdAt).toLocaleDateString()}
+                          ) : replied ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-chip-success-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-success-fg uppercase ring-1 ring-chip-success-fg/20">
+                              Replied
                             </span>
-                          </div>
-
-                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-800 dark:text-stone-200">
-                            {r.message}
-                          </p>
-
-                          {lastAdminBody ? (
-                            <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50/40 p-2.5 dark:border-emerald-800/40 dark:bg-emerald-950/30">
-                              <div className="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-600 font-mono text-[10px] font-semibold text-white">
-                                H
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900/70 uppercase">
-                                  Hunter
-                                  {lastAdminAt ? (
-                                    <span>
-                                      ·{" "}
-                                      {new Date(lastAdminAt).toLocaleDateString(
-                                        undefined,
-                                        { month: "short", day: "numeric" },
-                                      )}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <p className="mt-0.5 line-clamp-2 text-sm leading-6 text-emerald-900 dark:text-emerald-300">
-                                  {lastAdminBody}
-                                </p>
-                              </div>
-                            </div>
+                          ) : waiting ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-chip-warning-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-warning-fg uppercase ring-1 ring-chip-warning-fg/20">
+                              Waiting
+                            </span>
                           ) : null}
-
-                          <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
-                            {replyCount > 0
-                              ? `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`
-                              : "No replies yet"}
-                          </p>
+                          <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
+                            {new Date(r.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
+
+                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-foreground">
+                          {r.message}
+                        </p>
+
+                        {lastAdminBody ? (
+                          <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50/40 p-2.5 dark:border-emerald-800/40 dark:bg-emerald-950/30">
+                            <div className="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-600 font-mono text-[10px] font-semibold text-white">
+                              H
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900/70 uppercase">
+                                Hunter
+                                {lastAdminAt ? (
+                                  <span>
+                                    ·{" "}
+                                    {new Date(lastAdminAt).toLocaleDateString(
+                                      undefined,
+                                      { month: "short", day: "numeric" },
+                                    )}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <p className="mt-0.5 line-clamp-2 text-sm leading-6 text-emerald-900 dark:text-emerald-300">
+                                {lastAdminBody}
+                              </p>
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <p className="mt-2 text-xs text-muted-3">
+                          {replyCount > 0
+                            ? `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`
+                            : "No replies yet"}
+                        </p>
                       </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
       <SiteFooter />
     </main>

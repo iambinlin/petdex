@@ -2,11 +2,12 @@ import Link from "next/link";
 
 import { ArrowRight, Search, Sparkles } from "lucide-react";
 
+import { getApprovedPetCount, getFeaturedPetsWithMetrics } from "@/lib/pets";
+
 import { CommandLine } from "@/components/command-line";
 import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getApprovedPetCount, getFeaturedPetsWithMetrics } from "@/lib/pets";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,7 @@ export default async function NotFound() {
 
   // Pick a random featured pet for the "lost" sprite. Falls back gracefully
   // if the curated set is empty (early days / fresh DB).
-  const lost =
-    featured[Math.floor(Math.random() * featured.length)] ?? null;
+  const lost = featured[Math.floor(Math.random() * featured.length)] ?? null;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -41,9 +41,9 @@ export default async function NotFound() {
               This pet wandered off
             </h1>
             <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
-              The page you tried to reach isn't in the index. Could be a typo,
-              a withdrawn submission, or a pet that hasn't been approved yet.
-              Try one of these instead.
+              The page you tried to reach isn't in the index. Could be a typo, a
+              withdrawn submission, or a pet that hasn't been approved yet. Try
+              one of these instead.
             </p>
 
             {lost ? (
@@ -63,7 +63,7 @@ export default async function NotFound() {
                     label={`${lost.displayName} cycling through states`}
                   />
                 </div>
-                <p className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
+                <p className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
                   Caught wandering: {lost.displayName}
                 </p>
               </div>
@@ -73,21 +73,21 @@ export default async function NotFound() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/#gallery"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
               <Search className="size-4" />
               Browse {total > 0 ? `${total}+ pets` : "the gallery"}
             </Link>
             <Link
               href="/about"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-100 dark:hover:bg-stone-800"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
             >
               <Sparkles className="size-4" />
               About Petdex
             </Link>
             <Link
               href="/submit"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-100 dark:hover:bg-stone-800"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
             >
               Submit a pet
               <ArrowRight className="size-4" />
@@ -99,10 +99,10 @@ export default async function NotFound() {
       {featured.length > 0 ? (
         <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 md:px-8 md:py-16">
           <header className="flex flex-col gap-1">
-            <p className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
               Try a featured one
             </p>
-            <h2 className="text-2xl font-medium tracking-tight text-stone-950 md:text-3xl dark:text-stone-100">
+            <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
               Pets that are definitely here
             </h2>
           </header>
@@ -112,7 +112,7 @@ export default async function NotFound() {
               <Link
                 key={pet.slug}
                 href={`/pets/${pet.slug}`}
-                className="group flex flex-col items-center rounded-3xl border border-black/10 bg-white/76 px-5 py-6 shadow-sm shadow-blue-950/5 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 dark:border-white/10 dark:bg-stone-900/76 dark:hover:bg-stone-800"
+                className="group flex flex-col items-center rounded-3xl border border-border-base bg-surface/76 px-5 py-6 shadow-sm shadow-blue-950/5 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 dark:hover:bg-stone-800"
               >
                 <div
                   className="flex items-center justify-center px-2 py-3"
@@ -128,18 +128,18 @@ export default async function NotFound() {
                     label={`${pet.displayName} animated`}
                   />
                 </div>
-                <span className="mt-3 text-base font-semibold tracking-tight text-stone-950 dark:text-stone-100">
+                <span className="mt-3 text-base font-semibold tracking-tight text-foreground">
                   {pet.displayName}
                 </span>
-                <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
+                <span className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
                   {pet.kind}
                 </span>
               </Link>
             ))}
           </div>
 
-          <div className="mt-2 rounded-2xl border border-black/[0.08] bg-white/55 px-5 py-4 backdrop-blur dark:border-white/[0.08] dark:bg-stone-900/55">
-            <p className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
+          <div className="mt-2 rounded-2xl border border-black/[0.08] bg-surface/55 px-5 py-4 backdrop-blur dark:border-white/[0.08]">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
               Or install one from the terminal
             </p>
             <CommandLine
