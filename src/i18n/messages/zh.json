@@ -6,7 +6,29 @@
     "submitPet__fixme": true,
     "browseGallery": "浏览图库",
     "browseGallery__fixme": true,
-    "github": "GitHub"
+    "github": "GitHub",
+    "petdexHome": "Petdex 首页"
+  },
+  "metadata": {
+    "root": {
+      "titleDefault": "Petdex — 适用于 Codex CLI 的动画像素宠物",
+      "titleTemplate": "{title} | Petdex",
+      "description": "Petdex 是 Codex CLI 的公共动画像素宠物图库。浏览开源伙伴，预览它们的动画，并用一条命令安装。",
+      "description__fixme": true,
+      "ogTitle": "Petdex — 适用于 Codex CLI 的动画像素宠物",
+      "twitterTitle": "Petdex — 适用于 Codex CLI 的动画像素宠物",
+      "keywords": {
+        "codexPet": "Codex 宠物",
+        "codexCliPet": "Codex CLI 宠物",
+        "openaiCodexPets": "OpenAI Codex 宠物",
+        "pixelPet": "像素宠物",
+        "animatedPet": "动画宠物",
+        "developerMascot": "开发者吉祥物",
+        "terminalPet": "终端宠物",
+        "codexCompanion": "Codex 伙伴",
+        "petdex": "petdex"
+      }
+    }
   },
   "header": {
     "gallery": "图库",
@@ -21,12 +43,24 @@
     "requests__fixme": true,
     "about": "关于",
     "about__fixme": true,
+    "language": "语言",
     "submitCta": "提交宠物",
     "submitCta__fixme": true,
     "openMenu": "打开菜单",
     "openMenu__fixme": true,
     "closeMenu": "关闭菜单",
-    "closeMenu__fixme": true
+    "closeMenu__fixme": true,
+    "githubRepoAria": "GitHub 上的 Petdex",
+    "githubRepoAriaWithStars": "GitHub 上的 Petdex，{stars} 颗星"
+  },
+  "theme": {
+    "toggle": "切换主题",
+    "system": "系统（{resolvedTheme}）",
+    "dark": "深色",
+    "light": "浅色",
+    "ariaLabel": "主题：{label}。点击切换。",
+    "ariaLabel__fixme": true,
+    "title": "主题：{label}"
   },
   "footer": {
     "rightsNotice": "宠物是用户提交的同人作品。Petdex 不主张拥有任何底层知识产权。",
@@ -35,13 +69,15 @@
     "topCreators__fixme": true,
     "takedown": "下架请求",
     "takedown__fixme": true,
-    "github": "GitHub"
+    "github": "GitHub",
+    "sponsor": "赞助",
+    "sponsorAria": "在 GitHub 上赞助"
   },
   "home": {
     "eyebrow": "Codex 宠物索引",
     "eyebrow__fixme": true,
     "title": "Petdex",
-    "tagline": "{brand} 的动画像素宠物公共图库。浏览 {totalPets}+ 个开源伙伴，预览它们的状态，并用一个命令安装。",
+    "tagline": "<brand /> 的动画像素宠物公共图库。浏览 {totalPets}+ 个开源伙伴，预览它们的状态，并用一条命令安装。",
     "tagline__fixme": true,
     "heroCommand": "npx petdex install boba",
     "submitCta": "提交宠物",
@@ -52,9 +88,454 @@
     "openPet__fixme": true,
     "petAnimated": "{name} 动画",
     "petAnimated__fixme": true,
-    "jsonLdDescription": "Codex CLI 的动画像素宠物公共图库。用一个命令安装一只宠物。",
+    "petParadeAria": "精选宠物",
+    "jsonLdDescription": "Codex CLI 的动画像素宠物公共图库。用一条命令安装一只宠物。",
     "jsonLdDescription__fixme": true,
     "jsonLdFeaturedPets": "精选 Codex 宠物",
     "jsonLdFeaturedPets__fixme": true
+  },
+  "feedback": {
+    "trigger": "反馈",
+    "title": "发送反馈",
+    "close": "关闭",
+    "send": "发送",
+    "sending": "发送中…",
+    "emailPlaceholder": "邮箱（可选，仅当你想收到回复时填写）",
+    "githubPrompt": "发现 bug，或者想深入看看源码？",
+    "openIssue": "去 GitHub 提交 issue →",
+    "kinds": {
+      "suggestion": "建议",
+      "bug": "Bug",
+      "praise": "表扬",
+      "other": "其他"
+    },
+    "placeholders": {
+      "suggestion": "什么会让 Petdex 更好？",
+      "bug": "哪里坏了？如果可以，请附上步骤。",
+      "praise": "告诉我们你喜欢什么。",
+      "other": "你在想什么？"
+    },
+    "success": {
+      "title": "谢谢，已收到。",
+      "body": "每条留言都会进入队列。我们都会看。"
+    },
+    "errors": {
+      "moreDetail": "请再多说一点（至少 4 个字符）。",
+      "submitFailed": "提交失败（{status}）。",
+      "network": "网络错误。请重试。"
+    }
+  },
+  "admin": {
+    "metadata": {
+      "title": "Petdex — 管理后台"
+    },
+    "tabs": {
+      "ariaLabel": "管理分区",
+      "submissions": "提交",
+      "edits": "编辑",
+      "requests": "请求",
+      "feedback": "反馈",
+      "manifest": "Manifest"
+    },
+    "status": {
+      "pending": "待处理",
+      "approved": "已通过",
+      "rejected": "已拒绝",
+      "discovered": "已发现",
+      "all": "全部",
+      "open": "开放",
+      "fulfilled": "已完成",
+      "dismissed": "已忽略",
+      "addressed": "已处理",
+      "archived": "已归档"
+    },
+    "kinds": {
+      "all": "所有类型",
+      "suggestion": "建议",
+      "bug": "Bug",
+      "praise": "表扬",
+      "other": "其他",
+      "suggestShort": "建议"
+    },
+    "queue": {
+      "eyebrow": "提交队列",
+      "title": "审核宠物",
+      "empty": "这个视图里没有宠物。"
+    },
+    "review": {
+      "needsName": "需要名字",
+      "edit": "编辑",
+      "placeholders": {
+        "displayName": "宠物显示名",
+        "slug": "slug（URL 安全）",
+        "description": "描述"
+      },
+      "rejectPrompt": "拒绝原因（可选）",
+      "requestFailed": "请求失败（{status}）",
+      "save": "保存",
+      "cancel": "取消",
+      "approve": "通过",
+      "reject": "拒绝",
+      "revive": "恢复为待处理",
+      "links": {
+        "zip": "zip",
+        "sprite": "sprite",
+        "petJson": "pet.json"
+      },
+      "relative": {
+        "justNow": "刚刚"
+      },
+      "petTime": "PET",
+      "petAnimation": "宠物动画",
+      "similar": {
+        "possibleDuplicate": "可能重复",
+        "looksSimilar": "看起来相似",
+        "sameCharacter": "同一个角色？",
+        "hide": "隐藏",
+        "show": "显示"
+      }
+    },
+    "edits": {
+      "eyebrow": "编辑队列",
+      "title": "待审核编辑",
+      "description": "这是主人提交、等待重新审核的文本修改。在你处理之前，线上页面会继续显示已批准的内容。",
+      "empty": "没有待审核编辑。",
+      "submitted": "提交时间",
+      "displayName": "显示名",
+      "descriptionLabel": "描述",
+      "tags": "标签",
+      "emptyValue": "空",
+      "noChanges": "没有变化",
+      "noDiff": "检测到提交了编辑，但没有发现实际变化。可以拒绝以清空它。"
+    },
+    "editActions": {
+      "approve": "通过编辑",
+      "reject": "拒绝",
+      "rejectPrompt": "原因（可选，会发给主人）：",
+      "failed": "失败：{error}"
+    },
+    "feedback": {
+      "eyebrow": "收件箱",
+      "title": "反馈",
+      "empty": "这个视图里没有反馈。",
+      "thread": "线程",
+      "threadWithCount": "线程（{count}）",
+      "profile": "资料",
+      "viewProfile": "查看 @{handle} 的资料",
+      "sendEmail": "改为发送邮件",
+      "anonymous": "匿名",
+      "clerk": "clerk",
+      "filters": {
+        "pending": "待处理",
+        "addressed": "已处理",
+        "archived": "已归档",
+        "all": "全部"
+      },
+      "mailto": {
+        "bodyIntro": "感谢你在 Petdex 提交 {kind}",
+        "subject": "Re: 你的 Petdex 反馈 — {excerpt}"
+      }
+    },
+    "feedbackActions": {
+      "address": "标记为已处理",
+      "archive": "归档",
+      "reopen": "重新打开为待处理",
+      "failed": "失败：{error}"
+    },
+    "requests": {
+      "eyebrow": "社区愿望单",
+      "title": "宠物请求",
+      "summary": "{open} 个开放 · {fulfilled} 个完成 · {dismissed} 个忽略",
+      "openSection": "开放中",
+      "fulfilledSection": "已完成",
+      "dismissedSection": "已忽略",
+      "emptyOpen": "现在没有开放请求。",
+      "votes": "票",
+      "moreVoters": "+{count} 更多",
+      "anonymous": "匿名"
+    },
+    "requestActions": {
+      "fulfill": "完成",
+      "dismiss": "忽略",
+      "reopen": "重新打开",
+      "slug": "slug",
+      "placeholder": "cool-clippy",
+      "mark": "标记"
+    },
+    "manifest": {
+      "eyebrow": "遥测",
+      "title": "Manifest 拉取",
+      "description": "这里显示谁在拉取 /api/manifest。IP 会按天做 SHA-256 哈希，所以同一天内可分组，但不能反查。",
+      "total": "总量（全部时间）",
+      "last24": "最近 24 小时",
+      "distinct24": "不同 IP（24 小时）",
+      "byDay": "按天 · 最近 14 天",
+      "loudestIps": "最活跃的 IP · 最近 7 天",
+      "topUserAgents": "最常见的 user-agent · 最近 7 天",
+      "byCountry": "按国家 · 最近 7 天",
+      "headers": {
+        "ipHash": "IP 哈希",
+        "country": "国家",
+        "lastUa": "最新 UA",
+        "fetches": "拉取次数"
+      },
+      "noUa": "无 UA"
+    },
+    "threadPage": {
+      "back": "← 收件箱"
+    }
+  },
+  "submit": {
+    "metadata": {
+      "title": "提交宠物 — Petdex",
+      "description": "为 Petdex 上传并验证一个 Codex 宠物包。",
+      "description__fixme": true
+    },
+    "eyebrow": "提交",
+    "title": "把你的宠物加入 Petdex",
+    "body": "分享一个兼容 Codex 的动画宠物包。Petdex 会在本地检查文件、预览精灵图，并准备提交。",
+    "body__fixme": true,
+    "createCta": "还没有宠物？去 Codex 里孵化一只",
+    "createCta__fixme": true,
+    "legalPrefix": "提交即表示你确认自己拥有该作品的权利，或这是你创作的同人内容。权利人可以通过我们的",
+    "legalPrefix__fixme": true,
+    "legalLink": "下架通知",
+    "legalSuffix": "。"
+  },
+  "requests": {
+    "metadata": {
+      "title": "宠物请求",
+      "description": "为社区想在 Petdex 里看到的宠物投票。得票最高的请求会被优先处理。",
+      "description__fixme": true
+    },
+    "eyebrow": "社区愿望单",
+    "eyebrow__fixme": true,
+    "title": "大家正在请求的宠物",
+    "title__fixme": true,
+    "body": "当有人搜索一只还不存在的宠物时，他们可以发起请求。也给你想要的宠物投票吧，票数最高的会排到策展列表前面。",
+    "body__fixme": true,
+    "backToGallery": "← 返回图库"
+  },
+  "myPets": {
+    "metadata": {
+      "title": "我的提交",
+      "description": "跟踪你发往 Petdex 的每只宠物状态，自定义个人资料，并编辑已上线条目。",
+      "description__fixme": true
+    },
+    "edit": {
+      "confirmWithdraw": "要撤回这次编辑吗？当前已批准的内容会继续保持上线。",
+      "confirmWithdraw__fixme": true,
+      "pendingReview": "等待审核",
+      "submittedPrefix": "你的编辑已提交于",
+      "submittedSuffix": "。在 Hunter 审核前，下方页面仍显示当前已批准版本。",
+      "submittedSuffix__fixme": true,
+      "viewEdit": "查看编辑",
+      "withdraw": "撤回",
+      "rejected": "编辑被拒绝",
+      "tryAgain": "再试一次",
+      "open": "编辑名称和描述",
+      "open__fixme": true,
+      "modalTitle": "编辑宠物元数据",
+      "modalBody": "这会重新进入管理员审核。这里不能修改 sprites 或 zip；那类变更需要重新 /submit，才能再次运行去重和扫描流程。",
+      "modalBody__fixme": true,
+      "fields": {
+        "displayName": "显示名称",
+        "description": "描述",
+        "tags": "标签"
+      },
+      "tagsPlaceholder": "cat, desk-companion, cuddly",
+      "tagsHelp": "可用逗号或空格分隔。小写，最多 8 个，允许连字符。",
+      "tagsHelp__fixme": true,
+      "actions": {
+        "cancel": "取消",
+        "submit": "提交编辑以供审核"
+      }
+    }
+  },
+  "myFeedback": {
+    "metadata": {
+      "title": "我的反馈",
+      "description": "你与 Petdex 团队围绕已提交反馈展开的对话。",
+      "description__fixme": true
+    },
+    "eyebrow": "线程",
+    "eyebrow__fixme": true,
+    "title": "我的反馈",
+    "subtitle": "你和 Petdex 团队围绕已发送反馈的对话。",
+    "subtitle__fixme": true,
+    "empty": "你还没有发送任何反馈。使用 Feedback 按钮分享你的想法。",
+    "empty__fixme": true,
+    "emptyFiltered": "此视图中没有线程。",
+    "emptyFiltered__fixme": true,
+    "badges": {
+      "newReply": "新回复",
+      "replied": "已回复",
+      "waiting": "等待中"
+    },
+    "filters": {
+      "unread": "未读",
+      "replied": "已回复",
+      "waiting": "等待中",
+      "all": "全部"
+    },
+    "replyAuthor": "Hunter",
+    "replyCount": "{count, plural, other {# 条回复}}",
+    "noReplies": "还没有回复",
+    "noReplies__fixme": true
+  },
+  "myFeedbackThread": {
+    "metadata": {
+      "title": "反馈线程"
+    },
+    "back": "← 所有线程",
+    "back__fixme": true
+  },
+  "notFound": {
+    "metadata": {
+      "title": "未找到宠物",
+      "description": "这只宠物从索引里跑掉了。试试下面这些吧。",
+      "description__fixme": true
+    },
+    "eyebrow": "错误 404",
+    "title": "这只宠物走丢了",
+    "body": "你要访问的页面不在索引里。可能是拼写错误、投稿已撤回，或这只宠物还没有通过审核。试试下面这些替代选项。",
+    "lostPetAnimated": "{name} 正在轮播各个状态",
+    "caughtWandering": "游荡时抓到：{name}",
+    "browsePets": "浏览 {count}+ 只宠物",
+    "browseGallery": "浏览图库",
+    "about": "关于 Petdex",
+    "submit": "提交宠物",
+    "featuredEyebrow": "试试精选宠物",
+    "featuredTitle": "这些宠物肯定还在",
+    "featuredPetAnimated": "{name} 动画",
+    "terminalEyebrow": "或者直接在终端安装一只"
+  },
+  "leaderboard": {
+    "metadata": {
+      "title": "Petdex 排行榜",
+      "description": "Petdex 上的顶级创作者：获批宠物最多、最受喜爱、安装量最高。",
+      "description__fixme": true
+    },
+    "eyebrow": "热门创作者",
+    "title": "Petdex 排行榜",
+    "subtitle": "发布宠物最多、最受喜爱、安装量最高的创作者。实时更新。",
+    "categoryAria": "排行榜分类",
+    "secondaryStats": {
+      "pets": "宠物",
+      "likes": "点赞",
+      "installs": "安装"
+    },
+    "tabs": {
+      "pets": {
+        "label": "宠物最多",
+        "unit": "已批准",
+        "blurb": "按目录中已批准宠物数量排序的创作者。",
+        "empty": "还没有已批准的投稿。"
+      },
+      "likes": {
+        "label": "最受喜爱",
+        "unit": "点赞",
+        "blurb": "创作者所有宠物累计获得的点赞总数。",
+        "empty": "还没有人的宠物收到点赞。"
+      },
+      "installs": {
+        "label": "安装最多",
+        "unit": "安装",
+        "blurb": "创作者所有宠物累计获得的 CLI 安装总数。",
+        "empty": "还没有记录到安装。"
+      },
+      "rising": {
+        "label": "上升中",
+        "unit": "本周",
+        "blurb": "过去 7 天内获批的宠物。火起来了？继续发。",
+        "empty": "本周还没有新宠物获批。"
+      }
+    }
+  },
+  "claim": {
+    "cta": "登录以认领",
+    "body": "这是你的宠物吗，<strong>{author}</strong>？使用 GitHub 登录以认领 {petName}，编辑详细信息，并跟踪安装数据。"
+  },
+  "submittedBy": {
+    "eyebrow": "提交者",
+    "viewProfile": "查看 {name} 的主页"
+  },
+  "installCommand": {
+    "installStep": "1. 安装",
+    "activateStep": "2. 在 Codex 中激活",
+    "dropsInto": "将宠物包放入",
+    "methodAria": "安装方式",
+    "platformAria": "安装平台",
+    "tabs": {
+      "cli": "CLI"
+    },
+    "steps": {
+      "openCodex": "打开 Codex，",
+      "insideCodex": "在 Codex 中唤醒它或将其收起。",
+      "andClick": "并点击",
+      "use": "使用"
+    }
+  },
+  "commandLine": {
+    "copyAria": "复制命令"
+  },
+  "petActions": {
+    "moreActions": "{name} 的更多操作",
+    "moreActions__fixme": true,
+    "share": "分享",
+    "closeMenu": "关闭菜单",
+    "copiedInstall": "已复制安装命令",
+    "copiedInstall__fixme": true,
+    "copyInstall": "复制安装命令",
+    "copiedLink": "已复制链接",
+    "copyPageLink": "复制页面链接",
+    "shareToX": "分享到 X",
+    "shareToLinkedIn": "分享到 LinkedIn",
+    "more": "更多…",
+    "downloadZip": "下载 ZIP"
+  },
+  "petStateViewer": {
+    "eyebrow": "状态查看器",
+    "frames": "{count} 帧",
+    "rowFrames": "第 {row} 行 - {frames} 帧",
+    "animationLabel": "{name} {state} 动画",
+    "states": {
+      "idle": {
+        "label": "待机",
+        "purpose": "中性的呼吸与眨眼循环"
+      },
+      "running-right": {
+        "label": "向右跑",
+        "purpose": "向右的方向性移动"
+      },
+      "running-left": {
+        "label": "向左跑",
+        "purpose": "向左的方向性移动"
+      },
+      "waving": {
+        "label": "挥手",
+        "purpose": "问候或吸引注意的动作"
+      },
+      "jumping": {
+        "label": "跳跃",
+        "purpose": "预备、起跳、顶点、下落、落地"
+      },
+      "failed": {
+        "label": "失败",
+        "purpose": "易读的错误或难过反应"
+      },
+      "waiting": {
+        "label": "等待",
+        "purpose": "耐心待机的变体"
+      },
+      "running": {
+        "label": "奔跑",
+        "purpose": "通用的原地奔跑循环"
+      },
+      "review": {
+        "label": "审视",
+        "purpose": "专注观察或思考的循环"
+      }
+    }
   }
 }

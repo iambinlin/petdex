@@ -1,11 +1,13 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Check, Loader2, X } from "lucide-react";
 
 export function AdminEditActions({ id }: { id: string }) {
+  const t = useTranslations("admin.editActions");
   const router = useRouter();
   const [busy, setBusy] = useState<null | "approve" | "reject">(null);
   const [, startTransition] = useTransition();
@@ -13,7 +15,7 @@ export function AdminEditActions({ id }: { id: string }) {
   async function run(action: "approve" | "reject") {
     let reason: string | null = null;
     if (action === "reject") {
-      const v = window.prompt("Reason (optional, sent to owner):") ?? "";
+      const v = window.prompt(t("rejectPrompt")) ?? "";
       reason = v.trim() || null;
     }
     setBusy(action);
@@ -27,7 +29,7 @@ export function AdminEditActions({ id }: { id: string }) {
         const j = (await res.json().catch(() => null)) as {
           error?: string;
         } | null;
-        alert(`Failed: ${j?.error ?? res.statusText}`);
+        alert(t("failed", { error: j?.error ?? res.statusText }));
         return;
       }
       startTransition(() => router.refresh());
@@ -51,7 +53,7 @@ export function AdminEditActions({ id }: { id: string }) {
         ) : (
           <Check className="size-3.5" />
         )}
-        Approve edit
+        {t("approve")}
       </button>
       <button
         type="button"
@@ -64,7 +66,7 @@ export function AdminEditActions({ id }: { id: string }) {
         ) : (
           <X className="size-3.5" />
         )}
-        Reject
+        {t("reject")}
       </button>
     </div>
   );

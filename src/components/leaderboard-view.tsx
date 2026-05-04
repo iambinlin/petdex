@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Heart, Sparkles, TerminalSquare, Trophy } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type {
   LeaderboardMetric,
@@ -23,46 +24,45 @@ type CreditMap = Record<
 
 type Tab = {
   id: LeaderboardMetric;
-  label: string;
+  labelKey: string;
   icon: React.ReactNode;
-  unit: string;
-  // Description shown above the table when the tab is active.
-  blurb: string;
-  emptyCopy: string;
+  unitKey: string;
+  blurbKey: string;
+  emptyCopyKey: string;
 };
 
 const TABS: Tab[] = [
   {
     id: "pets",
-    label: "Most pets",
+    labelKey: "tabs.pets.label",
     icon: <Trophy className="size-3.5" />,
-    unit: "approved",
-    blurb: "Creators ranked by approved pets in the catalog.",
-    emptyCopy: "No approved submissions yet.",
+    unitKey: "tabs.pets.unit",
+    blurbKey: "tabs.pets.blurb",
+    emptyCopyKey: "tabs.pets.empty",
   },
   {
     id: "likes",
-    label: "Most loved",
+    labelKey: "tabs.likes.label",
     icon: <Heart className="size-3.5" />,
-    unit: "likes",
-    blurb: "Total likes earned across every pet a creator has shipped.",
-    emptyCopy: "Nobody's pets have collected likes yet.",
+    unitKey: "tabs.likes.unit",
+    blurbKey: "tabs.likes.blurb",
+    emptyCopyKey: "tabs.likes.empty",
   },
   {
     id: "installs",
-    label: "Most installed",
+    labelKey: "tabs.installs.label",
     icon: <TerminalSquare className="size-3.5" />,
-    unit: "installs",
-    blurb: "Total CLI installs aggregated across a creator's pets.",
-    emptyCopy: "No installs recorded yet.",
+    unitKey: "tabs.installs.unit",
+    blurbKey: "tabs.installs.blurb",
+    emptyCopyKey: "tabs.installs.empty",
   },
   {
     id: "rising",
-    label: "Rising",
+    labelKey: "tabs.rising.label",
     icon: <Sparkles className="size-3.5" />,
-    unit: "this week",
-    blurb: "Pets approved in the last 7 days. Caught fire? Ship more.",
-    emptyCopy: "No new pets approved this week.",
+    unitKey: "tabs.rising.unit",
+    blurbKey: "tabs.rising.blurb",
+    emptyCopyKey: "tabs.rising.empty",
   },
 ];
 
@@ -77,6 +77,7 @@ export function LeaderboardView({
   credits,
   rows,
 }: LeaderboardViewProps) {
+  const t = useTranslations("leaderboard");
   const router = useRouter();
   const params = useSearchParams();
 
@@ -97,7 +98,7 @@ export function LeaderboardView({
     <div className="flex flex-col gap-5">
       <div
         role="tablist"
-        aria-label="Leaderboard category"
+        aria-label={t("categoryAria")}
         className="flex flex-wrap items-center gap-1.5"
       >
         {TABS.map((tab) => {
@@ -117,7 +118,7 @@ export function LeaderboardView({
               }`}
             >
               {tab.icon}
-              {tab.label}
+              {t(tab.labelKey)}
               <span
                 className={`font-mono text-[10px] ${
                   isActive ? "text-on-inverse/60" : "text-muted-3"
@@ -130,11 +131,11 @@ export function LeaderboardView({
         })}
       </div>
 
-      <p className="text-sm text-muted-2">{activeTab.blurb}</p>
+      <p className="text-sm text-muted-2">{t(activeTab.blurbKey)}</p>
 
       {data.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
-          {activeTab.emptyCopy}
+          {t(activeTab.emptyCopyKey)}
         </div>
       ) : (
         <ol className="flex flex-col gap-2">
@@ -143,7 +144,7 @@ export function LeaderboardView({
               key={row.ownerId}
               rank={i + 1}
               row={row}
-              unit={activeTab.unit}
+              unit={t(activeTab.unitKey)}
               credit={credits[row.ownerId]}
             />
           ))}
@@ -164,6 +165,7 @@ function LeaderboardRowItem({
   unit: string;
   credit: CreditMap[string] | undefined;
 }) {
+  const t = useTranslations("leaderboard");
   const name = credit?.name ?? "anonymous";
   const handle = credit?.handle ?? row.ownerId.slice(-8).toLowerCase();
   const avatar = credit?.imageUrl ?? null;
@@ -211,17 +213,17 @@ function LeaderboardRowItem({
             <span className="font-mono text-foreground">
               {row.approvedCount}
             </span>{" "}
-            pets
+            {t("secondaryStats.pets")}
           </span>
           <span>
             <span className="font-mono text-foreground">{row.totalLikes}</span>{" "}
-            likes
+            {t("secondaryStats.likes")}
           </span>
           <span>
             <span className="font-mono text-foreground">
               {row.totalInstalls}
             </span>{" "}
-            installs
+            {t("secondaryStats.installs")}
           </span>
         </div>
 

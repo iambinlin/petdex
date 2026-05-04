@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Monitor, Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 
 // Cycles light -> dark -> system. Icon-only because it sits next to
@@ -10,6 +11,7 @@ import { useTheme } from "next-themes";
 // that cluster. Renders a sun placeholder until mounted to avoid the
 // hydration flash next-themes warns about.
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useTranslations("theme");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -32,18 +34,18 @@ export function ThemeToggle({ className }: { className?: string }) {
         : Sun;
 
   const label = !mounted
-    ? "Toggle theme"
+    ? t("toggle")
     : theme === "system"
-      ? `System (${resolvedTheme})`
+      ? t("system", { resolvedTheme: resolvedTheme ?? "light" })
       : theme === "dark"
-        ? "Dark"
-        : "Light";
+        ? t("dark")
+        : t("light");
 
   return (
     <button
       type="button"
-      aria-label={`Theme: ${label}. Click to cycle.`}
-      title={`Theme: ${label}`}
+      aria-label={t("ariaLabel", { label })}
+      title={t("title", { label })}
       onClick={next}
       className={
         className ??

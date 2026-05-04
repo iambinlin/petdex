@@ -3,6 +3,7 @@
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 // Inline "Is this you?" prompt shown on /pets/[slug] for discovered
 // pets when the viewer is either signed-out or signed in as someone
@@ -18,6 +19,7 @@ export function ClaimCTA({
   authorLabel: string;
   githubUrl: string | null;
 }) {
+  const t = useTranslations("claim");
   const { isLoaded, isSignedIn, user } = useUser();
   if (!isLoaded) return null;
 
@@ -40,7 +42,7 @@ export function ClaimCTA({
 
   const inner = (
     <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover">
-      Sign in to claim
+      {t("cta")}
       <ArrowRight className="size-4" />
     </span>
   );
@@ -48,9 +50,11 @@ export function ClaimCTA({
   return (
     <aside className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-chip-warning-fg/30 bg-chip-warning-bg p-4 text-sm text-chip-warning-fg">
       <span className="flex-1 leading-6">
-        Is this your pet,{" "}
-        <strong className="font-semibold">{authorLabel}</strong>? Sign in with
-        GitHub to claim {petName}, edit details, and track installs.
+        {t.rich("body", {
+          author: authorLabel,
+          petName,
+          strong: (chunks) => <strong className="font-semibold">{chunks}</strong>,
+        })}
       </span>
       {isSignedIn ? (
         // Already signed in — direct them to /my-pets where the claim

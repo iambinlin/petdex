@@ -1,10 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Sparkles, X } from "lucide-react";
-
-const STORAGE_KEY = "petdex_tour_seen_v1";
 
 type Step = {
   /** CSS selector pointing at the element to highlight. The first match wins. */
@@ -19,7 +18,7 @@ type Step = {
 
 const ALL_STEPS: Step[] = [
   {
-    selector: 'a[href="/#gallery"], a[href="/api/manifest"]',
+    selector: 'a[href="#gallery"], a[href="/#gallery"], a[href="/api/manifest"]',
     eyebrow: "What's new",
     title: "Petdex is now an index, not a list",
     body: "Browse 100+ animated companions, filter by vibe or kind, share any pet with one click. We'll show you the new bits in 30 seconds.",
@@ -50,49 +49,34 @@ const ALL_STEPS: Step[] = [
 
 type Rect = { top: number; left: number; width: number; height: number };
 
-export function OnboardingTour() {
-  const [active, setActive] = useState(false);
+type OnboardingTourProps = {
+  onClose: () => void;
+};
+
+export function OnboardingTour({ onClose }: OnboardingTourProps) {
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
   const [steps, setSteps] = useState<Step[]>(ALL_STEPS);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-open on first visit. Respects users who closed the dialog.
-  // Drops steps whose target isn't in the DOM (e.g. /my-pets is hidden
-  // for signed-out users) so the tour never highlights the wrong element.
-  // Skip outside the homepage / gallery — the steps reference the
-  // gallery's action menu and vibe chips, which don't apply on pet
-  // detail pages or owner dashboards and look out of place there.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const path = window.location.pathname;
-    const isHomePath =
-      path === "/" ||
-      /^\/(en|es|zh)\/?$/.test(path);
-    if (!isHomePath) return;
-    const seen = window.localStorage.getItem(STORAGE_KEY);
-    if (seen === "1") return;
-    const t = window.setTimeout(() => {
-      const visible = ALL_STEPS.filter(
-        (s) => document.querySelector(s.selector) !== null,
-      );
-      if (visible.length === 0) return;
-      setSteps(visible);
-      setActive(true);
-    }, 1200);
-    return () => window.clearTimeout(t);
+    const visible = ALL_STEPS.filter(
+      (s) => document.querySelector(s.selector) !== null,
+    );
+    if (visible.length === 0) {
+      onClose();
+      return;
+    }
+    setSteps(visible);
+    setStep(0);
   }, []);
 
   const close = useCallback(() => {
-    setActive(false);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, "1");
-    }
-  }, []);
+    onClose();
+  }, [onClose]);
 
   // Compute the highlight rect for the current step. Re-measures on resize.
   useEffect(() => {
-    if (!active) return;
     const measure = () => {
       const target = steps[step]
         ? document.querySelector(steps[step].selector)
@@ -127,11 +111,10 @@ export function OnboardingTour() {
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure);
     };
-  }, [active, step]);
+  }, [step, steps]);
 
   // Esc closes.
   useEffect(() => {
-    if (!active) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       if (e.key === "ArrowRight") next();
@@ -139,7 +122,7 @@ export function OnboardingTour() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  });
+  }, [close, step, steps.length]);
 
   const next = () => {
     if (step < steps.length - 1) setStep((s) => s + 1);
@@ -149,14 +132,14 @@ export function OnboardingTour() {
     if (step > 0) setStep((s) => s - 1);
   };
 
-  if (!active) return null;
+  if (!steps[step]) return null;
 
   const current = steps[step];
   const padding = 8;
 
   // Build the tooltip placement. If we don't have a rect (target not in DOM),
   // we still show the tooltip centered as a generic announcement.
-  const tooltipStyle: React.CSSProperties = (() => {
+  const tooltipStyle: CSSProperties = (() => {
     if (!rect) {
       return {
         position: "fixed",

@@ -6,9 +6,12 @@ import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
+import { renderEditApprovedEmail } from "@/lib/email-templates/edit-approved";
+import { renderEditRejectedEmail } from "@/lib/email-templates/edit-rejected";
 import { createNotification } from "@/lib/notifications";
 import { requireSameOrigin } from "@/lib/same-origin";
 import { refreshSimilarityFor } from "@/lib/similarity";
+import { getPreferredLocaleForUser } from "@/lib/user-locale";
 
 export const runtime = "nodejs";
 
@@ -95,17 +98,17 @@ export async function PATCH(
         const resend = new Resend(process.env.RESEND_API_KEY);
         const from =
           process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
+        const locale = await getPreferredLocaleForUser(updated.ownerId);
+        const email = renderEditApprovedEmail(locale, {
+          petName: updated.displayName,
+          petSlug: updated.slug,
+        });
         await resend.emails.send({
           from,
           to: updated.ownerEmail,
-          subject: `Your edit to ${updated.displayName} is live`,
-          text: [
-            `Your edit to "${updated.displayName}" was approved.`,
-            "",
-            `Page: https://petdex.crafter.run/pets/${updated.slug}`,
-            "",
-            "— Petdex",
-          ].join("\n"),
+          subject: email.subject,
+          html: email.html,
+          text: email.text,
         });
       } catch {
         /* silent */
@@ -160,19 +163,18 @@ export async function PATCH(
       const resend = new Resend(process.env.RESEND_API_KEY);
       const from =
         process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
+      const locale = await getPreferredLocaleForUser(updated.ownerId);
+      const email = renderEditRejectedEmail(locale, {
+        petName: updated.displayName,
+        petSlug: updated.slug,
+        reason,
+      });
       await resend.emails.send({
         from,
         to: toEmail,
-        subject: `Your edit to ${updated.displayName} needs changes`,
-        text: [
-          `Your edit to "${updated.displayName}" wasn't approved this round.`,
-          "",
-          reason ? `Reason: ${reason}` : "No reason was provided.",
-          "",
-          `You can revise it from your pet page: https://petdex.crafter.run/pets/${updated.slug}`,
-          "",
-          "— Petdex",
-        ].join("\n"),
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
       });
     } catch {
       /* silent */

@@ -10,6 +10,7 @@
     "format": "biome check --write .",
     "generate-assets": "bun scripts/generate-assets.ts",
     "auto-tag": "bun scripts/auto-tag.ts",
+    "i18n:check": "bun scripts/i18n-check.ts",
     "test": "bun test"
   },
   "dependencies": {

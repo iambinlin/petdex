@@ -90,6 +90,7 @@ export function PetGallery({
   dexMap,
   caughtSlugs,
 }: PetGalleryProps) {
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [query, setQuery] = useState("");
   const trimmedQuery = query.trim();
   const [activeKinds, setActiveKinds] = useState<Set<PetKind>>(new Set());
@@ -174,6 +175,14 @@ export function PetGallery({
     return () => window.clearTimeout(handle);
   }, [buildParams, trimmedQuery]);
 
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileFiltersOpen]);
+
   const loadMore = useCallback(async () => {
     if (nextCursor == null || loadingMore || loadingPage) return;
     const seq = requestSeq.current;
@@ -230,6 +239,11 @@ export function PetGallery({
     activeColors.size > 0 ||
     activeBatches.size > 0 ||
     query.length > 0;
+  const activeFilterCount =
+    activeKinds.size +
+    activeVibes.size +
+    activeColors.size +
+    activeBatches.size;
 
   return (
     <section className="space-y-5">
@@ -312,7 +326,30 @@ export function PetGallery({
         {/* Filter chips: kind + vibe in one continuous wrap row. Saves a
  whole horizontal label column and roughly half the height vs
  the previous two-row layout. */}
-        <div className="flex flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
+        <div className="flex items-center gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen(true)}
+            className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-foreground transition hover:border-border-strong"
+          >
+            Filters
+            {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+          </button>
+          {filtersActive ? (
+            <button
+              type="button"
+              onClick={() => {
+                track("filters_cleared");
+                clearFilters();
+              }}
+              className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+
+        <div className="hidden flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 md:flex dark:border-white/[0.05]">
           <FilterChips
             options={PET_KINDS}
             counts={facets.kinds}
@@ -328,7 +365,7 @@ export function PetGallery({
             tone="vibe"
           />
         </div>
-        <div className="flex flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
+        <div className="hidden flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 md:flex dark:border-white/[0.05]">
           <FilterChips
             options={COLOR_FAMILIES}
             counts={facets.colors}
@@ -338,7 +375,7 @@ export function PetGallery({
             dotColors={FAMILY_DOT}
           />
         </div>
-        <div className="flex flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
+        <div className="hidden flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 md:flex dark:border-white/[0.05]">
           <FilterChips
             options={facets.batches.map((batch) => batch.key)}
             counts={Object.fromEntries(
@@ -353,6 +390,113 @@ export function PetGallery({
           />
         </div>
       </div>
+
+      {mobileFiltersOpen ? (
+        <div
+          className="fixed inset-0 z-50 md:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Pet filters"
+        >
+          <button
+            type="button"
+            aria-label="Close filters"
+            onClick={() => setMobileFiltersOpen(false)}
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[75dvh] overflow-y-auto rounded-t-[28px] border border-border-base bg-background px-4 pt-4 pb-6 shadow-2xl">
+            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-black/10 dark:bg-white/10" />
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-base font-semibold text-foreground">Filters</p>
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="inline-flex h-9 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2"
+              >
+                Done
+              </button>
+            </div>
+            <div className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <p className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+                  Kind + vibe
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <FilterChips
+                    options={PET_KINDS}
+                    counts={facets.kinds}
+                    active={activeKinds}
+                    onToggle={(v) => toggleKind(v as PetKind)}
+                    tone="kind"
+                  />
+                  <FilterChips
+                    options={PET_VIBES}
+                    counts={facets.vibes}
+                    active={activeVibes}
+                    onToggle={(v) => toggleVibe(v as PetVibe)}
+                    tone="vibe"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+                  Color
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <FilterChips
+                    options={COLOR_FAMILIES}
+                    counts={facets.colors}
+                    active={activeColors}
+                    onToggle={(v) => toggleColor(v as ColorFamily)}
+                    tone="color"
+                    dotColors={FAMILY_DOT}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+                  Batch
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <FilterChips
+                    options={facets.batches.map((batch) => batch.key)}
+                    counts={Object.fromEntries(
+                      facets.batches.map((batch) => [batch.key, batch.count]),
+                    )}
+                    labels={Object.fromEntries(
+                      facets.batches.map((batch) => [batch.key, batch.label]),
+                    )}
+                    active={activeBatches}
+                    onToggle={toggleBatch}
+                    tone="batch"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2">
+                {filtersActive ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      track("filters_cleared");
+                      clearFilters();
+                    }}
+                    className="inline-flex h-10 flex-1 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2"
+                  >
+                    Clear all
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="inline-flex h-10 flex-1 items-center justify-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse"
+                >
+                  Show pets
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {searchMode === "vibe" && pets.length > 0 ? (
         <div className="flex items-center gap-2 rounded-2xl border border-brand-light/35 bg-brand-tint/70 px-4 py-2.5 text-sm text-muted-1">

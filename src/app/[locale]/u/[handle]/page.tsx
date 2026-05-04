@@ -6,14 +6,15 @@ import { and, desc, eq } from "drizzle-orm";
 import { Heart, TerminalSquare, Trophy } from "lucide-react";
 
 import { isAdmin } from "@/lib/admin";
+import { getCatchProgress } from "@/lib/catch-status";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
-import { handleFromClerk, userIdForHandle } from "@/lib/handles";
+import { userIdForHandle } from "@/lib/handles";
 import { getOwnerRank } from "@/lib/leaderboard";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { petStates } from "@/lib/pet-states";
 import { type PetWithMetrics, rowToPet } from "@/lib/pets";
 import { MAX_PINNED_PETS } from "@/lib/profiles";
-import { getCatchProgress } from "@/lib/catch-status";
 
 import { JsonLd } from "@/components/json-ld";
 import { PetCard } from "@/components/pet-gallery";
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${displayName} on Petdex`,
     description: `Pets created by ${displayName} for the Codex CLI.`,
-    alternates: { canonical: `/u/${handle}` },
+    alternates: buildLocaleAlternates(`/u/${handle}`),
     openGraph: {
       title: `${displayName} on Petdex`,
       description: `Animated Codex pets created by ${displayName}.`,
@@ -181,7 +182,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <ProfileAnalytics
         handle={handle}
@@ -349,7 +350,6 @@ export default async function UserProfilePage({ params }: PageProps) {
                   </p>
                 </div>
                 {featuredPets.length === 1 ? (
-                  // Single pin gets the big hero treatment.
                   <div className="relative">
                     {isOwner ? (
                       <div className="absolute top-4 right-4">
@@ -364,24 +364,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                     <FeaturedPin pet={featuredPets[0]} />
                   </div>
                 ) : (
-                  // 2..6 pinned: keep them on a single row regardless of
-                  // viewport. We pick the column count to match the number
-                  // of pinned items so the row is always full and never
-                  // wraps. The cards just shrink on narrow screens — that's
-                  // still nicer than wrapping the pinned strip.
-                  <div
-                    className={`grid gap-3 md:gap-4 ${
-                      featuredPets.length === 2
-                        ? "grid-cols-2"
-                        : featuredPets.length === 3
-                          ? "grid-cols-3"
-                          : featuredPets.length === 4
-                            ? "grid-cols-4"
-                            : featuredPets.length === 5
-                              ? "grid-cols-5"
-                              : "grid-cols-6"
-                    }`}
-                  >
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
                     {featuredPets.map((pet, index) => (
                       <div key={pet.slug} className="relative">
                         <PetCard

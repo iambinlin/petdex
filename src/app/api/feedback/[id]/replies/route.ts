@@ -6,8 +6,11 @@ import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
+import { renderFeedbackAdminReplyEmail } from "@/lib/email-templates/feedback-admin-reply";
+import { renderFeedbackFollowUpEmail } from "@/lib/email-templates/feedback-follow-up";
 import { createNotification } from "@/lib/notifications";
 import { requireSameOrigin } from "@/lib/same-origin";
+import { getPreferredLocaleForUser } from "@/lib/user-locale";
 
 export const runtime = "nodejs";
 
@@ -161,7 +164,6 @@ export async function POST(
       const resend = new Resend(process.env.RESEND_API_KEY);
       const from =
         process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
-      const threadUrl = `https://petdex.crafter.run/my-feedback/${id}`;
 
       if (adminCaller) {
         // Admin replied → notify the original author.
@@ -181,26 +183,19 @@ export async function POST(
           }
           if (toEmail) {
             const excerpt = row.message.slice(0, 80);
+            const locale = await getPreferredLocaleForUser(row.userId);
+            const email = renderFeedbackAdminReplyEmail(locale, {
+              feedbackId: id,
+              originalMessage: row.message,
+              replyBody: text,
+              excerpt: `${excerpt}${row.message.length > 80 ? "…" : ""}`,
+            });
             await resend.emails.send({
               from,
               to: toEmail,
-              subject: `Hunter replied to your Petdex feedback`,
-              text: [
-                `Hunter replied to your feedback on Petdex:`,
-                "",
-                `> ${row.message
-                  .split("\n")
-                  .map((l) => l)
-                  .join("\n> ")}`,
-                "",
-                "Reply:",
-                "",
-                text,
-                "",
-                "---",
-                `Continue the thread: ${threadUrl}`,
-                `(re: "${excerpt}${row.message.length > 80 ? "…" : ""}")`,
-              ].join("\n"),
+              subject: email.subject,
+              html: email.html,
+              text: email.text,
             });
           }
         }
@@ -209,27 +204,20 @@ export async function POST(
         const adminEmail =
           process.env.PETDEX_ADMIN_NOTIFY_EMAIL ?? "railly@clerk.dev";
         const excerpt = row.message.slice(0, 80);
+        const email = renderFeedbackFollowUpEmail("en", {
+          kindLabel: row.kind,
+          statusLabel: row.status,
+          originalMessage: row.message,
+          replyBody: text,
+          threadUrl: `https://petdex.crafter.run/admin/feedback?status=all&focus=${id}`,
+          excerpt: `${excerpt}${row.message.length > 80 ? "…" : ""}`,
+        });
         await resend.emails.send({
           from,
           to: adminEmail,
-          subject: `Petdex feedback follow-up — ${row.kind}`,
-          text: [
-            `New follow-up on a Petdex feedback thread.`,
-            "",
-            `Original (${row.kind}, ${row.status}):`,
-            `> ${row.message
-              .split("\n")
-              .map((l) => l)
-              .join("\n> ")}`,
-            "",
-            "User reply:",
-            "",
-            text,
-            "",
-            "---",
-            `Open thread: https://petdex.crafter.run/admin/feedback?status=all&focus=${id}`,
-            `(re: "${excerpt}${row.message.length > 80 ? "…" : ""}")`,
-          ].join("\n"),
+          subject: email.subject,
+          html: email.html,
+          text: email.text,
         });
       }
     } catch {

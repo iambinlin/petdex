@@ -8,10 +8,13 @@ import { dedupePins, MAX_PINNED_PETS } from "@/lib/profiles";
 import { profileEditRatelimit } from "@/lib/ratelimit";
 import { requireSameOrigin } from "@/lib/same-origin";
 
+import { defaultLocale, hasLocale, type Locale } from "@/i18n/config";
+
 export const runtime = "nodejs";
 
 type PatchBody = {
   bio?: string | null;
+  preferredLocale?: Locale;
   // Either pass the full ordered list of pins (preferred) or a single
   // toggle action that adds/removes a slug from the existing set.
   featuredPetSlugs?: string[] | null;
@@ -43,7 +46,11 @@ export async function PATCH(req: Request): Promise<Response> {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const patch: { bio?: string | null; featuredPetSlugs?: string[] } = {};
+  const patch: {
+    bio?: string | null;
+    preferredLocale?: Locale;
+    featuredPetSlugs?: string[];
+  } = {};
 
   if (body.bio !== undefined) {
     if (body.bio === null || body.bio === "") {
@@ -54,6 +61,16 @@ export async function PATCH(req: Request): Promise<Response> {
     } else {
       return NextResponse.json({ error: "invalid_bio" }, { status: 400 });
     }
+  }
+
+  if (body.preferredLocale !== undefined) {
+    if (!hasLocale(body.preferredLocale)) {
+      return NextResponse.json(
+        { error: "invalid_preferred_locale" },
+        { status: 400 },
+      );
+    }
+    patch.preferredLocale = body.preferredLocale;
   }
 
   // Resolve next pins set. Three input shapes are supported so callers
@@ -125,10 +142,7 @@ export async function PATCH(req: Request): Promise<Response> {
   }
 
   if (Object.keys(patch).length === 0) {
-    return NextResponse.json(
-      { error: "nothing_to_update" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "nothing_to_update" }, { status: 400 });
   }
 
   await db
@@ -136,6 +150,7 @@ export async function PATCH(req: Request): Promise<Response> {
     .values({
       userId,
       bio: patch.bio ?? null,
+      preferredLocale: patch.preferredLocale ?? defaultLocale,
       featuredPetSlugs: patch.featuredPetSlugs ?? [],
       updatedAt: new Date(),
     })
@@ -147,5 +162,9 @@ export async function PATCH(req: Request): Promise<Response> {
       },
     });
 
-  return NextResponse.json({ ok: true, featuredPetSlugs: patch.featuredPetSlugs });
+  return NextResponse.json({
+    ok: true,
+    preferredLocale: patch.preferredLocale,
+    featuredPetSlugs: patch.featuredPetSlugs,
+  });
 }

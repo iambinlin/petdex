@@ -13,6 +13,7 @@ import {
   MoreHorizontal,
   Terminal,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const SITE_URL = "https://petdex.crafter.run";
 
@@ -31,6 +32,7 @@ type Props = {
 };
 
 export function PetActionMenu({ pet, variant = "card" }: Props) {
+  const t = useTranslations("petActions");
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<"install" | "link" | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -148,7 +150,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`More actions for ${pet.displayName}`}
+        aria-label={t("moreActions", { name: pet.displayName })}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -159,7 +161,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
         {variant === "detail" ? (
           <>
             <MoreHorizontal className="size-4" />
-            Share
+            {t("share")}
           </>
         ) : (
           <MoreHorizontal className="size-4" />
@@ -177,7 +179,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
             </span>
             <button
               type="button"
-              aria-label="Close menu"
+              aria-label={t("closeMenu")}
               onClick={(e) => {
                 e.preventDefault();
                 setOpen(false);
@@ -197,7 +199,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                   <Terminal className="size-4" />
                 )
               }
-              label={copied === "install" ? "Copied install" : "Copy install"}
+              label={copied === "install" ? t("copiedInstall") : t("copyInstall")}
               hint={installCmd}
               onClick={() => copyText(installCmd, "install")}
             />
@@ -209,24 +211,24 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                   <Link2 className="size-4" />
                 )
               }
-              label={copied === "link" ? "Copied link" : "Copy page link"}
+              label={copied === "link" ? t("copiedLink") : t("copyPageLink")}
               hint={pageUrl.replace(/^https?:\/\//, "")}
               onClick={() => copyText(pageUrl, "link")}
             />
             <MenuItem
               icon={<XIcon className="size-4" />}
-              label="Share to X"
+              label={t("shareToX")}
               onClick={onShareX}
             />
             <MenuItem
               icon={<LinkedInIcon className="size-4" />}
-              label="Share to LinkedIn"
+              label={t("shareToLinkedIn")}
               onClick={onShareLinkedIn}
             />
             {typeof navigator !== "undefined" && "share" in navigator ? (
               <MenuItem
                 icon={<ExternalLink className="size-4" />}
-                label="More…"
+                label={t("more")}
                 onClick={onShareNative}
               />
             ) : null}
@@ -241,7 +243,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                   className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-muted-2 transition hover:bg-[#f4f6ff] hover:text-foreground dark:border-white/[0.06]"
                 >
                   <Download className="size-4" />
-                  <span className="flex-1">Download ZIP</span>
+                  <span className="flex-1">{t("downloadZip")}</span>
                 </a>
               </li>
             ) : null}

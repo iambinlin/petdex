@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { Bell, CheckCheck, Clock, Inbox } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Filter = "unread" | "replied" | "waiting" | "all";
 
@@ -29,6 +30,7 @@ export function MyFeedbackFilters({
   counts: Record<Filter, number>;
   defaultFilter: Filter;
 }) {
+  const t = useTranslations("myFeedback.filters");
   const params = useSearchParams();
   const current = (params?.get("filter") ?? defaultFilter) as Filter;
 
@@ -53,7 +55,7 @@ export function MyFeedbackFilters({
             }`}
           >
             {f.icon}
-            {f.label}
+            {t(f.value)}
             <span
               className={`font-mono text-[10px] ${
                 active ? "text-white/70" : "text-stone-400"

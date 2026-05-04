@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -16,6 +17,7 @@ export function AdminRequestActions({
   status: Status;
   defaultSlug?: string | null;
 }) {
+  const t = useTranslations("admin.requestActions");
   const router = useRouter();
   const [busy, setBusy] = useState<null | "fulfill" | "dismiss" | "reopen">(
     null,
@@ -64,7 +66,7 @@ export function AdminRequestActions({
             className="inline-flex h-8 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
           >
             <Sparkles className="size-3.5" />
-            Fulfill
+            {t("fulfill")}
           </button>
         ) : null}
         {status === "open" ? (
@@ -72,8 +74,8 @@ export function AdminRequestActions({
             type="button"
             disabled={disabled}
             onClick={() => void run("dismiss")}
-            aria-label="Dismiss"
-            title="Dismiss"
+            aria-label={t("dismiss")}
+            title={t("dismiss")}
             className="inline-flex size-8 items-center justify-center rounded-full border border-rose-200 bg-chip-danger-bg text-chip-danger-fg transition hover:border-rose-300 hover:bg-rose-100 disabled:opacity-60 dark:border-rose-800/60 dark:hover:border-rose-700 dark:hover:bg-rose-900/40"
           >
             {busy === "dismiss" ? (
@@ -88,8 +90,8 @@ export function AdminRequestActions({
             type="button"
             disabled={disabled}
             onClick={() => void run("reopen")}
-            aria-label="Re-open"
-            title="Re-open"
+            aria-label={t("reopen")}
+            title={t("reopen")}
             className="inline-flex size-8 items-center justify-center rounded-full border border-amber-200 bg-chip-warning-bg text-chip-warning-fg transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/60 dark:hover:border-amber-700 dark:hover:bg-amber-900/40"
           >
             {busy === "reopen" ? (
@@ -110,13 +112,13 @@ export function AdminRequestActions({
           className="flex items-center gap-1.5 rounded-full border border-border-base bg-surface px-2 py-1"
         >
           <span className="font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
-            slug
+            {t("slug")}
           </span>
           <input
             type="text"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="cool-clippy"
+            placeholder={t("placeholder")}
             className="h-7 w-44 bg-transparent text-xs text-stone-900 outline-none placeholder:text-muted-4 dark:text-stone-100"
             autoFocus
           />
@@ -130,7 +132,7 @@ export function AdminRequestActions({
             ) : (
               <Check className="size-3" />
             )}
-            Mark
+            {t("mark")}
           </button>
         </form>
       ) : null}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ArrowRight, Search, Sparkles } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { getApprovedPetCount, getFeaturedPetsWithMetrics } from "@/lib/pets";
 
@@ -11,13 +12,23 @@ import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Pet not found",
-  description: "This pet wandered off the index. Try one of these instead.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "notFound.metadata" });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function NotFound() {
+  const t = await getTranslations("notFound");
   const [featured, total] = await Promise.all([
     getFeaturedPetsWithMetrics(4),
     getApprovedPetCount(),
@@ -28,22 +39,20 @@ export default async function NotFound() {
   const lost = featured[Math.floor(Math.random() * featured.length)] ?? null;
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
 
           <div className="mt-10 flex flex-col items-center text-center md:mt-14">
             <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-              Error 404
+              {t("eyebrow")}
             </p>
             <h1 className="mt-3 text-balance text-[42px] leading-[1] font-semibold tracking-tight md:text-[64px]">
-              This pet wandered off
+              {t("title")}
             </h1>
             <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
-              The page you tried to reach isn't in the index. Could be a typo, a
-              withdrawn submission, or a pet that hasn't been approved yet. Try
-              one of these instead.
+              {t("body")}
             </p>
 
             {lost ? (
@@ -60,11 +69,11 @@ export default async function NotFound() {
                     cycleStates
                     cycleIntervalMs={1400}
                     scale={0.8}
-                    label={`${lost.displayName} cycling through states`}
+                    label={t("lostPetAnimated", { name: lost.displayName })}
                   />
                 </div>
                 <p className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
-                  Caught wandering: {lost.displayName}
+                  {t("caughtWandering", { name: lost.displayName })}
                 </p>
               </div>
             ) : null}
@@ -76,20 +85,22 @@ export default async function NotFound() {
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
               <Search className="size-4" />
-              Browse {total > 0 ? `${total}+ pets` : "the gallery"}
+              {total > 0
+                ? t("browsePets", { count: total })
+                : t("browseGallery")}
             </Link>
             <Link
               href="/about"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
             >
               <Sparkles className="size-4" />
-              About Petdex
+              {t("about")}
             </Link>
             <Link
               href="/submit"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
             >
-              Submit a pet
+              {t("submit")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -100,10 +111,10 @@ export default async function NotFound() {
         <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-12 md:px-8 md:py-16">
           <header className="flex flex-col gap-1">
             <p className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
-              Try a featured one
+              {t("featuredEyebrow")}
             </p>
             <h2 className="text-2xl font-medium tracking-tight text-foreground md:text-3xl">
-              Pets that are definitely here
+              {t("featuredTitle")}
             </h2>
           </header>
 
@@ -125,7 +136,7 @@ export default async function NotFound() {
                     src={pet.spritesheetPath}
                     cycleStates
                     scale={0.6}
-                    label={`${pet.displayName} animated`}
+                    label={t("featuredPetAnimated", { name: pet.displayName })}
                   />
                 </div>
                 <span className="mt-3 text-base font-semibold tracking-tight text-foreground">
@@ -140,7 +151,7 @@ export default async function NotFound() {
 
           <div className="mt-2 rounded-2xl border border-black/[0.08] bg-surface/55 px-5 py-4 backdrop-blur dark:border-white/[0.08]">
             <p className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
-              Or install one from the terminal
+              {t("terminalEyebrow")}
             </p>
             <CommandLine
               command={`npx petdex install ${lost?.slug ?? "boba"}`}

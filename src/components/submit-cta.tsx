@@ -7,6 +7,7 @@ import { SignInButton, useAuth } from "@clerk/nextjs";
 type SubmitCTAProps = {
   className?: string;
   children?: React.ReactNode;
+  href?: string;
 };
 
 const DEFAULT_CLASS =
@@ -15,6 +16,7 @@ const DEFAULT_CLASS =
 export function SubmitCTA({
   className = DEFAULT_CLASS,
   children = "Submit a pet",
+  href = "/submit",
 }: SubmitCTAProps) {
   const { isLoaded, isSignedIn } = useAuth();
 
@@ -22,8 +24,8 @@ export function SubmitCTA({
     return (
       <SignInButton
         mode="modal"
-        forceRedirectUrl="/submit"
-        signUpForceRedirectUrl="/submit"
+        forceRedirectUrl={href}
+        signUpForceRedirectUrl={href}
       >
         <button type="button" className={className}>
           {children}
@@ -33,7 +35,7 @@ export function SubmitCTA({
   }
 
   return (
-    <Link href="/submit" className={className}>
+    <Link href={href} className={className}>
       {children}
     </Link>
   );

@@ -250,6 +250,10 @@ export const userProfiles = pgTable("user_profiles", {
   // Clerk user id (string). PK because every user has at most one profile.
   userId: text("user_id").primaryKey(),
   bio: text("bio"),
+  preferredLocale: text("preferred_locale")
+    .$type<"en" | "es" | "zh">()
+    .notNull()
+    .default("en"),
   // Up to 6 approved pets the user has pinned to the top of their public
   // gallery, in the order they were added. Validated server-side: every
   // slug must belong to the same userId and currently be approved.

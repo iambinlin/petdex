@@ -5,33 +5,15 @@ import { useEffect, useState } from "react";
 import { track } from "@vercel/analytics";
 import { ArrowRight, Star, X } from "lucide-react";
 
-const STORAGE_KEY = "petdex_announce_github_star_v1";
+type GithubStarModalProps = {
+  onClose: () => void;
+};
 
-// One-time soft-FYI modal asking the visitor to star the repo on
-// GitHub. Surfaces a beat after the page settles, dismissible, never
-// reappears once closed or once the CTA fires. Shares the same visual
-// shape as AnnouncementModal so the two never feel like different
-// product surfaces.
-//
-// We don't compete with the onboarding tour or the vibe-search modal —
-// both must be marked seen before this one appears, so first-time
-// visitors don't see three pop-ups stacked.
-export function GithubStarModal() {
-  const [open, setOpen] = useState(false);
+export function GithubStarModal({ onClose }: GithubStarModalProps) {
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(STORAGE_KEY) === "1") return;
-    if (window.localStorage.getItem("petdex_tour_seen_v1") !== "1") return;
-    if (window.localStorage.getItem("petdex_announce_vibe_search_v1") !== "1")
-      return;
-
-    const t = window.setTimeout(() => {
-      setOpen(true);
-      track("announcement_shown", { announcement: "github_star" });
-    }, 2200);
-    return () => window.clearTimeout(t);
+    track("announcement_shown", { announcement: "github_star" });
   }, []);
 
   function close(reason: "dismiss" | "cta_star" | "later" = "dismiss") {
@@ -41,12 +23,9 @@ export function GithubStarModal() {
     });
     setClosing(true);
     window.setTimeout(() => {
-      setOpen(false);
-      window.localStorage.setItem(STORAGE_KEY, "1");
+      onClose();
     }, 220);
   }
-
-  if (!open) return null;
 
   return (
     <div
@@ -74,7 +53,7 @@ export function GithubStarModal() {
         {/* Hero — gpt-image-2 illustration. Mirror the
             AnnouncementModal's 3:2 aspect so the two modals feel
             consistent. */}
-        <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b">
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b sm:aspect-[3/2]">
           {/* biome-ignore lint/performance/noImgElement: AI-generated marketing illustration */}
           <img
             src="/announcements/github-star.webp"

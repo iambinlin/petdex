@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -14,6 +15,7 @@ export function AdminFeedbackActions({
   id: string;
   status: Status;
 }) {
+  const t = useTranslations("admin.feedbackActions");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<null | "address" | "archive" | "reopen">(
@@ -32,7 +34,7 @@ export function AdminFeedbackActions({
         const j = (await res.json().catch(() => null)) as {
           error?: string;
         } | null;
-        alert(`Failed: ${j?.error ?? res.statusText}`);
+        alert(t("failed", { error: j?.error ?? res.statusText }));
         return;
       }
       startTransition(() => router.refresh());
@@ -50,8 +52,8 @@ export function AdminFeedbackActions({
           type="button"
           disabled={disabled}
           onClick={() => void run("address")}
-          aria-label="Mark as addressed"
-          title="Mark as addressed"
+          aria-label={t("address")}
+          title={t("address")}
           className="inline-flex size-8 items-center justify-center rounded-full border border-emerald-200 bg-chip-success-bg text-chip-success-fg transition hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-800/60 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/40"
         >
           {busy === "address" ? (
@@ -67,8 +69,8 @@ export function AdminFeedbackActions({
           type="button"
           disabled={disabled}
           onClick={() => void run("archive")}
-          aria-label="Archive"
-          title="Archive"
+          aria-label={t("archive")}
+          title={t("archive")}
           className="inline-flex size-8 items-center justify-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:border-border-strong hover:text-stone-900 disabled:opacity-60 dark:hover:text-stone-100"
         >
           {busy === "archive" ? (
@@ -84,8 +86,8 @@ export function AdminFeedbackActions({
           type="button"
           disabled={disabled}
           onClick={() => void run("reopen")}
-          aria-label="Re-open into pending"
-          title="Re-open into pending"
+          aria-label={t("reopen")}
+          title={t("reopen")}
           className="inline-flex size-8 items-center justify-center rounded-full border border-amber-200 bg-chip-warning-bg text-chip-warning-fg transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/60 dark:hover:border-amber-700 dark:hover:bg-amber-900/40"
         >
           {busy === "reopen" ? (

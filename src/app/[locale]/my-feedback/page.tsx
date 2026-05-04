@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { desc, sql as dsql, eq, inArray } from "drizzle-orm";
 import { Bug, Heart, Lightbulb, MessageSquare } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { db, schema } from "@/lib/db/client";
 
@@ -13,12 +14,24 @@ import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "My feedback",
-  description: "Threads with the Petdex team about feedback you've shared.",
-  alternates: { canonical: "/my-feedback" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({
+    locale,
+    namespace: "myFeedback.metadata",
+  });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: { canonical: "/my-feedback" },
+    robots: { index: false, follow: false },
+  };
+}
 
 const KIND_META: Record<
   string,
@@ -55,6 +68,7 @@ export default async function MyFeedbackPage({
 }: {
   searchParams: Promise<SP>;
 }) {
+  const t = await getTranslations("myFeedback");
   const { userId } = await auth();
   if (!userId) {
     redirect("/");
@@ -163,20 +177,20 @@ export default async function MyFeedbackPage({
   });
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-20 md:px-8">
         <header className="space-y-3">
           <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-            Threads
+            {t("eyebrow")}
           </p>
           <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
-            My feedback
+            {t("title")}
           </h1>
           <p className="text-sm text-muted-2">
-            Conversations with the Petdex team about feedback you've sent.
+            {t("subtitle")}
           </p>
           {decorated.length > 0 ? (
             <MyFeedbackFilters counts={counts} defaultFilter={defaultFilter} />
@@ -185,12 +199,11 @@ export default async function MyFeedbackPage({
 
         {decorated.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-stone-600 dark:text-stone-400">
-            You haven't sent any feedback yet. Use the Feedback button to share
-            thoughts.
+            {t("empty")}
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
-            No threads in this view.
+            {t("emptyFiltered")}
           </div>
         ) : (
           <ul className="space-y-2">
@@ -221,15 +234,15 @@ export default async function MyFeedbackPage({
                           </span>
                           {unread ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-white uppercase">
-                              New reply
+                              {t("badges.newReply")}
                             </span>
                           ) : replied ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-chip-success-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-success-fg uppercase ring-1 ring-chip-success-fg/20">
-                              Replied
+                              {t("badges.replied")}
                             </span>
                           ) : waiting ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-chip-warning-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-warning-fg uppercase ring-1 ring-chip-warning-fg/20">
-                              Waiting
+                              {t("badges.waiting")}
                             </span>
                           ) : null}
                           <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
@@ -248,7 +261,7 @@ export default async function MyFeedbackPage({
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900/70 uppercase">
-                                Hunter
+                                {t("replyAuthor")}
                                 {lastAdminAt ? (
                                   <span>
                                     ·{" "}
@@ -268,8 +281,8 @@ export default async function MyFeedbackPage({
 
                         <p className="mt-2 text-xs text-muted-3">
                           {replyCount > 0
-                            ? `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`
-                            : "No replies yet"}
+                            ? t("replyCount", { count: replyCount })
+                            : t("noReplies")}
                         </p>
                       </div>
                     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import type { OwnerCredit } from "@/lib/owner-credit";
 import { isAllowedAvatarUrl } from "@/lib/url-allowlist";
@@ -39,13 +40,14 @@ function XIcon({ className }: { className?: string }) {
 }
 
 export function SubmittedBy({ credit }: SubmittedByProps) {
+  const t = useTranslations("submittedBy");
   const showAvatar = credit.imageUrl && isAllowedAvatarUrl(credit.imageUrl);
   const profileHref = `/u/${credit.handle}`;
 
   return (
     <Link
       href={profileHref}
-      aria-label={`View ${credit.name}'s profile`}
+      aria-label={t("viewProfile", { name: credit.name })}
       className="group block rounded-2xl border border-border-base bg-surface/76 p-4 backdrop-blur transition hover:border-border-strong hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
     >
       <div className="flex items-center gap-3">
@@ -63,7 +65,7 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
         )}
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-            Submitted by
+            {t("eyebrow")}
           </p>
           <div className="flex flex-wrap items-baseline gap-x-2">
             <p className="truncate text-sm font-medium text-foreground">

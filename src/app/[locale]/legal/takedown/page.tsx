@@ -1,3 +1,5 @@
+import { buildLocaleAlternates } from "@/lib/locale-routing";
+
 import { GithubIcon } from "@/components/github-icon";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -5,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 export const metadata = {
   title: "Takedown — Petdex",
   description: "How to report a pet that infringes your rights.",
+  alternates: buildLocaleAlternates("/legal/takedown"),
   robots: { index: true, follow: true },
 };
 
@@ -14,7 +17,7 @@ export default function TakedownPage() {
   const issueUrl = `https://github.com/${REPO}/issues/new?template=takedown.yml`;
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>

@@ -8,6 +8,8 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
+import { renderNewSubmissionEmail } from "@/lib/email-templates/new-submission";
+import { getPreferredLocaleForUser } from "@/lib/user-locale";
 import { isAllowedAssetUrl } from "@/lib/url-allowlist";
 
 export type SubmissionPrincipal = {
@@ -154,19 +156,21 @@ export async function persistSubmission(
     void (async () => {
       try {
         const resend = new Resend(resendKey);
+        const locale = await getPreferredLocaleForUser(null);
+        const email = renderNewSubmissionEmail(locale, {
+          displayName: body.displayName,
+          slug,
+          from: principal.email ?? principal.userId,
+          description: body.description,
+          spritesheetUrl: body.spritesheetUrl,
+          zipUrl: body.zipUrl,
+        });
         await resend.emails.send({
           from: "Petdex <petdex@notifications.crafter.run>",
           to: ownerNotify,
-          subject: `New pet submission: ${safeName}`,
-          text: [
-            `Pet: ${body.displayName} (${slug})`,
-            `From: ${principal.email ?? principal.userId}`,
-            "",
-            body.description,
-            "",
-            `Sprite: ${body.spritesheetUrl}`,
-            `Zip:    ${body.zipUrl}`,
-          ].join("\n"),
+          subject: email.subject.replace(body.displayName, safeName),
+          html: email.html,
+          text: email.text,
         });
       } catch {
         /* silent */
