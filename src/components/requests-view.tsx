@@ -423,7 +423,7 @@ function RequestCard({
             upvote();
           }}
           disabled={busy || request.voted || fulfilled}
-          aria-label={`Upvote "${request.query}"`}
+          aria-label={t("upvoteAria", { query: request.query })}
           className={`flex shrink-0 flex-col items-center gap-0.5 rounded-xl border px-3 py-2 transition ${
             request.voted
               ? "border-brand bg-brand text-white"

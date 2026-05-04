@@ -312,6 +312,7 @@
         "noMatches": "Ningún pedido coincide con \"{search}\".",
         "nothingInView": "Todavía no hay nada en esta vista."
       },
+      "upvoteAria": "Votar \"{query}\"",
       "moreVoters": "+{count} más",
       "errors": {
         "moreDetail": "Cuéntanos un poco más ({min}-{max} caracteres).",
@@ -685,6 +686,10 @@
     }
   },
   "pet": {
+    "navigation": {
+      "ariaLabel": "Navegación del Dex",
+      "shuffleTitle": "Cambiar a una mascota aleatoria (Space)"
+    },
     "keyboardHint": {
       "tip": "Tip:",
       "browse": "navegar",

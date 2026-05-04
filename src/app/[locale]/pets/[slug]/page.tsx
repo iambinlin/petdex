@@ -343,14 +343,14 @@ export default async function PetPage({ params }: PageProps) {
           {/* Dex nav pills + shuffle. Sit at the top edge of the banner
               so they read like a Pokédex chrome strip, not page content. */}
           <nav
-            aria-label="Dex navigation"
+            aria-label={tPet("navigation.ariaLabel")}
             className="flex flex-wrap items-center justify-between gap-3"
           >
             <DexNavPill pet={prevPet} direction="prev" />
             <Link
               href={shuffleHref}
               className="inline-flex h-10 items-center gap-2 rounded-full border border-border-base bg-surface/80 px-4 text-sm font-medium text-foreground backdrop-blur transition hover:border-border-strong"
-              title="Shuffle to a random pet (Space)"
+              title={tPet("navigation.shuffleTitle")}
             >
               <Shuffle className="size-4" />
               Shuffle

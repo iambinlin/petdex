@@ -359,6 +359,8 @@
         "nothingInView": "这个视图里还没有内容。",
         "nothingInView__fixme": true
       },
+      "upvoteAria": "给“{query}”投票",
+      "upvoteAria__fixme": true,
       "moreVoters": "+{count} 人",
       "moreVoters__fixme": true,
       "errors": {
@@ -818,6 +820,12 @@
     }
   },
   "pet": {
+    "navigation": {
+      "ariaLabel": "Dex 导航",
+      "ariaLabel__fixme": true,
+      "shuffleTitle": "切换到随机宠物（Space）",
+      "shuffleTitle__fixme": true
+    },
     "keyboardHint": {
       "tip": "提示：",
       "tip__fixme": true,

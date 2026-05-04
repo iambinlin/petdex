@@ -312,6 +312,7 @@
         "noMatches": "No requests match \"{search}\".",
         "nothingInView": "Nothing in this view yet."
       },
+      "upvoteAria": "Upvote \"{query}\"",
       "moreVoters": "+{count} more",
       "errors": {
         "moreDetail": "Tell us a bit more ({min}-{max} chars).",
@@ -685,6 +686,10 @@
     }
   },
   "pet": {
+    "navigation": {
+      "ariaLabel": "Dex navigation",
+      "shuffleTitle": "Shuffle to a random pet (Space)"
+    },
     "keyboardHint": {
       "tip": "Tip:",
       "browse": "browse",
