@@ -18,18 +18,48 @@ import { neon } from "@neondatabase/serverless";
 
 import * as schema from "../src/lib/db/schema";
 
-// Hit Clerk Backend API directly. Avoids pulling next runtime deps
-// into a CLI script.
-const CLERK_BASE = "https://api.clerk.com/v1";
-const CLERK_KEY = process.env.CLERK_SECRET_KEY ?? "";
+// Use the Clerk CLI (`clerk api`) so we don't have to handle a sk_live in
+// the script's environment. The CLI authenticates from your local
+// `clerk` config (run `clerk auth login` once) and resolves the right
+// instance via --app + --instance. Set PETDEX_CLERK_APP env var, or pass
+// --app=<id> to override.
+import { execFileSync } from "node:child_process";
+
+const PETDEX_CLERK_APP =
+  process.env.PETDEX_CLERK_APP ?? "app_3D9zFHDj1SHAKBi4fxhrOVcZXjM";
+const PETDEX_CLERK_INSTANCE = process.env.PETDEX_CLERK_INSTANCE ?? "production";
+
 async function clerkFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${CLERK_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${CLERK_KEY}` },
-  });
-  if (!res.ok) {
-    throw new Error(`clerk ${path} -> ${res.status}`);
+  // Calls `clerk api <path> --app=... --instance=...` and parses JSON.
+  // Synchronous because the CLI is fast and we're already in a serial
+  // pagination loop. If the CLI isn't logged in or the app id is wrong,
+  // the JSON will contain { error }.
+  const out = execFileSync(
+    "clerk",
+    [
+      "api",
+      path,
+      `--app=${PETDEX_CLERK_APP}`,
+      `--instance=${PETDEX_CLERK_INSTANCE}`,
+      "--mode=agent",
+    ],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(out);
+  } catch {
+    throw new Error(`clerk cli returned non-JSON for ${path}`);
   }
-  return (await res.json()) as T;
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    "error" in parsed &&
+    parsed.error
+  ) {
+    throw new Error(`clerk cli error for ${path}: ${JSON.stringify(parsed.error)}`);
+  }
+  return parsed as T;
 }
 
 const ADMIN_OWNER_ID = "user_3DA3wOYrJh1UNufe2pgQpcF6GJ7";
@@ -42,7 +72,6 @@ function env(name: string): string {
 
 const sql = neon(env("DATABASE_URL"));
 const db = drizzle(sql, { schema });
-env("CLERK_SECRET_KEY"); // assert presence
 
 type ClerkUser = {
   id: string;
