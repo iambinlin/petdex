@@ -110,7 +110,9 @@ export default async function LeaderboardPage({
 
 // Plain-object map so it can cross the server -> client boundary as
 // JSON. resolveOwnerCredits returns a Map<string, OwnerCredit>; the
-// view only needs the visible bits.
+// view only needs the visible bits. We surface the first GitHub external
+// here so the leaderboard can prefer the artist's GitHub @ over the
+// raw Clerk userId tail when no Clerk username is set.
 function serializeCredits(
   credits: Awaited<ReturnType<typeof resolveOwnerCredits>>,
 ): Record<
@@ -119,6 +121,7 @@ function serializeCredits(
     name: string;
     handle: string;
     username: string | null;
+    githubUsername: string | null;
     imageUrl: string | null;
   }
 > {
@@ -128,14 +131,17 @@ function serializeCredits(
       name: string;
       handle: string;
       username: string | null;
+      githubUsername: string | null;
       imageUrl: string | null;
     }
   > = {};
   for (const [id, c] of credits.entries()) {
+    const gh = c.externals.find((e) => e.provider === "github");
     out[id] = {
       name: c.name,
       handle: c.handle,
       username: c.username,
+      githubUsername: gh?.username ?? null,
       imageUrl: c.imageUrl,
     };
   }

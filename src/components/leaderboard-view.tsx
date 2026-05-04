@@ -16,6 +16,7 @@ type CreditMap = Record<
     name: string;
     handle: string;
     username: string | null;
+    githubUsername: string | null;
     imageUrl: string | null;
   }
 >;
@@ -166,7 +167,10 @@ function LeaderboardRowItem({
   const name = credit?.name ?? "anonymous";
   const handle = credit?.handle ?? row.ownerId.slice(-8).toLowerCase();
   const avatar = credit?.imageUrl ?? null;
-  const username = credit?.username ?? null;
+  // Prefer Clerk username, then GitHub username from the linked OAuth
+  // account. If neither exists we hide the secondary line entirely
+  // rather than showing the meaningless /u/<userid-tail> placeholder.
+  const at = credit?.username ?? credit?.githubUsername ?? null;
 
   return (
     <li>
@@ -195,9 +199,11 @@ function LeaderboardRowItem({
           <span className="truncate text-sm font-medium text-foreground">
             {name}
           </span>
-          <span className="truncate font-mono text-[11px] text-muted-3">
-            {username ? `@${username}` : `/u/${handle}`}
-          </span>
+          {at ? (
+            <span className="truncate font-mono text-[11px] text-muted-3">
+              @{at}
+            </span>
+          ) : null}
         </div>
 
         <div className="hidden items-center gap-4 text-[11px] text-muted-3 sm:flex">
