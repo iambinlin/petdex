@@ -221,7 +221,7 @@ export default async function PetPage({ params }: PageProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] dark:bg-stone-950">
+    <main className="min-h-screen bg-background">
       <JsonLd data={jsonLd} />
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
@@ -286,7 +286,7 @@ export default async function PetPage({ params }: PageProps) {
                 {pet.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea] dark:bg-[#1f2240]"
+                    className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-brand dark:bg-brand-tint-dark"
                   >
                     {tag}
                   </span>

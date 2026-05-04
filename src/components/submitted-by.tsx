@@ -49,7 +49,7 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
       <Link
         href={profileHref}
         aria-label={`View ${credit.name}'s profile`}
-        className="absolute inset-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5266ea]/40"
+        className="absolute inset-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
       />
 
       <div className="relative flex items-center gap-3">

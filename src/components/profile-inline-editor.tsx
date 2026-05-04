@@ -130,7 +130,7 @@ export function ProfileInlineEditor({
                   maxLength={280}
                   rows={4}
                   placeholder="Pixel art, cozy creatures, and the occasional shrimp."
-                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
                 />
                 <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   {bio.length}/280
@@ -166,7 +166,7 @@ export function ProfileInlineEditor({
                           }
                           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                             active
-                              ? "border-[#5266ea] bg-[#5266ea] text-white hover:bg-[#3847f5]"
+                              ? "border-brand bg-brand text-white hover:bg-brand-deep"
                               : "border-black/10 bg-white text-stone-700 hover:border-black/30"
                           } dark:bg-stone-900 dark:text-stone-300`}
                         >

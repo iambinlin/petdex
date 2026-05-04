@@ -90,7 +90,7 @@ export function MyPetsView({
       <ProfileCard profile={profile} />
       <ClaimableBanner />
       <header>
-        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard
         </p>
         <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl dark:text-stone-100">
@@ -104,7 +104,7 @@ export function MyPetsView({
             href={`/u/${profile.handle}`}
             target="_blank"
             rel="noreferrer"
-            className="font-medium text-[#5266ea] underline-offset-2 hover:underline"
+            className="font-medium text-brand underline-offset-2 hover:underline"
           >
             public profile
           </a>
@@ -245,7 +245,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
     <article
       className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white/76 backdrop-blur transition ${
         submission.featured
-          ? "border-[#6478f6]/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
+          ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-black/10 shadow-sm shadow-blue-950/5"
       } dark:bg-stone-900/76`}
     >
@@ -257,7 +257,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
           {statusConfig.label}
         </span>
         {submission.featured ? (
-          <span className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
+          <span className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
             ★ Featured
           </span>
         ) : null}
@@ -574,7 +574,7 @@ function EmptyState() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard
         </p>
         <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl dark:text-stone-100">

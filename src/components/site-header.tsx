@@ -38,7 +38,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
       <nav className="flex items-center justify-between gap-3">
         <PetdexLogo href="/" />
 
-        <div className="hidden items-center gap-7 text-sm text-[#4f515c] md:flex">
+        <div className="hidden items-center gap-7 text-sm text-muted-4 md:flex">
           <Link href="/#gallery" className="transition hover:text-black dark:hover:text-stone-100">
             Gallery
           </Link>
@@ -76,7 +76,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
 
       {open ? (
         <div
-          className="fixed inset-0 z-40 flex flex-col bg-[#f7f8ff]/95 backdrop-blur md:hidden"
+          className="fixed inset-0 z-40 flex flex-col bg-background/95 backdrop-blur md:hidden"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}

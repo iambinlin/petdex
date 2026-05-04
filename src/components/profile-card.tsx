@@ -120,7 +120,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
+          <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
             Public profile
           </p>
           <p className="mt-1 truncate text-base font-medium text-stone-950 dark:text-stone-100">
@@ -172,7 +172,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                 {pinnedDetails.map((p) => (
                   <span
                     key={p.slug}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea] dark:bg-[#1f2240]"
+                    className="inline-flex items-center gap-1 rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-brand dark:bg-brand-tint-dark"
                   >
                     <Star className="size-3" />
                     {p.displayName}
@@ -183,13 +183,13 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           ) : null}
         </div>
       ) : (
-        <div className="mt-3 rounded-2xl border border-dashed border-black/10 bg-[#eef1ff]/40 p-3 text-xs text-stone-600 dark:border-white/10 dark:text-stone-400">
+        <div className="mt-3 rounded-2xl border border-dashed border-black/10 bg-brand-tint/40 p-3 text-xs text-stone-600 dark:border-white/10 dark:text-stone-400">
           Add a bio and pin up to {MAX_PINNED_PETS} pets so visitors land
           somewhere opinionated. Hit{" "}
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="font-medium text-[#5266ea] underline-offset-2 hover:underline"
+            className="font-medium text-brand underline-offset-2 hover:underline"
           >
             Customize
           </button>{" "}
@@ -247,7 +247,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                   maxLength={280}
                   rows={4}
                   placeholder="Pixel art, cozy creatures, and the occasional shrimp."
-                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
                 />
                 <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   {bio.length}/280
@@ -283,7 +283,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                           }
                           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                             active
-                              ? "border-[#5266ea] bg-[#5266ea] text-white hover:bg-[#3847f5]"
+                              ? "border-brand bg-brand text-white hover:bg-brand-deep"
                               : "border-black/10 bg-white text-stone-700 hover:border-black/30"
                           } dark:bg-stone-900 dark:text-stone-300`}
                         >

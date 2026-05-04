@@ -112,6 +112,26 @@ The full step-by-step (with tips on what makes a great pet) lives at <https://pe
 | `register 400 missing_field` | Folder missing `pet.json` or `spritesheet.{webp,png}` | Inspect folder contents, re-export from Codex if needed |
 | `R2 PUT 403` | Presigned URL expired (60s TTL) | Retry the failed submission — CLI auto-presigns fresh URLs |
 
+## Common install issues
+
+The CLI is a single bundled JS file with no native dependencies — the
+install path is just `fetch a JSON manifest, write two files to
+~/.codex/pets/<slug>/`. Most "stuck" reports trace to one of these:
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Hangs at `Need to install the following packages: petdex@x` | `npx`'s own confirmation prompt, not a hang. Press `y` or auto-confirm | `npx -y petdex install <slug>` |
+| `npm ERR! engine Unsupported engine` | Node < 18 | Upgrade Node to 18+ (`nvm install 20` is the easiest path) |
+| `manifest fetch 5xx` / network timeout | Slow connection or corporate/national firewall blocking `petdex.crafter.run` | Set a proxy: `HTTPS_PROXY=http://your.proxy:port npx petdex install <slug>` |
+| `EACCES: permission denied … ~/.codex/pets/` | Pets dir owned by another user | `sudo chown -R "$USER" ~/.codex` or remove the dir and retry |
+| Windows: `'sh' is not recognized` | CLI version older than 0.1.1 piped through `curl … \| sh` | Upgrade: `npm i -g petdex@latest` or `npx petdex@latest install <slug>` |
+
+The CLI bundles `@clack/prompts`, `picocolors`, and `jszip` into the
+shipped JS — there is no separate dependency-install step on your
+machine. If something appears to be stuck on "installing
+dependencies", it's almost always npm's own progress bar for the
+`petdex` package itself, not a sub-dependency tree.
+
 ## License
 
 MIT — same as the [Petdex repo](https://github.com/crafter-station/petdex).

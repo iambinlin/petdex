@@ -72,7 +72,7 @@ export function AnnouncementModal() {
         } dark:border-white/10 dark:bg-stone-900`}
       >
         {/* Hero image */}
-        <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-[#d8e9ff] via-[#f7f8ff] to-[#c9c6ff]">
+        <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b">
           {/* biome-ignore lint/performance/noImgElement: AI-generated marketing illustration */}
           <img
             src="/announcements/vibe-search.webp"
@@ -92,10 +92,10 @@ export function AnnouncementModal() {
         {/* Body */}
         <div className="space-y-4 p-6">
           <div className="flex items-center gap-2">
-            <span className="grid size-6 place-items-center rounded-full bg-[#5266ea] text-white">
+            <span className="grid size-6 place-items-center rounded-full bg-brand text-white">
               <Sparkles className="size-3" />
             </span>
-            <p className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
               New · Vibe search
             </p>
           </div>

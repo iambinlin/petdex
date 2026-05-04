@@ -10,7 +10,7 @@ type SubmitCTAProps = {
 };
 
 const DEFAULT_CLASS =
-  "inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85";
+  "inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200";
 
 export function SubmitCTA({
   className = DEFAULT_CLASS,

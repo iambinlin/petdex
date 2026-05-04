@@ -36,32 +36,32 @@ const KIND_META: Record<
 > = {
   pet_approved: {
     icon: <CheckCircle2 className="size-3.5" />,
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
     verb: "approved",
   },
   pet_rejected: {
     icon: <XCircle className="size-3.5" />,
-    tone: "bg-rose-50 text-rose-900 ring-rose-200",
+    tone: "bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800/60",
     verb: "needs changes",
   },
   edit_approved: {
     icon: <Pencil className="size-3.5" />,
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
     verb: "edit approved",
   },
   edit_rejected: {
     icon: <Pencil className="size-3.5" />,
-    tone: "bg-rose-50 text-rose-900 ring-rose-200",
+    tone: "bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800/60",
     verb: "edit needs changes",
   },
   feedback_replied: {
     icon: <MessageSquare className="size-3.5" />,
-    tone: "bg-[#eef1ff] text-[#3847f5] ring-[#5266ea]/20",
+    tone: "bg-brand-tint text-brand-deep ring-brand/20",
     verb: "replied",
   },
   request_fulfilled: {
     icon: <Sparkles className="size-3.5" />,
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
     verb: "your request shipped",
   },
 };
@@ -206,7 +206,7 @@ export function NotificationsBell() {
         {unread > 0 ? (
           <span
             aria-hidden
-            className="pointer-events-none absolute -top-0.5 -right-0.5 grid size-4 place-items-center rounded-full bg-[#5266ea] font-mono text-[9px] font-semibold text-white ring-2 ring-white"
+            className="pointer-events-none absolute -top-0.5 -right-0.5 grid size-4 place-items-center rounded-full bg-brand font-mono text-[9px] font-semibold text-white ring-2 ring-white"
           >
             {unread > 9 ? "9+" : unread}
           </span>
@@ -223,7 +223,7 @@ export function NotificationsBell() {
               <button
                 type="button"
                 onClick={() => void markAll()}
-                className="inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.12em] text-[#5266ea] uppercase hover:underline"
+                className="inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.12em] text-brand uppercase hover:underline"
               >
                 <Check className="size-3" />
                 Mark all read
@@ -250,7 +250,7 @@ export function NotificationsBell() {
                         setOpen(false);
                       }}
                       className={`flex items-start gap-3 px-4 py-3 transition hover:bg-stone-50 ${
-                        isUnread ? "bg-[#eef1ff]/40" : ""
+                        isUnread ? "bg-brand-tint/40" : ""
                       } dark:hover:bg-stone-800/60`}
                     >
                       <span
@@ -270,7 +270,7 @@ export function NotificationsBell() {
                             {title}
                           </p>
                           {isUnread ? (
-                            <span className="size-1.5 shrink-0 rounded-full bg-[#5266ea]" />
+                            <span className="size-1.5 shrink-0 rounded-full bg-brand" />
                           ) : null}
                           <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
                             {relativeTime(n.createdAt)}

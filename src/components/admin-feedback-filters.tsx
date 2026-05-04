@@ -78,14 +78,14 @@ export function AdminFeedbackFilters({
               href={buildHref(currentStatus, f.value)}
               className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] transition ${
                 active
-                  ? "border-[#5266ea] bg-[#5266ea]/10 text-[#5266ea]"
+                  ? "border-brand bg-brand/10 text-brand"
                   : "border-black/10 bg-white text-stone-500 hover:border-black/30"
               } dark:bg-stone-900 dark:text-stone-400`}
             >
               {f.label}
               <span
                 className={`font-mono text-[10px] ${
-                  active ? "text-[#5266ea]/70" : "text-stone-400"
+                  active ? "text-brand/70" : "text-stone-400"
                 }`}
               >
                 {count}

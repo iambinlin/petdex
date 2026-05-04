@@ -67,20 +67,20 @@ export default async function Home() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
 
           <div className="mt-12 flex flex-col items-center text-center md:mt-16">
-            <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
               The Codex pet index
             </p>
             <h1 className="mt-3 text-[48px] leading-[0.98] font-semibold tracking-tight md:text-[80px]">
               Petdex
             </h1>
-            <p className="mt-5 max-w-xl text-balance text-base leading-7 text-[#202127] md:text-lg">
+            <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
               The public gallery of animated pixel pets for the{" "}
               <strong>Codex CLI</strong>. Browse {totalPets}+ open-source
               companions, preview their states, and install one with a single

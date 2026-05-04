@@ -117,7 +117,7 @@ export function FeedbackWidget() {
         <div className="w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-black/10 bg-white shadow-2xl shadow-blue-950/20 dark:border-white/10 dark:bg-stone-900">
           <div className="flex items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
             <div className="flex items-center gap-2">
-              <span className="grid size-7 place-items-center rounded-full bg-[#eef1ff] text-[#5266ea] dark:bg-[#1f2240]">
+              <span className="grid size-7 place-items-center rounded-full bg-brand-tint text-brand dark:bg-brand-tint-dark">
                 <MessageCircle className="size-3.5" />
               </span>
               <span className="text-sm font-semibold text-stone-950 dark:text-stone-100">
@@ -223,7 +223,7 @@ export function FeedbackWidget() {
                   href={githubIssueUrlFor(kind, message)}
                   target="_blank"
                   rel="noreferrer"
-                  className="font-medium text-[#5266ea] underline-offset-2 hover:underline"
+                  className="font-medium text-brand underline-offset-2 hover:underline"
                 >
                   Open an issue on GitHub →
                 </a>
@@ -238,7 +238,7 @@ export function FeedbackWidget() {
           onClick={() => setOpen(true)}
           className="group inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 shadow-lg shadow-blue-950/10 transition hover:border-black/30 hover:text-black hover:shadow-xl dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30 dark:hover:text-stone-100"
         >
-          <MessageCircle className="size-4 text-[#5266ea]" />
+          <MessageCircle className="size-4 text-brand" />
           <span>Feedback</span>
         </button>
       )}

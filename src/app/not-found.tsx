@@ -28,19 +28,19 @@ export default async function NotFound() {
     featured[Math.floor(Math.random() * featured.length)] ?? null;
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
 
           <div className="mt-10 flex flex-col items-center text-center md:mt-14">
-            <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
               Error 404
             </p>
             <h1 className="mt-3 text-balance text-[42px] leading-[1] font-semibold tracking-tight md:text-[64px]">
               This pet wandered off
             </h1>
-            <p className="mt-5 max-w-xl text-balance text-base leading-7 text-[#202127] md:text-lg">
+            <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
               The page you tried to reach isn't in the index. Could be a typo,
               a withdrawn submission, or a pet that hasn't been approved yet.
               Try one of these instead.
@@ -49,7 +49,7 @@ export default async function NotFound() {
             {lost ? (
               <div className="relative mt-10 flex flex-col items-center gap-3">
                 <div
-                  className="relative flex items-center justify-center rounded-3xl border border-[#6478f6]/25 bg-white/82 px-10 py-8 shadow-[0_0_0_1px_rgba(100,120,246,0.10),0_24px_60px_-30px_rgba(82,102,234,0.45)] backdrop-blur"
+                  className="relative flex items-center justify-center rounded-3xl border border-brand-light/25 bg-white/82 px-10 py-8 shadow-[0_0_0_1px_rgba(100,120,246,0.10),0_24px_60px_-30px_rgba(82,102,234,0.45)] backdrop-blur"
                   style={{
                     background:
                       "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 60%, transparent 90%)",

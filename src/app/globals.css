@@ -4,19 +4,75 @@
    which is what next-themes (attribute="class") writes. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* All brand colors live in OKLCH so we can reason about lightness +
+   chroma + hue independently. The hex equivalents (kept here as
+   comments) match the values the codebase used pre-migration. The
+   tokens get wired into Tailwind via @theme inline below, so each
+   one becomes available as bg-{name}, text-{name}, border-{name},
+   ring-{name}, etc. */
 :root {
-  --background: #f7f8ff;
-  --foreground: #050505;
+  /* Page surfaces — perceptually near-white with a faint cool tint */
+  --bg-app: oklch(0.984 0.009 271.7);     /* #f7f8ff */
+  --text-default: oklch(0.142 0 0);       /* #050505 */
+
+  /* Brand purple family — same hue (~271°), three lightness steps */
+  --brand: oklch(0.561 0.207 271.8);      /* #5266ea */
+  --brand-deep: oklch(0.521 0.260 269.4); /* #3847f5 — hovers/CTAs */
+  --brand-light: oklch(0.616 0.193 272.1);/* #6478f6 — borders/highlights */
+  --brand-tint: oklch(0.949 0.019 269.0); /* #eef1ff — chip backgrounds */
+  --brand-tint-dark: oklch(0.243 0.075 274.3); /* #1f2240 — dark chip bg */
+
+  /* Body / muted text scale (single hue ~277°, varying L) */
+  --text-muted-1: oklch(0.235 0.009 277.1); /* #202127 — body secondary */
+  --text-muted-2: oklch(0.317 0.013 280.1); /* #33333a — submit intro */
+  --text-muted-3: oklch(0.475 0.024 273.7); /* #5b6076 — OG footer */
+  --text-muted-4: oklch(0.430 0.014 277.6); /* #4f515c — nav inactive */
+
+  /* Hero cloud gradient stops */
+  --gradient-a: oklch(0.918 0.040 247.6);  /* #d8e9ff */
+  --gradient-b: oklch(0.829 0.067 290.4);  /* #c9c6ff */
+
+  /* Semantic background <-> foreground mapped via theme below */
+  --background: var(--bg-app);
+  --foreground: var(--text-default);
 }
 
 .dark {
-  --background: #0a0a0c;
-  --foreground: #f0f0f3;
+  /* In dark mode, the page surface flips to a near-black with the same
+     subtle cool tint, and the default text becomes near-white. The
+     brand tokens stay constant — purple at L~0.56 reads well on both
+     light and dark backgrounds without retuning. */
+  --bg-app: oklch(0.157 0.004 285.7);     /* #0a0a0c */
+  --text-default: oklch(0.949 0.002 286.2); /* #f0f0f3 */
+
+  /* Muted text scale flips: in light mode --text-muted-1 was nearly
+     black for body secondary, in dark mode it should be a slightly
+     dimmed near-white. We keep the same hue (~277°) and invert the
+     L axis so the visual hierarchy (1 = strongest, 4 = weakest)
+     stays consistent. */
+  --text-muted-1: oklch(0.880 0.010 277.0); /* near-white body */
+  --text-muted-2: oklch(0.760 0.012 280.0); /* secondary */
+  --text-muted-3: oklch(0.640 0.015 274.0); /* dim */
+  --text-muted-4: oklch(0.560 0.014 277.5); /* very dim — nav inactive */
+
+  --background: var(--bg-app);
+  --foreground: var(--text-default);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-light: var(--brand-light);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-tint-dark: var(--brand-tint-dark);
+  --color-muted-1: var(--text-muted-1);
+  --color-muted-2: var(--text-muted-2);
+  --color-muted-3: var(--text-muted-3);
+  --color-muted-4: var(--text-muted-4);
+  --color-gradient-a: var(--gradient-a);
+  --color-gradient-b: var(--gradient-b);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -54,6 +110,32 @@ input {
     linear-gradient(120deg, #d8e9ff 0%, #f7f8ff 47%, #c9c6ff 100%);
 }
 
+/* Dark variant: same composition but the cloud whites become deep
+   purples and the linear-gradient base flips to a near-black. The
+   accent purples gain transparency so they still glow without
+   overpowering the page surface. */
+.dark .petdex-cloud {
+  background:
+    radial-gradient(
+      circle at 49% 18%,
+      rgb(60 70 130 / 0.45) 0 13%,
+      rgb(40 50 100 / 0.30) 24%,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 12% 68%,
+      rgb(30 50 110 / 0.55) 0 20%,
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 83% 44%,
+      rgb(82 102 234 / 0.45) 0 25%,
+      rgb(56 71 245 / 0.30) 43%,
+      transparent 68%
+    ),
+    linear-gradient(120deg, #0d1230 0%, #0a0a0c 47%, #1a1238 100%);
+}
+
 .petdex-cloud::before {
   position: absolute;
   inset: 0;
@@ -77,6 +159,31 @@ input {
       rgb(255 255 255 / 0.1)
     );
   filter: blur(18px);
+}
+
+/* The "stage" behind every pet sprite: a soft white halo on light
+   mode that helps the pixel art stand out, a muted stone halo on
+   dark mode. Used by every PetCard variant via a className so we
+   stop pasting the same inline style style={{ background: ... }}
+   in five places and keep dark theming in one spot. */
+.pet-sprite-stage {
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      rgb(255 255 255 / 0.95) 0%,
+      rgb(238 241 255 / 0.55) 55%,
+      transparent 80%
+    );
+}
+
+.dark .pet-sprite-stage {
+  background:
+    radial-gradient(
+      circle at 50% 38%,
+      rgb(64 64 70 / 0.85) 0%,
+      rgb(40 40 48 / 0.55) 55%,
+      transparent 80%
+    );
 }
 
 .glass-panel {

@@ -229,7 +229,7 @@ export function OwnerEditPanel({
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   maxLength={60}
-                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
                 />
                 <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   {displayName.length}/60
@@ -249,7 +249,7 @@ export function OwnerEditPanel({
                   onChange={(e) => setDescription(e.target.value)}
                   maxLength={280}
                   rows={4}
-                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
                 />
                 <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   {description.length}/280
@@ -268,7 +268,7 @@ export function OwnerEditPanel({
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
                   placeholder="cat, desk-companion, cuddly"
-                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
                 />
                 <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   Comma- or space-separated. Lowercase, max 8, hyphens ok.

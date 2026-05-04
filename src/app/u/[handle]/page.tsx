@@ -164,7 +164,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <ProfileAnalytics
         handle={handle}
@@ -196,7 +196,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 
             {/* Identity */}
             <div className="text-center lg:text-left">
-              <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+              <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
                 Petdex creator
               </p>
               <h1 className="mt-3 text-balance text-[40px] leading-[1] font-semibold tracking-tight md:text-[56px]">
@@ -208,7 +208,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 </p>
               ) : null}
               {bio ? (
-                <p className="mt-4 max-w-xl text-balance text-base leading-7 text-[#202127] md:text-lg">
+                <p className="mt-4 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
                   {bio}
                 </p>
               ) : null}
@@ -299,7 +299,7 @@ export default async function UserProfilePage({ params }: PageProps) {
             {featuredPets.length > 0 ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="font-mono text-[11px] tracking-[0.22em] text-[#5266ea] uppercase">
+                  <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
                     ★ Pinned
                   </p>
                   <p className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
@@ -408,7 +408,7 @@ function FeaturedPin({ pet }: { pet: PetWithMetrics }) {
     <Link
       href={`/pets/${pet.slug}`}
       aria-label={`Open ${pet.displayName}`}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-[#6478f6]/45 bg-white/80 backdrop-blur transition hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 md:flex-row md:items-stretch dark:bg-stone-900/80 dark:hover:bg-stone-800"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-brand-light/45 bg-white/80 backdrop-blur transition hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 md:flex-row md:items-stretch dark:bg-stone-900/80 dark:hover:bg-stone-800"
       style={{
         boxShadow:
           "0 0 0 1px rgba(100,120,246,0.18), 0 18px 45px -22px rgba(82,102,234,0.5)",
@@ -429,7 +429,7 @@ function FeaturedPin({ pet }: { pet: PetWithMetrics }) {
         />
       </div>
       <div className="flex flex-1 flex-col justify-center gap-3 border-t border-black/[0.06] p-6 md:border-t-0 md:border-l dark:border-white/[0.06]">
-        <span className="font-mono text-[11px] tracking-[0.22em] text-[#5266ea] uppercase">
+        <span className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
           ★ Pinned
         </span>
         <h2 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-4xl dark:text-stone-100">

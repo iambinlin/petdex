@@ -26,22 +26,22 @@ const KIND_META: Record<
 > = {
   suggestion: {
     label: "Suggest",
-    tone: "bg-amber-50 text-amber-900 ring-amber-200",
+    tone: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/60",
     icon: <Lightbulb className="size-3.5" />,
   },
   bug: {
     label: "Bug",
-    tone: "bg-rose-50 text-rose-900 ring-rose-200",
+    tone: "bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800/60",
     icon: <Bug className="size-3.5" />,
   },
   praise: {
     label: "Praise",
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
     icon: <Heart className="size-3.5" />,
   },
   other: {
     label: "Other",
-    tone: "bg-stone-50 text-stone-900 ring-stone-200",
+    tone: "bg-stone-50 text-stone-900 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-700",
     icon: <MessageSquare className="size-3.5" />,
   },
 };
@@ -164,13 +164,13 @@ export default async function MyFeedbackPage({
   });
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-20 md:px-8">
           <header className="space-y-3">
-            <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
               Threads
             </p>
             <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
@@ -210,7 +210,7 @@ export default async function MyFeedbackPage({
                       href={`/my-feedback/${r.id}`}
                       className={`block rounded-2xl border p-4 transition hover:bg-white ${
                         unread
-                          ? "border-[#5266ea]/40 bg-white shadow-[0_0_0_1px_rgba(82,102,234,0.18),0_18px_45px_-26px_rgba(82,102,234,0.4)]"
+                          ? "border-brand/40 bg-white shadow-[0_0_0_1px_rgba(82,102,234,0.18),0_18px_45px_-26px_rgba(82,102,234,0.4)]"
                           : "border-black/10 bg-white/80 hover:border-black/30 dark:border-white/10 dark:bg-stone-900/80 dark:hover:border-white/30"
             }`}
                     >
@@ -224,7 +224,7 @@ export default async function MyFeedbackPage({
                               {meta.label}
                             </span>
                             {unread ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-[#5266ea] px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-white uppercase">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-white uppercase">
                                 New reply
                               </span>
                             ) : replied ? (

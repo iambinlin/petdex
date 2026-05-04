@@ -19,18 +19,18 @@ export const metadata = {
 
 export default function CreatePage() {
   return (
-    <main className="petdex-cloud relative min-h-screen overflow-hidden bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="petdex-cloud relative min-h-screen overflow-hidden bg-background text-foreground">
       <section className="relative mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 py-5 pb-12 md:px-8 md:py-5 md:pb-16">
         <SiteHeader />
 
         <header className="mt-6 max-w-3xl">
-          <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+          <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
             Make your own
           </p>
           <h1 className="mt-3 text-5xl leading-tight font-medium tracking-tight md:text-7xl">
             Hatch a pet in Codex
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-[#33333a]">
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-2">
             Codex ships a built-in skill called{" "}
             <strong>Hatch Pet</strong> that generates a fully animated
             companion (9 states, 1536×1872) from a short description. Five

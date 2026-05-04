@@ -24,9 +24,17 @@ export default async function AdminPage({
   const filter = (status ?? "pending") as Filter;
 
   const pets = await listAllSubmittedPets();
+  // Pending and Discovered are orthogonal axes — every discovered pet
+  // is also technically pending until an admin reviews it. To make
+  // the queue actionable we treat 'pending' as "user-submitted +
+  // pending review" only, and surface discovered rows in their own
+  // tab so the admin doesn't have to wade through 170 imports to
+  // find genuine new submissions.
   const counts = {
     all: pets.length,
-    pending: pets.filter((p) => p.status === "pending").length,
+    pending: pets.filter(
+      (p) => p.status === "pending" && p.source !== "discover",
+    ).length,
     approved: pets.filter((p) => p.status === "approved").length,
     rejected: pets.filter((p) => p.status === "rejected").length,
     discovered: pets.filter((p) => p.source === "discover").length,
@@ -37,12 +45,16 @@ export default async function AdminPage({
       ? pets
       : filter === "discovered"
         ? pets.filter((p) => p.source === "discover")
-        : pets.filter((p) => p.status === filter);
+        : filter === "pending"
+          ? pets.filter(
+              (p) => p.status === "pending" && p.source !== "discover",
+            )
+          : pets.filter((p) => p.status === filter);
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
       <header className="space-y-3">
-        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Submission queue
         </p>
         <h1 className="text-4xl font-medium tracking-tight md:text-5xl">

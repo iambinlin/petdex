@@ -27,9 +27,9 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const STATUS_TONE: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-900 ring-amber-200",
-  addressed: "bg-emerald-50 text-emerald-900 ring-emerald-200",
-  archived: "bg-stone-100 text-stone-600 ring-stone-200",
+  pending: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/60",
+  addressed: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
+  archived: "bg-stone-100 text-stone-600 ring-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:ring-stone-700",
 };
 
 export function FeedbackThread({
@@ -151,7 +151,7 @@ export function FeedbackThread({
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 ring-1 ${
                     fromAdmin
                       ? "bg-white text-stone-900 ring-black/10"
-                      : "bg-[#5266ea] text-white ring-[#5266ea]/30"
+                      : "bg-brand text-white ring-brand/30"
                   } dark:text-stone-100`}
                 >
                   <div

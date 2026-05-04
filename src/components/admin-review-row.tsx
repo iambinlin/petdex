@@ -342,7 +342,7 @@ function SpritePreview({ src }: { src: string }) {
   }, []);
 
   return (
-    <div className="w-fit rounded-2xl border border-black/10 bg-[#f7f8ff] p-3 dark:border-white/10 dark:bg-stone-950">
+    <div className="w-fit rounded-2xl border border-black/10 bg-background p-3 dark:border-white/10">
       <div
         className="pet-sprite-frame"
         role="img"

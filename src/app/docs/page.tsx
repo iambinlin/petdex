@@ -25,7 +25,7 @@ const SKILL_URL = `${REPO_URL}/blob/main/.claude/skills/petdex/SKILL.md`;
 
 export default function DocsPage() {
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
@@ -52,7 +52,7 @@ export default function DocsPage() {
 
         <article className="min-w-0 space-y-14">
           <header className="space-y-3">
-            <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
               Petdex CLI · v0.1
             </p>
             <h1 className="text-5xl font-medium tracking-tight md:text-6xl">
@@ -593,7 +593,7 @@ function Section({
 
 function Callout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[#6478f6]/40 bg-[#eef1ff] p-4 text-sm leading-6 text-[#33333a] dark:bg-[#1f2240]">
+    <div className="rounded-2xl border border-brand-light/40 bg-brand-tint p-4 text-sm leading-6 text-muted-2 dark:bg-brand-tint-dark">
       {children}
     </div>
   );

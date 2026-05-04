@@ -192,7 +192,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
     <section className="space-y-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-xs tracking-[0.18em] text-[#6478f6] uppercase">
+          <p className="font-mono text-xs tracking-[0.18em] text-brand-light uppercase">
             Gallery — {totalPets} pets
           </p>
           <h2 className="mt-1.5 text-3xl font-medium tracking-tight text-black md:text-4xl dark:text-stone-100">
@@ -230,7 +230,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Try 'cozy night programmer' or 'fierce dragon'"
-              className="h-11 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#5266ea]/60 focus:ring-2 focus:ring-[#5266ea]/15 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
+              className="h-11 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-brand/60 focus:ring-2 focus:ring-brand/15 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
             />
             {query.length > 0 ? (
               <button
@@ -288,8 +288,8 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
       </div>
 
       {searchMode === "vibe" && pets.length > 0 ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-[#6478f6]/35 bg-[#eef1ff]/70 px-4 py-2.5 text-sm text-[#202127]">
-          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#5266ea] text-white">
+        <div className="flex items-center gap-2 rounded-2xl border border-brand-light/35 bg-brand-tint/70 px-4 py-2.5 text-sm text-muted-1">
+          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand text-white">
             <Sparkles className="size-3" />
           </span>
           <span>
@@ -376,7 +376,7 @@ function FilterChips({
         if (count === 0) return null;
         const isActive = active.has(value);
         const dotClass =
-          tone === "kind" ? "bg-[#0a0a0a]/70" : "bg-[#5266ea]";
+          tone === "kind" ? "bg-[#0a0a0a]/70" : "bg-brand";
         return (
           <button
             key={value}
@@ -435,7 +435,7 @@ export function PetCard({ pet, index }: PetCardProps) {
     <article
       className={`group relative rounded-3xl border bg-white/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
-          ? "border-[#6478f6]/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
+          ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-black/10 shadow-sm shadow-blue-950/5"
       } dark:bg-stone-900/76 dark:hover:bg-stone-800`}
     >
@@ -450,13 +450,7 @@ export function PetCard({ pet, index }: PetCardProps) {
           </span>
         </div>
 
-        <div
-          className="relative flex items-center justify-center overflow-hidden px-5 py-6"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
-          }}
-        >
+        <div className="pet-sprite-stage relative flex items-center justify-center overflow-hidden px-5 py-6">
           <PetSprite
             src={pet.spritesheetPath}
             cycleStates
@@ -479,7 +473,7 @@ export function PetCard({ pet, index }: PetCardProps) {
                 <span
                   aria-label="Featured"
                   title="Featured"
-                  className="font-mono text-[10px] text-[#5266ea]"
+                  className="font-mono text-[10px] text-brand"
                 >
                   ★
                 </span>
@@ -680,7 +674,7 @@ function NoResults({
               type="button"
               onClick={submitRequest}
               disabled={state.tag === "submitting"}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#5266ea] px-4 text-sm font-medium text-white transition hover:bg-[#3847f5] disabled:opacity-60"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-sm font-medium text-white transition hover:bg-brand-deep disabled:opacity-60"
             >
               <Plus className="size-4" />
               {state.tag === "submitting" ? "Sending…" : "Request this pet"}

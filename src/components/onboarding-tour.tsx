@@ -207,7 +207,7 @@ export function OnboardingTour() {
       >
         {rect ? (
           <div
-            className="pointer-events-none absolute rounded-2xl ring-2 ring-[#5266ea] transition-all duration-200"
+            className="pointer-events-none absolute rounded-2xl ring-2 ring-brand transition-all duration-200"
             style={{
               top: rect.top - padding,
               left: rect.left - padding,
@@ -230,7 +230,7 @@ export function OnboardingTour() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
-          <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-[#5266ea] uppercase">
+          <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-brand uppercase">
             <Sparkles className="size-3.5" />
             {current.eyebrow}
             <span className="text-stone-300 dark:text-stone-600">·</span>
@@ -257,7 +257,7 @@ export function OnboardingTour() {
           </p>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-black/[0.06] bg-[#f7f8ff] px-4 py-3 dark:border-white/[0.06] dark:bg-stone-950">
+        <div className="flex items-center justify-between gap-2 border-t border-black/[0.06] bg-background px-4 py-3 dark:border-white/[0.06]">
           <button
             type="button"
             onClick={close}

@@ -13,16 +13,16 @@ export const metadata = {
 
 export default function SubmitPage() {
   return (
-    <main className="petdex-cloud relative min-h-screen overflow-hidden bg-[#f7f8ff] dark:bg-stone-950">
+    <main className="petdex-cloud relative min-h-screen overflow-hidden bg-background">
       <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-5 pb-12 md:px-8 md:py-5 md:pb-16">
         <SiteHeader hideSubmitCta />
 
         <header className="max-w-3xl">
-          <p className="text-sm font-medium text-[#6478f6]">Submit</p>
+          <p className="text-sm font-medium text-brand-light">Submit</p>
           <h1 className="mt-4 text-5xl leading-tight font-medium tracking-normal text-black md:text-7xl dark:text-stone-100">
             Add your pet to Petdex
           </h1>
-          <p className="mt-6 text-lg leading-8 text-[#33333a]">
+          <p className="mt-6 text-lg leading-8 text-muted-2">
             Share a Codex-compatible animated pet package. Petdex checks the
             files locally, previews the sprite, and prepares the submission.
           </p>

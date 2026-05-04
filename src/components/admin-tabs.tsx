@@ -58,7 +58,7 @@ export function AdminTabs() {
           >
             {tab.label}
             {active ? (
-              <span className="absolute right-0 bottom-0 left-0 h-[2px] rounded-full bg-[#5266ea]" />
+              <span className="absolute right-0 bottom-0 left-0 h-[2px] rounded-full bg-brand" />
             ) : null}
           </Link>
         );

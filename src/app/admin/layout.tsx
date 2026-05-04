@@ -23,7 +23,7 @@ export default async function AdminLayout({
   if (!isAdmin(userId)) notFound();
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-5 md:px-8 md:py-6">
         <SiteHeader />
         <AdminTabs />

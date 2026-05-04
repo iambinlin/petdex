@@ -87,7 +87,7 @@ export default async function AdminManifestPage() {
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
       <header>
-        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Telemetry
         </p>
         <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
@@ -120,7 +120,7 @@ export default async function AdminManifestPage() {
                   </span>
                   <span className="flex-1">
                     <span
-                      className="block h-1.5 rounded-full bg-[#5266ea]/70"
+                      className="block h-1.5 rounded-full bg-brand/70"
                       style={{ width: `${pct}%` }}
                     />
                   </span>
@@ -251,7 +251,7 @@ function Card({
 }) {
   return (
     <section className="rounded-2xl border border-black/10 bg-white/76 p-5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
-      <h2 className="font-mono text-[11px] tracking-[0.22em] text-[#5266ea] uppercase">
+      <h2 className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
         {title}
       </h2>
       <div className="mt-4">{children}</div>

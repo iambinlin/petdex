@@ -35,18 +35,18 @@ export function FacetPage({
   const cmd = `npx petdex install ${exampleSlug ?? pets[0]?.slug ?? "boba"}`;
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
           <div className="mt-12 flex flex-col items-center text-center md:mt-16">
-            <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
               {eyebrow}
             </p>
             <h1 className="mt-3 text-balance text-[40px] leading-[1] font-semibold tracking-tight md:text-[64px]">
               {title}
             </h1>
-            <p className="mt-5 max-w-2xl text-balance text-base leading-7 text-[#202127] md:text-lg">
+            <p className="mt-5 max-w-2xl text-balance text-base leading-7 text-muted-1 md:text-lg">
               {intro}
             </p>
             <CommandLine

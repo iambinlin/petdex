@@ -83,19 +83,19 @@ export default async function AboutPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
           <div className="mt-12 flex flex-col items-center text-center md:mt-16">
-            <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
               About
             </p>
             <h1 className="mt-3 text-balance text-[40px] leading-[1] font-semibold tracking-tight md:text-[64px]">
               Petdex is the index of Codex pets
             </h1>
-            <p className="mt-5 max-w-2xl text-balance text-base leading-7 text-[#202127] md:text-lg">
+            <p className="mt-5 max-w-2xl text-balance text-base leading-7 text-muted-1 md:text-lg">
               An open-source gallery of {totalPets}+ animated pixel companions
               for the <strong>Codex CLI</strong>. Install one with a single
               command, animate your terminal, and ship code with company.
@@ -126,14 +126,14 @@ export default async function AboutPage() {
             doesn't require scrolling, and per-vibe collections like{" "}
             <Link
               href="/vibe/cozy"
-              className="text-[#5266ea] underline-offset-2 hover:underline"
+              className="text-brand underline-offset-2 hover:underline"
             >
               cozy pets
             </Link>{" "}
             or{" "}
             <Link
               href="/vibe/focused"
-              className="text-[#5266ea] underline-offset-2 hover:underline"
+              className="text-brand underline-offset-2 hover:underline"
             >
               focused pets
             </Link>
@@ -146,10 +146,10 @@ export default async function AboutPage() {
             How a pet pack works
           </h2>
           <p className="text-base leading-7 text-stone-700 md:text-lg dark:text-stone-300">
-            Each pet is two files. <code className="rounded bg-[#eef1ff] px-1 py-0.5 text-[#5266ea] dark:bg-[#1f2240]">pet.json</code>{" "}
+            Each pet is two files. <code className="rounded bg-brand-tint px-1 py-0.5 text-brand dark:bg-brand-tint-dark">pet.json</code>{" "}
             defines the metadata — name, the 9 animation states, frame durations
             — and{" "}
-            <code className="rounded bg-[#eef1ff] px-1 py-0.5 text-[#5266ea] dark:bg-[#1f2240]">spritesheet.webp</code>{" "}
+            <code className="rounded bg-brand-tint px-1 py-0.5 text-brand dark:bg-brand-tint-dark">spritesheet.webp</code>{" "}
             holds the pixel art as a horizontal strip. Codex loads them at
             startup and swaps states based on what's happening in your session.
           </p>

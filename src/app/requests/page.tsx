@@ -127,13 +127,13 @@ export default async function RequestsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
+    <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-20 md:px-8">
         <header className="space-y-3">
-          <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+          <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
             Community wishlist
           </p>
           <h1 className="text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl dark:text-stone-100">

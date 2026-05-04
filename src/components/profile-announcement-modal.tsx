@@ -77,7 +77,7 @@ export function ProfileAnnouncementModal() {
         } dark:border-white/10 dark:bg-stone-900`}
       >
         {/* Hero — preview of the user's actual profile URL with their avatar. */}
-        <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-[#eef1ff] via-white to-[#dbe2ff]">
+        <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-brand-tint via-white to-[#dbe2ff]">
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6">
             {user.imageUrl ? (
               // biome-ignore lint/performance/noImgElement: Clerk avatar
@@ -112,10 +112,10 @@ export function ProfileAnnouncementModal() {
 
         <div className="space-y-4 p-6">
           <div className="flex items-center gap-2">
-            <span className="grid size-6 place-items-center rounded-full bg-[#5266ea] text-white">
+            <span className="grid size-6 place-items-center rounded-full bg-brand text-white">
               <Sparkles className="size-3" />
             </span>
-            <p className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
               New · Public profiles
             </p>
           </div>

@@ -99,7 +99,7 @@ export default async function AdminEditsPage() {
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
       <header className="space-y-3">
-        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Edit queue
         </p>
         <h1 className="text-4xl font-medium tracking-tight md:text-5xl">

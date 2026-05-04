@@ -228,7 +228,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
         className="space-y-3 rounded-3xl border border-black/[0.06] bg-white px-4 py-4 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)] dark:border-white/[0.06] dark:bg-stone-900"
       >
         <div className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-full bg-[#5266ea] text-white">
+          <span className="grid size-7 place-items-center rounded-full bg-brand text-white">
             <Sparkles className="size-3.5" />
           </span>
           <p className="text-sm font-semibold text-stone-950 dark:text-stone-100">Request a pet</p>
@@ -249,7 +249,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
               }}
               placeholder="e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig"
               maxLength={MAX_LEN}
-              className="h-11 w-full rounded-full border border-black/10 bg-white px-4 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#5266ea]/60 focus:ring-2 focus:ring-[#5266ea]/15 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
+              className="h-11 w-full rounded-full border border-black/10 bg-white px-4 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-brand/60 focus:ring-2 focus:ring-brand/15 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
             />
             <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 font-mono text-[10px] text-stone-300 dark:text-stone-600">
               {draft.length}/{MAX_LEN}
@@ -258,7 +258,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
           <button
             type="submit"
             disabled={submitting || draft.trim().length < MIN_LEN}
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-[#5266ea] px-5 text-sm font-medium text-white transition hover:bg-[#3847f5] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-brand px-5 text-sm font-medium text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" />
             {submitting ? "Sending…" : "Request"}
@@ -309,7 +309,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search requests…"
-              className="h-9 w-full rounded-full border border-black/10 bg-white pr-3 pl-8 text-xs text-stone-900 outline-none placeholder:text-stone-400 focus:border-[#5266ea]/60 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
+              className="h-9 w-full rounded-full border border-black/10 bg-white pr-3 pl-8 text-xs text-stone-900 outline-none placeholder:text-stone-400 focus:border-brand/60 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
             />
           </label>
         </div>
@@ -400,7 +400,7 @@ function RequestCard({
       className={`group rounded-2xl border bg-white px-4 py-3.5 backdrop-blur transition ${
         fulfilled
           ? "border-emerald-200 hover:border-emerald-300"
-          : "border-black/10 hover:border-[#5266ea]/40 hover:shadow-[0_18px_45px_-26px_rgba(82,102,234,0.4)]"
+          : "border-black/10 hover:border-brand/40 hover:shadow-[0_18px_45px_-26px_rgba(82,102,234,0.4)]"
       } dark:bg-stone-900`}
     >
       <div className="flex items-start gap-3">
@@ -415,8 +415,8 @@ function RequestCard({
           aria-label={`Upvote "${request.query}"`}
           className={`flex shrink-0 flex-col items-center gap-0.5 rounded-xl border px-3 py-2 transition ${
             request.voted
-              ? "border-[#5266ea] bg-[#5266ea] text-white"
-              : "border-black/10 bg-white text-stone-700 hover:border-[#5266ea]/40 hover:bg-[#eef1ff]"
+              ? "border-brand bg-brand text-white"
+              : "border-black/10 bg-white text-stone-700 hover:border-brand/40 hover:bg-brand-tint"
           } disabled:cursor-not-allowed disabled:opacity-60 dark:bg-stone-900 dark:text-stone-300`}
         >
           {request.voted ? (
@@ -532,7 +532,7 @@ function RequestCard({
 function EmptyState() {
   return (
     <div className="space-y-3 rounded-3xl border border-dashed border-black/15 bg-white/70 p-8 text-center dark:border-white/15 dark:bg-stone-900/70">
-      <span className="mx-auto grid size-10 place-items-center rounded-full bg-[#eef1ff] text-[#5266ea] dark:bg-[#1f2240]">
+      <span className="mx-auto grid size-10 place-items-center rounded-full bg-brand-tint text-brand dark:bg-brand-tint-dark">
         <Sparkles className="size-4" />
       </span>
       <p className="text-sm font-medium text-stone-950 dark:text-stone-100">
@@ -542,7 +542,7 @@ function EmptyState() {
         Or search{" "}
         <a
           href="/#gallery"
-          className="text-[#5266ea] underline-offset-4 hover:underline"
+          className="text-brand underline-offset-4 hover:underline"
         >
           the gallery
         </a>{" "}

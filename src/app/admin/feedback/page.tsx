@@ -29,22 +29,22 @@ const KIND_META: Record<
 > = {
   suggestion: {
     label: "Suggest",
-    tone: "bg-amber-50 text-amber-900 ring-amber-200",
+    tone: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/60",
     icon: <Lightbulb className="size-3.5" />,
   },
   bug: {
     label: "Bug",
-    tone: "bg-rose-50 text-rose-900 ring-rose-200",
+    tone: "bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800/60",
     icon: <Bug className="size-3.5" />,
   },
   praise: {
     label: "Praise",
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
     icon: <Heart className="size-3.5" />,
   },
   other: {
     label: "Other",
-    tone: "bg-stone-50 text-stone-900 ring-stone-200",
+    tone: "bg-stone-50 text-stone-900 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-700",
     icon: <MessageSquare className="size-3.5" />,
   },
 };
@@ -55,15 +55,15 @@ const STATUS_META: Record<
 > = {
   pending: {
     label: "Pending",
-    tone: "bg-amber-50 text-amber-900 ring-amber-200",
+    tone: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/60",
   },
   addressed: {
     label: "Addressed",
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
   },
   archived: {
     label: "Archived",
-    tone: "bg-stone-100 text-stone-600 ring-stone-200",
+    tone: "bg-stone-100 text-stone-600 ring-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:ring-stone-700",
   },
 };
 
@@ -215,7 +215,7 @@ export default async function AdminFeedbackPage({
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
       <header className="space-y-3">
-        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Inbox
         </p>
         <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
@@ -356,7 +356,7 @@ export default async function AdminFeedbackPage({
                   <div className="flex shrink-0 items-center gap-1.5">
                     <Link
                       href={`/admin/feedback/${r.id}`}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#5266ea] px-3 text-xs font-medium text-white transition hover:bg-[#3847f5]"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-brand px-3 text-xs font-medium text-white transition hover:bg-brand-deep"
                     >
                       <MessageSquare className="size-3.5" />
                       {replyCount > 0

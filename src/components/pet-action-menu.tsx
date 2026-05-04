@@ -116,8 +116,8 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
   // the like button. Card variant: compact circular icon in a corner.
   const triggerClassName =
     variant === "detail"
-      ? "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-stone-700 transition hover:border-black/30"
-      : "inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white/90 text-stone-600 transition hover:border-black/30 hover:text-black";
+      ? "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+      : "inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white/90 text-stone-600 transition hover:border-black/30 hover:text-black dark:border-white/10 dark:bg-stone-900/90 dark:text-stone-400 dark:hover:border-white/30 dark:hover:text-stone-100";
 
   // Both variants open downward — the trigger lives in the top of its row,
   // so down has more room than up. Card variant aligns the menu's right

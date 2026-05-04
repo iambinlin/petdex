@@ -66,15 +66,15 @@ const STATUS_META: Record<
 > = {
   open: {
     label: "Open",
-    tone: "bg-amber-50 text-amber-900 ring-amber-200",
+    tone: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/60",
   },
   fulfilled: {
     label: "Fulfilled",
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
   },
   dismissed: {
     label: "Dismissed",
-    tone: "bg-stone-100 text-stone-600 ring-stone-200",
+    tone: "bg-stone-100 text-stone-600 ring-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:ring-stone-700",
   },
 };
 
@@ -140,7 +140,7 @@ export default async function AdminRequestsPage() {
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
       <header>
-        <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
+        <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Community wishlist
         </p>
         <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
