@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { listAllSubmittedPets } from "@/lib/db/queries";
 import { resolveOwnerCredits } from "@/lib/owner-credit";
 import { petStates } from "@/lib/pet-states";
@@ -17,10 +19,14 @@ type SP = { status?: string };
 type Filter = "all" | "pending" | "approved" | "rejected" | "discovered";
 
 export default async function AdminPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<SP>;
 }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "admin.queue" });
   const { status } = await searchParams;
   const filter = (status ?? "pending") as Filter;
 
@@ -70,17 +76,17 @@ export default async function AdminPage({
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
       <header className="space-y-3">
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-          Submission queue
+          {t("eyebrow")}
         </p>
         <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
-          Review pets
+          {t("title")}
         </h1>
         <AdminStatusFilter counts={counts} />
       </header>
 
       {visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
-          No pets in this view.
+          {t("empty")}
         </div>
       ) : (
         <div className="space-y-3">

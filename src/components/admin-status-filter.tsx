@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+
+import { localizePath } from "@/i18n/config";
 
 const FILTERS: Array<{
   value: "all" | "pending" | "approved" | "rejected" | "discovered";
-  label: string;
 }> = [
-  { value: "pending", label: "Pending" },
-  { value: "discovered", label: "Discovered" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
-  { value: "all", label: "All" },
+  { value: "pending" },
+  { value: "discovered" },
+  { value: "approved" },
+  { value: "rejected" },
+  { value: "all" },
 ];
 
 export function AdminStatusFilter({
@@ -25,6 +27,8 @@ export function AdminStatusFilter({
     discovered: number;
   };
 }) {
+  const t = useTranslations("admin.status");
+  const locale = useLocale();
   const params = useSearchParams();
   const current = (params?.get("status") ?? "pending") as
     | "all"
@@ -37,7 +41,10 @@ export function AdminStatusFilter({
     <div className="flex flex-wrap items-center gap-1.5">
       {FILTERS.map((f) => {
         const active = current === f.value;
-        const href = f.value === "pending" ? "/admin" : `/admin?status=${f.value}`;
+        const href =
+          f.value === "pending"
+            ? localizePath(locale, "/admin")
+            : `${localizePath(locale, "/admin")}?status=${f.value}`;
         const count = counts[f.value];
         return (
           <Link
@@ -49,7 +56,7 @@ export function AdminStatusFilter({
                 : "border-border-base bg-surface text-muted-2 hover:border-border-strong"
             }`}
           >
-            {f.label}
+            {t(f.value)}
             <span
               className={`font-mono text-[10px] ${
                 active ? "text-on-inverse/60" : "text-muted-3"
