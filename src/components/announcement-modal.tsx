@@ -51,7 +51,7 @@ export function AnnouncementModal({ onClose }: AnnouncementModalProps) {
       />
 
       <div
-        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-border-base bg-surface shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
+        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-border-base bg-surface text-foreground shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
           closing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
@@ -99,9 +99,7 @@ export function AnnouncementModal({ onClose }: AnnouncementModalProps) {
           </p>
           <p className="text-sm leading-6 text-muted-2">
             Doesn't find what you wanted?{" "}
-            <strong className="text-foreground">
-              Request the pet
-            </strong>{" "}
+            <strong className="text-foreground">Request the pet</strong>{" "}
             and the community can upvote it. Most-asked land in the queue first.
           </p>
 
