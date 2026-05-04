@@ -9,6 +9,8 @@ import {
   MessageSquare,
 } from "lucide-react";
 
+import { AdminFeedbackActions } from "@/components/admin-feedback-actions";
+import { AdminFeedbackFilters } from "@/components/admin-feedback-filters";
 import { db, schema } from "@/lib/db/client";
 
 export const metadata = {
@@ -44,6 +46,24 @@ const KIND_META: Record<
   },
 };
 
+const STATUS_META: Record<
+  string,
+  { label: string; tone: string }
+> = {
+  pending: {
+    label: "Pending",
+    tone: "bg-amber-50 text-amber-900 ring-amber-200",
+  },
+  addressed: {
+    label: "Addressed",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+  },
+  archived: {
+    label: "Archived",
+    tone: "bg-stone-100 text-stone-600 ring-stone-200",
+  },
+};
+
 type ClerkInfo = {
   imageUrl: string | null;
   displayName: string | null;
@@ -65,8 +85,6 @@ async function loadClerkInfo(
   } catch {
     return out;
   }
-  // Clerk SDK supports getUserList({ userId: [...] }) for batched lookup.
-  // We chunk in groups of 100 (Clerk's max) just in case.
   const chunks: string[][] = [];
   for (let i = 0; i < userIds.length; i += 100) {
     chunks.push(userIds.slice(i, i + 100));
@@ -112,52 +130,82 @@ async function loadClerkInfo(
   return out;
 }
 
-export default async function AdminFeedbackPage() {
+type SP = { status?: string; kind?: string };
+
+export default async function AdminFeedbackPage({
+  searchParams,
+}: {
+  searchParams: Promise<SP>;
+}) {
+  const sp = await searchParams;
+  const statusFilter = (sp.status ?? "pending") as
+    | "pending"
+    | "addressed"
+    | "archived"
+    | "all";
+  const kindFilter = (sp.kind ?? "all") as
+    | "all"
+    | "suggestion"
+    | "bug"
+    | "praise"
+    | "other";
+
   const rows = await db
     .select()
     .from(schema.feedback)
     .orderBy(desc(schema.feedback.createdAt))
-    .limit(200);
+    .limit(500);
 
-  const userIds = [
-    ...new Set(rows.map((r) => r.userId).filter((v): v is string => !!v)),
-  ];
-  const clerkInfo = await loadClerkInfo(userIds);
-
-  const counts = {
+  const statusCounts = {
+    pending: rows.filter((r) => r.status === "pending").length,
+    addressed: rows.filter((r) => r.status === "addressed").length,
+    archived: rows.filter((r) => r.status === "archived").length,
+    all: rows.length,
+  };
+  const kindCounts = {
+    all: rows.length,
     suggestion: rows.filter((r) => r.kind === "suggestion").length,
     bug: rows.filter((r) => r.kind === "bug").length,
     praise: rows.filter((r) => r.kind === "praise").length,
     other: rows.filter((r) => r.kind === "other").length,
   };
 
+  const visible = rows.filter((r) => {
+    if (statusFilter !== "all" && r.status !== statusFilter) return false;
+    if (kindFilter !== "all" && r.kind !== kindFilter) return false;
+    return true;
+  });
+
+  const userIds = [
+    ...new Set(visible.map((r) => r.userId).filter((v): v is string => !!v)),
+  ];
+  const clerkInfo = await loadClerkInfo(userIds);
+
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
-      <header>
+    <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
+      <header className="space-y-3">
         <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
           Inbox
         </p>
-        <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
+        <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
           Feedback
         </h1>
-        <p className="mt-3 text-sm text-stone-600">
-          {counts.suggestion} suggestion · {counts.bug} bug ·{" "}
-          {counts.praise} praise · {counts.other} other
-        </p>
+        <AdminFeedbackFilters
+          statusCounts={statusCounts}
+          kindCounts={kindCounts}
+        />
       </header>
 
-      {rows.length === 0 ? (
+      {visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600">
-          No feedback yet.
+          No feedback in this view.
         </div>
       ) : (
         <ul className="space-y-3">
-          {rows.map((r) => {
+          {visible.map((r) => {
             const meta = KIND_META[r.kind] ?? KIND_META.other;
+            const statusMeta = STATUS_META[r.status] ?? STATUS_META.pending;
             const info = (r.userId ? clerkInfo.get(r.userId) : null) ?? null;
-            // Reply target: prefer the email the user typed in the form,
-            // fall back to their Clerk primary email so you can always
-            // reach a signed-in author even if they didn't fill the field.
             const replyEmail = r.email ?? info?.primaryEmail ?? null;
             const subjectExcerpt = r.message.slice(0, 50).replace(/\s+/g, " ");
             const mailtoBody = encodeURIComponent(
@@ -176,9 +224,12 @@ export default async function AdminFeedbackPage() {
             return (
               <li
                 key={r.id}
-                className="rounded-2xl border border-black/10 bg-white/80 p-4 backdrop-blur"
+                className={`rounded-2xl border bg-white/80 p-4 backdrop-blur transition ${
+                  r.status === "archived"
+                    ? "border-black/5 opacity-70"
+                    : "border-black/10"
+                }`}
               >
-                {/* Author row */}
                 <div className="flex items-start gap-3">
                   <Avatar info={info} email={r.email} />
                   <div className="min-w-0 flex-1">
@@ -188,6 +239,11 @@ export default async function AdminFeedbackPage() {
                       >
                         {meta.icon}
                         {meta.label}
+                      </span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${statusMeta.tone}`}
+                      >
+                        {statusMeta.label}
                       </span>
                       <span className="text-sm font-medium text-stone-900">
                         {info?.displayName ??
@@ -251,25 +307,20 @@ export default async function AdminFeedbackPage() {
                       )) ?? null}
                     </div>
                   </div>
-                  {mailtoHref ? (
-                    <a
-                      href={mailtoHref}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#5266ea] px-3 text-xs font-medium text-white transition hover:bg-[#3847f5]"
-                    >
-                      <Mail className="size-3.5" />
-                      Reply
-                    </a>
-                  ) : (
-                    <span
-                      className="inline-flex h-8 cursor-not-allowed items-center rounded-full border border-black/10 px-3 text-xs font-medium text-stone-400"
-                      title="No email on this entry"
-                    >
-                      No reply
-                    </span>
-                  )}
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    {mailtoHref ? (
+                      <a
+                        href={mailtoHref}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#5266ea] px-3 text-xs font-medium text-white transition hover:bg-[#3847f5]"
+                      >
+                        <Mail className="size-3.5" />
+                        Reply
+                      </a>
+                    ) : null}
+                    <AdminFeedbackActions id={r.id} status={r.status} />
+                  </div>
                 </div>
 
-                {/* Message body */}
                 <p className="mt-3 text-sm leading-6 whitespace-pre-wrap text-stone-800">
                   {r.message}
                 </p>
@@ -299,8 +350,7 @@ function Avatar({
       />
     );
   }
-  const seed =
-    info?.displayName ?? info?.username ?? email ?? "?";
+  const seed = info?.displayName ?? info?.username ?? email ?? "?";
   return (
     <div className="grid size-9 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-xs font-semibold text-stone-700 ring-1 ring-black/10">
       {seed.slice(0, 1).toUpperCase()}

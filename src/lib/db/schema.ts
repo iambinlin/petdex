@@ -107,16 +107,26 @@ export const feedbackKind = pgEnum("feedback_kind", [
   "other",
 ]);
 
+export const feedbackStatus = pgEnum("feedback_status", [
+  "pending",
+  "addressed",
+  "archived",
+]);
+
 export const feedback = pgTable(
   "feedback",
   {
     id: text("id").primaryKey(),
     kind: feedbackKind("kind").notNull().default("suggestion"),
+    status: feedbackStatus("status").notNull().default("pending"),
     message: text("message").notNull(),
     email: text("email"),
     pageUrl: text("page_url"),
     userAgent: text("user_agent"),
     userId: text("user_id"),
+    addressedAt: timestamp("addressed_at", { withTimezone: true }),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    adminNote: text("admin_note"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -124,6 +134,7 @@ export const feedback = pgTable(
   (table) => ({
     createdAtIdx: index("feedback_created_at_idx").on(table.createdAt),
     userIdx: index("feedback_user_idx").on(table.userId),
+    statusIdx: index("feedback_status_idx").on(table.status),
   }),
 );
 
