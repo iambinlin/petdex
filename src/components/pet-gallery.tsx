@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 
+import { formatBatchLabel, getBatchKey } from "@/lib/dex-batch";
 import { petStates } from "@/lib/pet-states";
 import type { PetWithMetrics } from "@/lib/pets";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
@@ -445,6 +446,9 @@ export function PetCard({ pet, index, dexNumber }: PetCardProps) {
   const { likeCount, installCount } = pet.metrics;
   const isDiscovered = pet.source === "discover";
   const href = `/pets/${pet.slug}`;
+  const batchLabel = pet.approvedAt
+    ? formatBatchLabel(getBatchKey(new Date(pet.approvedAt)))
+    : null;
 
   return (
     <article
@@ -501,6 +505,11 @@ export function PetCard({ pet, index, dexNumber }: PetCardProps) {
           <p className="line-clamp-2 text-sm leading-6 text-muted-2">
             {pet.description}
           </p>
+          {batchLabel ? (
+            <span className="inline-flex w-fit items-center rounded-full border border-black/[0.08] bg-black/[0.03] px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-muted-2 uppercase dark:border-white/[0.1] dark:bg-white/[0.04]">
+              {batchLabel}
+            </span>
+          ) : null}
           {pet.vibes.length > 0 ? (
             <div className="mt-1 flex flex-wrap gap-1.5">
               {pet.vibes.map((vibe) => (

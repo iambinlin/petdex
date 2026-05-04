@@ -46,6 +46,7 @@ export type PetdexPet = {
    * since claimed it. UI shows a small chip when 'discover'.
    */
   source: PetSource;
+  approvedAt: string | null;
   importedAt: string;
   qa: {
     contactSheetPath?: string;

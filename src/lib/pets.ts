@@ -130,6 +130,7 @@ export function rowToPet(
     tags: (row.tags as string[]) ?? [],
     submittedBy,
     source: row.source,
+    approvedAt: row.approvedAt?.toISOString() ?? null,
     importedAt: row.approvedAt?.toISOString() ?? row.createdAt.toISOString(),
     qa: {},
   };
