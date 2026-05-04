@@ -9,26 +9,36 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { buildLocaleAlternates } from "@/lib/locale-routing";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
-export const metadata = {
-  title: "Create a pet — Petdex",
-  description:
-    "Hatch your own Codex pet in 5 minutes, then share it on Petdex.",
-  alternates: buildLocaleAlternates("/create"),
-  openGraph: {
-    title: "Create a pet — Petdex",
-    description:
-      "Hatch your own Codex pet in 5 minutes, then share it on Petdex.",
-    images: ["/og.png"],
-  },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "create.metadata" });
 
-export default function CreatePage() {
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates("/create"),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      images: ["/og.png"],
+    },
+  };
+}
+
+export default async function CreatePage() {
+  const t = await getTranslations("create");
+
   return (
     <main className="petdex-cloud relative min-h-dvh overflow-hidden bg-background text-foreground">
       <section className="relative mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 py-5 pb-12 md:px-8 md:py-5 md:pb-16">
@@ -36,16 +46,15 @@ export default function CreatePage() {
 
         <header className="mt-6 max-w-3xl">
           <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-            Make your own
+            {t("eyebrow")}
           </p>
           <h1 className="mt-3 text-5xl leading-tight font-medium tracking-tight md:text-7xl">
-            Hatch a pet in Codex
+            {t("title")}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-2">
-            Codex ships a built-in skill called <strong>Hatch Pet</strong> that
-            generates a fully animated companion (9 states, 1536×1872) from a
-            short description. Five minutes from idea to a sprite that lives in
-            your editor.
+            {t.rich("body", {
+              strong: (chunks) => <strong>{chunks}</strong>,
+            })}
           </p>
         </header>
 
@@ -53,96 +62,102 @@ export default function CreatePage() {
           <Step
             n={1}
             icon={<Package className="size-4" />}
-            title="Get the Hatch Pet skill"
+            title={t("steps.install.title")}
           >
             <p>
-              Open Codex → <span className="font-mono">Skills</span> in the top
-              navbar → find <strong>Hatch Pet</strong> → install.
+              {t.rich("steps.install.body", {
+                skills: (chunks) => <span className="font-mono">{chunks}</span>,
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </p>
           </Step>
 
           <Step
             n={2}
             icon={<Hammer className="size-4" />}
-            title="Hatch your pet"
+            title={t("steps.hatch.title")}
           >
             <p>
-              In Codex chat, type{" "}
+              {t("steps.hatch.beforeCommand")}{" "}
               <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
                 /pet
               </code>
-              . Describe the pet you want (an idea, a vibe, a thing on your
-              desk). The skill generates the spritesheet and animations
-              automatically.
+              {t("steps.hatch.afterCommand")}
             </p>
             <p className="text-xs text-muted-3">
-              Tip: specifics travel further. "A tiny sock-elf with green eyes"
-              beats "a creature".
+              {t("steps.hatch.tip")}
             </p>
           </Step>
 
           <Step
             n={3}
             icon={<Settings className="size-4" />}
-            title="Activate it"
+            title={t("steps.activate.title")}
           >
             <p>
-              Restart Codex, then go to{" "}
-              <span className="font-mono">Settings → Appearance → Pets</span>{" "}
-              and click <strong>Select</strong> on your new pet under{" "}
-              <span className="font-mono">Custom pets</span>.
+              {t("steps.activate.beforeSettings")}{" "}
+              <span className="font-mono">
+                {t("steps.activate.settingsPath")}
+              </span>{" "}
+              {t("steps.activate.middle")}{" "}
+              <strong>{t("steps.activate.select")}</strong>{" "}
+              {t("steps.activate.afterSelect")}{" "}
+              <span className="font-mono">
+                {t("steps.activate.customPets")}
+              </span>
+              .
             </p>
             <p className="text-xs text-muted-3">
-              Use{" "}
+              {t("steps.activate.tipBefore")}{" "}
               <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
                 /pet
               </code>{" "}
-              afterwards to wake or tuck it away.
+              {t("steps.activate.tipAfter")}
             </p>
           </Step>
 
           <Step
             n={4}
             icon={<Upload className="size-4" />}
-            title="Share it on Petdex"
+            title={t("steps.share.title")}
           >
             <p>
-              The pet lives at{" "}
+              {t("steps.share.beforePath")}{" "}
               <code className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs">
                 ~/.codex/pets/&lt;name&gt;
               </code>
-              . Drag that folder (or its zip) to{" "}
+              {t("steps.share.beforeLink")}{" "}
               <Link
                 href="/submit"
                 className="font-medium underline underline-offset-4 hover:text-foreground"
               >
                 /submit
               </Link>{" "}
-              and Petdex hosts it for everyone to install with one curl.
+              {t("steps.share.afterLink")}
             </p>
           </Step>
         </ol>
 
         <div className="rounded-3xl border border-border-base bg-surface/76 p-6 backdrop-blur md:p-8">
           <h2 className="text-lg font-semibold tracking-tight">
-            What makes a great pet
+            {t("guide.title")}
           </h2>
           <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-2">
             <li>
-              <strong>Specific over generic.</strong> "A bubble-tea otter" beats
-              "an otter".
+              <strong>{t("guide.items.specific.label")}</strong>{" "}
+              {t("guide.items.specific.body")}
             </li>
             <li>
-              <strong>Twist a job, role, or object.</strong> Paperclip
-              assistant, sock elf, microwave companion — the unexpected sticks.
+              <strong>{t("guide.items.twist.label")}</strong>{" "}
+              {t("guide.items.twist.body")}
             </li>
             <li>
-              <strong>One vibe.</strong> Cozy, focused, mischievous, heroic.
-              Don't try to be all of them.
+              <strong>{t("guide.items.vibe.label")}</strong>{" "}
+              {t("guide.items.vibe.body")}
             </li>
             <li>
-              <strong>Skip clear IP.</strong> Fan-art is welcome but expect
-              takedowns. Original concepts age better.
+              <strong>{t("guide.items.ip.label")}</strong>{" "}
+              {t("guide.items.ip.body")}
             </li>
           </ul>
         </div>
@@ -151,17 +166,17 @@ export default function CreatePage() {
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border-base bg-surface/85 p-6 backdrop-blur">
             <div>
               <p className="text-base font-semibold text-foreground">
-                Already have a pet?
+                {t("cards.submit.title")}
               </p>
               <p className="mt-1 text-sm text-muted-2">
-                Drop the folder or zip and we'll publish it.
+                {t("cards.submit.body")}
               </p>
             </div>
             <Link
               href="/submit"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
-              Submit your pet
+              {t("cards.submit.cta")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -172,18 +187,17 @@ export default function CreatePage() {
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border-base bg-surface/85 p-6 backdrop-blur">
             <div>
               <p className="text-base font-semibold text-foreground">
-                Burning through Codex tokens?
+                {t("cards.request.title")}
               </p>
               <p className="mt-1 text-sm text-muted-2">
-                Drop a wish in the request queue — the community (and we) will
-                pick it up.
+                {t("cards.request.body")}
               </p>
             </div>
             <Link
               href="/requests"
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border-base bg-surface px-5 text-sm font-medium text-foreground transition hover:border-border-strong"
             >
-              Request a pet
+              {t("cards.request.cta")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -200,16 +214,14 @@ export default function CreatePage() {
             </span>
             <div>
               <p className="flex flex-wrap items-center gap-2 text-base font-semibold text-foreground">
-                Web pet creator
+                {t("creator.title")}
                 <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-white uppercase">
                   <Sparkles className="size-3" />
-                  Soon
+                  {t("creator.soon")}
                 </span>
               </p>
               <p className="mt-1 max-w-2xl text-sm text-muted-2">
-                A browser-native studio so you can sketch, animate, and preview
-                your pet without ever leaving Petdex — no Codex tokens required.
-                Sign in to get notified when it lands.
+                {t("creator.body")}
               </p>
             </div>
           </div>

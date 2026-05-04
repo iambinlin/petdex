@@ -1,7 +1,7 @@
 {
   "common": {
     "brand": "Petdex",
-    "codexCli": "Codex CLI",
+    "codexCli": "Codex",
     "submitPet": "Enviar una mascota",
     "browseGallery": "Ver galería",
     "github": "GitHub",
@@ -9,14 +9,14 @@
   },
   "metadata": {
     "root": {
-      "titleDefault": "Petdex — Mascotas pixel art animadas para Codex CLI",
+      "titleDefault": "Petdex — Compañeros animados para Codex",
       "titleTemplate": "{title} | Petdex",
-      "description": "Petdex es la galería pública de mascotas pixel art animadas para Codex CLI. Explora compañeros open source, previsualiza sus animaciones e instala uno con un solo comando.",
-      "ogTitle": "Petdex — Mascotas pixel art animadas para Codex CLI",
-      "twitterTitle": "Petdex — Mascotas pixel art animadas para Codex CLI",
+      "description": "Petdex es la galería pública de compañeros animados para Codex. Explora compañeros open source, previsualiza sus animaciones e instala uno con un solo comando.",
+      "ogTitle": "Petdex — Compañeros animados para Codex",
+      "twitterTitle": "Petdex — Compañeros animados para Codex",
       "keywords": {
         "codexPet": "mascota de Codex",
-        "codexCliPet": "mascota de Codex CLI",
+        "codexCliPet": "mascota de Codex",
         "openaiCodexPets": "mascotas de OpenAI Codex",
         "pixelPet": "mascota pixel art",
         "animatedPet": "mascota animada",
@@ -60,14 +60,14 @@
   "home": {
     "eyebrow": "El índice de mascotas de Codex",
     "title": "Petdex",
-    "tagline": "La galería pública de mascotas pixel art animadas para <brand />. Explora más de {totalPets} compañeros open source, previsualiza sus estados e instala uno con un solo comando.",
+    "tagline": "La galería pública de compañeros animados para <brand />. Explora más de {totalPets} compañeros open source, previsualiza sus estados e instala uno con un solo comando.",
     "heroCommand": "npx petdex install boba",
     "submitCta": "Enviar una mascota",
     "browseGallery": "Ver galería",
     "openPet": "Abrir {name}",
     "petAnimated": "{name} animado",
     "petParadeAria": "Mascotas destacadas",
-    "jsonLdDescription": "Galería pública de mascotas pixel art animadas para Codex CLI. Instala una con un solo comando.",
+    "jsonLdDescription": "Galería pública de compañeros animados para Codex. Instala uno con un solo comando.",
     "jsonLdFeaturedPets": "Mascotas destacadas de Codex"
   },
   "feedback": {
@@ -282,7 +282,201 @@
     "eyebrow": "Lista de deseos de la comunidad",
     "title": "Mascotas que la gente está pidiendo",
     "body": "Cuando alguien busca una mascota que todavía no existe, puede pedirla. Vota por las que también quieras ver: las más votadas suben al tope de la lista de curación.",
-    "backToGallery": "← Volver a la galería"
+    "backToGallery": "← Volver a la galería",
+    "view": {
+      "form": {
+        "title": "Pide una mascota",
+        "body": "Describe la mascota que te gustaría ver: personaje, tema, vibra. Si alguien ya pidió lo mismo, tu envío se convierte en un voto para esa petición.",
+        "placeholder": "p. ej. una chinchilla estilo Ghibli, un ajolote programador con sueño, Spider-Pig",
+        "submit": "Pedir",
+        "sending": "Enviando…"
+      },
+      "success": {
+        "created": "Se pidió \"{query}\". Otras personas ya pueden votarla.",
+        "upvoted": "Se votó el pedido existente para \"{query}\": ahora va en {count} votos."
+      },
+      "sort": {
+        "top": "Más votadas",
+        "new": "Más nuevas",
+        "fulfilled": "Cumplidas",
+        "searchPlaceholder": "Buscar pedidos…"
+      },
+      "badges": {
+        "fulfilled": "Cumplida"
+      },
+      "empty": {
+        "title": "Todavía no hay pedidos. Sé la primera persona.",
+        "beforeLink": "O busca en",
+        "link": "la galería",
+        "afterLink": "y pide una mascota directamente desde la pantalla sin resultados.",
+        "noMatches": "Ningún pedido coincide con \"{search}\".",
+        "nothingInView": "Todavía no hay nada en esta vista."
+      },
+      "moreVoters": "+{count} más",
+      "errors": {
+        "moreDetail": "Cuéntanos un poco más ({min}-{max} caracteres).",
+        "signInRequest": "Inicia sesión para pedir una mascota.",
+        "submitFailed": "No se pudo enviar ({status})",
+        "networkRetry": "Error de red, inténtalo de nuevo.",
+        "signInUpvote": "Inicia sesión para votar.",
+        "voteFailed": "No se pudo votar ({status})",
+        "network": "Error de red"
+      }
+    }
+  },
+  "create": {
+    "metadata": {
+      "title": "Crea una mascota — Petdex",
+      "description": "Incuba tu propia mascota de Codex en 5 minutos y luego compártela en Petdex."
+    },
+    "eyebrow": "Haz la tuya",
+    "title": "Incuba una mascota en Codex",
+    "body": "Codex trae una skill integrada llamada <strong>Hatch Pet</strong> que genera un compañero totalmente animado (9 estados, 1536×1872) a partir de una descripción corta. Cinco minutos desde la idea hasta un sprite que vive dentro de la app.",
+    "steps": {
+      "install": {
+        "title": "Consigue la skill Hatch Pet",
+        "body": "Abre Codex → <skills>Skills</skills> en la barra superior → encuentra <strong>Hatch Pet</strong> → instala."
+      },
+      "hatch": {
+        "title": "Incuba tu mascota",
+        "beforeCommand": "En el chat de Codex, escribe",
+        "afterCommand": ". Describe la mascota que quieres (una idea, una vibra, algo de tu escritorio). La skill genera automáticamente el spritesheet y las animaciones.",
+        "tip": "Tip: lo específico llega más lejos. \"Un duende-calcetín diminuto con ojos verdes\" supera a \"una criatura\"."
+      },
+      "activate": {
+        "title": "Actívala",
+        "beforeSettings": "Reinicia Codex y luego ve a",
+        "settingsPath": "Settings → Appearance → Pets",
+        "middle": "y haz clic en",
+        "select": "Select",
+        "afterSelect": "sobre tu nueva mascota dentro de",
+        "customPets": "Custom pets",
+        "tipBefore": "Usa",
+        "tipAfter": "después para despertarla o guardarla."
+      },
+      "share": {
+        "title": "Compártela en Petdex",
+        "beforePath": "La mascota vive en",
+        "beforeLink": ". Arrastra esa carpeta (o su zip) a",
+        "afterLink": "y Petdex la aloja para que cualquiera la instale con un solo curl."
+      }
+    },
+    "guide": {
+      "title": "Qué hace grande a una mascota",
+      "items": {
+        "specific": {
+          "label": "Mejor específica que genérica.",
+          "body": "\"Una nutria de bubble tea\" supera a \"una nutria\"."
+        },
+        "twist": {
+          "label": "Dale un giro a un oficio, rol u objeto.",
+          "body": "Asistente sujetapapeles, duende-calcetín, compañero microondas: lo inesperado se queda."
+        },
+        "vibe": {
+          "label": "Una sola vibra.",
+          "body": "Cozy, focused, mischievous, heroic. No intentes ser todas a la vez."
+        },
+        "ip": {
+          "label": "Evita IP demasiado clara.",
+          "body": "El fan art es bienvenido, pero espera retiros. Los conceptos originales envejecen mejor."
+        }
+      }
+    },
+    "cards": {
+      "submit": {
+        "title": "¿Ya tienes una mascota?",
+        "body": "Suelta la carpeta o el zip y la publicamos.",
+        "cta": "Envía tu mascota"
+      },
+      "request": {
+        "title": "¿Te estás gastando los tokens de Codex?",
+        "body": "Deja un deseo en la cola de pedidos: la comunidad (y nosotros) lo recogerá.",
+        "cta": "Pide una mascota"
+      }
+    },
+    "creator": {
+      "title": "Creador web de mascotas",
+      "soon": "Pronto",
+      "body": "Un estudio nativo del navegador para que bocetes, animes y previsualices tu mascota sin salir de Petdex, sin necesidad de tokens de Codex. Inicia sesión para enterarte cuando llegue."
+    }
+  },
+  "about": {
+    "metadata": {
+      "title": "Acerca de Petdex — Compañeros animados para Codex",
+      "description": "Petdex es una galería open source de compañeros animados para Codex. Recorre el catálogo, instala con un comando o envía el tuyo.",
+      "ogTitle": "Acerca de Petdex",
+      "ogDescription": "Una galería open source de compañeros animados para Codex."
+    },
+    "eyebrow": "Acerca de",
+    "hero": {
+      "title": "Petdex es el índice de mascotas de Codex",
+      "body": "Una galería open source de más de {totalPets} compañeros animados para <strong>Codex</strong>. Instala uno con un solo comando y programa con compañía."
+    },
+    "sections": {
+      "what": {
+        "title": "Qué es Petdex",
+        "body1": "Petdex es un registro público y open source. Cada entrada es un paquete de mascota: un pequeño bundle de metadata y pixel art que Codex sabe mostrar mientras trabajas. Piénsalo como una Pokédex de compañeros para la app.",
+        "body2": {
+          "beforeCozy": "La plataforma te ahorra las dudas: hay un CLI para instalar y enviar, una galería con etiquetas para encontrar el compañero correcto sin scrollear sin fin y colecciones por vibra como",
+          "cozyLabel": "mascotas acogedoras",
+          "middle": "o",
+          "focusedLabel": "mascotas enfocadas",
+          "afterFocused": "."
+        }
+      },
+      "pack": {
+        "title": "Cómo funciona un paquete de mascota",
+        "beforePetJson": "Cada mascota son dos archivos.",
+        "betweenFiles": "define la metadata — nombre, los 9 estados de animación, duraciones de frames — y",
+        "afterSpritesheet": "guarda el pixel art en una tira horizontal. Codex los carga al iniciar y cambia de estado según lo que esté pasando en tu sesión."
+      }
+    },
+    "faq": {
+      "title": "FAQ",
+      "items": {
+        "whatIs": {
+          "q": "¿Qué es una mascota de Codex?",
+          "a": "Una mascota de Codex es un pequeño compañero animado en pixel art para la app. Cada mascota viene como un solo pet.json que describe 9 estados (idle, working, sleeping, etc.) más un spritesheet horizontal. Codex elige el estado correcto automáticamente según lo que estés haciendo en tu sesión."
+        },
+        "install": {
+          "q": "¿Cómo instalo una mascota?",
+          "a": "Desde la galería o cualquier página de detalle, copia el comando de instalación (se ve como `npx petdex install boba`) y pégalo en tu terminal. El CLI trae la mascota desde R2, la deja en ~/.codex/pets/<slug>/ y le dice a Codex que la use. Funciona en macOS, Linux y Windows (vía PowerShell)."
+        },
+        "origin": {
+          "q": "¿De dónde salen las mascotas?",
+          "a": "La mayoría las envía la comunidad desde la web o el CLI de petdex. Unas cuantas son entradas curadas y destacadas seleccionadas por Crafter Station. Cada mascota pasa por revisión de un admin antes de aparecer en la galería."
+        },
+        "submit": {
+          "q": "¿Puedo enviar mi propia mascota?",
+          "a": "Sí. Inicia sesión con el CLI de petdex (`npx petdex login`) y corre `npx petdex submit ./my-pet/`: el CLI sube los assets a R2 y deja el envío en cola para revisión. También puedes enviarla desde la web en /submit. Solo necesitas un archivo pet.json y un spritesheet de 9 estados."
+        },
+        "openSource": {
+          "q": "¿Las mascotas de Petdex son gratis y open source?",
+          "a": "Cada mascota de Petdex es gratis para instalar y usar. Las mascotas conservan el crédito de sus autores originales. La plataforma Petdex en sí (CLI + sitio) es open source bajo el paraguas de Crafter Station."
+        },
+        "taxonomy": {
+          "q": "¿Qué es una vibe? ¿Qué es un kind?",
+          "a": "Cada mascota se etiqueta con un kind (creature, object, character) y entre una y tres vibes (cozy, playful, focused, mystical, …). Eso alimenta los filtros de la galería y las landing pages por vibe o kind para que encuentres un compañero que encaje con tu mood sin revisar más de 70 entradas."
+        },
+        "money": {
+          "q": "¿Cómo gana dinero Petdex?",
+          "a": "No gana. Petdex es un proyecto comunitario gestionado por Crafter Station. El equipo de plataforma absorbe el storage y la base de datos: sin anuncios, sin upsells y sin telemetría más allá de la analítica estándar sobre qué mascotas se instalan."
+        }
+      }
+    },
+    "browse": {
+      "title": "Explora por kind o vibe",
+      "links": {
+        "creatures": "Criaturas",
+        "objects": "Objetos",
+        "characters": "Personajes",
+        "cozy": "Acogedoras",
+        "playful": "Juguetonas",
+        "focused": "Enfocadas",
+        "mystical": "Místicas",
+        "wholesome": "Tiernas"
+      }
+    }
   },
   "myPets": {
     "metadata": {
@@ -488,6 +682,21 @@
         "label": "Revisión",
         "purpose": "Ciclo de inspección o pensamiento concentrado"
       }
+    }
+  },
+  "pet": {
+    "keyboardHint": {
+      "tip": "Tip:",
+      "browse": "navegar",
+      "shuffle": "mezclar"
+    },
+    "stats": {
+      "title": "Stats del Dex",
+      "ariaLabel": "Gráfico radar de stats de la mascota",
+      "vibrance": "VIBRANCIA",
+      "popularity": "POPULARIDAD",
+      "loved": "QUERIDA",
+      "freshness": "FRESCURA"
     }
   }
 }

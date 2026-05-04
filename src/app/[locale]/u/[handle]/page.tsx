@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps) {
   }
   return {
     title: `${displayName} on Petdex`,
-    description: `Pets created by ${displayName} for the Codex CLI.`,
+    description: `Pets created by ${displayName} for Codex.`,
     alternates: buildLocaleAlternates(`/u/${handle}`),
     openGraph: {
       title: `${displayName} on Petdex`,

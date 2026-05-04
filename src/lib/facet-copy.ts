@@ -16,35 +16,35 @@ export const VIBE_COPY: Record<PetVibe, FacetCopy> = {
     intro:
       "Companions that radiate warm-blanket energy: soft poses, gentle blinks, and quiet idle states. Pick one to keep your terminal feeling like a Sunday afternoon.",
     metaDescription:
-      "Cozy animated pixel pets for the Codex CLI. Soft, calming companions you can install with one command.",
+      "Cozy animated pixel pets for Codex. Soft, calming companions you can install with one command.",
   },
   calm: {
     title: "Calm Codex pets",
     intro:
       "Steady, low-key companions for focused sessions. Their idle animations breathe instead of bounce — easy on the eyes during long debugging stretches.",
     metaDescription:
-      "Calm pixel pets for the Codex CLI. Low-motion animated companions for deep work.",
+      "Calm pixel pets for Codex. Low-motion animated companions for deep work.",
   },
   playful: {
     title: "Playful Codex pets",
     intro:
       "Bouncy, mischievous companions that refuse to sit still. Expect tail wags, spins, and unexpected cameos in the middle of your prompt.",
     metaDescription:
-      "Playful animated pet companions for the Codex CLI. Bouncy, animated pixel art you can install with one command.",
+      "Playful animated companions for Codex. Bouncy, animated pixel art you can install with one command.",
   },
   cheerful: {
     title: "Cheerful Codex pets",
     intro:
       "The optimists of the index. Bright color palettes, smiling sprites, and idle states that look genuinely happy you opened the terminal.",
     metaDescription:
-      "Cheerful Codex CLI pets. Bright, smiling animated companions installable with one command.",
+      "Cheerful Codex pets. Bright, smiling animated companions installable with one command.",
   },
   focused: {
     title: "Focused Codex pets",
     intro:
       "Companions in deep work mode. Headphones, monitors, and concentrated stares — they want to ship the feature with you.",
     metaDescription:
-      "Focused Codex pets. Concentrated, deep-work companions for the Codex CLI.",
+      "Focused Codex pets. Concentrated, deep-work companions for Codex.",
   },
   mischievous: {
     title: "Mischievous Codex pets",
@@ -65,14 +65,14 @@ export const VIBE_COPY: Record<PetVibe, FacetCopy> = {
     intro:
       "Darker palettes, sharper silhouettes, attitude turned up. For when your terminal needs a little more bite.",
     metaDescription:
-      "Edgy Codex pets. Bold, animated pixel companions for the Codex CLI.",
+      "Edgy Codex pets. Bold, animated pixel companions for Codex.",
   },
   mystical: {
     title: "Mystical Codex pets",
     intro:
       "Moons, sparkles, robes. Companions that feel like they know the answer before the model does.",
     metaDescription:
-      "Mystical Codex pets. Magical animated pixel companions for the Codex CLI.",
+      "Mystical Codex pets. Magical animated pixel companions for Codex.",
   },
   wholesome: {
     title: "Wholesome Codex pets",
@@ -86,14 +86,14 @@ export const VIBE_COPY: Record<PetVibe, FacetCopy> = {
     intro:
       "Maximum energy, minimum predictability. Their states cycle in ways that feel slightly off, in a good way.",
     metaDescription:
-      "Chaotic Codex pets. High-energy animated pixel companions for the Codex CLI.",
+      "Chaotic Codex pets. High-energy animated pixel companions for Codex.",
   },
   melancholic: {
     title: "Melancholic Codex pets",
     intro:
       "Pensive, soft, a little wistful. Companions for the part of the night when the build keeps failing.",
     metaDescription:
-      "Melancholic Codex pets. Pensive animated pixel companions for the Codex CLI.",
+      "Melancholic Codex pets. Pensive animated pixel companions for Codex.",
   },
 };
 
@@ -103,20 +103,20 @@ export const KIND_COPY: Record<PetKind, FacetCopy> = {
     intro:
       "Animals, critters, and made-up beasts. The biggest collection in the index — most contributors start here. Otters, capybaras, foxes, things with too many legs.",
     metaDescription:
-      "Animated creature pets for the Codex CLI. Otters, capybaras, foxes and more, installable with one command.",
+      "Animated creature pets for Codex. Otters, capybaras, foxes and more, installable with one command.",
   },
   object: {
     title: "Codex object pets",
     intro:
       "Pets that aren't alive but absolutely have personality. Paperclips, mugs, ice cream scoops — the inanimate companions that earned a soul.",
     metaDescription:
-      "Codex CLI object pets. Animated pixel companions made from everyday objects.",
+      "Codex object pets. Animated pixel companions made from everyday objects.",
   },
   character: {
     title: "Codex character pets",
     intro:
       "Humanoids, mascots, fictional figures. Original characters and homages, all in 9-state pixel form.",
     metaDescription:
-      "Animated character pets for the Codex CLI. Humanoid pixel companions installable with one command.",
+      "Animated character pets for Codex. Humanoid pixel companions installable with one command.",
   },
 };

@@ -3,6 +3,13 @@ type PetRadarProps = {
   popularity: number;
   loved: number;
   freshness: number;
+  labels: {
+    vibrance: string;
+    popularity: string;
+    loved: string;
+    freshness: string;
+  };
+  ariaLabel: string;
 };
 
 const SIZE = 200;
@@ -12,7 +19,6 @@ const MAX_RADIUS = 62;
 const AXES = [
   {
     key: "vibrance",
-    label: "VIBRANCE",
     pointDx: 0,
     pointDy: -88,
     labelX: CENTER,
@@ -20,7 +26,6 @@ const AXES = [
   },
   {
     key: "popularity",
-    label: "POPULARITY",
     pointDx: 88,
     pointDy: 0,
     labelX: 160,
@@ -28,7 +33,6 @@ const AXES = [
   },
   {
     key: "loved",
-    label: "LOVED",
     pointDx: 0,
     pointDy: 88,
     labelX: CENTER,
@@ -36,7 +40,6 @@ const AXES = [
   },
   {
     key: "freshness",
-    label: "FRESHNESS",
     pointDx: -88,
     pointDy: 0,
     labelX: 40,
@@ -44,7 +47,6 @@ const AXES = [
   },
 ] as const satisfies ReadonlyArray<{
   key: keyof PetRadarProps;
-  label: string;
   pointDx: number;
   pointDy: number;
   labelX: number;
@@ -69,7 +71,7 @@ export function PetRadar(props: PetRadarProps) {
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       className="mx-auto block aspect-square h-auto w-full max-w-[200px]"
       role="img"
-      aria-label="Pet stats radar chart"
+      aria-label={props.ariaLabel}
     >
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
         {[0.25, 0.5, 0.75, 1].map((ratio) => (
@@ -123,7 +125,7 @@ export function PetRadar(props: PetRadarProps) {
           }
           className="fill-foreground font-mono text-[10px] tracking-[0.18em]"
         >
-          {axis.label}
+          {props.labels[axis.key]}
         </text>
       ))}
     </svg>

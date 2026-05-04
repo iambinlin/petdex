@@ -107,7 +107,7 @@ export default async function Home() {
             <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
               {t.rich("tagline", {
                 totalPets,
-                brand: () => <strong>Codex CLI</strong>,
+                brand: () => <strong>Codex</strong>,
               })}
             </p>
             <CommandLine
