@@ -5,10 +5,8 @@ import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 
-import { AnnouncementModal } from "@/components/announcement-modal";
+import { AnnouncementQueue } from "@/components/announcement-queue";
 import { FeedbackWidget } from "@/components/feedback-widget";
-import { GithubStarModal } from "@/components/github-star-modal";
-import { OnboardingTour } from "@/components/onboarding-tour";
 import { ProfileAnnouncementModal } from "@/components/profile-announcement-modal";
 import { AppProviders } from "@/components/theme-providers";
 
@@ -54,9 +52,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <AppProviders>
             {children}
             <FeedbackWidget />
-            <OnboardingTour />
-            <AnnouncementModal />
-            <GithubStarModal />
+            <AnnouncementQueue />
             <ProfileAnnouncementModal />
             <Analytics />
           </AppProviders>

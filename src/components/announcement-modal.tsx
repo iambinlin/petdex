@@ -6,30 +6,15 @@ import { useEffect, useState } from "react";
 import { track } from "@vercel/analytics";
 import { ArrowRight, Sparkles, X } from "lucide-react";
 
-const STORAGE_KEY = "petdex_announce_vibe_search_v1";
+type AnnouncementModalProps = {
+  onClose: () => void;
+};
 
-// One-time modal announcing the new semantic search + request flow.
-// Soft entrance: 1.5s after first paint, dismissable, never reappears once
-// the user closes or clicks the CTA. The onboarding tour already runs on
-// first visit so we skip this modal if the tour hasn't been seen yet — we
-// don't want two layers of intro pop-ups stacked.
-export function AnnouncementModal() {
-  const [open, setOpen] = useState(false);
+export function AnnouncementModal({ onClose }: AnnouncementModalProps) {
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem(STORAGE_KEY) === "1") return;
-    // Don't compete with the onboarding tour. If it's still active for
-    // this user (no `petdex_tour_seen_v1` flag), wait. Once the tour
-    // marks itself seen, this modal will surface on the next visit.
-    if (window.localStorage.getItem("petdex_tour_seen_v1") !== "1") return;
-
-    const t = window.setTimeout(() => {
-      setOpen(true);
-      track("announcement_shown", { announcement: "vibe_search" });
-    }, 1500);
-    return () => window.clearTimeout(t);
+    track("announcement_shown", { announcement: "vibe_search" });
   }, []);
 
   function close(
@@ -41,12 +26,9 @@ export function AnnouncementModal() {
     });
     setClosing(true);
     window.setTimeout(() => {
-      setOpen(false);
-      window.localStorage.setItem(STORAGE_KEY, "1");
+      onClose();
     }, 220);
   }
-
-  if (!open) return null;
 
   return (
     <div
