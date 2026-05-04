@@ -30,7 +30,7 @@ export default async function NotFound() {
   const lost = featured[Math.floor(Math.random() * featured.length)] ?? null;
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
