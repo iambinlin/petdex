@@ -67,6 +67,16 @@
     "openPet": "Open {name}",
     "petAnimated": "{name} animated",
     "petParadeAria": "Featured pets",
+    "surprise": {
+      "eyebrow": "Surprise drop",
+      "title": "A pet found you",
+      "dismiss": "Dismiss surprise pet",
+      "view": "View",
+      "install": "Install",
+      "shuffle": "Shuffle",
+      "viewAria": "View {name}",
+      "spriteAlt": "{name} surprise pet"
+    },
     "jsonLdDescription": "Public gallery of animated companions for Codex. Install one with a single command.",
     "jsonLdFeaturedPets": "Featured Codex pets"
   },

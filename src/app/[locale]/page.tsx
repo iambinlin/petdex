@@ -21,6 +21,7 @@ import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SubmitCTA } from "@/components/submit-cta";
+import { SurprisePetCard } from "@/components/surprise-pet-card";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -93,6 +94,7 @@ export default async function Home() {
   return (
     <main className="min-h-dvh bg-background text-foreground">
       <JsonLd data={jsonLd} />
+      <SurprisePetCard />
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
