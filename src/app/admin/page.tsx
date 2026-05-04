@@ -1,4 +1,5 @@
 import { listAllSubmittedPets } from "@/lib/db/queries";
+import { resolveOwnerCredits } from "@/lib/owner-credit";
 import { petStates } from "@/lib/pet-states";
 
 import { AdminReviewRow } from "@/components/admin-review-row";
@@ -51,6 +52,20 @@ export default async function AdminPage({
             )
           : pets.filter((p) => p.status === filter);
 
+  // Resolve Clerk handles for every owner shown in the visible queue so
+  // each row gets a /u/<handle> link without doing N round-trips. Proxy
+  // owners (discover rows) point at the importer's Clerk profile, which
+  // is fine here — the admin needs to land on whichever profile is
+  // actually wired up, including their own.
+  const credits = await resolveOwnerCredits(
+    visible.map((p) => ({
+      ownerId: p.ownerId,
+      creditName: p.creditName,
+      creditUrl: p.creditUrl,
+      creditImage: p.creditImage,
+    })),
+  );
+
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
       <header className="space-y-3">
@@ -74,6 +89,7 @@ export default async function AdminPage({
               key={pet.id}
               pet={pet}
               stateCount={petStates.length}
+              ownerHandle={credits.get(pet.ownerId)?.handle}
             />
           ))}
         </div>

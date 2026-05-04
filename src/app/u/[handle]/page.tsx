@@ -5,6 +5,7 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, desc, eq } from "drizzle-orm";
 import { Heart, TerminalSquare, Trophy } from "lucide-react";
 
+import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { handleFromClerk, userIdForHandle } from "@/lib/handles";
@@ -148,9 +149,12 @@ export default async function UserProfilePage({ params }: PageProps) {
     0,
   );
 
-  // Leaderboard rank, by approved-pet count. Returns null when the
-  // owner is outside the top 50 — we hide the badge in that case.
-  const rank = await getOwnerRank(ownerId, "pets");
+  // Admins get a "Creator of Petdex" badge instead of a numeric rank,
+  // since they're filtered out of the leaderboard. For everyone else
+  // we look up their rank by approved-pet count and only render the
+  // badge when they're inside the top 50.
+  const isOwnerAdmin = isAdmin(ownerId);
+  const rank = isOwnerAdmin ? null : await getOwnerRank(ownerId, "pets");
 
   // Viewer detection.
   const { userId: viewerId } = await auth();
@@ -211,7 +215,15 @@ export default async function UserProfilePage({ params }: PageProps) {
                 <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
                   Petdex creator
                 </p>
-                {rank ? (
+                {isOwnerAdmin ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-white uppercase"
+                    title="One of the people who built Petdex"
+                  >
+                    <Trophy className="size-3" />
+                    Creator of Petdex
+                  </span>
+                ) : rank ? (
                   <Link
                     href="/leaderboard"
                     className="inline-flex items-center gap-1 rounded-full bg-chip-warning-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-chip-warning-fg uppercase transition hover:opacity-80"

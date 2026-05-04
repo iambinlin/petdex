@@ -112,7 +112,14 @@ export default async function PetPage({ params }: PageProps) {
         ownerId: ownerRow.ownerId,
         creditName: ownerRow.creditName,
         creditUrl: ownerRow.creditUrl,
-        creditImage: ownerRow.creditImage,
+        // Discovered rows can carry a stale credit_image from the seed
+        // import that belongs to a *different* user (the importer's
+        // primary login or whichever Clerk profile was active during
+        // the bulk insert). Drop it for discovered rows so we never
+        // show another person's avatar; we still show the right name +
+        // GitHub url because those came from the seed enrichment.
+        creditImage:
+          ownerRow.source === "discover" ? null : ownerRow.creditImage,
         // For 'discover' rows the ownerId is the admin who imported
         // on the author's behalf, NOT the author. Use stored credit_*
         // exclusively so the author keeps the byline. After someone
@@ -239,9 +246,10 @@ export default async function PetPage({ params }: PageProps) {
               <div className="mt-6 max-w-md">
                 <SubmittedBy credit={ownerCredit} />
                 {/* Discovered = an admin imported this on the author's
-                    behalf. Surface a 'sign in to claim' nudge for any
-                    viewer who isn't already the matching author. */}
-                {ownerRow?.source === "discover" ? (
+                    behalf. Only nudge anonymous viewers — claiming
+                    requires a sign-in flow that already-signed-in users
+                    can trigger themselves from /my-pets if it's theirs. */}
+                {ownerRow?.source === "discover" && !userId ? (
                   <ClaimCTA
                     petName={pet.displayName}
                     authorLabel={ownerCredit.name}

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 import type { OwnerCredit } from "@/lib/owner-credit";
@@ -41,27 +43,21 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
   const profileHref = `/u/${credit.handle}`;
 
   return (
-    <div className="group relative rounded-2xl border border-border-base bg-surface/76 p-4 backdrop-blur transition hover:border-border-strong hover:bg-white dark:hover:bg-stone-800">
-      {/* The whole card is the profile link. Stretched-link pattern: an
- absolute-inset overlay catches clicks across the full surface so
- the social chips below can still receive their own clicks via
- a higher z-index. */}
-      <Link
-        href={profileHref}
-        aria-label={`View ${credit.name}'s profile`}
-        className="absolute inset-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-      />
-
-      <div className="relative flex items-center gap-3">
+    <Link
+      href={profileHref}
+      aria-label={`View ${credit.name}'s profile`}
+      className="group block rounded-2xl border border-border-base bg-surface/76 p-4 backdrop-blur transition hover:border-border-strong hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+    >
+      <div className="flex items-center gap-3">
         {showAvatar ? (
           // biome-ignore lint/performance/noImgElement: external avatar URL
           <img
             src={credit.imageUrl ?? undefined}
             alt=""
-            className="size-10 shrink-0 rounded-full ring-1 ring-black/10"
+            className="size-10 shrink-0 rounded-full ring-1 ring-border-base"
           />
         ) : (
-          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-sm text-muted-2 ring-1 ring-black/10 dark:bg-stone-700">
+          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-muted font-mono text-sm text-muted-2 ring-1 ring-border-base">
             {credit.name.slice(0, 1).toUpperCase()}
           </div>
         )}
@@ -83,17 +79,21 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
       </div>
 
       {credit.externals.length > 0 ? (
-        <div className="relative mt-3 flex flex-wrap items-center gap-1.5 border-t border-black/[0.06] pt-3 dark:border-white/[0.06]">
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border-base pt-3">
           {credit.externals.map((ext) => (
-            <a
+            // Rendered as a button (not nested <a>, which would be
+            // invalid HTML inside the wrapping profile <Link>). The
+            // button calls window.open and stops propagation so the
+            // outer card click doesn't also fire.
+            <button
               key={ext.url}
-              href={ext.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              // Stay above the stretched-link overlay so this beats the
-              // profile click.
-              style={{ position: "relative", zIndex: 1 }}
-              className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border-base bg-surface px-2.5 font-mono text-[11px] tracking-[0.04em] text-muted-2 transition hover:border-border-strong hover:bg-stone-50 dark:hover:bg-stone-800/60"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                window.open(ext.url, "_blank", "noopener,noreferrer");
+              }}
+              className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border-base bg-surface px-2.5 font-mono text-[11px] tracking-[0.04em] text-muted-2 transition hover:border-border-strong hover:bg-surface-muted"
             >
               {ext.provider === "github" ? (
                 <GithubIcon className="size-3.5" />
@@ -101,10 +101,10 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
                 <XIcon className="size-3" />
               )}
               {ext.username}
-            </a>
+            </button>
           ))}
         </div>
       ) : null}
-    </div>
+    </Link>
   );
 }

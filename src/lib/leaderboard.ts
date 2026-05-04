@@ -3,9 +3,12 @@
 // All metrics exclude `source = 'discover'` rows so admin-imported pets
 // (where ownerId points at the importer, not the artist) don't poison
 // the ranking. They re-enter once the original author claims them.
+// Admins themselves are also filtered out — the leaderboard exists to
+// surface community creators, not the team running the catalog.
 
 import { sql } from "drizzle-orm";
 
+import { getAdminUserIds } from "@/lib/admin";
 import { db } from "@/lib/db/client";
 
 export type LeaderboardMetric = "pets" | "likes" | "installs" | "rising";
@@ -46,6 +49,7 @@ export async function getLeaderboard(
     }>;
   };
 
+  const adminIds = getAdminUserIds();
   return result.rows
     .map((row) => ({
       ownerId: row.owner_id,
@@ -55,7 +59,7 @@ export async function getLeaderboard(
       totalInstalls: Number(row.total_installs),
       totalDownloads: Number(row.total_downloads),
     }))
-    .filter((r) => r.value >= MIN_VALUE);
+    .filter((r) => r.value >= MIN_VALUE && !adminIds.has(r.ownerId));
 }
 
 function aggregateQuery(metric: Exclude<LeaderboardMetric, "rising">) {

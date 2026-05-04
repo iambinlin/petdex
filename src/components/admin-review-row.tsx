@@ -11,6 +11,7 @@ import {
   Mail,
   Pencil,
   Slash,
+  User,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -21,9 +22,50 @@ import { petStates } from "@/lib/pet-states";
 type AdminReviewRowProps = {
   pet: SubmittedPet;
   stateCount: number;
+  /** Pre-resolved profile handle for the submitter (Clerk username, fallback to userId tail). */
+  ownerHandle?: string;
 };
 
-export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
+// Lima time, en-US so the format stays predictable. The admin only
+// works from Peru — having a single non-locale clock means we don't
+// have to read the user's browser locale and risk getting MM/DD/YYYY
+// vs DD/MM/YYYY ambiguity.
+const PET_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Lima",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+function formatPetTime(d: Date): string {
+  return PET_FORMATTER.format(d);
+}
+
+// Compact relative time without pulling in a date library. Mirrors the
+// pattern used in feedback threads but keeps it inline since this is the
+// only callsite for the admin row.
+function relativeTime(d: Date, now: number): string {
+  const diff = Math.max(0, now - d.getTime());
+  const sec = Math.round(diff / 1000);
+  if (sec < 45) return "just now";
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.round(hr / 24);
+  if (day < 30) return `${day}d ago`;
+  const month = Math.round(day / 30);
+  if (month < 12) return `${month}mo ago`;
+  return `${Math.round(month / 12)}y ago`;
+}
+
+export function AdminReviewRow({
+  pet,
+  stateCount,
+  ownerHandle,
+}: AdminReviewRowProps) {
   const [status, setStatus] = useState(pet.status);
   const [displayName, setDisplayName] = useState(pet.displayName);
   const [description, setDescription] = useState(pet.description);
@@ -31,8 +73,20 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Tick once a minute so "5m ago" doesn't go stale while the admin
+  // sits on the queue page. Resets on row mount; cheap.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const isUntitled = pet.displayName === "Untitled pet";
+  const createdAtDate = new Date(pet.createdAt);
+  // stateCount is intentionally read here (linter would otherwise flag
+  // the unused param) — the count never varies per row but the prop
+  // stays for API stability with admin/page.tsx callers.
+  void stateCount;
 
   async function decide(action: "approve" | "reject" | "revive") {
     if (busy) return;
@@ -191,11 +245,26 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
               {pet.ownerEmail}
             </span>
           ) : null}
-          <span className="inline-flex items-center gap-1">
+          {ownerHandle ? (
+            <Link
+              href={`/u/${ownerHandle}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 underline-offset-4 transition hover:text-foreground hover:underline"
+            >
+              <User className="size-3" />/u/{ownerHandle}
+            </Link>
+          ) : null}
+          <span
+            className="inline-flex items-center gap-1"
+            title={formatPetTime(createdAtDate) + " (PET)"}
+          >
             <Clock className="size-3" />
-            {new Date(pet.createdAt).toLocaleString()}
+            {relativeTime(createdAtDate, now)}
+            <span className="text-muted-4">
+              · {formatPetTime(createdAtDate)} PET
+            </span>
           </span>
-          <span>{stateCount} states</span>
         </div>
         <div className="flex flex-wrap gap-3 text-xs">
           <a

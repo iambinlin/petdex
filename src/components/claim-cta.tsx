@@ -39,15 +39,15 @@ export function ClaimCTA({
   }
 
   const inner = (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-inverse px-3 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover">
+    <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover">
       Sign in to claim
-      <ArrowRight className="size-3.5" />
+      <ArrowRight className="size-4" />
     </span>
   );
 
   return (
-    <aside className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-chip-warning-bg p-3 text-sm text-chip-warning-fg dark:border-amber-800/60">
-      <span className="flex-1">
+    <aside className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-chip-warning-fg/30 bg-chip-warning-bg p-4 text-sm text-chip-warning-fg">
+      <span className="flex-1 leading-6">
         Is this your pet,{" "}
         <strong className="font-semibold">{authorLabel}</strong>? Sign in with
         GitHub to claim {petName}, edit details, and track installs.
@@ -58,7 +58,7 @@ export function ClaimCTA({
         <a
           href="/my-pets"
           onClick={() => track("claim_cta_clicked", { signed_in: true })}
-          className="inline-flex h-8 items-center"
+          className="inline-flex"
         >
           {inner}
         </a>
@@ -71,7 +71,7 @@ export function ClaimCTA({
           <button
             type="button"
             onClick={() => track("claim_cta_clicked", { signed_in: false })}
-            className="inline-flex h-8 items-center"
+            className="inline-flex"
           >
             {inner}
           </button>
