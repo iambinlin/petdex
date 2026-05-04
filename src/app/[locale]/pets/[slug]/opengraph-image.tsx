@@ -5,10 +5,13 @@
 // crop the first 256×256 state with sharp, and inject it as a PNG data URL.
 
 import { ImageResponse } from "next/og";
+
 import sharp from "sharp";
 
 import { getPet } from "@/lib/pets";
 import { isAllowedAssetUrl } from "@/lib/url-allowlist";
+
+import { defaultLocale, hasLocale } from "@/i18n/config";
 
 export const runtime = "nodejs";
 export const contentType = "image/png";
@@ -31,7 +34,8 @@ export default async function Image({
 }: {
   params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  const copy = await getOgImageCopy(locale);
   const pet = await getPet(slug);
 
   if (!pet) {
@@ -41,7 +45,10 @@ export default async function Image({
   const spriteDataUrl = await loadFirstFrameAsDataUrl(pet.spritesheetPath);
 
   const tagsLine =
-    pet.tags.slice(0, 4).map((t) => `#${t}`).join("  ") || `#${pet.kind}`;
+    pet.tags
+      .slice(0, 4)
+      .map((t) => `#${t}`)
+      .join("  ") || `#${pet.kind}`;
   const vibesLine = pet.vibes.slice(0, 3).join(" · ") || pet.kind;
 
   return new ImageResponse(
@@ -105,7 +112,7 @@ export default async function Image({
           }}
         >
           {pet.featured ? <StarMark size={18} /> : null}
-          <span>{pet.featured ? "Featured Codex pet" : "Codex pet"}</span>
+          <span>{pet.featured ? copy.featuredPet : copy.codexPet}</span>
         </div>
       </div>
 
@@ -152,7 +159,6 @@ export default async function Image({
             </div>
           ) : null}
         </div>
-
 
         {/* Text column */}
         <div
@@ -257,6 +263,19 @@ export default async function Image({
   );
 }
 
+async function getOgImageCopy(locale: string) {
+  const resolvedLocale = locale && hasLocale(locale) ? locale : defaultLocale;
+  const messages = (await import(`@/i18n/messages/${resolvedLocale}.json`))
+    .default as {
+    ogImage?: { featuredPet?: string; codexPet?: string };
+  };
+
+  return {
+    featuredPet: messages.ogImage?.featuredPet ?? "Featured Codex pet",
+    codexPet: messages.ogImage?.codexPet ?? "Codex pet",
+  };
+}
+
 async function loadFirstFrameAsDataUrl(url: string): Promise<string | null> {
   // Defensive SSRF guard. Even though pet.spritesheetPath comes from the DB,
   // the row was originally populated from a user submission. A row predating
@@ -294,6 +313,7 @@ async function loadFirstFrameAsDataUrl(url: string): Promise<string | null> {
 function PetdexMark({ size }: { size: number }) {
   return (
     <svg
+      aria-hidden="true"
       width={size}
       height={size}
       viewBox="0 0 64 64"
@@ -324,6 +344,7 @@ function PetdexMark({ size }: { size: number }) {
 function StarMark({ size }: { size: number }) {
   return (
     <svg
+      aria-hidden="true"
       width={size}
       height={size}
       viewBox="0 0 24 24"
