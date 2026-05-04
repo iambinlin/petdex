@@ -7,6 +7,26 @@
     "github": "GitHub",
     "petdexHome": "Inicio de Petdex"
   },
+  "metadata": {
+    "root": {
+      "titleDefault": "Petdex — Mascotas pixel art animadas para Codex CLI",
+      "titleTemplate": "{title} | Petdex",
+      "description": "Petdex es la galería pública de mascotas pixel art animadas para Codex CLI. Explora compañeros open source, previsualiza sus animaciones e instala uno con un solo comando.",
+      "ogTitle": "Petdex — Mascotas pixel art animadas para Codex CLI",
+      "twitterTitle": "Petdex — Mascotas pixel art animadas para Codex CLI",
+      "keywords": {
+        "codexPet": "mascota de Codex",
+        "codexCliPet": "mascota de Codex CLI",
+        "openaiCodexPets": "mascotas de OpenAI Codex",
+        "pixelPet": "mascota pixel art",
+        "animatedPet": "mascota animada",
+        "developerMascot": "mascota para desarrolladores",
+        "terminalPet": "mascota para terminal",
+        "codexCompanion": "compañero de Codex",
+        "petdex": "petdex"
+      }
+    }
+  },
   "header": {
     "gallery": "Galería",
     "create": "Crear",
@@ -20,6 +40,14 @@
     "closeMenu": "Cerrar menú",
     "githubRepoAria": "Petdex en GitHub",
     "githubRepoAriaWithStars": "Petdex en GitHub, {stars} estrellas"
+  },
+  "theme": {
+    "toggle": "Cambiar tema",
+    "system": "Sistema ({resolvedTheme})",
+    "dark": "Oscuro",
+    "light": "Claro",
+    "ariaLabel": "Tema: {label}. Haz clic para alternar.",
+    "title": "Tema: {label}"
   },
   "footer": {
     "rightsNotice": "Las mascotas son fan art enviado por usuarios. Petdex no reclama derechos sobre ninguna propiedad intelectual subyacente.",
@@ -74,6 +102,9 @@
     }
   },
   "admin": {
+    "metadata": {
+      "title": "Petdex — Admin"
+    },
     "tabs": {
       "ariaLabel": "Secciones de admin",
       "submissions": "Envíos",
@@ -230,7 +261,95 @@
       "back": "← Inbox"
     }
   },
+  "submit": {
+    "metadata": {
+      "title": "Enviar una mascota — Petdex",
+      "description": "Sube y valida un paquete de mascota de Codex para Petdex."
+    },
+    "eyebrow": "Enviar",
+    "title": "Agrega tu mascota a Petdex",
+    "body": "Comparte un paquete de mascota animada compatible con Codex. Petdex revisa los archivos localmente, previsualiza el sprite y prepara el envío.",
+    "createCta": "¿Todavía no tienes una mascota? Créala en Codex",
+    "legalPrefix": "Al enviar, confirmas que tienes derechos sobre la ilustración o que estás creando fan content. Los titulares pueden pedir la eliminación mediante nuestro",
+    "legalLink": "aviso de retiro",
+    "legalSuffix": "."
+  },
+  "requests": {
+    "metadata": {
+      "title": "Pedidos de mascotas",
+      "description": "Vota por las mascotas que la comunidad quiere ver en Petdex. Los pedidos con más votos reciben prioridad."
+    },
+    "eyebrow": "Lista de deseos de la comunidad",
+    "title": "Mascotas que la gente está pidiendo",
+    "body": "Cuando alguien busca una mascota que todavía no existe, puede pedirla. Vota por las que también quieras ver: las más votadas suben al tope de la lista de curación.",
+    "backToGallery": "← Volver a la galería"
+  },
+  "myPets": {
+    "metadata": {
+      "title": "Mis envíos",
+      "description": "Sigue el estado de cada mascota que enviaste a Petdex, personaliza tu perfil y edita entradas ya publicadas."
+    },
+    "edit": {
+      "confirmWithdraw": "¿Retirar esta edición? Los valores aprobados actuales seguirán visibles.",
+      "pendingReview": "Pendiente de revisión",
+      "submittedPrefix": "Tu edición se envió el",
+      "submittedSuffix": ". La página de abajo sigue mostrando la versión aprobada hasta que Hunter la revise.",
+      "viewEdit": "Ver edición",
+      "withdraw": "Retirar",
+      "rejected": "Edición rechazada",
+      "tryAgain": "Intentar de nuevo",
+      "open": "Editar nombre y descripción",
+      "modalTitle": "Editar metadatos de la mascota",
+      "modalBody": "Esto vuelve a pasar por revisión de admin. Aquí no se pueden cambiar los sprites ni el zip: para eso hace falta un /submit nuevo para que corra otra vez la deduplicación y el escaneo.",
+      "fields": {
+        "displayName": "Nombre visible",
+        "description": "Descripción",
+        "tags": "Tags"
+      },
+      "tagsPlaceholder": "gato, desk-companion, tierno",
+      "tagsHelp": "Separados por coma o espacio. En minúsculas, máximo 8, se permiten guiones.",
+      "actions": {
+        "cancel": "Cancelar",
+        "submit": "Enviar edición para revisión"
+      }
+    }
+  },
+  "myFeedback": {
+    "metadata": {
+      "title": "Mi feedback",
+      "description": "Hilos con el equipo de Petdex sobre el feedback que ya compartiste."
+    },
+    "eyebrow": "Hilos",
+    "title": "Mi feedback",
+    "subtitle": "Conversaciones con el equipo de Petdex sobre el feedback que enviaste.",
+    "empty": "Todavía no enviaste feedback. Usa el botón Feedback para compartir tus ideas.",
+    "emptyFiltered": "No hay hilos en esta vista.",
+    "badges": {
+      "newReply": "Nueva respuesta",
+      "replied": "Respondido",
+      "waiting": "En espera"
+    },
+    "filters": {
+      "unread": "Sin leer",
+      "replied": "Respondido",
+      "waiting": "En espera",
+      "all": "Todos"
+    },
+    "replyAuthor": "Hunter",
+    "replyCount": "{count, plural, one {# respuesta} other {# respuestas}}",
+    "noReplies": "Todavía no hay respuestas"
+  },
+  "myFeedbackThread": {
+    "metadata": {
+      "title": "Hilo de feedback"
+    },
+    "back": "← Todos los hilos"
+  },
   "notFound": {
+    "metadata": {
+      "title": "Mascota no encontrada",
+      "description": "Esta mascota se salió del índice. Prueba una de estas en su lugar."
+    },
     "eyebrow": "Error 404",
     "title": "Esta mascota se perdió",
     "body": "La página que intentaste abrir no está en el índice. Puede ser un error de escritura, un envío retirado o una mascota que todavía no ha sido aprobada. Prueba con una de estas opciones.",
@@ -246,6 +365,10 @@
     "terminalEyebrow": "O instala una desde la terminal"
   },
   "leaderboard": {
+    "metadata": {
+      "title": "Ranking de Petdex",
+      "description": "Los mejores creadores en Petdex: más mascotas aprobadas, más amor y más instalaciones."
+    },
     "eyebrow": "Creadores destacados",
     "title": "Ranking de Petdex",
     "subtitle": "Los artistas que publican más mascotas, reciben más cariño y logran más instalaciones. Se actualiza en vivo.",
@@ -306,10 +429,64 @@
       "use": "Usa"
     }
   },
+  "commandLine": {
+    "copyAria": "Copiar comando"
+  },
+  "petActions": {
+    "moreActions": "Más acciones para {name}",
+    "share": "Compartir",
+    "closeMenu": "Cerrar menú",
+    "copiedInstall": "Instalación copiada",
+    "copyInstall": "Copiar instalación",
+    "copiedLink": "Enlace copiado",
+    "copyPageLink": "Copiar enlace de la página",
+    "shareToX": "Compartir en X",
+    "shareToLinkedIn": "Compartir en LinkedIn",
+    "more": "Más…",
+    "downloadZip": "Descargar ZIP"
+  },
   "petStateViewer": {
     "eyebrow": "Visor de estados",
     "frames": "{count} frames",
     "rowFrames": "Fila {row} - {frames} frames",
-    "animationLabel": "{name} animación {state}"
+    "animationLabel": "{name} animación {state}",
+    "states": {
+      "idle": {
+        "label": "Inactivo",
+        "purpose": "Ciclo neutral de respiración y parpadeo"
+      },
+      "running-right": {
+        "label": "Corre derecha",
+        "purpose": "Locomoción direccional hacia la derecha"
+      },
+      "running-left": {
+        "label": "Corre izquierda",
+        "purpose": "Locomoción direccional hacia la izquierda"
+      },
+      "waving": {
+        "label": "Saludando",
+        "purpose": "Saludo o gesto para llamar la atención"
+      },
+      "jumping": {
+        "label": "Saltando",
+        "purpose": "Anticipación, impulso, pico, descenso, aterrizaje"
+      },
+      "failed": {
+        "label": "Falló",
+        "purpose": "Reacción de error o tristeza visible"
+      },
+      "waiting": {
+        "label": "Esperando",
+        "purpose": "Variante paciente del estado inactivo"
+      },
+      "running": {
+        "label": "Corriendo",
+        "purpose": "Ciclo de carrera genérico en el lugar"
+      },
+      "review": {
+        "label": "Revisión",
+        "purpose": "Ciclo de inspección o pensamiento concentrado"
+      }
+    }
   }
 }

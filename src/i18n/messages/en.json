@@ -7,6 +7,26 @@
     "github": "GitHub",
     "petdexHome": "Petdex home"
   },
+  "metadata": {
+    "root": {
+      "titleDefault": "Petdex — Animated pixel pets for the Codex CLI",
+      "titleTemplate": "{title} | Petdex",
+      "description": "Petdex is the public gallery of animated pixel pets for the Codex CLI. Browse open-source companions, preview their animations, and install one with a single command.",
+      "ogTitle": "Petdex — Animated pixel pets for the Codex CLI",
+      "twitterTitle": "Petdex — Animated pixel pets for the Codex CLI",
+      "keywords": {
+        "codexPet": "Codex pet",
+        "codexCliPet": "Codex CLI pet",
+        "openaiCodexPets": "OpenAI Codex pets",
+        "pixelPet": "pixel pet",
+        "animatedPet": "animated pet",
+        "developerMascot": "developer mascot",
+        "terminalPet": "terminal pet",
+        "codexCompanion": "Codex companion",
+        "petdex": "petdex"
+      }
+    }
+  },
   "header": {
     "gallery": "Gallery",
     "create": "Create",
@@ -20,6 +40,14 @@
     "closeMenu": "Close menu",
     "githubRepoAria": "Petdex on GitHub",
     "githubRepoAriaWithStars": "Petdex on GitHub, {stars} stars"
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "system": "System ({resolvedTheme})",
+    "dark": "Dark",
+    "light": "Light",
+    "ariaLabel": "Theme: {label}. Click to cycle.",
+    "title": "Theme: {label}"
   },
   "footer": {
     "rightsNotice": "Pets are user-submitted fan art. Petdex does not claim rights to any underlying IP.",
@@ -74,6 +102,9 @@
     }
   },
   "admin": {
+    "metadata": {
+      "title": "Petdex — Admin"
+    },
     "tabs": {
       "ariaLabel": "Admin sections",
       "submissions": "Submissions",
@@ -230,7 +261,95 @@
       "back": "← Inbox"
     }
   },
+  "submit": {
+    "metadata": {
+      "title": "Submit a pet — Petdex",
+      "description": "Upload and validate a Codex pet package for Petdex."
+    },
+    "eyebrow": "Submit",
+    "title": "Add your pet to Petdex",
+    "body": "Share a Codex-compatible animated pet package. Petdex checks the files locally, previews the sprite, and prepares the submission.",
+    "createCta": "Don't have a pet yet? Hatch one in Codex",
+    "legalPrefix": "By submitting, you confirm you have rights to the artwork or are creating fan content. Rights holders can request removal via our",
+    "legalLink": "takedown notice",
+    "legalSuffix": "."
+  },
+  "requests": {
+    "metadata": {
+      "title": "Pet requests",
+      "description": "Vote on pets the community wants to see in Petdex. Most-upvoted requests get prioritized."
+    },
+    "eyebrow": "Community wishlist",
+    "title": "Pets people are asking for",
+    "body": "When someone searches for a pet that doesn't exist yet, they can request it. Upvote the ones you'd want too — most-upvoted go to the top of the curation list.",
+    "backToGallery": "← Back to gallery"
+  },
+  "myPets": {
+    "metadata": {
+      "title": "My submissions",
+      "description": "Track the status of every pet you've sent to Petdex, customize your profile, and edit live entries."
+    },
+    "edit": {
+      "confirmWithdraw": "Withdraw this edit? Current approved values stay live.",
+      "pendingReview": "Pending review",
+      "submittedPrefix": "Your edit was submitted",
+      "submittedSuffix": ". The page below shows the live approved version until Hunter signs off.",
+      "viewEdit": "View edit",
+      "withdraw": "Withdraw",
+      "rejected": "Edit rejected",
+      "tryAgain": "Try again",
+      "open": "Edit name & description",
+      "modalTitle": "Edit pet metadata",
+      "modalBody": "Goes back through admin review. Sprites and zip can't be changed here — those need a fresh /submit so the dedup + scan pipeline runs again.",
+      "fields": {
+        "displayName": "Display name",
+        "description": "Description",
+        "tags": "Tags"
+      },
+      "tagsPlaceholder": "cat, desk-companion, cuddly",
+      "tagsHelp": "Comma- or space-separated. Lowercase, max 8, hyphens ok.",
+      "actions": {
+        "cancel": "Cancel",
+        "submit": "Submit edit for review"
+      }
+    }
+  },
+  "myFeedback": {
+    "metadata": {
+      "title": "My feedback",
+      "description": "Threads with the Petdex team about feedback you've shared."
+    },
+    "eyebrow": "Threads",
+    "title": "My feedback",
+    "subtitle": "Conversations with the Petdex team about feedback you've sent.",
+    "empty": "You haven't sent any feedback yet. Use the Feedback button to share thoughts.",
+    "emptyFiltered": "No threads in this view.",
+    "badges": {
+      "newReply": "New reply",
+      "replied": "Replied",
+      "waiting": "Waiting"
+    },
+    "filters": {
+      "unread": "Unread",
+      "replied": "Replied",
+      "waiting": "Waiting",
+      "all": "All"
+    },
+    "replyAuthor": "Hunter",
+    "replyCount": "{count, plural, one {# reply} other {# replies}}",
+    "noReplies": "No replies yet"
+  },
+  "myFeedbackThread": {
+    "metadata": {
+      "title": "Feedback thread"
+    },
+    "back": "← All threads"
+  },
   "notFound": {
+    "metadata": {
+      "title": "Pet not found",
+      "description": "This pet wandered off the index. Try one of these instead."
+    },
     "eyebrow": "Error 404",
     "title": "This pet wandered off",
     "body": "The page you tried to reach isn't in the index. Could be a typo, a withdrawn submission, or a pet that hasn't been approved yet. Try one of these instead.",
@@ -246,6 +365,10 @@
     "terminalEyebrow": "Or install one from the terminal"
   },
   "leaderboard": {
+    "metadata": {
+      "title": "Petdex leaderboard",
+      "description": "Top creators on Petdex — most pets approved, most loved, most installed."
+    },
     "eyebrow": "Top creators",
     "title": "Petdex leaderboard",
     "subtitle": "The artists shipping the most pets, getting the most love, and landing the most installs. Updated live.",
@@ -306,10 +429,64 @@
       "use": "Use"
     }
   },
+  "commandLine": {
+    "copyAria": "Copy command"
+  },
+  "petActions": {
+    "moreActions": "More actions for {name}",
+    "share": "Share",
+    "closeMenu": "Close menu",
+    "copiedInstall": "Copied install",
+    "copyInstall": "Copy install",
+    "copiedLink": "Copied link",
+    "copyPageLink": "Copy page link",
+    "shareToX": "Share to X",
+    "shareToLinkedIn": "Share to LinkedIn",
+    "more": "More…",
+    "downloadZip": "Download ZIP"
+  },
   "petStateViewer": {
     "eyebrow": "State viewer",
     "frames": "{count} frames",
     "rowFrames": "Row {row} - {frames} frames",
-    "animationLabel": "{name} {state} animation"
+    "animationLabel": "{name} {state} animation",
+    "states": {
+      "idle": {
+        "label": "Idle",
+        "purpose": "Neutral breathing and blinking loop"
+      },
+      "running-right": {
+        "label": "Run Right",
+        "purpose": "Directional locomotion to the right"
+      },
+      "running-left": {
+        "label": "Run Left",
+        "purpose": "Directional locomotion to the left"
+      },
+      "waving": {
+        "label": "Waving",
+        "purpose": "Greeting or attention gesture"
+      },
+      "jumping": {
+        "label": "Jumping",
+        "purpose": "Anticipation, lift, peak, descent, settle"
+      },
+      "failed": {
+        "label": "Failed",
+        "purpose": "Readable error or sad reaction"
+      },
+      "waiting": {
+        "label": "Waiting",
+        "purpose": "Patient idle variant"
+      },
+      "running": {
+        "label": "Running",
+        "purpose": "Generic in-place run loop"
+      },
+      "review": {
+        "label": "Review",
+        "purpose": "Focused inspecting or thinking loop"
+      }
+    }
   }
 }

@@ -12,11 +12,20 @@ import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Pet not found",
-  description: "This pet wandered off the index. Try one of these instead.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "notFound.metadata" });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function NotFound() {
   const t = await getTranslations("notFound");

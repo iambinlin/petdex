@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { asc, eq } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 
 import { db, schema } from "@/lib/db/client";
 
@@ -12,18 +13,31 @@ import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Feedback thread",
-  robots: { index: false, follow: false },
-};
-
 type Params = { id: string; locale: string };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({
+    locale,
+    namespace: "myFeedbackThread.metadata",
+  });
+
+  return {
+    title: t("title"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function MyFeedbackThreadPage({
   params,
 }: {
   params: Promise<Params>;
 }) {
+  const t = await getTranslations("myFeedbackThread");
   const { userId } = await auth();
   if (!userId) redirect("/");
 
@@ -54,7 +68,7 @@ export default async function MyFeedbackThreadPage({
             href="/my-feedback"
             className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase hover:text-stone-900 dark:hover:text-stone-100"
           >
-            ← All threads
+            {t("back")}
           </Link>
           <FeedbackThread
             feedback={{

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { Loader2, Pencil, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Pending = {
   displayName: string | null;
@@ -46,6 +47,7 @@ export function OwnerEditPanel({
   initialPending: Pending | null;
   initialRejection: string | null;
 }) {
+  const t = useTranslations("myPets.edit");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<Pending | null>(initialPending);
@@ -106,7 +108,7 @@ export function OwnerEditPanel({
   }
 
   async function withdraw() {
-    if (!confirm("Withdraw this edit? Current approved values stay live.")) {
+    if (!confirm(t("confirmWithdraw"))) {
       return;
     }
     setBusy(true);
@@ -129,22 +131,21 @@ export function OwnerEditPanel({
       {hasPending ? (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200 bg-chip-warning-bg px-3 py-2 text-xs text-chip-warning-fg dark:border-amber-800/60">
           <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
-            Pending review
+            {t("pendingReview")}
           </span>
           <span>
-            Your edit was submitted{" "}
+            {t("submittedPrefix")}{" "}
             {pending && pending.submittedAt
               ? new Date(pending.submittedAt).toLocaleDateString()
               : ""}
-            . The page below shows the live approved version until Hunter signs
-            off.
+            {t("submittedSuffix")}
           </span>
           <button
             type="button"
             onClick={() => setOpen(true)}
             className="ml-auto inline-flex h-7 items-center rounded-full border border-amber-300 bg-surface px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
           >
-            View edit
+            {t("viewEdit")}
           </button>
           <button
             type="button"
@@ -152,13 +153,13 @@ export function OwnerEditPanel({
             disabled={busy}
             className="inline-flex h-7 items-center rounded-full border border-amber-300 bg-surface px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100 disabled:opacity-60 dark:text-amber-300 dark:hover:bg-amber-900/40"
           >
-            Withdraw
+            {t("withdraw")}
           </button>
         </div>
       ) : rejection ? (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50/80 px-3 py-2 text-xs text-rose-900 dark:border-rose-800/60 dark:text-rose-300">
           <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
-            Edit rejected
+            {t("rejected")}
           </span>
           <span>{rejection}</span>
           <button
@@ -166,7 +167,7 @@ export function OwnerEditPanel({
             onClick={() => setOpen(true)}
             className="ml-auto inline-flex h-7 items-center rounded-full border border-rose-300 bg-surface px-2.5 text-[11px] font-medium text-rose-900 transition hover:bg-rose-100 dark:text-rose-300 dark:hover:bg-rose-900/40"
           >
-            Try again
+            {t("tryAgain")}
           </button>
         </div>
       ) : null}
@@ -178,7 +179,7 @@ export function OwnerEditPanel({
           className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:border-black/40 dark:hover:border-white/40"
         >
           <Pencil className="size-3.5" />
-          Edit name & description
+          {t("open")}
         </button>
       ) : null}
 
@@ -195,12 +196,10 @@ export function OwnerEditPanel({
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
-                  Edit pet metadata
+                  {t("modalTitle")}
                 </h2>
                 <p className="mt-1 text-xs text-muted-3">
-                  Goes back through admin review. Sprites and zip can't be
-                  changed here — those need a fresh /submit so the dedup + scan
-                  pipeline runs again.
+                  {t("modalBody")}
                 </p>
               </div>
               <button
@@ -224,7 +223,7 @@ export function OwnerEditPanel({
                   htmlFor="edit-display-name"
                   className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
-                  Display name
+                  {t("fields.displayName")}
                 </label>
                 <input
                   id="edit-display-name"
@@ -243,7 +242,7 @@ export function OwnerEditPanel({
                   htmlFor="edit-description"
                   className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
-                  Description
+                  {t("fields.description")}
                 </label>
                 <textarea
                   id="edit-description"
@@ -263,17 +262,17 @@ export function OwnerEditPanel({
                   htmlFor="edit-tags"
                   className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
-                  Tags
+                  {t("fields.tags")}
                 </label>
                 <input
                   id="edit-tags"
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
-                  placeholder="cat, desk-companion, cuddly"
+                  placeholder={t("tagsPlaceholder")}
                   className="mt-1 w-full rounded-xl border border-border-base bg-surface px-3 py-2 text-sm focus:border-brand focus:outline-none"
                 />
                 <p className="mt-1 font-mono text-[10px] text-muted-4">
-                  Comma- or space-separated. Lowercase, max 8, hyphens ok.
+                  {t("tagsHelp")}
                 </p>
               </div>
 
@@ -289,7 +288,7 @@ export function OwnerEditPanel({
                   onClick={() => setOpen(false)}
                   className="inline-flex h-9 items-center rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:border-border-strong"
                 >
-                  Cancel
+                  {t("actions.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -297,7 +296,7 @@ export function OwnerEditPanel({
                   className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-stone-800 disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
-                  Submit edit for review
+                  {t("actions.submit")}
                 </button>
               </div>
             </form>

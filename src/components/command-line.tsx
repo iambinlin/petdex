@@ -4,6 +4,7 @@ import { Fragment, useState } from "react";
 
 import { track } from "@vercel/analytics";
 import { Check, Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type CommandLineProps = {
   command: string;
@@ -70,6 +71,7 @@ export function CommandLine({
   source,
   className = "",
 }: CommandLineProps) {
+  const t = useTranslations("commandLine");
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -90,7 +92,7 @@ export function CommandLine({
     <button
       type="button"
       onClick={() => void handleCopy()}
-      aria-label="Copy command"
+      aria-label={t("copyAria")}
       style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace" }}
       className={`group inline-flex items-center gap-2 rounded-xl border border-border-base bg-surface/80 px-3 py-2 text-left text-[12px] text-foreground backdrop-blur transition hover:border-brand-light/40 hover:bg-surface ${className}`}
     >

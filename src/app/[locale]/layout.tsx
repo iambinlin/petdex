@@ -1,9 +1,10 @@
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 
 import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AnnouncementQueue } from "@/components/announcement-queue";
 import { FeedbackWidget } from "@/components/feedback-widget";
@@ -27,8 +28,53 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
+const SITE_URL = "https://petdex.crafter.run";
+
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(locale)) {
+    notFound();
+  }
+
+  const t = await getTranslations({ locale, namespace: "metadata.root" });
+
+  return {
+    title: {
+      default: t("titleDefault"),
+      template: t("titleTemplate"),
+    },
+    description: t("description"),
+    keywords: [
+      t("keywords.codexPet"),
+      t("keywords.codexCliPet"),
+      t("keywords.openaiCodexPets"),
+      t("keywords.pixelPet"),
+      t("keywords.animatedPet"),
+      t("keywords.developerMascot"),
+      t("keywords.terminalPet"),
+      t("keywords.codexCompanion"),
+      t("keywords.petdex"),
+    ],
+    openGraph: {
+      title: t("ogTitle"),
+      description: t("description"),
+      url: SITE_URL,
+      siteName: "Petdex",
+      type: "website",
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Petdex" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("twitterTitle"),
+      description: t("description"),
+      images: ["/og-twitter.png"],
+      creator: "@raillyhugo",
+    },
+  };
 }
 
 export default async function LocaleLayout({ children, params }: Props) {

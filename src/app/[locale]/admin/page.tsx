@@ -7,10 +7,19 @@ import { petStates } from "@/lib/pet-states";
 import { AdminReviewRow } from "@/components/admin-review-row";
 import { AdminStatusFilter } from "@/components/admin-status-filter";
 
-export const metadata = {
-  title: "Petdex — Admin",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "admin.metadata" });
+
+  return {
+    title: t("title"),
+    robots: { index: false, follow: false },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

@@ -13,12 +13,23 @@ import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Petdex leaderboard",
-  description:
-    "Top creators on Petdex — most pets approved, most loved, most installed.",
-  alternates: buildLocaleAlternates("/leaderboard"),
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({
+    locale,
+    namespace: "leaderboard.metadata",
+  });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates("/leaderboard"),
+  };
+}
 
 const METRIC_VALUES: LeaderboardMetric[] = [
   "pets",

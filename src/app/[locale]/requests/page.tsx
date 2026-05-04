@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { clerkClient } from "@clerk/nextjs/server";
 import { desc, inArray, sql } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 
 import { db, schema } from "@/lib/db/client";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
@@ -12,14 +13,24 @@ import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Pet requests",
-  description:
-    "Vote on pets the community wants to see in Petdex. Most-upvoted requests get prioritized.",
-  alternates: buildLocaleAlternates("/requests"),
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "requests.metadata" });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: buildLocaleAlternates("/requests"),
+  };
+}
 
 export default async function RequestsPage() {
+  const t = await getTranslations("requests");
+
   // Pull everything (open + fulfilled + dismissed) so the sort tabs in
   // RequestsView can switch instantly without a refetch. The list is
   // small enough that 80 rows is fine.
@@ -141,21 +152,19 @@ export default async function RequestsPage() {
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-20 md:px-8">
         <header className="space-y-3">
           <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-            Community wishlist
+            {t("eyebrow")}
           </p>
           <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-            Pets people are asking for
+            {t("title")}
           </h1>
           <p className="max-w-2xl text-base leading-7 text-muted-2">
-            When someone searches for a pet that doesn't exist yet, they can
-            request it. Upvote the ones you'd want too — most-upvoted go to the
-            top of the curation list.
+            {t("body")}
           </p>
           <Link
             href="/#gallery"
             className="inline-flex h-9 items-center rounded-full border border-border-base bg-surface px-4 text-xs font-medium text-muted-2 transition hover:border-border-strong"
           >
-            ← Back to gallery
+            {t("backToGallery")}
           </Link>
         </header>
 

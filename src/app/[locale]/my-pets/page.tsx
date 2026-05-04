@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
@@ -14,13 +15,21 @@ import { SiteHeader } from "@/components/site-header";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "My submissions",
-  description:
-    "Track the status of every pet you've sent to Petdex, customize your profile, and edit live entries.",
-  alternates: { canonical: "/my-pets" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "myPets.metadata" });
+
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: { canonical: "/my-pets" },
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function MyPetsPage() {
   const { userId } = await auth();
