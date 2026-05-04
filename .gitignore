@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -59,3 +60,6 @@ seed/
 # End-of-session handoff doc — local only, not committed
 HANDOFF.md
 .handoff-archive/
+
+# clerk configuration (can include secrets)
+/.clerk/
