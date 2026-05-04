@@ -5,6 +5,7 @@ import {
   type SortKey,
   searchPets,
 } from "@/lib/pet-search";
+import { readShuffleSeed } from "@/lib/shuffle-seed";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -41,12 +42,31 @@ export async function GET(req: Request): Promise<Response> {
     SEARCH_LIMITS.DEFAULT_LIMIT,
   );
 
-  const result = await searchPets({ q, kinds, vibes, sort, cursor, limit });
+  // Read-only — the SSR home page is responsible for minting the seed
+  // on first hit. Pagination requests don't need to set the cookie
+  // again, just re-use whatever was minted.
+  const shuffleSeed = sort === "curated" ? await readShuffleSeed() : null;
+
+  const result = await searchPets({
+    q,
+    kinds,
+    vibes,
+    sort,
+    cursor,
+    limit,
+    shuffleSeed: shuffleSeed ?? undefined,
+  });
+
+  // Curated results are now per-visitor; caching on the edge would
+  // cross-pollute orderings across visitors. Other sorts are still
+  // deterministic so they can keep the short-lived shared cache.
+  const cacheHeader =
+    sort === "curated"
+      ? "private, no-store"
+      : "public, max-age=20, s-maxage=30";
 
   return NextResponse.json(result, {
-    headers: {
-      "Cache-Control": "public, max-age=20, s-maxage=30",
-    },
+    headers: { "Cache-Control": cacheHeader },
   });
 }
 

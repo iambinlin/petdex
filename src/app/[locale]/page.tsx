@@ -6,6 +6,7 @@ import {
   getApprovedPetCount,
   getFeaturedPetsWithMetrics,
 } from "@/lib/pets";
+import { getOrSetShuffleSeed } from "@/lib/shuffle-seed";
 
 import { CommandLine } from "@/components/command-line";
 import { JsonLd } from "@/components/json-ld";
@@ -20,10 +21,15 @@ export const dynamic = "force-dynamic";
 const SITE_URL = "https://petdex.crafter.run";
 
 export default async function Home() {
+  // Mint or read the visitor's shuffle seed before any data fetch so
+  // the SSR pass and the subsequent /api/pets/search?cursor=... pages
+  // both share the same ordering. See lib/shuffle-seed.ts for context.
+  const shuffleSeed = await getOrSetShuffleSeed();
+
   const [heroPets, totalPets, initialSearch] = await Promise.all([
     getFeaturedPetsWithMetrics(6),
     getApprovedPetCount(),
-    searchPets({ sort: "curated" }),
+    searchPets({ sort: "curated", shuffleSeed }),
   ]);
 
   const jsonLd = [

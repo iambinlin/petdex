@@ -33,6 +33,14 @@ export type SearchInput = {
   sort?: SortKey;
   cursor?: number;
   limit?: number;
+  /**
+   * Per-visitor random hash used by the curated sort to give every
+   * pet a fair shot at homepage exposure. See `lib/shuffle-seed.ts`
+   * for how it's minted and persisted. Validated upstream — we still
+   * pass it as a parameter binding so the SQL engine treats it as
+   * data. Fallback ordering when missing is the legacy alpha sort.
+   */
+  shuffleSeed?: string;
 };
 
 export type SearchOutput = {
@@ -112,7 +120,12 @@ export async function searchPets(
   const likeCountSql = sql<number>`coalesce(${schema.petMetrics.likeCount}, 0)`;
   const zipDownloadCountSql = sql<number>`coalesce(${schema.petMetrics.zipDownloadCount}, 0)`;
 
-  const orderBy = orderForSort(sortKey, installCountSql, likeCountSql);
+  const orderBy = orderForSort(
+    sortKey,
+    installCountSql,
+    likeCountSql,
+    input.shuffleSeed,
+  );
 
   const pageRows = await db
     .select({
@@ -275,6 +288,7 @@ function orderForSort(
   key: SortKey,
   installCountSql: SQL<number>,
   likeCountSql: SQL<number>,
+  shuffleSeed?: string,
 ) {
   switch (key) {
     case "popular":
@@ -284,11 +298,25 @@ function orderForSort(
     case "alpha":
       return [asc(schema.submittedPets.displayName)];
     case "curated":
-    default:
+    default: {
+      // Per-visitor stable shuffle: featured pets keep their pinned
+      // tier, then everything else is ordered by a deterministic hash
+      // of (slug + visitor_seed). Different visitors get different
+      // orderings; the same visitor gets a stable order for the life
+      // of their cookie. Falls back to alpha when no seed is supplied
+      // (e.g. cookies disabled, server-side debug calls).
+      // See https://github.com/crafter-station/petdex/issues/82
+      if (shuffleSeed) {
+        return [
+          desc(schema.submittedPets.featured),
+          sql`md5(${schema.submittedPets.slug} || ${shuffleSeed})`,
+        ];
+      }
       return [
         desc(schema.submittedPets.featured),
         asc(schema.submittedPets.displayName),
       ];
+    }
   }
 }
 
