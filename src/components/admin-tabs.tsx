@@ -14,6 +14,11 @@ const TABS: Array<{
     match: (p) => p === "/admin",
   },
   {
+    href: "/admin/edits",
+    label: "Edits",
+    match: (p) => p.startsWith("/admin/edits"),
+  },
+  {
     href: "/admin/requests",
     label: "Requests",
     match: (p) => p.startsWith("/admin/requests"),

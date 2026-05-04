@@ -73,3 +73,12 @@ export const cliVerifyRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(120, "1 m"),
   prefix: "petdex:cli-verify",
 });
+
+// Owner edits to displayName/description/tags. Generous within the day so
+// the owner can iterate copy, but caps a malicious loop that floods the
+// admin queue with edit churn. Keyed by petId.
+export const editRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "24 h"),
+  prefix: "petdex:edit",
+});

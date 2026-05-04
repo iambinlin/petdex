@@ -1,0 +1,309 @@
+"use client";
+
+import { Loader2, Pencil, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+
+type Pending = {
+  displayName: string | null;
+  description: string | null;
+  tags: string[] | null;
+  submittedAt: string | null;
+};
+
+const TAG_RE = /^[a-z0-9][a-z0-9-]{0,30}$/;
+
+function parseTags(input: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of input.split(/[,\s]+/)) {
+    const v = raw.trim().toLowerCase();
+    if (!v) continue;
+    if (!TAG_RE.test(v)) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+export function OwnerEditPanel({
+  petId,
+  slug,
+  currentDisplayName,
+  currentDescription,
+  currentTags,
+  initialPending,
+  initialRejection,
+}: {
+  petId: string;
+  slug: string;
+  currentDisplayName: string;
+  currentDescription: string;
+  currentTags: string[];
+  initialPending: Pending | null;
+  initialRejection: string | null;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState<Pending | null>(initialPending);
+  const [rejection, setRejection] = useState<string | null>(initialRejection);
+  const [busy, setBusy] = useState(false);
+  const [, startTransition] = useTransition();
+
+  // Form state.
+  const [displayName, setDisplayName] = useState(
+    pending?.displayName ?? currentDisplayName,
+  );
+  const [description, setDescription] = useState(
+    pending?.description ?? currentDescription,
+  );
+  const [tagsInput, setTagsInput] = useState(
+    (pending?.tags ?? currentTags).join(", "),
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setDisplayName(pending?.displayName ?? currentDisplayName);
+      setDescription(pending?.description ?? currentDescription);
+      setTagsInput((pending?.tags ?? currentTags).join(", "));
+      setError(null);
+    }
+  }, [open, pending, currentDisplayName, currentDescription, currentTags]);
+
+  async function submit() {
+    setBusy(true);
+    setError(null);
+    try {
+      const tags = parseTags(tagsInput);
+      const res = await fetch(`/api/my-pets/${petId}/edit`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          displayName: displayName.trim(),
+          description: description.trim(),
+          tags,
+        }),
+      });
+      const j = (await res.json().catch(() => null)) as {
+        error?: string;
+        pending?: Pending;
+      } | null;
+      if (!res.ok) {
+        setError(j?.error ?? res.statusText);
+        return;
+      }
+      setPending(j?.pending ?? null);
+      setRejection(null);
+      setOpen(false);
+      startTransition(() => router.refresh());
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function withdraw() {
+    if (!confirm("Withdraw this edit? Current approved values stay live.")) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/my-pets/${petId}/edit`, {
+        method: "DELETE",
+      });
+      if (!res.ok) return;
+      setPending(null);
+      startTransition(() => router.refresh());
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const hasPending = pending && pending.submittedAt;
+
+  return (
+    <>
+      {hasPending ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+          <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
+            Pending review
+          </span>
+          <span>
+            Your edit was submitted{" "}
+            {pending && pending.submittedAt
+              ? new Date(pending.submittedAt).toLocaleDateString()
+              : ""}
+            . The page below shows the live approved version until Hunter signs off.
+          </span>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="ml-auto inline-flex h-7 items-center rounded-full border border-amber-300 bg-white px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100"
+          >
+            View edit
+          </button>
+          <button
+            type="button"
+            onClick={() => void withdraw()}
+            disabled={busy}
+            className="inline-flex h-7 items-center rounded-full border border-amber-300 bg-white px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
+          >
+            Withdraw
+          </button>
+        </div>
+      ) : rejection ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50/80 px-3 py-2 text-xs text-rose-900">
+          <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
+            Edit rejected
+          </span>
+          <span>{rejection}</span>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="ml-auto inline-flex h-7 items-center rounded-full border border-rose-300 bg-white px-2.5 text-[11px] font-medium text-rose-900 transition hover:bg-rose-100"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
+
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-black/15 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/40"
+        >
+          <Pencil className="size-3.5" />
+          Edit name & description
+        </button>
+      ) : null}
+
+      {open ? (
+        <div
+          aria-modal
+          role="dialog"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
+        >
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-medium tracking-tight">
+                  Edit pet metadata
+                </h2>
+                <p className="mt-1 text-xs text-stone-500">
+                  Goes back through admin review. Sprites and zip can't be
+                  changed here — those need a fresh /submit so the dedup +
+                  scan pipeline runs again.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submit();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label
+                  htmlFor="edit-display-name"
+                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
+                >
+                  Display name
+                </label>
+                <input
+                  id="edit-display-name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  maxLength={60}
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none"
+                />
+                <p className="mt-1 font-mono text-[10px] text-stone-400">
+                  {displayName.length}/60
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="edit-description"
+                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
+                >
+                  Description
+                </label>
+                <textarea
+                  id="edit-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  maxLength={280}
+                  rows={4}
+                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none"
+                />
+                <p className="mt-1 font-mono text-[10px] text-stone-400">
+                  {description.length}/280
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="edit-tags"
+                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
+                >
+                  Tags
+                </label>
+                <input
+                  id="edit-tags"
+                  value={tagsInput}
+                  onChange={(e) => setTagsInput(e.target.value)}
+                  placeholder="cat, desk-companion, cuddly"
+                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none"
+                />
+                <p className="mt-1 font-mono text-[10px] text-stone-400">
+                  Comma- or space-separated. Lowercase, max 8, hyphens ok.
+                </p>
+              </div>
+
+              {error ? (
+                <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-900">
+                  {error.replace(/_/g, " ")}
+                </p>
+              ) : null}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-60"
+                >
+                  {busy ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : null}
+                  Submit edit for review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}

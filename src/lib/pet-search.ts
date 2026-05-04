@@ -257,6 +257,14 @@ function rowToSchema(row: Record<string, unknown>): typeof schema.submittedPets.
     approvedAt: row.approved_at ? new Date(row.approved_at as string) : null,
     rejectedAt: row.rejected_at ? new Date(row.rejected_at as string) : null,
     rejectionReason: (row.rejection_reason as string | null) ?? null,
+    pendingDisplayName: (row.pending_display_name as string | null) ?? null,
+    pendingDescription: (row.pending_description as string | null) ?? null,
+    pendingTags: (row.pending_tags as string[] | null) ?? null,
+    pendingSubmittedAt: row.pending_submitted_at
+      ? new Date(row.pending_submitted_at as string)
+      : null,
+    pendingRejectionReason:
+      (row.pending_rejection_reason as string | null) ?? null,
   };
 }
 

@@ -11,6 +11,7 @@ import { getPet, getStaticPetSlugs } from "@/lib/pets";
 import { InstallCommand } from "@/components/install-command";
 import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
+import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
@@ -95,6 +96,46 @@ export default async function PetPage({ params }: PageProps) {
         }),
       )
     : false;
+
+  // Owner-only: pull editing state. Anonymous viewers skip the query.
+  let ownerEditState:
+    | {
+        isOwner: boolean;
+        petId: string;
+        currentTags: string[];
+        pending: {
+          displayName: string | null;
+          description: string | null;
+          tags: string[] | null;
+          submittedAt: string | null;
+        } | null;
+        lastRejection: string | null;
+      }
+    | null = null;
+  if (userId) {
+    const row = await db.query.submittedPets.findFirst({
+      where: eq(schema.submittedPets.slug, slug),
+    });
+    if (row && row.ownerId === userId) {
+      const hasPending = Boolean(row.pendingSubmittedAt);
+      ownerEditState = {
+        isOwner: true,
+        petId: row.id,
+        currentTags: (row.tags as string[]) ?? [],
+        pending: hasPending
+          ? {
+              displayName: row.pendingDisplayName,
+              description: row.pendingDescription,
+              tags: (row.pendingTags as string[] | null) ?? null,
+              submittedAt: row.pendingSubmittedAt
+                ? row.pendingSubmittedAt.toISOString()
+                : null,
+            }
+          : null,
+        lastRejection: row.pendingRejectionReason,
+      };
+    }
+  }
 
   const url = `${SITE_URL}/pets/${pet.slug}`;
   const jsonLd = [
@@ -208,6 +249,20 @@ export default async function PetPage({ params }: PageProps) {
                     {tag}
                   </span>
                 ))}
+              </div>
+            ) : null}
+
+            {ownerEditState ? (
+              <div className="mt-6">
+                <OwnerEditPanel
+                  petId={ownerEditState.petId}
+                  slug={pet.slug}
+                  currentDisplayName={pet.displayName}
+                  currentDescription={pet.description}
+                  currentTags={ownerEditState.currentTags}
+                  initialPending={ownerEditState.pending}
+                  initialRejection={ownerEditState.lastRejection}
+                />
               </div>
             ) : null}
           </div>

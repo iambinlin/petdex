@@ -53,6 +53,15 @@ export const submittedPets = pgTable(
     approvedAt: timestamp("approved_at", { withTimezone: true }),
     rejectedAt: timestamp("rejected_at", { withTimezone: true }),
     rejectionReason: text("rejection_reason"),
+    // Owner-submitted text edits awaiting admin re-approval. Sprites/zip
+    // are not editable here — those changes require a fresh /submit so
+    // the dedup + virus-scan + dhash pipeline runs again. When all three
+    // pendingX fields are null the pet has no edit in flight.
+    pendingDisplayName: text("pending_display_name"),
+    pendingDescription: text("pending_description"),
+    pendingTags: jsonb("pending_tags").$type<string[] | null>(),
+    pendingSubmittedAt: timestamp("pending_submitted_at", { withTimezone: true }),
+    pendingRejectionReason: text("pending_rejection_reason"),
   },
   (table) => ({
     statusIdx: index("submitted_pets_status_idx").on(table.status),
@@ -66,6 +75,9 @@ export const submittedPets = pgTable(
     statusKindIdx: index("submitted_pets_status_kind_idx").on(
       table.status,
       table.kind,
+    ),
+    pendingEditIdx: index("submitted_pets_pending_edit_idx").on(
+      table.pendingSubmittedAt,
     ),
     vibesGinIdx: index("submitted_pets_vibes_gin_idx")
       .using("gin", table.vibes),
