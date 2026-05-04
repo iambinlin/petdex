@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { track } from "@vercel/analytics";
 import { ArrowUp, Check, Sparkles } from "lucide-react";
 
 type Request = {
@@ -35,6 +36,7 @@ export function RequestsView({ initial }: { initial: Request[] }) {
 
   async function upvote(req: Request) {
     if (pending.has(req.id) || req.voted) return;
+    track("pet_request_upvote_clicked", { id: req.id });
     setPending((s) => new Set(s).add(req.id));
     setError(null);
     try {
@@ -45,6 +47,7 @@ export function RequestsView({ initial }: { initial: Request[] }) {
       });
       if (!res.ok) {
         if (res.status === 401) {
+          track("pet_request_upvote_blocked", { reason: "unauthorized" });
           setError("Sign in to upvote.");
           return;
         }
@@ -52,10 +55,12 @@ export function RequestsView({ initial }: { initial: Request[] }) {
           message?: string;
           error?: string;
         };
+        track("pet_request_upvote_failed", { status: res.status });
         setError(data.message ?? data.error ?? `Vote failed (${res.status})`);
         return;
       }
       const data = (await res.json()) as { upvoteCount: number };
+      track("pet_request_upvote_succeeded", { id: req.id, count: data.upvoteCount });
       setRequests((rs) =>
         rs.map((r) =>
           r.id === req.id
@@ -64,6 +69,7 @@ export function RequestsView({ initial }: { initial: Request[] }) {
         ),
       );
     } catch {
+      track("pet_request_upvote_failed", { reason: "network" });
       setError("Network error");
     } finally {
       setPending((s) => {

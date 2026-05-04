@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+import { track } from "@vercel/analytics";
 import { ArrowRight, Sparkles, X } from "lucide-react";
 
 const STORAGE_KEY = "petdex_announce_vibe_search_v1";
@@ -24,11 +25,18 @@ export function AnnouncementModal() {
     // marks itself seen, this modal will surface on the next visit.
     if (window.localStorage.getItem("petdex_tour_seen_v1") !== "1") return;
 
-    const t = window.setTimeout(() => setOpen(true), 1500);
+    const t = window.setTimeout(() => {
+      setOpen(true);
+      track("announcement_shown", { announcement: "vibe_search" });
+    }, 1500);
     return () => window.clearTimeout(t);
   }, []);
 
-  function close() {
+  function close(reason: "dismiss" | "cta_search" | "cta_requests" = "dismiss") {
+    track("announcement_closed", {
+      announcement: "vibe_search",
+      reason,
+    });
     setClosing(true);
     window.setTimeout(() => {
       setOpen(false);
@@ -52,7 +60,7 @@ export function AnnouncementModal() {
       <button
         type="button"
         aria-label="Dismiss"
-        onClick={close}
+        onClick={() => close("dismiss")}
         className={`absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity duration-200 ${
           closing ? "opacity-0" : "opacity-100"
         }`}
@@ -73,7 +81,7 @@ export function AnnouncementModal() {
           />
           <button
             type="button"
-            onClick={close}
+            onClick={() => close("dismiss")}
             aria-label="Close"
             className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-white/90 text-stone-700 shadow-sm transition hover:bg-white hover:text-black"
           >
@@ -114,7 +122,7 @@ export function AnnouncementModal() {
           <div className="flex items-center gap-2 pt-1">
             <Link
               href="/#gallery"
-              onClick={close}
+              onClick={() => close("cta_search")}
               className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85"
             >
               Try the search
@@ -122,7 +130,7 @@ export function AnnouncementModal() {
             </Link>
             <Link
               href="/requests"
-              onClick={close}
+              onClick={() => close("cta_requests")}
               className="inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-stone-700 transition hover:border-black/30"
             >
               See requests

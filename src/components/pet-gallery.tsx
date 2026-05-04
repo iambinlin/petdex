@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { track } from "@vercel/analytics";
 import {
   Check,
   ChevronDown,
@@ -111,7 +112,25 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
         setTotal(data.total);
         setNextCursor(data.nextCursor);
         setFacets(data.facets);
-        setSearchMode(data.searchMode ?? "all");
+        const mode = data.searchMode ?? "all";
+        setSearchMode(mode);
+        // Track only meaningful searches (skip the empty initial load
+        // and very short typing). 'no_results' fires its own event
+        // because it gates the request CTA — we want to know which
+        // queries miss most often.
+        if (query.trim().length >= 4 && mode !== "all") {
+          track("gallery_searched", {
+            mode,
+            length: query.trim().length,
+            results: data.total,
+          });
+          if (data.total === 0) {
+            track("gallery_no_results", {
+              query_length: query.trim().length,
+              mode,
+            });
+          }
+        }
       } catch {
         // soft-fail: keep whatever's already on screen
       } finally {
@@ -169,24 +188,48 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
     activeKinds.size > 0 || activeVibes.size > 0 || query.length > 0;
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <section className="space-y-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-xs tracking-[0.18em] text-[#6478f6] uppercase">
             Gallery — {totalPets} pets
           </p>
-          <h2 className="mt-2 text-3xl font-medium tracking-tight text-black md:text-5xl">
+          <h2 className="mt-1.5 text-3xl font-medium tracking-tight text-black md:text-4xl">
             Pick a companion
           </h2>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center lg:w-auto lg:max-w-md">
-          <label className="relative block w-full sm:flex-1">
+        {filtersActive ? (
+          <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+            <span>
+              {total} match{total === 1 ? "" : "es"}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                track("filters_cleared");
+                clearFilters();
+              }}
+              className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-stone-700 transition hover:border-black/30 hover:text-black"
+            >
+              Clear all
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Unified control bar: search input takes full width, sort sits to the
+          right, filter chips wrap below. Whole thing gets the same subtle
+          shadow as the announcement modal so it reads as one cohesive
+          surface and the search bar feels like a primary action. */}
+      <div className="space-y-3 rounded-3xl border border-black/[0.06] bg-white px-3 py-3 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)] md:px-4 md:py-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="relative block w-full flex-1">
             <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-4 size-4 text-stone-500" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Try 'cozy night programmer' or 'fierce dragon'"
-              className="h-11 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40"
+              className="h-11 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#5266ea]/60 focus:ring-2 focus:ring-[#5266ea]/15"
             />
             {query.length > 0 ? (
               <button
@@ -202,9 +245,13 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
           <div className="relative shrink-0">
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
+              onChange={(e) => {
+                const next = e.target.value as SortKey;
+                track("sort_changed", { sort: next });
+                setSort(next);
+              }}
               aria-label="Sort pets"
-              className="h-11 w-full cursor-pointer appearance-none rounded-full border border-black/10 bg-white pr-9 pl-4 text-sm text-stone-900 outline-none transition hover:border-black/30 focus:border-black/40 sm:w-auto sm:min-w-[170px]"
+              className="h-11 w-full cursor-pointer appearance-none rounded-full border border-black/10 bg-white pr-9 pl-4 text-sm text-stone-900 outline-none transition hover:border-black/30 focus:border-black/40 sm:w-auto sm:min-w-[160px]"
             >
               {(Object.entries(SORT_LABELS) as [SortKey, string][]).map(
                 ([key, label]) => (
@@ -217,38 +264,26 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
             <ChevronDown className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 size-4 text-stone-500" />
           </div>
         </div>
-      </div>
 
-      <div className="space-y-3 rounded-2xl border border-black/[0.08] bg-white/55 px-4 py-4 backdrop-blur md:px-5">
-        <FilterGroup
-          label="Kind"
-          options={PET_KINDS}
-          counts={facets.kinds}
-          active={activeKinds}
-          onToggle={(v) => toggleKind(v as PetKind)}
-        />
-        <FilterGroup
-          label="Vibe"
-          options={PET_VIBES}
-          counts={facets.vibes}
-          active={activeVibes}
-          onToggle={(v) => toggleVibe(v as PetVibe)}
-        />
-        {filtersActive ? (
-          <div className="flex items-center justify-between gap-3 border-t border-black/[0.06] pt-3">
-            <span className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase">
-              {total} match
-              {total === 1 ? "" : "es"}
-            </span>
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase transition hover:text-black"
-            >
-              Clear all
-            </button>
-          </div>
-        ) : null}
+        {/* Filter chips: kind + vibe in one continuous wrap row. Saves a
+            whole horizontal label column and roughly half the height vs
+            the previous two-row layout. */}
+        <div className="flex flex-wrap gap-1.5 border-t border-black/[0.05] pt-3">
+          <FilterChips
+            options={PET_KINDS}
+            counts={facets.kinds}
+            active={activeKinds}
+            onToggle={(v) => toggleKind(v as PetKind)}
+            tone="kind"
+          />
+          <FilterChips
+            options={PET_VIBES}
+            counts={facets.vibes}
+            active={activeVibes}
+            onToggle={(v) => toggleVibe(v as PetVibe)}
+            tone="vibe"
+          />
+        </div>
       </div>
 
       {searchMode === "vibe" && pets.length > 0 ? (
@@ -318,56 +353,63 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
   );
 }
 
-type FilterGroupProps = {
-  label: string;
+type FilterChipsProps = {
   options: readonly string[];
   counts: Record<string, number>;
   active: Set<string>;
   onToggle: (value: string) => void;
+  tone: "kind" | "vibe";
 };
 
-function FilterGroup({
-  label,
+function FilterChips({
   options,
   counts,
   active,
   onToggle,
-}: FilterGroupProps) {
+  tone,
+}: FilterChipsProps) {
   return (
-    <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
-      <p className="w-16 shrink-0 font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase">
-        {label}
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((value) => {
-          const count = counts[value] ?? 0;
-          if (count === 0) return null;
-          const isActive = active.has(value);
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => onToggle(value)}
-              aria-pressed={isActive}
-              className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 font-mono text-[11px] tracking-[0.08em] capitalize transition ${
-                isActive
-                  ? "border-black bg-black text-white"
-                  : "border-black/10 bg-white text-stone-700 hover:border-black/30"
+    <>
+      {options.map((value) => {
+        const count = counts[value] ?? 0;
+        if (count === 0) return null;
+        const isActive = active.has(value);
+        const dotClass =
+          tone === "kind" ? "bg-[#0a0a0a]/70" : "bg-[#5266ea]";
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => {
+              track("filter_toggled", {
+                tone,
+                value,
+                next: isActive ? "off" : "on",
+              });
+              onToggle(value);
+            }}
+            aria-pressed={isActive}
+            className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] capitalize transition ${
+              isActive
+                ? "border-black bg-black text-white"
+                : "border-black/10 bg-white text-stone-700 hover:border-black/30"
+            }`}
+          >
+            {!isActive ? (
+              <span className={`size-1.5 shrink-0 rounded-full ${dotClass}`} />
+            ) : null}
+            <span>{value}</span>
+            <span
+              className={`font-mono text-[9px] ${
+                isActive ? "text-white/60" : "text-stone-400"
               }`}
             >
-              <span>{value}</span>
-              <span
-                className={`text-[10px] ${
-                  isActive ? "text-white/60" : "text-stone-400"
-                }`}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+              {count}
+            </span>
+          </button>
+        );
+      })}
+    </>
   );
 }
 
@@ -543,6 +585,7 @@ function NoResults({
 
   async function submitRequest() {
     if (!canRequest || state.tag === "submitting") return;
+    track("pet_request_clicked", { from: "gallery_empty_state" });
     setState({ tag: "submitting" });
     try {
       const res = await fetch("/api/pet-requests", {
@@ -552,6 +595,7 @@ function NoResults({
       });
       if (!res.ok) {
         if (res.status === 401) {
+          track("pet_request_blocked", { reason: "unauthorized" });
           setState({
             tag: "error",
             reason: "Sign in to request a pet.",
@@ -562,6 +606,7 @@ function NoResults({
           message?: string;
           error?: string;
         };
+        track("pet_request_failed", { status: res.status });
         setState({
           tag: "error",
           reason:
@@ -573,12 +618,17 @@ function NoResults({
         mode: "created" | "upvoted";
         upvoteCount: number;
       };
+      track("pet_request_succeeded", {
+        mode: data.mode,
+        upvotes: data.upvoteCount,
+      });
       setState({
         tag: "ok",
         mode: data.mode,
         count: data.upvoteCount,
       });
     } catch {
+      track("pet_request_failed", { reason: "network" });
       setState({ tag: "error", reason: "Network error, try again." });
     }
   }
