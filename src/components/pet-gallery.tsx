@@ -287,7 +287,7 @@ export function PetGallery({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Try 'cozy night programmer' or 'fierce dragon'"
-              className="h-11 w-full rounded-full border border-border-base bg-surface pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-muted-4 focus:border-brand/60 focus:ring-2 focus:ring-brand/15"
+              className="h-11 w-full rounded-full border border-border-base bg-surface pr-10 pl-11 text-sm text-foreground outline-none transition placeholder:text-muted-3 focus:border-brand/60 focus:ring-2 focus:ring-brand/15"
             />
             {query.length > 0 ? (
               <button
@@ -309,7 +309,7 @@ export function PetGallery({
                 setSort(next);
               }}
               aria-label="Sort pets"
-              className="h-11 w-full cursor-pointer appearance-none rounded-full border border-border-base bg-surface pr-9 pl-4 text-sm text-stone-900 outline-none transition hover:border-black/30 focus:border-black/40 sm:w-auto sm:min-w-[160px] dark:hover:border-white/30"
+              className="h-11 w-full cursor-pointer appearance-none rounded-full border border-border-base bg-surface pr-9 pl-4 text-sm text-foreground outline-none transition hover:border-border-strong focus:border-brand/60 focus:ring-2 focus:ring-brand/15 sm:w-auto sm:min-w-[160px]"
             >
               {(Object.entries(SORT_LABELS) as [SortKey, string][]).map(
                 ([key, label]) => (
