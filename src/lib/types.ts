@@ -1,6 +1,6 @@
 export type ApprovalState = "approved" | "needs-review" | "needs-repair";
 
-import type { ColorFamily } from "@/lib/color-extract";
+import type { ColorFamily } from "@/lib/color-families";
 
 export type PetKind = "creature" | "object" | "character";
 

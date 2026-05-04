@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-extract";
+import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
 import { SEARCH_LIMITS, type SortKey, searchPets } from "@/lib/pet-search";
 import { readShuffleSeed } from "@/lib/shuffle-seed";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";

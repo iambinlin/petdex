@@ -16,7 +16,7 @@ import {
   sql,
 } from "drizzle-orm";
 
-import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-extract";
+import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
 import { db, schema } from "@/lib/db/client";
 import { getAvailableBatches } from "@/lib/dex-batch";
 import type { PetWithMetrics } from "@/lib/pets";

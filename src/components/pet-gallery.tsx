@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 
-import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-extract";
+import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
 import { formatBatchLabel, getBatchKey } from "@/lib/dex-batch";
 import { petStates } from "@/lib/pet-states";
 import type { PetWithMetrics } from "@/lib/pets";
