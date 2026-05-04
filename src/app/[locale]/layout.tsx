@@ -7,6 +7,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 
 import { AnnouncementModal } from "@/components/announcement-modal";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { GithubStarModal } from "@/components/github-star-modal";
 import { OnboardingTour } from "@/components/onboarding-tour";
 import { ProfileAnnouncementModal } from "@/components/profile-announcement-modal";
 import { AppProviders } from "@/components/theme-providers";
@@ -55,6 +56,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             <FeedbackWidget />
             <OnboardingTour />
             <AnnouncementModal />
+            <GithubStarModal />
             <ProfileAnnouncementModal />
             <Analytics />
           </AppProviders>
