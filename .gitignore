@@ -48,3 +48,7 @@ packages/*/dist/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local scratch space (db dumps, sample fixtures, throwaway scripts)
+.scratch/
+seed/
