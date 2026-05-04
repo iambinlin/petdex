@@ -26,6 +26,7 @@ import {
 } from "@/lib/types";
 
 import { PetActionMenu } from "@/components/pet-action-menu";
+import { PetCardFooter } from "@/components/pet-card-footer";
 import { PetSprite } from "@/components/pet-sprite";
 import { isAllowedAvatarUrl } from "@/lib/url-allowlist";
 
@@ -416,13 +417,18 @@ function FilterChips({
 type PetCardProps = {
   pet: PetWithMetrics;
   index: number;
-  stateCount: number;
+  /**
+   * Optional. Kept on the type so older call sites that still pass
+   * stateCount don't break. The card no longer renders a 'states'
+   * label — install count is shown instead.
+   */
+  stateCount?: number;
 };
 
-function PetCard({ pet, index, stateCount }: PetCardProps) {
+export function PetCard({ pet, index }: PetCardProps) {
   const dexNumber = String(index + 1).padStart(3, "0");
   const { likeCount, installCount } = pet.metrics;
-  const showMetrics = likeCount > 0 || installCount > 0;
+  const isDiscovered = pet.source === "discover";
   const href = `/pets/${pet.slug}`;
 
   return (
@@ -442,11 +448,6 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
           <span className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
             No. {dexNumber}
           </span>
-          {pet.featured ? (
-            <span className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
-              ★ Featured
-            </span>
-          ) : null}
         </div>
 
         <div
@@ -462,15 +463,27 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
             scale={0.7}
             label={`${pet.displayName} animated`}
           />
-          <span className="pointer-events-none absolute right-5 bottom-2 font-mono text-[10px] tracking-[0.22em] text-stone-400 uppercase">
-            {stateCount} states
-          </span>
+          {installCount > 0 ? (
+            <span className="pointer-events-none absolute right-5 bottom-2 font-mono text-[10px] tracking-[0.22em] text-stone-400 uppercase">
+              {compactNumber(installCount)} install
+              {installCount === 1 ? "" : "s"}
+            </span>
+          ) : null}
         </div>
 
-        <div className="flex flex-col gap-2 rounded-b-3xl border-t border-black/[0.06] px-5 py-4">
+        <div className="flex flex-col gap-2 border-t border-black/[0.06] px-5 pt-4 pb-3">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-lg font-semibold tracking-tight text-stone-950">
-              {pet.displayName}
+            <h3 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold tracking-tight text-stone-950">
+              <span className="truncate">{pet.displayName}</span>
+              {pet.featured ? (
+                <span
+                  aria-label="Featured"
+                  title="Featured"
+                  className="font-mono text-[10px] text-[#5266ea]"
+                >
+                  ★
+                </span>
+              ) : null}
             </h3>
             <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
               {pet.kind}
@@ -491,43 +504,44 @@ function PetCard({ pet, index, stateCount }: PetCardProps) {
               ))}
             </div>
           ) : null}
+          {isDiscovered ? (
+            <span
+              className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-amber-900 uppercase ring-1 ring-amber-200"
+              title="Added on behalf of the original author. Not yet claimed."
+            >
+              <Sparkles className="size-3" />
+              Discovered
+            </span>
+          ) : null}
 
-          <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/[0.05] pt-3">
-            {pet.submittedBy ? (
-              <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
-                {pet.submittedBy.imageUrl &&
-                isAllowedAvatarUrl(pet.submittedBy.imageUrl) ? (
-                  // biome-ignore lint/performance/noImgElement: avatar allowlisted above
-                  <img
-                    src={pet.submittedBy.imageUrl}
-                    alt=""
-                    className="size-4 rounded-full ring-1 ring-black/10"
-                  />
-                ) : null}
-                by {pet.submittedBy.name}
-              </span>
-            ) : (
-              <span />
-            )}
-            {showMetrics ? (
-              <span className="flex items-center gap-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
-                {likeCount > 0 ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Heart className="size-3" />
-                    {compactNumber(likeCount)}
-                  </span>
-                ) : null}
-                {installCount > 0 ? (
-                  <span className="inline-flex items-center gap-1">
-                    <TerminalSquare className="size-3" />
-                    {compactNumber(installCount)}
-                  </span>
-                ) : null}
-              </span>
-            ) : null}
-          </div>
+          {pet.submittedBy ? (
+            <div className="mt-2 flex items-center gap-1.5 border-t border-black/[0.05] pt-2 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+              {pet.submittedBy.imageUrl &&
+              isAllowedAvatarUrl(pet.submittedBy.imageUrl) ? (
+                // biome-ignore lint/performance/noImgElement: avatar allowlisted above
+                <img
+                  src={pet.submittedBy.imageUrl}
+                  alt=""
+                  className="size-4 rounded-full ring-1 ring-black/10"
+                />
+              ) : null}
+              by {pet.submittedBy.name}
+            </div>
+          ) : null}
         </div>
       </Link>
+
+      {/* Footer bar — outside the card-wide Link so each button can
+          fire its own action without bubbling up to navigation. */}
+      <div className="rounded-b-3xl">
+        <PetCardFooter
+          slug={pet.slug}
+          displayName={pet.displayName}
+          zipUrl={pet.zipUrl}
+          installCount={installCount}
+          likeCount={likeCount}
+        />
+      </div>
 
       {/* Action menu lives outside the Link so its clicks don't navigate.
           Absolute-positioned to overlap the featured badge corner. */}

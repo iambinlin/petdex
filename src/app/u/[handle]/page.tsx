@@ -13,7 +13,7 @@ import { petStates } from "@/lib/pet-states";
 import { MAX_PINNED_PETS } from "@/lib/profiles";
 
 import { JsonLd } from "@/components/json-ld";
-import { PetCard } from "@/components/facet-page";
+import { PetCard } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { ProfileAnalytics } from "@/components/profile-analytics";
 import { ProfileExternalLink } from "@/components/profile-external-link";
