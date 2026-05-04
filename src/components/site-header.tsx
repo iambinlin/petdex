@@ -4,13 +4,18 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Menu, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+
+import { withLocale } from "@/lib/locale-routing";
 
 import { AuthBadge } from "@/components/auth-badge";
 import { GithubStarsLink } from "@/components/github-stars-link";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { PetdexLogo } from "@/components/petdex-logo";
 import { SubmitCTA } from "@/components/submit-cta";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+import { hasLocale, type Locale } from "@/i18n/config";
 
 type SiteHeaderProps = {
   /** When true, hide the primary "Submit a pet" CTA (e.g. on /submit itself). */
@@ -19,8 +24,14 @@ type SiteHeaderProps = {
 
 export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
+  const locale = useLocale();
+  const currentLocale: Locale = hasLocale(locale) ? locale : "en";
   const t = useTranslations("header");
   const common = useTranslations("common");
+
+  function href(pathname: string) {
+    return withLocale(pathname, currentLocale);
+  }
 
   // Close menu on Escape + lock body scroll while open.
   useEffect(() => {
@@ -39,25 +50,37 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
   return (
     <>
       <nav className="flex items-center justify-between gap-3">
-        <PetdexLogo href="/" ariaLabel={common("petdexHome")} />
+        <PetdexLogo href={href("/")} ariaLabel={common("petdexHome")} />
 
         <div className="hidden items-center gap-7 text-sm text-muted-2 md:flex">
-          <Link href="/create" className="transition hover:text-foreground">
+          <Link
+            href={href("/create")}
+            className="transition hover:text-foreground"
+          >
             {t("create")}
           </Link>
-          <Link href="/docs" className="transition hover:text-foreground">
+          <Link
+            href={href("/docs")}
+            className="transition hover:text-foreground"
+          >
             {t("docs")}
           </Link>
           <Link
-            href="/leaderboard"
+            href={href("/leaderboard")}
             className="transition hover:text-foreground"
           >
             {t("topCreators")}
           </Link>
-          <Link href="/requests" className="transition hover:text-foreground">
+          <Link
+            href={href("/requests")}
+            className="transition hover:text-foreground"
+          >
             {t("requests")}
           </Link>
-          <Link href="/about" className="transition hover:text-foreground">
+          <Link
+            href={href("/about")}
+            className="transition hover:text-foreground"
+          >
             {t("about")}
           </Link>
           <GithubStarsLink />
@@ -65,11 +88,15 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
 
         <div className="flex shrink-0 items-center gap-2">
           {hideSubmitCta ? null : (
-            <SubmitCTA className="hidden h-10 items-center justify-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover md:inline-flex">
+            <SubmitCTA
+              href={href("/submit")}
+              className="hidden h-10 items-center justify-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover md:inline-flex"
+            >
               {t("submitCta")}
             </SubmitCTA>
           )}
           <ThemeToggle />
+          <LocaleSwitcher />
           <AuthBadge />
           <button
             type="button"
@@ -84,14 +111,15 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
       </nav>
 
       {open ? (
-        <div
-          className="fixed inset-0 z-40 flex flex-col bg-background/95 backdrop-blur md:hidden"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setOpen(false);
-          }}
-        >
+        <div className="fixed inset-0 z-40 flex flex-col bg-background/95 backdrop-blur md:hidden">
+          <button
+            type="button"
+            aria-label={t("closeMenu")}
+            onClick={() => setOpen(false)}
+            className="absolute inset-0"
+          />
           <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-            <PetdexLogo href="/" ariaLabel={common("petdexHome")} />
+            <PetdexLogo href={href("/")} ariaLabel={common("petdexHome")} />
             <button
               type="button"
               aria-label={t("closeMenu")}
@@ -102,19 +130,22 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             </button>
           </div>
           <nav className="mt-4 flex flex-col gap-1 px-5 text-lg">
-            <MobileLink href="/create" onClick={() => setOpen(false)}>
+            <MobileLink href={href("/create")} onClick={() => setOpen(false)}>
               {t("create")}
             </MobileLink>
-            <MobileLink href="/docs" onClick={() => setOpen(false)}>
+            <MobileLink href={href("/docs")} onClick={() => setOpen(false)}>
               {t("docs")}
             </MobileLink>
-            <MobileLink href="/leaderboard" onClick={() => setOpen(false)}>
+            <MobileLink
+              href={href("/leaderboard")}
+              onClick={() => setOpen(false)}
+            >
               {t("topCreators")}
             </MobileLink>
-            <MobileLink href="/requests" onClick={() => setOpen(false)}>
+            <MobileLink href={href("/requests")} onClick={() => setOpen(false)}>
               {t("requests")}
             </MobileLink>
-            <MobileLink href="/about" onClick={() => setOpen(false)}>
+            <MobileLink href={href("/about")} onClick={() => setOpen(false)}>
               {t("about")}
             </MobileLink>
             <GithubStarsLink
@@ -125,7 +156,10 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
 
           {!hideSubmitCta ? (
             <div className="mt-auto p-5">
-              <SubmitCTA className="inline-flex h-12 w-full items-center justify-center rounded-full bg-inverse px-6 text-base font-medium text-on-inverse transition hover:bg-inverse-hover">
+              <SubmitCTA
+                href={href("/submit")}
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-inverse px-6 text-base font-medium text-on-inverse transition hover:bg-inverse-hover"
+              >
                 {t("submitCta")}
               </SubmitCTA>
             </div>
