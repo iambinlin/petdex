@@ -10,7 +10,7 @@
   "metadata": {
     "root": {
       "titleDefault": "Petdex — Compañeros animados para Codex",
-      "titleTemplate": "{title} | Petdex",
+      "titleTemplate": "%s | Petdex",
       "description": "Petdex es la galería pública de compañeros animados para Codex. Explora compañeros open source, previsualiza sus animaciones e instala uno con un solo comando.",
       "ogTitle": "Petdex — Compañeros animados para Codex",
       "twitterTitle": "Petdex — Compañeros animados para Codex",
