@@ -13,17 +13,15 @@ export const dynamic = "force-dynamic";
 
 type SP = { status?: string };
 
+type Filter = "all" | "pending" | "approved" | "rejected" | "discovered";
+
 export default async function AdminPage({
   searchParams,
 }: {
   searchParams: Promise<SP>;
 }) {
   const { status } = await searchParams;
-  const filter = ((status ?? "pending") as
-    | "all"
-    | "pending"
-    | "approved"
-    | "rejected") satisfies "all" | "pending" | "approved" | "rejected";
+  const filter = (status ?? "pending") as Filter;
 
   const pets = await listAllSubmittedPets();
   const counts = {
@@ -31,10 +29,15 @@ export default async function AdminPage({
     pending: pets.filter((p) => p.status === "pending").length,
     approved: pets.filter((p) => p.status === "approved").length,
     rejected: pets.filter((p) => p.status === "rejected").length,
+    discovered: pets.filter((p) => p.source === "discover").length,
   };
 
   const visible =
-    filter === "all" ? pets : pets.filter((p) => p.status === filter);
+    filter === "all"
+      ? pets
+      : filter === "discovered"
+        ? pets.filter((p) => p.source === "discover")
+        : pets.filter((p) => p.status === filter);
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">

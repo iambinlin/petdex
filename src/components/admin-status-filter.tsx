@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 const FILTERS: Array<{
-  value: "all" | "pending" | "approved" | "rejected";
+  value: "all" | "pending" | "approved" | "rejected" | "discovered";
   label: string;
 }> = [
   { value: "pending", label: "Pending" },
+  { value: "discovered", label: "Discovered" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
   { value: "all", label: "All" },
@@ -21,6 +22,7 @@ export function AdminStatusFilter({
     pending: number;
     approved: number;
     rejected: number;
+    discovered: number;
   };
 }) {
   const params = useSearchParams();
@@ -28,7 +30,8 @@ export function AdminStatusFilter({
     | "all"
     | "pending"
     | "approved"
-    | "rejected";
+    | "rejected"
+    | "discovered";
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">

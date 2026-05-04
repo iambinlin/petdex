@@ -4,13 +4,14 @@
 
 import Link from "next/link";
 
-import { Heart, TerminalSquare } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 import type { PetWithMetrics } from "@/lib/pets";
 import { petStates } from "@/lib/pet-states";
 
 import { CommandLine } from "@/components/command-line";
 import { PetActionMenu } from "@/components/pet-action-menu";
+import { PetCardFooter } from "@/components/pet-card-footer";
 import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -110,7 +111,7 @@ export function PetCard({
 }) {
   const dexNumber = String(index + 1).padStart(3, "0");
   const { likeCount, installCount } = pet.metrics;
-  const showMetrics = likeCount > 0 || installCount > 0;
+  const isDiscovered = pet.source === "discover";
 
   return (
     <article
@@ -147,7 +148,7 @@ export function PetCard({
             {stateCount} states
           </span>
         </div>
-        <div className="flex flex-col gap-2 rounded-b-3xl border-t border-black/[0.06] px-5 py-4">
+        <div className="flex flex-col gap-2 border-t border-black/[0.06] px-5 pt-4 pb-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold tracking-tight text-stone-950">
               <span className="truncate">{pet.displayName}</span>
@@ -168,24 +169,29 @@ export function PetCard({
           <p className="line-clamp-2 text-sm leading-6 text-stone-600">
             {pet.description}
           </p>
-          {showMetrics ? (
-            <div className="mt-2 flex items-center gap-3 border-t border-black/[0.05] pt-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
-              {likeCount > 0 ? (
-                <span className="inline-flex items-center gap-1">
-                  <Heart className="size-3" />
-                  {likeCount}
-                </span>
-              ) : null}
-              {installCount > 0 ? (
-                <span className="inline-flex items-center gap-1">
-                  <TerminalSquare className="size-3" />
-                  {installCount}
-                </span>
-              ) : null}
-            </div>
+          {isDiscovered ? (
+            <span
+              className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-amber-900 uppercase ring-1 ring-amber-200"
+              title="Added on behalf of the original author. Not yet claimed."
+            >
+              <Sparkles className="size-3" />
+              Discovered
+            </span>
           ) : null}
         </div>
       </Link>
+
+      {/* Footer bar — outside the card-wide Link so each button can
+          fire its own action without bubbling up to navigation. */}
+      <div className="rounded-b-3xl">
+        <PetCardFooter
+          slug={pet.slug}
+          displayName={pet.displayName}
+          zipUrl={pet.zipUrl}
+          installCount={installCount}
+          likeCount={likeCount}
+        />
+      </div>
 
       <div className="absolute top-3 right-4 z-20">
         <PetActionMenu

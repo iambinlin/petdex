@@ -20,6 +20,17 @@ export const approvalStatus = pgEnum("approval_status", [
 
 export const petKind = pgEnum("pet_kind", ["creature", "object", "character"]);
 
+// How this pet entered the catalog. 'submit' = uploaded through the
+// regular /submit flow. 'discover' = added by an admin on behalf of
+// an external author who hasn't claimed yet. 'claimed' = was
+// 'discover' and the original author has since signed in and claimed
+// ownership through /my-pets, so it now behaves like a normal submission.
+export const petSource = pgEnum("pet_source", [
+  "submit",
+  "discover",
+  "claimed",
+]);
+
 export const submittedPets = pgTable(
   "submitted_pets",
   {
@@ -42,6 +53,7 @@ export const submittedPets = pgTable(
     // so we keep it as `unknown` here and cast at the query boundary.
     // The actual column is declared via ALTER TABLE in scripts/.
     status: approvalStatus("status").notNull().default("pending"),
+    source: petSource("source").notNull().default("submit"),
     ownerId: text("owner_id").notNull(),
     ownerEmail: text("owner_email"),
     creditName: text("credit_name"),

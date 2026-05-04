@@ -22,6 +22,8 @@ export type PetCredit = {
   imageUrl?: string;
 };
 
+export type PetSource = "submit" | "discover" | "claimed";
+
 export type PetdexPet = {
   id: string;
   slug: string;
@@ -37,6 +39,13 @@ export type PetdexPet = {
   vibes: PetVibe[];
   tags: string[];
   submittedBy?: PetCredit;
+  /**
+   * How the pet entered the catalog. 'submit' = uploaded through the
+   * regular flow. 'discover' = added by an admin on behalf of the
+   * original author. 'claimed' = was 'discover' and the author has
+   * since claimed it. UI shows a small chip when 'discover'.
+   */
+  source: PetSource;
   importedAt: string;
   qa: {
     contactSheetPath?: string;

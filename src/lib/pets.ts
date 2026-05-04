@@ -129,6 +129,7 @@ export function rowToPet(
     vibes: (row.vibes as PetVibe[]) ?? [],
     tags: (row.tags as string[]) ?? [],
     submittedBy,
+    source: row.source,
     importedAt: row.approvedAt?.toISOString() ?? row.createdAt.toISOString(),
     qa: {},
   };

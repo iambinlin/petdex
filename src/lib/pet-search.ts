@@ -248,6 +248,9 @@ function rowToSchema(row: Record<string, unknown>): typeof schema.submittedPets.
     featured: row.featured as boolean,
     dhash: (row.dhash as string | null) ?? null,
     status: row.status as "approved" | "pending" | "rejected",
+    source:
+      (row.source as "submit" | "discover" | "claimed" | undefined) ??
+      "submit",
     ownerId: row.owner_id as string,
     ownerEmail: (row.owner_email as string | null) ?? null,
     creditName: (row.credit_name as string | null) ?? null,
