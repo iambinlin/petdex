@@ -365,3 +365,51 @@ input {
     animation: none;
   }
 }
+
+/* Tap-me hint ring on the interactive PetFloater. A brand-tinted glow
+   pulses outward to invite the user to grab the pet on first visit.
+   We render two staggered rings (the second uses --late) so the
+   pulses overlap and create a continuous "breathing" effect. */
+.pet-floater-hint-ring {
+  box-shadow:
+    0 0 0 0 oklch(from var(--brand) l c h / 0.55),
+    0 0 24px 8px oklch(from var(--brand) l c h / 0.18);
+  animation: pet-floater-hint 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  will-change: transform, box-shadow, opacity;
+}
+
+.pet-floater-hint-ring--late {
+  animation-delay: 0.8s;
+}
+
+@keyframes pet-floater-hint {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 0 oklch(from var(--brand) l c h / 0.55),
+      0 0 18px 4px oklch(from var(--brand) l c h / 0.25);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.2);
+    box-shadow:
+      0 0 0 14px oklch(from var(--brand) l c h / 0),
+      0 0 30px 12px oklch(from var(--brand) l c h / 0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.2);
+    box-shadow:
+      0 0 0 0 oklch(from var(--brand) l c h / 0),
+      0 0 0 0 oklch(from var(--brand) l c h / 0);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-floater-hint-ring {
+    animation: none;
+    box-shadow: 0 0 0 2px oklch(from var(--brand) l c h / 0.45);
+    opacity: 1;
+  }
+}
