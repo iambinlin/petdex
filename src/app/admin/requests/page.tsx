@@ -160,7 +160,9 @@ export default async function AdminRequestsPage() {
               request={r}
               requester={r.requestedBy ? clerkInfo.get(r.requestedBy) : null}
               voters={votes
-                .filter((v) => v.requestId === r.id)
+                .filter(
+                  (v) => v.requestId === r.id && v.userId !== r.requestedBy,
+                )
                 .map((v) => clerkInfo.get(v.userId))
                 .filter((v): v is ClerkInfo => Boolean(v))}
               fulfilledPet={null}
@@ -179,7 +181,9 @@ export default async function AdminRequestsPage() {
               request={r}
               requester={r.requestedBy ? clerkInfo.get(r.requestedBy) : null}
               voters={votes
-                .filter((v) => v.requestId === r.id)
+                .filter(
+                  (v) => v.requestId === r.id && v.userId !== r.requestedBy,
+                )
                 .map((v) => clerkInfo.get(v.userId))
                 .filter((v): v is ClerkInfo => Boolean(v))}
               fulfilledPet={
@@ -198,7 +202,9 @@ export default async function AdminRequestsPage() {
               request={r}
               requester={r.requestedBy ? clerkInfo.get(r.requestedBy) : null}
               voters={votes
-                .filter((v) => v.requestId === r.id)
+                .filter(
+                  (v) => v.requestId === r.id && v.userId !== r.requestedBy,
+                )
                 .map((v) => clerkInfo.get(v.userId))
                 .filter((v): v is ClerkInfo => Boolean(v))}
               fulfilledPet={null}

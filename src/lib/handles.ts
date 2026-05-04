@@ -48,21 +48,63 @@ export async function userIdForHandle(handle: string): Promise<string | null> {
     /* fall through */
   }
 
-  // Fallback: hex-ish suffix of a userId. Only resolve when the handle
-  // matches the FALLBACK_LENGTH and contains only safe characters.
+  // Fallback: id-suffix lookup. We accept the handle if it matches the
+  // FALLBACK_LENGTH and only contains safe characters, then sweep the
+  // tables that store userIds (pets, requests, feedback, profiles) for
+  // any id whose tail matches. Refuses ambiguous matches (>1 user).
   if (
     normalized.length === FALLBACK_LENGTH &&
     /^[a-z0-9]+$/.test(normalized)
   ) {
     const { db, schema } = await import("@/lib/db/client");
     const { sql } = await import("drizzle-orm");
-    const rows = await db
-      .selectDistinct({ ownerId: schema.submittedPets.ownerId })
+    // Same predicate against four tables. We use a single query per
+    // table because cross-table UNION through Drizzle is awkward, and
+    // four cheap indexed scans is plenty fast at our row counts.
+    const candidates = new Set<string>();
+    const fromPets = await db
+      .selectDistinct({ id: schema.submittedPets.ownerId })
       .from(schema.submittedPets)
-      .where(sql`lower(right(${schema.submittedPets.ownerId}, ${FALLBACK_LENGTH})) = ${normalized}`)
+      .where(
+        sql`lower(right(${schema.submittedPets.ownerId}, ${FALLBACK_LENGTH})) = ${normalized}`,
+      )
       .limit(2);
-    // Refuse to resolve if multiple users share the suffix.
-    if (rows.length === 1) return rows[0].ownerId;
+    for (const r of fromPets) candidates.add(r.id);
+
+    if (candidates.size < 2) {
+      const fromRequests = await db
+        .selectDistinct({ id: schema.petRequests.requestedBy })
+        .from(schema.petRequests)
+        .where(
+          sql`${schema.petRequests.requestedBy} IS NOT NULL AND lower(right(${schema.petRequests.requestedBy}, ${FALLBACK_LENGTH})) = ${normalized}`,
+        )
+        .limit(2);
+      for (const r of fromRequests) if (r.id) candidates.add(r.id);
+    }
+
+    if (candidates.size < 2) {
+      const fromFeedback = await db
+        .selectDistinct({ id: schema.feedback.userId })
+        .from(schema.feedback)
+        .where(
+          sql`${schema.feedback.userId} IS NOT NULL AND lower(right(${schema.feedback.userId}, ${FALLBACK_LENGTH})) = ${normalized}`,
+        )
+        .limit(2);
+      for (const r of fromFeedback) if (r.id) candidates.add(r.id);
+    }
+
+    if (candidates.size < 2) {
+      const fromProfiles = await db
+        .selectDistinct({ id: schema.userProfiles.userId })
+        .from(schema.userProfiles)
+        .where(
+          sql`lower(right(${schema.userProfiles.userId}, ${FALLBACK_LENGTH})) = ${normalized}`,
+        )
+        .limit(2);
+      for (const r of fromProfiles) candidates.add(r.id);
+    }
+
+    if (candidates.size === 1) return [...candidates][0];
   }
 
   return null;

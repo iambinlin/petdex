@@ -105,7 +105,7 @@ export default async function RequestsPage() {
       ? clerkInfo.get(r.requestedBy) ?? null
       : null;
     const voters = votes
-      .filter((v) => v.requestId === r.id)
+      .filter((v) => v.requestId === r.id && v.userId !== r.requestedBy)
       .map((v) => clerkInfo.get(v.userId))
       .filter((v): v is ClerkInfo => Boolean(v))
       .slice(0, 6);

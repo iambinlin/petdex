@@ -47,6 +47,9 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           <Link href="/requests" className="transition hover:text-black">
             Requests
           </Link>
+          <Link href="/about" className="transition hover:text-black">
+            About
+          </Link>
           <a href="/api/manifest" className="transition hover:text-black">
             Manifest
           </a>
@@ -99,6 +102,9 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             </MobileLink>
             <MobileLink href="/requests" onClick={() => setOpen(false)}>
               Requests
+            </MobileLink>
+            <MobileLink href="/about" onClick={() => setOpen(false)}>
+              About
             </MobileLink>
             <MobileLink href="/api/manifest" onClick={() => setOpen(false)}>
               Manifest

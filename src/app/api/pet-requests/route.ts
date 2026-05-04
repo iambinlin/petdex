@@ -136,8 +136,11 @@ export async function GET(req: Request): Promise<Response> {
       const requester = r.requestedBy
         ? clerkInfo.get(r.requestedBy) ?? null
         : null;
+      // Exclude the requester from the voter stack — they auto-vote
+      // for their own request, but rendering them twice in the UI
+      // (chip + duplicate avatar) feels broken.
       const voterUserIds = votes
-        .filter((v) => v.requestId === r.id)
+        .filter((v) => v.requestId === r.id && v.userId !== r.requestedBy)
         .map((v) => v.userId);
       const voters = voterUserIds
         .map((id) => clerkInfo.get(id))
