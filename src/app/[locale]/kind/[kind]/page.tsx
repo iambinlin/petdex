@@ -1,13 +1,12 @@
 import { notFound } from "next/navigation";
 
-import { JsonLd } from "@/components/json-ld";
-import { FacetPage } from "@/components/facet-page";
 import { KIND_COPY } from "@/lib/facet-copy";
-import {
-  type PetWithMetrics,
-  getApprovedPetsWithMetrics,
-} from "@/lib/pets";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
+import { getApprovedPetsWithMetrics, type PetWithMetrics } from "@/lib/pets";
 import { PET_KINDS, type PetKind } from "@/lib/types";
+
+import { FacetPage } from "@/components/facet-page";
+import { JsonLd } from "@/components/json-ld";
 
 const SITE_URL = "https://petdex.crafter.run";
 
@@ -41,7 +40,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: copy.title,
     description: copy.metaDescription,
-    alternates: { canonical: `/kind/${kind}` },
+    alternates: buildLocaleAlternates(`/kind/${kind}`),
     openGraph: {
       title: copy.title,
       description: copy.metaDescription,

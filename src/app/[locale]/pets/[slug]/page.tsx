@@ -7,6 +7,7 @@ import { Shuffle, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { resolveOwnerCreditFor } from "@/lib/owner-credit";
 import { computeStats } from "@/lib/pet-stats";
 import {
@@ -73,7 +74,7 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title,
     description,
-    alternates: { canonical: `/pets/${pet.slug}` },
+    alternates: buildLocaleAlternates(`/pets/${pet.slug}`),
     keywords: [
       pet.displayName,
       `${pet.displayName} Codex pet`,
@@ -117,8 +118,8 @@ export default async function PetPage({ params }: PageProps) {
     }
   }
 
-  const neighborSlugs = [prevSlug, nextSlug].filter(
-    (value): value is string => Boolean(value),
+  const neighborSlugs = [prevSlug, nextSlug].filter((value): value is string =>
+    Boolean(value),
   );
   const neighborRows =
     neighborSlugs.length > 0
@@ -133,20 +134,22 @@ export default async function PetPage({ params }: PageProps) {
   const neighborNameMap = new Map(
     neighborRows.map((row) => [row.slug, row.displayName]),
   );
+  const prevDexNumber = prevSlug ? dexMap.get(prevSlug) : undefined;
+  const nextDexNumber = nextSlug ? dexMap.get(nextSlug) : undefined;
   const prevPet =
-    prevSlug && dexMap.has(prevSlug)
+    prevSlug && prevDexNumber !== undefined
       ? {
           slug: prevSlug,
           displayName: neighborNameMap.get(prevSlug) ?? prevSlug,
-          dexNumber: dexMap.get(prevSlug)!,
+          dexNumber: prevDexNumber,
         }
       : null;
   const nextPet =
-    nextSlug && dexMap.has(nextSlug)
+    nextSlug && nextDexNumber !== undefined
       ? {
           slug: nextSlug,
           displayName: neighborNameMap.get(nextSlug) ?? nextSlug,
-          dexNumber: dexMap.get(nextSlug)!,
+          dexNumber: nextDexNumber,
         }
       : null;
 
@@ -307,7 +310,7 @@ export default async function PetPage({ params }: PageProps) {
   const shuffleHref = `/api/pets/random?exclude=${encodeURIComponent(pet.slug)}`;
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-dvh bg-background">
       <JsonLd data={jsonLd} />
 
       {/* Wire keyboard shortcuts: ←/→ for prev/next, Space for shuffle.

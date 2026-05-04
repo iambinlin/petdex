@@ -5,11 +5,12 @@ import { getTranslations } from "next-intl/server";
 
 import { getCaughtSlugSet } from "@/lib/catch-status";
 import { getDexNumberMap } from "@/lib/dex";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { searchPets } from "@/lib/pet-search";
 import {
-  type PetWithMetrics,
   getApprovedPetCount,
   getFeaturedPetsWithMetrics,
+  type PetWithMetrics,
 } from "@/lib/pets";
 import { readShuffleSeed } from "@/lib/shuffle-seed";
 
@@ -22,7 +23,9 @@ import { SiteHeader } from "@/components/site-header";
 import { SubmitCTA } from "@/components/submit-cta";
 
 export const dynamic = "force-dynamic";
-
+export const metadata = {
+  alternates: buildLocaleAlternates("/"),
+};
 const SITE_URL = "https://petdex.crafter.run";
 
 export default async function Home() {
@@ -88,7 +91,7 @@ export default async function Home() {
   ];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
@@ -159,7 +162,7 @@ async function HeroPetParade({ pets }: HeroPetParadeProps) {
   const t = await getTranslations("home");
 
   return (
-    <div
+    <section
       className="mt-10 flex flex-wrap items-end justify-center gap-3 md:gap-5"
       aria-label={t("petParadeAria")}
     >
@@ -187,6 +190,6 @@ async function HeroPetParade({ pets }: HeroPetParadeProps) {
           </Link>
         );
       })}
-    </div>
+    </section>
   );
 }

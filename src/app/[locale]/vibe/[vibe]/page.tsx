@@ -1,13 +1,12 @@
 import { notFound } from "next/navigation";
 
-import { JsonLd } from "@/components/json-ld";
-import { FacetPage } from "@/components/facet-page";
 import { VIBE_COPY } from "@/lib/facet-copy";
-import {
-  type PetWithMetrics,
-  getApprovedPetsWithMetrics,
-} from "@/lib/pets";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
+import { getApprovedPetsWithMetrics, type PetWithMetrics } from "@/lib/pets";
 import { PET_VIBES, type PetVibe } from "@/lib/types";
+
+import { FacetPage } from "@/components/facet-page";
+import { JsonLd } from "@/components/json-ld";
 
 function curatedSort(pets: PetWithMetrics[]): PetWithMetrics[] {
   return [...pets].sort((a, b) => {
@@ -41,7 +40,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: copy.title,
     description: copy.metaDescription,
-    alternates: { canonical: `/vibe/${vibe}` },
+    alternates: buildLocaleAlternates(`/vibe/${vibe}`),
     openGraph: {
       title: copy.title,
       description: copy.metaDescription,
@@ -70,9 +69,10 @@ export default async function VibePage({ params }: Props) {
 
   // Related vibes: top 6 other vibes by count, excluding current.
   const facetCounts = new Map<PetVibe, number>();
-  for (const p of all) for (const v of p.vibes) {
-    facetCounts.set(v, (facetCounts.get(v) ?? 0) + 1);
-  }
+  for (const p of all)
+    for (const v of p.vibes) {
+      facetCounts.set(v, (facetCounts.get(v) ?? 0) + 1);
+    }
   const related = [...facetCounts.entries()]
     .filter(([v]) => v !== vibe)
     .sort((a, b) => b[1] - a[1])

@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { ArrowRight, Hammer } from "lucide-react";
 
+import { buildLocaleAlternates } from "@/lib/locale-routing";
+
 import { PetSubmitForm } from "@/components/pet-submit-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -9,11 +11,12 @@ import { SiteHeader } from "@/components/site-header";
 export const metadata = {
   title: "Submit a pet — Petdex",
   description: "Upload and validate a Codex pet package for Petdex.",
+  alternates: buildLocaleAlternates("/submit"),
 };
 
 export default function SubmitPage() {
   return (
-    <main className="petdex-cloud relative min-h-screen overflow-hidden bg-background">
+    <main className="petdex-cloud relative min-h-dvh overflow-hidden bg-background">
       <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-5 pb-12 md:px-8 md:py-5 md:pb-16">
         <SiteHeader hideSubmitCta />
 

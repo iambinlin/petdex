@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { getApprovedPetCount } from "@/lib/pets";
 
 import { CommandLine } from "@/components/command-line";
@@ -15,7 +16,7 @@ export const metadata = {
   title: "About Petdex — Animated pet companions for the Codex CLI",
   description:
     "Petdex is an open-source gallery of animated pixel pets for the OpenAI Codex CLI. Browse the catalog, install with one command, or submit your own.",
-  alternates: { canonical: "/about" },
+  alternates: buildLocaleAlternates("/about"),
   openGraph: {
     title: "About Petdex",
     description:
@@ -84,7 +85,7 @@ export default async function AboutPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">

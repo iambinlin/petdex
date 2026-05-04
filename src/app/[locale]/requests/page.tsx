@@ -4,6 +4,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { desc, inArray, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
 
 import { type RequestRow, RequestsView } from "@/components/requests-view";
 import { SiteFooter } from "@/components/site-footer";
@@ -15,7 +16,7 @@ export const metadata = {
   title: "Pet requests",
   description:
     "Vote on pets the community wants to see in Petdex. Most-upvoted requests get prioritized.",
-  alternates: { canonical: "/requests" },
+  alternates: buildLocaleAlternates("/requests"),
 };
 
 export default async function RequestsPage() {
@@ -86,8 +87,14 @@ export default async function RequestsPage() {
 
   // Fulfilled pet thumbnails.
   const fulfilledSlugs = rows
-    .filter((r) => r.status === "fulfilled" && r.fulfilledPetSlug)
-    .map((r) => r.fulfilledPetSlug!);
+    .filter(
+      (
+        r,
+      ): r is typeof r & {
+        fulfilledPetSlug: string;
+      } => r.status === "fulfilled" && typeof r.fulfilledPetSlug === "string",
+    )
+    .map((r) => r.fulfilledPetSlug);
   const fulfilledPets = fulfilledSlugs.length
     ? await db
         .select({
@@ -127,7 +134,7 @@ export default async function RequestsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>

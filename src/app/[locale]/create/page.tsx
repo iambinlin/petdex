@@ -10,6 +10,8 @@ import {
   Upload,
 } from "lucide-react";
 
+import { buildLocaleAlternates } from "@/lib/locale-routing";
+
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -17,6 +19,7 @@ export const metadata = {
   title: "Create a pet — Petdex",
   description:
     "Hatch your own Codex pet in 5 minutes, then share it on Petdex.",
+  alternates: buildLocaleAlternates("/create"),
   openGraph: {
     title: "Create a pet — Petdex",
     description:
@@ -27,7 +30,7 @@ export const metadata = {
 
 export default function CreatePage() {
   return (
-    <main className="petdex-cloud relative min-h-screen overflow-hidden bg-background text-foreground">
+    <main className="petdex-cloud relative min-h-dvh overflow-hidden bg-background text-foreground">
       <section className="relative mx-auto flex w-full max-w-5xl flex-col gap-10 px-5 py-5 pb-12 md:px-8 md:py-5 md:pb-16">
         <SiteHeader />
 
@@ -172,8 +175,8 @@ export default function CreatePage() {
                 Burning through Codex tokens?
               </p>
               <p className="mt-1 text-sm text-muted-2">
-                Drop a wish in the request queue — the community (and we)
-                will pick it up.
+                Drop a wish in the request queue — the community (and we) will
+                pick it up.
               </p>
             </div>
             <Link
@@ -204,9 +207,9 @@ export default function CreatePage() {
                 </span>
               </p>
               <p className="mt-1 max-w-2xl text-sm text-muted-2">
-                A browser-native studio so you can sketch, animate, and
-                preview your pet without ever leaving Petdex — no Codex
-                tokens required. Sign in to get notified when it lands.
+                A browser-native studio so you can sketch, animate, and preview
+                your pet without ever leaving Petdex — no Codex tokens required.
+                Sign in to get notified when it lands.
               </p>
             </div>
           </div>

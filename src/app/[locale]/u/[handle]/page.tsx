@@ -6,14 +6,15 @@ import { and, desc, eq } from "drizzle-orm";
 import { Heart, TerminalSquare, Trophy } from "lucide-react";
 
 import { isAdmin } from "@/lib/admin";
+import { getCatchProgress } from "@/lib/catch-status";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
-import { handleFromClerk, userIdForHandle } from "@/lib/handles";
+import { userIdForHandle } from "@/lib/handles";
 import { getOwnerRank } from "@/lib/leaderboard";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { petStates } from "@/lib/pet-states";
 import { type PetWithMetrics, rowToPet } from "@/lib/pets";
 import { MAX_PINNED_PETS } from "@/lib/profiles";
-import { getCatchProgress } from "@/lib/catch-status";
 
 import { JsonLd } from "@/components/json-ld";
 import { PetCard } from "@/components/pet-gallery";
@@ -47,7 +48,7 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${displayName} on Petdex`,
     description: `Pets created by ${displayName} for the Codex CLI.`,
-    alternates: { canonical: `/u/${handle}` },
+    alternates: buildLocaleAlternates(`/u/${handle}`),
     openGraph: {
       title: `${displayName} on Petdex`,
       description: `Animated Codex pets created by ${displayName}.`,
@@ -181,7 +182,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <ProfileAnalytics
         handle={handle}

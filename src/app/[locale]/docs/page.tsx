@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { ArrowRight, Check } from "lucide-react";
 
+import { buildLocaleAlternates } from "@/lib/locale-routing";
+
 import { CommandLine } from "@/components/command-line";
 import { GithubIcon } from "@/components/github-icon";
 import { SiteFooter } from "@/components/site-footer";
@@ -11,6 +13,7 @@ export const metadata = {
   title: "Docs · Petdex",
   description:
     "How to install, distribute, and automate Codex pets with the Petdex CLI.",
+  alternates: buildLocaleAlternates("/docs"),
   openGraph: {
     title: "Petdex CLI · Docs",
     description:
@@ -25,7 +28,7 @@ const SKILL_URL = `${REPO_URL}/blob/main/.claude/skills/petdex/SKILL.md`;
 
 export default function DocsPage() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
