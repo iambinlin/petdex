@@ -60,25 +60,25 @@ export function PetKeyboardNav({
       }
       if (event.key === " " && shuffleHref) {
         event.preventDefault();
-        // The shuffle endpoint 302s to a random pet. Doing a plain
-        // router.push to the API route would full-page-load (302
-        // gets followed by the browser, not Next's app router).
-        // Instead, fetch with redirect:'manual' to peek at the
-        // Location header, then router.push that URL with scroll:false
-        // so the visitor stays at the same scroll offset.
+        // The shuffle endpoint returns JSON `{ slug, href }` when
+        // requested with Accept: application/json (and 302s otherwise
+        // for the plain <a href> case). We ask for JSON, parse the
+        // href, and router.push it with scroll:false so the visitor
+        // keeps their scroll offset.
         void (async () => {
           try {
-            const res = await fetch(shuffleHref, { redirect: "manual" });
-            const next =
-              res.headers.get("location") ??
-              res.headers.get("Location") ??
-              null;
-            if (next) {
-              router.push(next, { scroll: false });
+            const res = await fetch(shuffleHref, {
+              headers: { accept: "application/json" },
+            });
+            if (!res.ok) {
+              window.location.assign(shuffleHref);
+              return;
+            }
+            const data = (await res.json()) as { href?: string };
+            if (data.href) {
+              router.push(data.href, { scroll: false });
             }
           } catch {
-            // Fall back to a hard navigation if the manual redirect
-            // dance fails (some browsers don't expose the header).
             window.location.assign(shuffleHref);
           }
         })();

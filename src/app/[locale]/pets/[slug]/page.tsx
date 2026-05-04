@@ -324,16 +324,16 @@ export default async function PetPage({ params }: PageProps) {
           animated sprite + install command + secondary panels live
           below in their own contained section. */}
       <section className="petdex-cloud relative overflow-hidden">
-        {/* Interactive floater pet — drag, click, watch. Renders an
-            absolute-positioned sprite over the banner's empty right
-            side. Only rendered on md+ where there's enough room; on
-            mobile the banner is too cramped for a draggable toy. */}
-        <div className="pointer-events-none absolute inset-0 hidden md:block">
-          <PetFloater src={pet.spritesheetPath} petName={pet.displayName} />
-        </div>
-
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pt-5 pb-10 md:px-8 md:pb-14">
           <SiteHeader />
+
+          {/* Interactive floater pet — drag, click, watch. Renders an
+              absolute-positioned sprite over the banner's empty right
+              side. Mounted INSIDE the max-w-6xl content wrapper so it
+              shares the same coordinate space and z-index as the rest
+              of the banner. Only rendered on md+ where there's enough
+              room; on mobile the banner is too cramped. */}
+          <PetFloater src={pet.spritesheetPath} petName={pet.displayName} />
 
           {/* Dex nav pills + shuffle. Sit at the top edge of the banner
               so they read like a Pokédex chrome strip, not page content. */}

@@ -9,17 +9,20 @@ export const dynamic = "force-dynamic";
 
 // GET /api/pets/random?exclude=current-slug
 //
-// Picks a random approved pet (excluding the optional `exclude` slug) and
-// 302s to /pets/<slug>. Used by the shuffle button + spacebar shortcut on
-// the detail page so the client never needs the full catalog.
+// Picks a random approved pet (excluding the optional `exclude` slug).
+// Behaviour depends on the Accept header:
+//   - Accept: application/json -> JSON `{ slug }` payload (used by the
+//     keyboard shortcut so the client can router.push without an
+//     opaque 302 redirect).
+//   - default                  -> 302 to /pets/<slug> (used by the
+//     plain <a href> shuffle pill so a click without JS still works).
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
   const exclude = url.searchParams.get("exclude") ?? "";
+  const wantsJson = (req.headers.get("accept") ?? "").includes(
+    "application/json",
+  );
 
-  // SELECT a single random approved, non-discover pet. Skip the current
-  // one when exclude is present so spamming spacebar always lands on a
-  // different pet. ORDER BY random() is fine at our catalog size (~440
-  // rows) — it's a one-shot index scan, not a hot path.
   const rows = await db
     .select({ slug: schema.submittedPets.slug })
     .from(schema.submittedPets)
@@ -35,9 +38,22 @@ export async function GET(req: Request): Promise<Response> {
     .limit(1);
 
   const next = rows[0]?.slug;
+
+  if (wantsJson) {
+    if (!next) {
+      return NextResponse.json(
+        { error: "no pets available" },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json(
+      { slug: next, href: `/pets/${next}` },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   if (!next) {
     return NextResponse.redirect(new URL("/", req.url), 302);
   }
-
   return NextResponse.redirect(new URL(`/pets/${next}`, req.url), 302);
 }
