@@ -9,6 +9,7 @@ import {
   Lightbulb,
   Mail,
   MessageSquare,
+  UserSquare,
 } from "lucide-react";
 
 import { AdminFeedbackActions } from "@/components/admin-feedback-actions";
@@ -70,6 +71,10 @@ type ClerkInfo = {
   imageUrl: string | null;
   displayName: string | null;
   username: string | null;
+  // Resolved /u/<handle> path component. Username when set, fallback
+  // to last 8 chars of the userId so every signed-in author has a
+  // public profile we can link to.
+  handle: string;
   primaryEmail: string | null;
   externalUrls: string[];
   emails: string[];
@@ -119,6 +124,9 @@ async function loadClerkInfo(
           imageUrl: u.imageUrl ?? null,
           displayName: displayName || null,
           username: u.username ?? null,
+          handle: u.username
+            ? u.username.toLowerCase()
+            : u.id.slice(-8).toLowerCase(),
           primaryEmail: primary?.emailAddress?.toLowerCase() ?? null,
           externalUrls,
           emails: u.emailAddresses.map((e) => e.emailAddress.toLowerCase()),
@@ -251,93 +259,101 @@ export default async function AdminFeedbackPage({
               (!r.adminLastReadAt ||
                 new Date(lastUserAt) > new Date(r.adminLastReadAt));
 
+            const displayName =
+              info?.displayName ??
+              info?.username ??
+              (r.email ? r.email.split("@")[0] : "Anonymous");
+
             return (
               <li
                 key={r.id}
-                className={`rounded-2xl border bg-white/80 p-4 backdrop-blur transition ${
+                className={`rounded-xl border bg-white/80 px-4 py-3 backdrop-blur transition ${
                   r.status === "archived"
                     ? "border-black/5 opacity-70"
                     : "border-black/10"
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  <Avatar info={info} email={r.email} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${meta.tone}`}
-                      >
-                        {meta.icon}
-                        {meta.label}
-                      </span>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${statusMeta.tone}`}
-                      >
-                        {statusMeta.label}
-                      </span>
-                      <span className="text-sm font-medium text-stone-900">
-                        {info?.displayName ??
-                          info?.username ??
-                          (r.email ? r.email.split("@")[0] : "Anonymous")}
-                      </span>
-                      {info?.username ? (
-                        <span className="font-mono text-[10px] text-stone-400">
-                          @{info.username}
+                {/* Top row: identity + tags on left, action cluster on right */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar info={info} email={r.email} />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="truncate text-sm font-medium text-stone-900">
+                          {displayName}
                         </span>
-                      ) : null}
-                      <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
-                        · {new Date(r.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-500">
-                      {replyEmail ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Mail className="size-3" />
-                          {replyEmail}
-                          {!r.email && info?.primaryEmail ? (
-                            <span className="text-[10px] text-stone-400">
-                              (clerk)
-                            </span>
-                          ) : null}
-                        </span>
-                      ) : null}
-                      {r.userId ? (
-                        <span className="font-mono text-[10px] text-stone-400">
-                          {r.userId.slice(0, 14)}…
-                        </span>
-                      ) : null}
-                      {r.pageUrl ? (
-                        <a
-                          href={r.pageUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                        {info?.username ? (
+                          <span className="font-mono text-[10px] text-stone-400">
+                            @{info.username}
+                          </span>
+                        ) : null}
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] tracking-[0.1em] uppercase ring-1 ${meta.tone}`}
                         >
-                          <ExternalLink className="size-3" />
-                          {(() => {
-                            try {
-                              return new URL(r.pageUrl).pathname;
-                            } catch {
-                              return r.pageUrl;
-                            }
-                          })()}
-                        </a>
-                      ) : null}
-                      {info?.externalUrls.map((url) => (
-                        <a
-                          key={url}
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                          {meta.icon}
+                          {meta.label}
+                        </span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-1.5 py-0.5 font-mono text-[9px] tracking-[0.1em] uppercase ring-1 ${statusMeta.tone}`}
                         >
-                          <ExternalLink className="size-3" />
-                          {url.replace(/^https?:\/\//, "")}
-                        </a>
-                      )) ?? null}
+                          {statusMeta.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-stone-400">
+                          {new Date(r.createdAt).toLocaleString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-stone-500">
+                        {replyEmail ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Mail className="size-3" />
+                            {replyEmail}
+                            {!r.email && info?.primaryEmail ? (
+                              <span className="text-[10px] text-stone-400">
+                                (clerk)
+                              </span>
+                            ) : null}
+                          </span>
+                        ) : null}
+                        {r.pageUrl ? (
+                          <a
+                            href={r.pageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                          >
+                            <ExternalLink className="size-3" />
+                            {(() => {
+                              try {
+                                return new URL(r.pageUrl).pathname;
+                              } catch {
+                                return r.pageUrl;
+                              }
+                            })()}
+                          </a>
+                        ) : null}
+                        {info?.externalUrls.map((url) => (
+                          <a
+                            key={url}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                          >
+                            <ExternalLink className="size-3" />
+                            {url.replace(/^https?:\/\//, "")}
+                          </a>
+                        )) ?? null}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex shrink-0 flex-col items-end gap-2">
+
+                  {/* Actions: single horizontal row */}
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <Link
                       href={`/admin/feedback/${r.id}`}
                       className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#5266ea] px-3 text-xs font-medium text-white transition hover:bg-[#3847f5]"
@@ -345,26 +361,38 @@ export default async function AdminFeedbackPage({
                       <MessageSquare className="size-3.5" />
                       {replyCount > 0
                         ? `Thread (${replyCount})`
-                        : "Open thread"}
+                        : "Thread"}
                       {adminUnread ? (
                         <span className="ml-0.5 size-1.5 rounded-full bg-white" />
                       ) : null}
                     </Link>
+                    {info?.handle ? (
+                      <Link
+                        href={`/u/${info.handle}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`View @${info.handle}'s profile`}
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 text-[11px] text-stone-600 transition hover:border-black/30 hover:text-stone-900"
+                      >
+                        <UserSquare className="size-3" />
+                        Profile
+                      </Link>
+                    ) : null}
                     {mailtoHref ? (
                       <a
                         href={mailtoHref}
-                        className="inline-flex h-7 items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 text-[11px] text-stone-600 transition hover:border-black/30"
                         title="Send email instead"
+                        className="inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white text-stone-600 transition hover:border-black/30 hover:text-stone-900"
                       >
-                        <Mail className="size-3" />
-                        Email
+                        <Mail className="size-3.5" />
                       </a>
                     ) : null}
                     <AdminFeedbackActions id={r.id} status={r.status} />
                   </div>
                 </div>
 
-                <p className="mt-3 text-sm leading-6 whitespace-pre-wrap text-stone-800">
+                {/* Message */}
+                <p className="mt-2.5 text-sm leading-6 whitespace-pre-wrap text-stone-800">
                   {r.message}
                 </p>
               </li>
@@ -389,13 +417,13 @@ function Avatar({
       <img
         src={info.imageUrl}
         alt=""
-        className="size-9 shrink-0 rounded-full ring-1 ring-black/10"
+        className="size-8 shrink-0 rounded-full ring-1 ring-black/10"
       />
     );
   }
   const seed = info?.displayName ?? info?.username ?? email ?? "?";
   return (
-    <div className="grid size-9 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-xs font-semibold text-stone-700 ring-1 ring-black/10">
+    <div className="grid size-8 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-xs font-semibold text-stone-700 ring-1 ring-black/10">
       {seed.slice(0, 1).toUpperCase()}
     </div>
   );

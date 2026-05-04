@@ -49,15 +49,15 @@ export function AdminFeedbackActions({
           type="button"
           disabled={disabled}
           onClick={() => void run("address")}
-          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-60"
+          aria-label="Mark as addressed"
           title="Mark as addressed"
+          className="inline-flex size-8 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-60"
         >
           {busy === "address" ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <CheckCircle2 className="size-3.5" />
           )}
-          Addressed
         </button>
       ) : null}
 
@@ -66,15 +66,15 @@ export function AdminFeedbackActions({
           type="button"
           disabled={disabled}
           onClick={() => void run("archive")}
-          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30 disabled:opacity-60"
+          aria-label="Archive"
           title="Archive"
+          className="inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white text-stone-600 transition hover:border-black/30 hover:text-stone-900 disabled:opacity-60"
         >
           {busy === "archive" ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <Archive className="size-3.5" />
           )}
-          Archive
         </button>
       ) : null}
 
@@ -83,15 +83,15 @@ export function AdminFeedbackActions({
           type="button"
           disabled={disabled}
           onClick={() => void run("reopen")}
-          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 text-xs font-medium text-amber-900 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60"
+          aria-label="Re-open into pending"
           title="Re-open into pending"
+          className="inline-flex size-8 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-900 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60"
         >
           {busy === "reopen" ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <RotateCcw className="size-3.5" />
           )}
-          Re-open
         </button>
       ) : null}
     </div>
