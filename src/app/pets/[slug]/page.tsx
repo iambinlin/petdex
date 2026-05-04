@@ -17,6 +17,7 @@ import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ClaimCTA } from "@/components/claim-cta";
 import { SubmittedBy } from "@/components/submitted-by";
 
 const SITE_URL = "https://petdex.crafter.run";
@@ -242,6 +243,20 @@ export default async function PetPage({ params }: PageProps) {
             {ownerCredit ? (
               <div className="mt-6 max-w-md">
                 <SubmittedBy credit={ownerCredit} />
+                {/* Discovered = an admin imported this on the author's
+                    behalf. Surface a 'sign in to claim' nudge for any
+                    viewer who isn't already the matching author. */}
+                {ownerRow?.source === "discover" ? (
+                  <ClaimCTA
+                    petName={pet.displayName}
+                    authorLabel={ownerCredit.name}
+                    githubUrl={
+                      ownerCredit.externals.find(
+                        (e) => e.provider === "github",
+                      )?.url ?? null
+                    }
+                  />
+                ) : null}
               </div>
             ) : null}
 
