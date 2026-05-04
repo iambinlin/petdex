@@ -45,7 +45,7 @@ function UserButtonWithAdminLink() {
     <div className="relative">
       <UserButton
         appearance={{
-          elements: { avatarBox: "size-9 rounded-full ring-1 ring-black/10" },
+          elements: { avatarBox: "size-10 rounded-full ring-1 ring-black/10" },
         }}
       >
         <UserButton.MenuItems>
