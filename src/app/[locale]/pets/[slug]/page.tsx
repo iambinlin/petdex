@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
@@ -6,8 +7,10 @@ import { Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
+import { formatDexNumber } from "@/lib/dex";
 import { resolveOwnerCreditFor } from "@/lib/owner-credit";
 import { getPet, getStaticPetSlugs } from "@/lib/pets";
+import { getVariantsFor } from "@/lib/variants";
 
 import { ClaimCTA } from "@/components/claim-cta";
 import { InstallCommand } from "@/components/install-command";
@@ -15,6 +18,7 @@ import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
+import { PetSprite } from "@/components/pet-sprite";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -87,8 +91,14 @@ export default async function PetPage({ params }: PageProps) {
     notFound();
   }
 
-  const { userId } = await auth();
-  const metrics = await getMetricsForSlug(slug);
+  const [{ userId }, metrics, ownerRow, variants] = await Promise.all([
+    auth(),
+    getMetricsForSlug(slug),
+    db.query.submittedPets.findFirst({
+      where: eq(schema.submittedPets.slug, slug),
+    }),
+    getVariantsFor(slug),
+  ]);
   const initialLiked = userId
     ? Boolean(
         await db.query.petLikes.findFirst({
@@ -100,11 +110,6 @@ export default async function PetPage({ params }: PageProps) {
       )
     : false;
 
-  // Pull the underlying row once: gives us the ownerId for the profile
-  // link plus the pending-edit state when the viewer is the owner.
-  const ownerRow = await db.query.submittedPets.findFirst({
-    where: eq(schema.submittedPets.slug, slug),
-  });
   // Resolve the "submitted by" credit live from Clerk so name/url/avatar
   // reflect the user's *current* profile (not the snapshot taken at
   // submit time). Falls back to row.credit_* for orphan rows.
@@ -312,7 +317,48 @@ export default async function PetPage({ params }: PageProps) {
             ) : null}
           </div>
 
-          <InstallCommand slug={pet.slug} displayName={pet.displayName} />
+          <div className="space-y-4">
+            <InstallCommand slug={pet.slug} displayName={pet.displayName} />
+
+            {variants.length > 0 ? (
+              <section className="rounded-3xl border border-border-base bg-surface/76 p-4 shadow-sm shadow-blue-950/5 backdrop-blur md:p-5">
+                <div>
+                  <p className="font-mono text-[11px] tracking-[0.18em] text-brand uppercase">
+                    Variants of this character
+                  </p>
+                  <p className="mt-1 text-sm text-muted-2">
+                    Other approved pets with closely matching sprite shapes.
+                  </p>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {variants.map((variant) => (
+                    <Link
+                      key={variant.slug}
+                      href={`/pets/${variant.slug}`}
+                      className="group flex items-center gap-3 rounded-2xl border border-border-base bg-background/70 p-3 transition hover:-translate-y-0.5 hover:border-brand/35 hover:bg-background"
+                    >
+                      <div className="shrink-0 rounded-2xl border border-border-base bg-surface p-2">
+                        <PetSprite
+                          src={variant.spritesheetUrl}
+                          scale={0.45}
+                          label={`${variant.displayName} animated`}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground transition group-hover:text-brand">
+                          {variant.displayName}
+                        </p>
+                        <p className="mt-1 font-mono text-[11px] tracking-[0.16em] text-muted-3 uppercase">
+                          #{formatDexNumber(variant.dexNumber)}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
         </header>
 
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
