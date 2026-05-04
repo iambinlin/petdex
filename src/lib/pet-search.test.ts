@@ -14,6 +14,7 @@ describe("searchPets", () => {
     expect(out.total).toBeGreaterThanOrEqual(out.pets.length);
     expect(out.facets.kinds).toBeDefined();
     expect(out.facets.vibes).toBeDefined();
+    expect(out.facets.batches).toBeDefined();
   });
 
   it("sort=installed orders by installCount descending (regression #11)", async () => {
@@ -88,6 +89,17 @@ describe("searchPets", () => {
     if (out.pets.length === 0) return;
     for (const pet of out.pets) {
       expect(pet.kind).toBe("creature");
+    }
+  });
+
+  it("batches filter only returns pets from that approval month", async () => {
+    const initial = await searchPets({ limit: 1 });
+    const firstBatch = initial.facets.batches[0]?.key;
+    if (!firstBatch) return;
+    const out = await searchPets({ batches: [firstBatch], limit: 60 });
+    if (out.pets.length === 0) return;
+    for (const pet of out.pets) {
+      expect(pet.approvedAt?.slice(0, 7)).toBe(firstBatch);
     }
   });
 
