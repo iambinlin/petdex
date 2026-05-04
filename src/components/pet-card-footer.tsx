@@ -195,9 +195,9 @@ function FooterBtn({
       title={label}
       className={`inline-flex h-8 items-center gap-1 rounded-full px-2 transition ${
         active
-          ? "bg-stone-100 text-stone-900"
-          : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-      } dark:hover:bg-stone-800`}
+          ? "bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-stone-100"
+          : "text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+      }`}
     >
       {children}
     </button>
