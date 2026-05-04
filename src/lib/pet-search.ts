@@ -3,8 +3,8 @@
 // facets are computed via grouped queries the DB can answer with the GIN
 // indexes on `vibes` / `tags`.
 
+import { neon } from "@neondatabase/serverless";
 import {
-  type SQL,
   and,
   asc,
   desc,
@@ -12,11 +12,13 @@ import {
   ilike,
   inArray,
   or,
+  type SQL,
   sql,
 } from "drizzle-orm";
-import { neon } from "@neondatabase/serverless";
 
+import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-extract";
 import { db, schema } from "@/lib/db/client";
+import { getAvailableBatches } from "@/lib/dex-batch";
 import type { PetWithMetrics } from "@/lib/pets";
 import { rowToPet } from "@/lib/pets";
 import { embedQuery, looksLikeVibeQuery } from "@/lib/query-embed";
@@ -30,6 +32,8 @@ export type SearchInput = {
   q?: string;
   kinds?: PetKind[];
   vibes?: PetVibe[];
+  colorFamilies?: ColorFamily[];
+  batches?: string[];
   sort?: SortKey;
   cursor?: number;
   limit?: number;
@@ -53,15 +57,15 @@ export type SearchOutput = {
   facets: {
     kinds: Record<string, number>;
     vibes: Record<string, number>;
+    colors: Record<ColorFamily, number>;
+    batches: Array<{ key: string; label: string; count: number }>;
   };
 };
 
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 60;
 
-export async function searchPets(
-  input: SearchInput,
-): Promise<SearchOutput> {
+export async function searchPets(input: SearchInput): Promise<SearchOutput> {
   const sortKey = input.sort ?? "curated";
   const limit = clamp(input.limit ?? DEFAULT_LIMIT, 1, MAX_LIMIT);
   const cursor = Math.max(0, input.cursor ?? 0);
@@ -75,7 +79,9 @@ export async function searchPets(
     sortKey === "curated" &&
     looksLikeVibeQuery(q) &&
     !(input.kinds && input.kinds.length > 0) &&
-    !(input.vibes && input.vibes.length > 0);
+    !(input.vibes && input.vibes.length > 0) &&
+    !(input.colorFamilies && input.colorFamilies.length > 0) &&
+    !(input.batches && input.batches.length > 0);
 
   if (isVibe) {
     const out = await vibeSearch({ q, limit, cursor });
@@ -93,8 +99,17 @@ export async function searchPets(
     // jsonb ?| text[]  — the GIN index on `vibes` answers this. Pass as a
     // pg text array literal so the driver doesn't try to JSON-encode it.
     const literal = `{${input.vibes.map((v) => `"${v.replace(/"/g, "")}"`).join(",")}}`;
+    filters.push(sql`${schema.submittedPets.vibes} ?| ${literal}::text[]`);
+  }
+
+  if (input.batches && input.batches.length > 0) {
+    const batchExpr = sql<string>`to_char(date_trunc('month', ${schema.submittedPets.approvedAt} AT TIME ZONE 'UTC'), 'YYYY-MM')`;
+    filters.push(inArray(batchExpr, input.batches));
+  }
+
+  if (input.colorFamilies && input.colorFamilies.length > 0) {
     filters.push(
-      sql`${schema.submittedPets.vibes} ?| ${literal}::text[]`,
+      inArray(schema.submittedPets.colorFamily, input.colorFamilies),
     );
   }
 
@@ -103,13 +118,14 @@ export async function searchPets(
     // Tags are jsonb — cast to text so ILIKE can scan them. The substring
     // search on display_name + description is small enough to live without
     // a trigram index at our current scale.
-    filters.push(
-      or(
-        ilike(schema.submittedPets.displayName, like),
-        ilike(schema.submittedPets.description, like),
-        sql`${schema.submittedPets.tags}::text ILIKE ${like}`,
-      )!,
+    const keywordFilter = or(
+      ilike(schema.submittedPets.displayName, like),
+      ilike(schema.submittedPets.description, like),
+      sql`${schema.submittedPets.tags}::text ILIKE ${like}`,
     );
+    if (keywordFilter) {
+      filters.push(keywordFilter);
+    }
   }
 
   const where = and(...filters);
@@ -206,7 +222,8 @@ async function vibeSearch(args: {
     SELECT
       sp.id, sp.slug, sp.display_name, sp.description,
       sp.spritesheet_url, sp.pet_json_url, sp.zip_url,
-      sp.kind, sp.vibes, sp.tags, sp.featured, sp.status,
+      sp.kind, sp.vibes, sp.tags, sp.dominant_color, sp.color_family,
+      sp.featured, sp.status, sp.source,
       sp.owner_id, sp.owner_email,
       sp.credit_name, sp.credit_url, sp.credit_image,
       sp.created_at, sp.approved_at, sp.rejected_at, sp.rejection_reason,
@@ -246,7 +263,9 @@ async function vibeSearch(args: {
 // Map a snake_case row out of the raw query into the camelCase shape
 // rowToPet expects. Drizzle's findFirst would do this for us but raw SQL
 // gives us the embedding ordering we need.
-function rowToSchema(row: Record<string, unknown>): typeof schema.submittedPets.$inferSelect {
+function rowToSchema(
+  row: Record<string, unknown>,
+): typeof schema.submittedPets.$inferSelect {
   return {
     id: row.id as string,
     slug: row.slug as string,
@@ -258,12 +277,13 @@ function rowToSchema(row: Record<string, unknown>): typeof schema.submittedPets.
     kind: row.kind as "creature" | "object" | "character",
     vibes: row.vibes as string[],
     tags: row.tags as string[],
+    dominantColor: (row.dominant_color as string | null) ?? null,
+    colorFamily: (row.color_family as string | null) ?? null,
     featured: row.featured as boolean,
     dhash: (row.dhash as string | null) ?? null,
     status: row.status as "approved" | "pending" | "rejected",
     source:
-      (row.source as "submit" | "discover" | "claimed" | undefined) ??
-      "submit",
+      (row.source as "submit" | "discover" | "claimed" | undefined) ?? "submit",
     ownerId: row.owner_id as string,
     ownerEmail: (row.owner_email as string | null) ?? null,
     creditName: (row.credit_name as string | null) ?? null,
@@ -297,7 +317,6 @@ function orderForSort(
       return [desc(installCountSql), asc(schema.submittedPets.displayName)];
     case "alpha":
       return [asc(schema.submittedPets.displayName)];
-    case "curated":
     default: {
       // Per-visitor stable shuffle: featured pets keep their pinned
       // tier, then everything else is ordered by a deterministic hash
@@ -321,31 +340,31 @@ function orderForSort(
 }
 
 async function loadFacets(): Promise<SearchOutput["facets"]> {
-  // kind counts
-  const kindRows = await db
-    .select({
-      kind: schema.submittedPets.kind,
-      n: sql<number>`count(*)::int`,
-    })
-    .from(schema.submittedPets)
-    .where(eq(schema.submittedPets.status, "approved"))
-    .groupBy(schema.submittedPets.kind);
+  const [kindRows, vibeRows, batches] = await Promise.all([
+    db
+      .select({
+        kind: schema.submittedPets.kind,
+        n: sql<number>`count(*)::int`,
+      })
+      .from(schema.submittedPets)
+      .where(eq(schema.submittedPets.status, "approved"))
+      .groupBy(schema.submittedPets.kind),
+    db.execute<{
+      vibe: string;
+      n: number;
+    }>(sql`
+      SELECT v::text AS vibe, count(*)::int AS n
+      FROM submitted_pets,
+           jsonb_array_elements_text(vibes) AS v
+      WHERE status = 'approved'
+      GROUP BY v
+    `),
+    getAvailableBatches(),
+  ]);
 
   const kinds: Record<string, number> = {};
   for (const k of PET_KINDS) kinds[k] = 0;
   for (const row of kindRows) kinds[row.kind] = row.n;
-
-  // vibe counts via jsonb_array_elements_text — single index-friendly scan
-  const vibeRows = await db.execute<{
-    vibe: string;
-    n: number;
-  }>(sql`
-    SELECT v::text AS vibe, count(*)::int AS n
-    FROM submitted_pets,
-         jsonb_array_elements_text(vibes) AS v
-    WHERE status = 'approved'
-    GROUP BY v
-  `);
 
   const vibes: Record<string, number> = {};
   for (const v of PET_VIBES) vibes[v] = 0;
@@ -353,7 +372,25 @@ async function loadFacets(): Promise<SearchOutput["facets"]> {
     vibes[row.vibe] = row.n;
   }
 
-  return { kinds, vibes };
+  const colorRows = await db
+    .select({
+      colorFamily: schema.submittedPets.colorFamily,
+      n: sql<number>`count(*)::int`,
+    })
+    .from(schema.submittedPets)
+    .where(eq(schema.submittedPets.status, "approved"))
+    .groupBy(schema.submittedPets.colorFamily);
+
+  const colors = Object.fromEntries(
+    COLOR_FAMILIES.map((family) => [family, 0]),
+  ) as Record<ColorFamily, number>;
+  for (const row of colorRows) {
+    if (row.colorFamily && row.colorFamily in colors) {
+      colors[row.colorFamily as ColorFamily] = row.n;
+    }
+  }
+
+  return { kinds, vibes, colors, batches };
 }
 
 function clamp(n: number, lo: number, hi: number): number {

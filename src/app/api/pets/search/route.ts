@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 
-import {
-  SEARCH_LIMITS,
-  type SortKey,
-  searchPets,
-} from "@/lib/pet-search";
+import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-extract";
+import { SEARCH_LIMITS, type SortKey, searchPets } from "@/lib/pet-search";
 import { readShuffleSeed } from "@/lib/shuffle-seed";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
 
@@ -13,12 +10,9 @@ export const dynamic = "force-dynamic";
 
 const KIND_SET = new Set<string>(PET_KINDS);
 const VIBE_SET = new Set<string>(PET_VIBES);
-const SORT_SET = new Set<SortKey>([
-  "curated",
-  "popular",
-  "installed",
-  "alpha",
-]);
+const COLOR_SET = new Set<string>(COLOR_FAMILIES);
+const BATCH_KEY_RE = /^\d{4}-\d{2}$/;
+const SORT_SET = new Set<SortKey>(["curated", "popular", "installed", "alpha"]);
 
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -26,10 +20,16 @@ export async function GET(req: Request): Promise<Response> {
 
   const q = params.get("q") ?? undefined;
 
-  const kinds = parseList(params.get("kinds"))
-    .filter((k) => KIND_SET.has(k)) as PetKind[];
-  const vibes = parseList(params.get("vibes"))
-    .filter((v) => VIBE_SET.has(v)) as PetVibe[];
+  const kinds = parseList(params.get("kinds")).filter((k) =>
+    KIND_SET.has(k),
+  ) as PetKind[];
+  const vibes = parseList(params.get("vibes")).filter((v) =>
+    VIBE_SET.has(v),
+  ) as PetVibe[];
+  const colors = parseList(params.get("colors")).filter((family) =>
+    COLOR_SET.has(family),
+  ) as ColorFamily[];
+  const batches = parseBatchList(params.get("batches"));
 
   const sortRaw = (params.get("sort") ?? "curated").toLowerCase();
   const sort: SortKey = SORT_SET.has(sortRaw as SortKey)
@@ -37,10 +37,7 @@ export async function GET(req: Request): Promise<Response> {
     : "curated";
 
   const cursor = parseIntSafe(params.get("cursor"), 0);
-  const limit = parseIntSafe(
-    params.get("limit"),
-    SEARCH_LIMITS.DEFAULT_LIMIT,
-  );
+  const limit = parseIntSafe(params.get("limit"), SEARCH_LIMITS.DEFAULT_LIMIT);
 
   // Read-only — the SSR home page is responsible for minting the seed
   // on first hit. Pagination requests don't need to set the cookie
@@ -51,6 +48,8 @@ export async function GET(req: Request): Promise<Response> {
     q,
     kinds,
     vibes,
+    colorFamilies: colors,
+    batches,
     sort,
     cursor,
     limit,
@@ -82,4 +81,12 @@ function parseIntSafe(raw: string | null, fallback: number): number {
   if (!raw) return fallback;
   const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+function parseBatchList(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => BATCH_KEY_RE.test(value));
 }
