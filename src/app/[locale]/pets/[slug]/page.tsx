@@ -326,7 +326,7 @@ export default async function PetPage({ params }: PageProps) {
           (if the viewer owns the pet) the inline edit button. The
           animated sprite + install command + secondary panels live
           below in their own contained section. */}
-      <section className="petdex-cloud relative overflow-hidden">
+      <section className="petdex-cloud relative z-10 overflow-visible">
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pt-5 pb-10 md:px-8 md:pb-14">
           <SiteHeader />
 
