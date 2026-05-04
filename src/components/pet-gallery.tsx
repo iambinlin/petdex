@@ -1,21 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { track } from "@vercel/analytics";
 import {
   Check,
+  CheckCircle2,
   ChevronDown,
-  Heart,
   Loader2,
   Plus,
   Search,
   Sparkles,
-  TerminalSquare,
   X,
 } from "lucide-react";
 
+import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-extract";
 import { formatBatchLabel, getBatchKey } from "@/lib/dex-batch";
 import { petStates } from "@/lib/pet-states";
 import type { PetWithMetrics } from "@/lib/pets";
@@ -29,6 +30,8 @@ import { PetSprite } from "@/components/pet-sprite";
 type Facets = {
   kinds: Record<string, number>;
   vibes: Record<string, number>;
+  colors: Record<ColorFamily, number>;
+  batches: Array<{ key: string; label: string; count: number }>;
 };
 
 type SearchMode = "vibe" | "keyword" | "all";
@@ -44,6 +47,7 @@ type SearchPayload = {
 type PetGalleryProps = {
   initial: SearchPayload;
   totalPets: number;
+  caughtSlugs?: string[];
   /**
    * slug -> canonical dex number (ROW_NUMBER over approved_at). Built
    * once on the server for the whole approved catalog and shipped to
@@ -65,11 +69,35 @@ const SORT_LABELS: Record<SortKey, string> = {
 
 const PAGE_SIZE = 24;
 
-export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
+const FAMILY_DOT: Record<ColorFamily, string> = {
+  red: "#ef4444",
+  orange: "#f97316",
+  yellow: "#eab308",
+  lime: "#84cc16",
+  green: "#22c55e",
+  teal: "#14b8a6",
+  blue: "#3b82f6",
+  indigo: "#6366f1",
+  purple: "#a855f7",
+  pink: "#ec4899",
+  brown: "#a16207",
+  neutral: "#737373",
+};
+
+export function PetGallery({
+  initial,
+  totalPets,
+  dexMap,
+  caughtSlugs,
+}: PetGalleryProps) {
   const [query, setQuery] = useState("");
+  const trimmedQuery = query.trim();
   const [activeKinds, setActiveKinds] = useState<Set<PetKind>>(new Set());
   const [activeVibes, setActiveVibes] = useState<Set<PetVibe>>(new Set());
+  const [activeColors, setActiveColors] = useState<Set<ColorFamily>>(new Set());
+  const [activeBatches, setActiveBatches] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortKey>("curated");
+  const caughtSet = new Set(caughtSlugs ?? []);
 
   const [pets, setPets] = useState<PetWithMetrics[]>(initial.pets);
   const [total, setTotal] = useState<number>(initial.total);
@@ -89,16 +117,19 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
   const buildParams = useCallback(
     (cursor: number) => {
       const p = new URLSearchParams();
-      const trimmed = query.trim();
-      if (trimmed) p.set("q", trimmed);
+      if (trimmedQuery) p.set("q", trimmedQuery);
       if (activeKinds.size > 0) p.set("kinds", [...activeKinds].join(","));
       if (activeVibes.size > 0) p.set("vibes", [...activeVibes].join(","));
+      if (activeColors.size > 0) p.set("colors", [...activeColors].join(","));
+      if (activeBatches.size > 0) {
+        p.set("batches", [...activeBatches].join(","));
+      }
       if (sort !== "curated") p.set("sort", sort);
       if (cursor > 0) p.set("cursor", String(cursor));
       p.set("limit", String(PAGE_SIZE));
       return p;
     },
-    [query, activeKinds, activeVibes, sort],
+    [trimmedQuery, activeKinds, activeVibes, activeColors, activeBatches, sort],
   );
 
   // Re-fetch on filter / sort / query changes (debounced for the query).
@@ -121,15 +152,15 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
         // and very short typing). 'no_results' fires its own event
         // because it gates the request CTA — we want to know which
         // queries miss most often.
-        if (query.trim().length >= 4 && mode !== "all") {
+        if (trimmedQuery.length >= 4 && mode !== "all") {
           track("gallery_searched", {
             mode,
-            length: query.trim().length,
+            length: trimmedQuery.length,
             results: data.total,
           });
           if (data.total === 0) {
             track("gallery_no_results", {
-              query_length: query.trim().length,
+              query_length: trimmedQuery.length,
               mode,
             });
           }
@@ -141,7 +172,7 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
       }
     }, 250);
     return () => window.clearTimeout(handle);
-  }, [buildParams]);
+  }, [buildParams, trimmedQuery]);
 
   const loadMore = useCallback(async () => {
     if (nextCursor == null || loadingMore || loadingPage) return;
@@ -180,15 +211,25 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
     setActiveKinds((c) => toggleSet(c, kind));
   const toggleVibe = (vibe: PetVibe) =>
     setActiveVibes((c) => toggleSet(c, vibe));
+  const toggleColor = (color: ColorFamily) =>
+    setActiveColors((c) => toggleSet(c, color));
+  const toggleBatch = (batch: string) =>
+    setActiveBatches((c) => toggleSet(c, batch));
 
   const clearFilters = () => {
     setActiveKinds(new Set());
     setActiveVibes(new Set());
+    setActiveColors(new Set());
+    setActiveBatches(new Set());
     setQuery("");
   };
 
   const filtersActive =
-    activeKinds.size > 0 || activeVibes.size > 0 || query.length > 0;
+    activeKinds.size > 0 ||
+    activeVibes.size > 0 ||
+    activeColors.size > 0 ||
+    activeBatches.size > 0 ||
+    query.length > 0;
 
   return (
     <section className="space-y-5">
@@ -287,6 +328,30 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
             tone="vibe"
           />
         </div>
+        <div className="flex flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
+          <FilterChips
+            options={COLOR_FAMILIES}
+            counts={facets.colors}
+            active={activeColors}
+            onToggle={(v) => toggleColor(v as ColorFamily)}
+            tone="color"
+            dotColors={FAMILY_DOT}
+          />
+        </div>
+        <div className="flex flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
+          <FilterChips
+            options={facets.batches.map((batch) => batch.key)}
+            counts={Object.fromEntries(
+              facets.batches.map((batch) => [batch.key, batch.count]),
+            )}
+            labels={Object.fromEntries(
+              facets.batches.map((batch) => [batch.key, batch.label]),
+            )}
+            active={activeBatches}
+            onToggle={toggleBatch}
+            tone="batch"
+          />
+        </div>
       </div>
 
       {searchMode === "vibe" && pets.length > 0 ? (
@@ -296,7 +361,7 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
           </span>
           <span>
             Showing pets that vibe with{" "}
-            <span className="font-medium">"{query.trim()}"</span>. Closer to the
+            <span className="font-medium">"{trimmedQuery}"</span>. Closer to the
             top means stronger match.
           </span>
         </div>
@@ -314,13 +379,14 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
             index={index}
             stateCount={stateCount}
             dexNumber={dexMap?.[pet.slug] ?? null}
+            caught={caughtSet.has(pet.slug)}
           />
         ))}
       </div>
 
       {pets.length === 0 && !loadingPage ? (
         <NoResults
-          query={query.trim()}
+          query={trimmedQuery}
           mode={searchMode}
           filtersActive={filtersActive}
           onClearFilters={clearFilters}
@@ -360,17 +426,21 @@ export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
 type FilterChipsProps = {
   options: readonly string[];
   counts: Record<string, number>;
+  labels?: Record<string, string>;
   active: Set<string>;
   onToggle: (value: string) => void;
-  tone: "kind" | "vibe";
+  tone: "kind" | "vibe" | "color" | "batch";
+  dotColors?: Partial<Record<string, string>>;
 };
 
 function FilterChips({
   options,
   counts,
+  labels,
   active,
   onToggle,
   tone,
+  dotColors,
 }: FilterChipsProps) {
   return (
     <>
@@ -378,7 +448,16 @@ function FilterChips({
         const count = counts[value] ?? 0;
         if (count === 0) return null;
         const isActive = active.has(value);
-        const dotClass = tone === "kind" ? "bg-[#0a0a0a]/70" : "bg-brand";
+        const dotClass =
+          tone === "kind"
+            ? "bg-[#0a0a0a]/70"
+            : tone === "vibe"
+              ? "bg-brand"
+              : tone === "color"
+                ? ""
+                : "bg-sky-500";
+        const dotColor = dotColors?.[value];
+        const label = labels?.[value] ?? value;
         return (
           <button
             key={value}
@@ -398,10 +477,15 @@ function FilterChips({
                 : "border-border-base bg-surface text-muted-2 hover:border-border-strong"
             }`}
           >
-            {!isActive ? (
-              <span className={`size-1.5 shrink-0 rounded-full ${dotClass}`} />
+            {!isActive || dotColor ? (
+              <span
+                className={`size-1.5 shrink-0 rounded-full ${dotClass}`}
+                style={dotColor ? { backgroundColor: dotColor } : undefined}
+              />
             ) : null}
-            <span>{value}</span>
+            <span className={tone === "batch" ? "" : "capitalize"}>
+              {label}
+            </span>
             <span
               className={`font-mono text-[9px] ${
                 isActive ? "text-on-inverse/60" : "text-muted-3"
@@ -419,6 +503,7 @@ function FilterChips({
 type PetCardProps = {
   pet: PetWithMetrics;
   index: number;
+  caught?: boolean;
   /**
    * Optional. Kept on the type so older call sites that still pass
    * stateCount don't break. The card no longer renders a 'states'
@@ -436,7 +521,7 @@ type PetCardProps = {
   dexNumber?: number | null;
 };
 
-export function PetCard({ pet, index, dexNumber }: PetCardProps) {
+export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
   const dexLabel =
     dexNumber != null
       ? dexNumber < 1000
@@ -449,13 +534,20 @@ export function PetCard({ pet, index, dexNumber }: PetCardProps) {
   const batchLabel = pet.approvedAt
     ? formatBatchLabel(getBatchKey(new Date(pet.approvedAt)))
     : null;
+  const accentStyle =
+    !pet.featured && pet.dominantColor
+      ? ({ "--pet-accent": pet.dominantColor } as CSSProperties)
+      : undefined;
 
   return (
     <article
+      style={accentStyle}
       className={`group relative rounded-3xl border bg-surface/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
-          : "border-black/10 shadow-sm shadow-blue-950/5"
+          : pet.dominantColor
+            ? "border-black/10 shadow-sm shadow-blue-950/5 ring-1 ring-[color:var(--pet-accent)]/30 hover:ring-[color:var(--pet-accent)]/60"
+            : "border-black/10 shadow-sm shadow-blue-950/5"
       } dark:hover:bg-stone-800`}
     >
       <Link
@@ -463,10 +555,17 @@ export function PetCard({ pet, index, dexNumber }: PetCardProps) {
         aria-label={`Open ${pet.displayName}`}
         className="flex flex-col rounded-3xl"
       >
-        <div className="flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pr-12 pb-3 dark:border-white/[0.06]">
-          <span className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
-            No. {dexLabel}
-          </span>
+        <div className="flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pr-5 pb-3 dark:border-white/[0.06]">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
+              No. {dexLabel}
+            </span>
+            {caught ? (
+              <span title="Caught" className="text-emerald-600">
+                <CheckCircle2 className="size-4 fill-current" />
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="pet-sprite-stage relative flex items-center justify-center overflow-hidden px-5 py-6">
@@ -490,7 +589,6 @@ export function PetCard({ pet, index, dexNumber }: PetCardProps) {
               <span className="truncate">{pet.displayName}</span>
               {pet.featured ? (
                 <span
-                  aria-label="Featured"
                   title="Featured"
                   className="font-mono text-[10px] text-brand"
                 >
