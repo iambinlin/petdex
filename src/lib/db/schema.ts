@@ -127,6 +127,13 @@ export const feedback = pgTable(
     addressedAt: timestamp("addressed_at", { withTimezone: true }),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     adminNote: text("admin_note"),
+    // True = user opted in to email notifications when admin replies.
+    // Defaults to true; user can mute from /my-feedback later.
+    notifyEmail: boolean("notify_email").notNull().default(true),
+    // Last time the original author saw the thread (used for unread counts).
+    userLastReadAt: timestamp("user_last_read_at", { withTimezone: true }),
+    // Last time admin saw the thread (so user follow-ups bell on admin side).
+    adminLastReadAt: timestamp("admin_last_read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -135,6 +142,31 @@ export const feedback = pgTable(
     createdAtIdx: index("feedback_created_at_idx").on(table.createdAt),
     userIdx: index("feedback_user_idx").on(table.userId),
     statusIdx: index("feedback_status_idx").on(table.status),
+  }),
+);
+
+export const feedbackAuthorKind = pgEnum("feedback_author_kind", [
+  "admin",
+  "user",
+]);
+
+export const feedbackReplies = pgTable(
+  "feedback_replies",
+  {
+    id: text("id").primaryKey(),
+    feedbackId: text("feedback_id")
+      .notNull()
+      .references(() => feedback.id, { onDelete: "cascade" }),
+    authorKind: feedbackAuthorKind("author_kind").notNull(),
+    authorUserId: text("author_user_id"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    feedbackIdx: index("feedback_replies_feedback_idx").on(table.feedbackId),
+    createdAtIdx: index("feedback_replies_created_at_idx").on(table.createdAt),
   }),
 );
 

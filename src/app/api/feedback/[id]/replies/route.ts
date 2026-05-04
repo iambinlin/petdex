@@ -1,0 +1,225 @@
+import { NextResponse } from "next/server";
+
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { asc, eq } from "drizzle-orm";
+import { Resend } from "resend";
+
+import { isAdmin } from "@/lib/admin";
+import { db, schema } from "@/lib/db/client";
+import { requireSameOrigin } from "@/lib/same-origin";
+
+export const runtime = "nodejs";
+
+type Params = { id: string };
+
+type PostBody = {
+  body: string;
+};
+
+function newId(): string {
+  return `rep_${crypto.randomUUID().replace(/-/g, "").slice(0, 24)}`;
+}
+
+export async function GET(
+  _req: Request,
+  ctx: { params: Promise<Params> },
+): Promise<Response> {
+  const { userId } = await auth();
+  const { id } = await ctx.params;
+
+  const row = await db.query.feedback.findFirst({
+    where: eq(schema.feedback.id, id),
+  });
+  if (!row) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  // Only the original author or an admin can read a thread.
+  const ok = isAdmin(userId) || (userId && row.userId === userId);
+  if (!ok) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  const replies = await db
+    .select()
+    .from(schema.feedbackReplies)
+    .where(eq(schema.feedbackReplies.feedbackId, id))
+    .orderBy(asc(schema.feedbackReplies.createdAt));
+
+  // Side-effect: mark thread as read for the caller.
+  const now = new Date();
+  if (isAdmin(userId)) {
+    await db
+      .update(schema.feedback)
+      .set({ adminLastReadAt: now })
+      .where(eq(schema.feedback.id, id));
+  } else if (userId && row.userId === userId) {
+    await db
+      .update(schema.feedback)
+      .set({ userLastReadAt: now })
+      .where(eq(schema.feedback.id, id));
+  }
+
+  return NextResponse.json({
+    feedback: {
+      id: row.id,
+      kind: row.kind,
+      status: row.status,
+      message: row.message,
+      createdAt: row.createdAt,
+    },
+    replies,
+  });
+}
+
+export async function POST(
+  req: Request,
+  ctx: { params: Promise<Params> },
+): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await ctx.params;
+
+  let body: PostBody;
+  try {
+    body = (await req.json()) as PostBody;
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+  }
+
+  const text = (body.body ?? "").trim();
+  if (!text || text.length > 2000) {
+    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  }
+
+  const row = await db.query.feedback.findFirst({
+    where: eq(schema.feedback.id, id),
+  });
+  if (!row) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  const adminCaller = isAdmin(userId);
+  const isAuthor = row.userId === userId;
+  if (!adminCaller && !isAuthor) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  const now = new Date();
+  const replyId = newId();
+
+  const [reply] = await db
+    .insert(schema.feedbackReplies)
+    .values({
+      id: replyId,
+      feedbackId: id,
+      authorKind: adminCaller ? "admin" : "user",
+      authorUserId: userId,
+      body: text,
+      createdAt: now,
+    })
+    .returning();
+
+  // Update read markers for the writer.
+  if (adminCaller) {
+    await db
+      .update(schema.feedback)
+      .set({ adminLastReadAt: now })
+      .where(eq(schema.feedback.id, id));
+  } else {
+    await db
+      .update(schema.feedback)
+      .set({ userLastReadAt: now })
+      .where(eq(schema.feedback.id, id));
+  }
+
+  // Email the other party.
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const from =
+        process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
+      const threadUrl = `https://petdex.crafter.run/my-feedback/${id}`;
+
+      if (adminCaller) {
+        // Admin replied → notify the original author.
+        if (row.notifyEmail) {
+          let toEmail = row.email ?? null;
+          if (!toEmail && row.userId) {
+            try {
+              const client = await clerkClient();
+              const u = await client.users.getUser(row.userId);
+              const primary = u.emailAddresses.find(
+                (e) => e.id === u.primaryEmailAddressId,
+              );
+              toEmail = primary?.emailAddress ?? null;
+            } catch {
+              /* ignore */
+            }
+          }
+          if (toEmail) {
+            const excerpt = row.message.slice(0, 80);
+            await resend.emails.send({
+              from,
+              to: toEmail,
+              subject: `Hunter replied to your Petdex feedback`,
+              text: [
+                `Hunter replied to your feedback on Petdex:`,
+                "",
+                `> ${row.message
+                  .split("\n")
+                  .map((l) => l)
+                  .join("\n> ")}`,
+                "",
+                "Reply:",
+                "",
+                text,
+                "",
+                "---",
+                `Continue the thread: ${threadUrl}`,
+                `(re: "${excerpt}${row.message.length > 80 ? "…" : ""}")`,
+              ].join("\n"),
+            });
+          }
+        }
+      } else {
+        // User followed up → notify admin (Hunter).
+        const adminEmail =
+          process.env.PETDEX_ADMIN_NOTIFY_EMAIL ?? "railly@clerk.dev";
+        const excerpt = row.message.slice(0, 80);
+        await resend.emails.send({
+          from,
+          to: adminEmail,
+          subject: `Petdex feedback follow-up — ${row.kind}`,
+          text: [
+            `New follow-up on a Petdex feedback thread.`,
+            "",
+            `Original (${row.kind}, ${row.status}):`,
+            `> ${row.message
+              .split("\n")
+              .map((l) => l)
+              .join("\n> ")}`,
+            "",
+            "User reply:",
+            "",
+            text,
+            "",
+            "---",
+            `Open thread: https://petdex.crafter.run/admin/feedback?status=all&focus=${id}`,
+            `(re: "${excerpt}${row.message.length > 80 ? "…" : ""}")`,
+          ].join("\n"),
+        });
+      }
+    } catch {
+      /* email is best-effort; silent fail */
+    }
+  }
+
+  return NextResponse.json({ ok: true, reply });
+}

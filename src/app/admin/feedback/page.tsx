@@ -1,5 +1,7 @@
+import Link from "next/link";
+
 import { clerkClient } from "@clerk/nextjs/server";
-import { desc } from "drizzle-orm";
+import { desc, sql as dsql } from "drizzle-orm";
 import {
   Bug,
   ExternalLink,
@@ -181,6 +183,27 @@ export default async function AdminFeedbackPage({
   ];
   const clerkInfo = await loadClerkInfo(userIds);
 
+  // Reply counts + last user reply per visible thread (for unread dot).
+  const visibleIds = visible.map((r) => r.id);
+  type Agg = {
+    feedbackId: string;
+    replyCount: number;
+    lastUserReplyAt: Date | null;
+  };
+  const aggMap = new Map<string, Agg>();
+  if (visibleIds.length > 0) {
+    const aggRows = await db
+      .select({
+        feedbackId: schema.feedbackReplies.feedbackId,
+        replyCount: dsql<number>`COUNT(*)::int`,
+        lastUserReplyAt: dsql<Date | null>`MAX(${schema.feedbackReplies.createdAt}) FILTER (WHERE ${schema.feedbackReplies.authorKind} = 'user')`,
+      })
+      .from(schema.feedbackReplies)
+      .where(dsql`${schema.feedbackReplies.feedbackId} = ANY(${visibleIds})`)
+      .groupBy(schema.feedbackReplies.feedbackId);
+    for (const r of aggRows) aggMap.set(r.feedbackId, r);
+  }
+
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
       <header className="space-y-3">
@@ -220,6 +243,13 @@ export default async function AdminFeedbackPage({
             const mailtoHref = replyEmail
               ? `mailto:${replyEmail}?subject=${mailtoSubject}&body=${mailtoBody}`
               : null;
+            const agg = aggMap.get(r.id);
+            const replyCount = agg?.replyCount ?? 0;
+            const lastUserAt = agg?.lastUserReplyAt ?? null;
+            const adminUnread =
+              lastUserAt &&
+              (!r.adminLastReadAt ||
+                new Date(lastUserAt) > new Date(r.adminLastReadAt));
 
             return (
               <li
@@ -308,13 +338,26 @@ export default async function AdminFeedbackPage({
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">
+                    <Link
+                      href={`/admin/feedback/${r.id}`}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#5266ea] px-3 text-xs font-medium text-white transition hover:bg-[#3847f5]"
+                    >
+                      <MessageSquare className="size-3.5" />
+                      {replyCount > 0
+                        ? `Thread (${replyCount})`
+                        : "Open thread"}
+                      {adminUnread ? (
+                        <span className="ml-0.5 size-1.5 rounded-full bg-white" />
+                      ) : null}
+                    </Link>
                     {mailtoHref ? (
                       <a
                         href={mailtoHref}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#5266ea] px-3 text-xs font-medium text-white transition hover:bg-[#3847f5]"
+                        className="inline-flex h-7 items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 text-[11px] text-stone-600 transition hover:border-black/30"
+                        title="Send email instead"
                       >
-                        <Mail className="size-3.5" />
-                        Reply
+                        <Mail className="size-3" />
+                        Email
                       </a>
                     ) : null}
                     <AdminFeedbackActions id={r.id} status={r.status} />
