@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { auth } from "@clerk/nextjs/server";
-import { eq, sql } from "drizzle-orm";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
 
 import { db, schema } from "@/lib/db/client";
@@ -23,25 +23,31 @@ function normalize(q: string): string {
     .slice(0, 200);
 }
 
-// GET — list top requests (paged by upvote count).
+// GET — list requests with requester info, top voters, and fulfilled
+// pet thumbnail. The page hydrates from this so card UI stays rich.
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const limit = Math.min(50, Number(url.searchParams.get("limit") ?? 20));
-  const status = url.searchParams.get("status") ?? "open";
+  const limit = Math.min(80, Number(url.searchParams.get("limit") ?? 60));
+  // 'open' is the default. Pass status=all to include fulfilled and
+  // dismissed (used by the public page when the user picks the
+  // 'Fulfilled' sort tab).
+  const statusParam = url.searchParams.get("status") ?? "open";
+  const includeAll = statusParam === "all";
 
-  const rows = await db
-    .select({
-      id: schema.petRequests.id,
-      query: schema.petRequests.query,
-      upvoteCount: schema.petRequests.upvoteCount,
-      status: schema.petRequests.status,
-      fulfilledPetSlug: schema.petRequests.fulfilledPetSlug,
-      createdAt: schema.petRequests.createdAt,
-    })
-    .from(schema.petRequests)
-    .where(eq(schema.petRequests.status, status))
-    .orderBy(sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`)
-    .limit(limit);
+  const rows = includeAll
+    ? await db
+        .select()
+        .from(schema.petRequests)
+        .orderBy(sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`)
+        .limit(limit)
+    : await db
+        .select()
+        .from(schema.petRequests)
+        .where(eq(schema.petRequests.status, statusParam))
+        .orderBy(sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`)
+        .limit(limit);
+
+  const requestIds = rows.map((r) => r.id);
 
   // Tell the caller which ones they've already upvoted (UI state).
   const { userId } = await auth();
@@ -54,11 +60,105 @@ export async function GET(req: Request): Promise<Response> {
     myVotes = new Set(v.map((r) => r.requestId));
   }
 
+  // Top voters per request (most-recent first; cap is enforced client-
+  // side as we render up to 3).
+  type VoteRow = { requestId: string; userId: string };
+  const votes: VoteRow[] = requestIds.length
+    ? ((await db
+        .select({
+          requestId: schema.petRequestVotes.requestId,
+          userId: schema.petRequestVotes.userId,
+        })
+        .from(schema.petRequestVotes)
+        .where(inArray(schema.petRequestVotes.requestId, requestIds))
+        .orderBy(desc(schema.petRequestVotes.createdAt))) as VoteRow[])
+    : [];
+
+  // Batch one Clerk lookup for all relevant userIds (requesters + voters).
+  const userIdSet = new Set<string>();
+  for (const r of rows) if (r.requestedBy) userIdSet.add(r.requestedBy);
+  for (const v of votes) userIdSet.add(v.userId);
+
+  type ClerkInfo = {
+    handle: string;
+    displayName: string | null;
+    username: string | null;
+    imageUrl: string | null;
+  };
+  const clerkInfo = new Map<string, ClerkInfo>();
+  if (userIdSet.size > 0) {
+    try {
+      const client = await clerkClient();
+      const all = [...userIdSet];
+      for (let i = 0; i < all.length; i += 100) {
+        const batch = await client.users.getUserList({
+          userId: all.slice(i, i + 100),
+          limit: 100,
+        });
+        for (const u of batch.data) {
+          const displayName = [u.firstName, u.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+          clerkInfo.set(u.id, {
+            handle: u.username
+              ? u.username.toLowerCase()
+              : u.id.slice(-8).toLowerCase(),
+            displayName: displayName || null,
+            username: u.username ?? null,
+            imageUrl: u.imageUrl ?? null,
+          });
+        }
+      }
+    } catch {
+      /* fall through; rows render without identity */
+    }
+  }
+
+  // Fulfilled pet thumbnail lookup.
+  const fulfilledSlugs = rows
+    .filter((r) => r.status === "fulfilled" && r.fulfilledPetSlug)
+    .map((r) => r.fulfilledPetSlug!);
+  const fulfilledPets = fulfilledSlugs.length
+    ? await db
+        .select({
+          slug: schema.submittedPets.slug,
+          displayName: schema.submittedPets.displayName,
+          spritesheetUrl: schema.submittedPets.spritesheetUrl,
+        })
+        .from(schema.submittedPets)
+        .where(inArray(schema.submittedPets.slug, fulfilledSlugs))
+    : [];
+  const petBySlug = new Map(fulfilledPets.map((p) => [p.slug, p]));
+
   return NextResponse.json({
-    requests: rows.map((r) => ({
-      ...r,
-      voted: myVotes.has(r.id),
-    })),
+    requests: rows.map((r) => {
+      const requester = r.requestedBy
+        ? clerkInfo.get(r.requestedBy) ?? null
+        : null;
+      const voterUserIds = votes
+        .filter((v) => v.requestId === r.id)
+        .map((v) => v.userId);
+      const voters = voterUserIds
+        .map((id) => clerkInfo.get(id))
+        .filter((v): v is ClerkInfo => Boolean(v))
+        .slice(0, 6);
+      const fulfilledPet = r.fulfilledPetSlug
+        ? petBySlug.get(r.fulfilledPetSlug) ?? null
+        : null;
+      return {
+        id: r.id,
+        query: r.query,
+        upvoteCount: r.upvoteCount,
+        status: r.status,
+        fulfilledPetSlug: r.fulfilledPetSlug,
+        createdAt: r.createdAt,
+        voted: myVotes.has(r.id),
+        requester,
+        voters,
+        fulfilledPet,
+      };
+    }),
   });
 }
 

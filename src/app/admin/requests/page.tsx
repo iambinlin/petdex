@@ -1,5 +1,10 @@
-import { sql } from "drizzle-orm";
+import Link from "next/link";
 
+import { clerkClient } from "@clerk/nextjs/server";
+import { desc, eq, inArray, sql as dsql } from "drizzle-orm";
+import { ExternalLink, Sparkles } from "lucide-react";
+
+import { AdminRequestActions } from "@/components/admin-request-actions";
 import { db, schema } from "@/lib/db/client";
 
 export const metadata = {
@@ -9,22 +14,124 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
+type ClerkInfo = {
+  imageUrl: string | null;
+  displayName: string | null;
+  username: string | null;
+  handle: string;
+};
+
+async function loadClerkInfo(
+  userIds: string[],
+): Promise<Map<string, ClerkInfo>> {
+  const out = new Map<string, ClerkInfo>();
+  if (userIds.length === 0) return out;
+  let client: Awaited<ReturnType<typeof clerkClient>>;
+  try {
+    client = await clerkClient();
+  } catch {
+    return out;
+  }
+  const chunks: string[][] = [];
+  for (let i = 0; i < userIds.length; i += 100) {
+    chunks.push(userIds.slice(i, i + 100));
+  }
+  for (const ids of chunks) {
+    try {
+      const list = await client.users.getUserList({ userId: ids, limit: 100 });
+      for (const u of list.data) {
+        const displayName = [u.firstName, u.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+        out.set(u.id, {
+          imageUrl: u.imageUrl ?? null,
+          displayName: displayName || null,
+          username: u.username ?? null,
+          handle: u.username
+            ? u.username.toLowerCase()
+            : u.id.slice(-8).toLowerCase(),
+        });
+      }
+    } catch {
+      /* swallow — we still render rows without identity */
+    }
+  }
+  return out;
+}
+
+const STATUS_META: Record<
+  string,
+  { label: string; tone: string }
+> = {
+  open: {
+    label: "Open",
+    tone: "bg-amber-50 text-amber-900 ring-amber-200",
+  },
+  fulfilled: {
+    label: "Fulfilled",
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+  },
+  dismissed: {
+    label: "Dismissed",
+    tone: "bg-stone-100 text-stone-600 ring-stone-200",
+  },
+};
+
 export default async function AdminRequestsPage() {
   const rows = await db
-    .select({
-      id: schema.petRequests.id,
-      query: schema.petRequests.query,
-      upvoteCount: schema.petRequests.upvoteCount,
-      status: schema.petRequests.status,
-      fulfilledPetSlug: schema.petRequests.fulfilledPetSlug,
-      requestedBy: schema.petRequests.requestedBy,
-      createdAt: schema.petRequests.createdAt,
-    })
+    .select()
     .from(schema.petRequests)
     .orderBy(
-      sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`,
+      dsql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`,
     )
     .limit(200);
+
+  const requestIds = rows.map((r) => r.id);
+
+  // Top voters per request: top 3 most-recent voters as avatar stack.
+  // Postgres-friendly approach: pull all votes for visible requests + a
+  // global voter count, slice client-side to top 3.
+  type VoteRow = { requestId: string; userId: string; createdAt: Date };
+  const votes: VoteRow[] = requestIds.length
+    ? ((await db
+        .select({
+          requestId: schema.petRequestVotes.requestId,
+          userId: schema.petRequestVotes.userId,
+          createdAt: schema.petRequestVotes.createdAt,
+        })
+        .from(schema.petRequestVotes)
+        .where(inArray(schema.petRequestVotes.requestId, requestIds))
+        .orderBy(desc(schema.petRequestVotes.createdAt))) as VoteRow[])
+    : [];
+
+  // Pull every userId we'll need (requesters + voters) so we batch one
+  // Clerk lookup. Cheaper than per-row.
+  const userIdSet = new Set<string>();
+  for (const r of rows) if (r.requestedBy) userIdSet.add(r.requestedBy);
+  for (const v of votes) userIdSet.add(v.userId);
+  const clerkInfo = await loadClerkInfo([...userIdSet]);
+
+  // Pull fulfilled pet thumbnails so the row can show what shipped.
+  const fulfilledSlugs = rows
+    .filter((r) => r.status === "fulfilled" && r.fulfilledPetSlug)
+    .map((r) => r.fulfilledPetSlug!);
+  type Pet = {
+    slug: string;
+    displayName: string;
+    spritesheetUrl: string;
+  };
+  const pets: Pet[] = fulfilledSlugs.length
+    ? await db
+        .select({
+          slug: schema.submittedPets.slug,
+          displayName: schema.submittedPets.displayName,
+          spritesheetUrl: schema.submittedPets.spritesheetUrl,
+        })
+        .from(schema.submittedPets)
+        .where(inArray(schema.submittedPets.slug, fulfilledSlugs))
+    : [];
+  const petBySlug = new Map(pets.map((p) => [p.slug, p]));
 
   const open = rows.filter((r) => r.status === "open");
   const fulfilled = rows.filter((r) => r.status === "fulfilled");
@@ -48,7 +155,16 @@ export default async function AdminRequestsPage() {
       {open.length > 0 ? (
         <Section title="Open" count={open.length}>
           {open.map((r) => (
-            <RequestRow key={r.id} request={r} />
+            <RequestRow
+              key={r.id}
+              request={r}
+              requester={r.requestedBy ? clerkInfo.get(r.requestedBy) : null}
+              voters={votes
+                .filter((v) => v.requestId === r.id)
+                .map((v) => clerkInfo.get(v.userId))
+                .filter((v): v is ClerkInfo => Boolean(v))}
+              fulfilledPet={null}
+            />
           ))}
         </Section>
       ) : (
@@ -58,7 +174,18 @@ export default async function AdminRequestsPage() {
       {fulfilled.length > 0 ? (
         <Section title="Fulfilled" count={fulfilled.length}>
           {fulfilled.map((r) => (
-            <RequestRow key={r.id} request={r} />
+            <RequestRow
+              key={r.id}
+              request={r}
+              requester={r.requestedBy ? clerkInfo.get(r.requestedBy) : null}
+              voters={votes
+                .filter((v) => v.requestId === r.id)
+                .map((v) => clerkInfo.get(v.userId))
+                .filter((v): v is ClerkInfo => Boolean(v))}
+              fulfilledPet={
+                r.fulfilledPetSlug ? petBySlug.get(r.fulfilledPetSlug) : null
+              }
+            />
           ))}
         </Section>
       ) : null}
@@ -66,7 +193,16 @@ export default async function AdminRequestsPage() {
       {dismissed.length > 0 ? (
         <Section title="Dismissed" count={dismissed.length}>
           {dismissed.map((r) => (
-            <RequestRow key={r.id} request={r} />
+            <RequestRow
+              key={r.id}
+              request={r}
+              requester={r.requestedBy ? clerkInfo.get(r.requestedBy) : null}
+              voters={votes
+                .filter((v) => v.requestId === r.id)
+                .map((v) => clerkInfo.get(v.userId))
+                .filter((v): v is ClerkInfo => Boolean(v))}
+              fulfilledPet={null}
+            />
           ))}
         </Section>
       ) : null}
@@ -76,47 +212,148 @@ export default async function AdminRequestsPage() {
 
 function RequestRow({
   request,
+  requester,
+  voters,
+  fulfilledPet,
 }: {
-  request: {
-    id: string;
-    query: string;
-    upvoteCount: number;
-    status: string;
-    fulfilledPetSlug: string | null;
-    requestedBy: string | null;
-    createdAt: Date;
-  };
+  request: typeof schema.petRequests.$inferSelect;
+  requester: ClerkInfo | null | undefined;
+  voters: ClerkInfo[];
+  fulfilledPet:
+    | { slug: string; displayName: string; spritesheetUrl: string }
+    | null
+    | undefined;
 }) {
+  const statusMeta = STATUS_META[request.status] ?? STATUS_META.open;
+  const top3 = voters.slice(0, 3);
+  const moreVoters = Math.max(0, request.upvoteCount - top3.length);
+
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/76 px-4 py-3 backdrop-blur">
-      <div className="flex shrink-0 flex-col items-center rounded-xl border border-black/10 bg-white px-3 py-1.5 text-stone-700">
-        <span className="font-mono text-sm font-semibold leading-none">
-          {request.upvoteCount}
-        </span>
-        <span className="font-mono text-[9px] tracking-[0.18em] text-stone-400 uppercase">
-          votes
-        </span>
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm text-stone-900">{request.query}</p>
-        <p className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
-          {request.status === "fulfilled" && request.fulfilledPetSlug ? (
-            <span className="text-emerald-700">
-              Fulfilled · /pets/{request.fulfilledPetSlug}
+    <div className="rounded-2xl border border-black/10 bg-white/80 p-4 backdrop-blur">
+      <div className="flex items-start gap-3">
+        {/* Vote tile */}
+        <div className="flex shrink-0 flex-col items-center rounded-xl border border-black/10 bg-white px-3 py-2 text-stone-700">
+          <span className="font-mono text-base font-semibold leading-none">
+            {request.upvoteCount}
+          </span>
+          <span className="font-mono text-[9px] tracking-[0.18em] text-stone-400 uppercase">
+            votes
+          </span>
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-base text-stone-900">{request.query}</p>
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${statusMeta.tone}`}
+            >
+              {statusMeta.label}
             </span>
-          ) : null}
-          {request.status === "dismissed" ? (
-            <span className="text-rose-700">Dismissed</span>
-          ) : null}
-          {request.status === "open" ? (
-            <>open · {new Date(request.createdAt).toLocaleDateString()}</>
-          ) : null}
-          {request.requestedBy ? (
-            <span className="ml-2 normal-case text-stone-400">
-              by {request.requestedBy.slice(0, 14)}…
+            <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+              {new Date(request.createdAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })}
             </span>
-          ) : null}
-        </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-stone-500">
+            {/* Requester */}
+            {requester ? (
+              <Link
+                href={`/u/${requester.handle}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-stone-50 px-2 py-1 transition hover:bg-stone-100 hover:text-stone-900"
+              >
+                {requester.imageUrl ? (
+                  // biome-ignore lint/performance/noImgElement: Clerk avatar
+                  <img
+                    src={requester.imageUrl}
+                    alt=""
+                    className="size-5 rounded-full ring-1 ring-black/10"
+                  />
+                ) : (
+                  <span className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[9px] font-semibold text-stone-700">
+                    {(requester.displayName ?? requester.handle)
+                      .slice(0, 1)
+                      .toUpperCase()}
+                  </span>
+                )}
+                <span className="text-stone-800">
+                  {requester.displayName ?? `@${requester.handle}`}
+                </span>
+                {requester.username ? (
+                  <span className="font-mono text-[10px] text-stone-400">
+                    @{requester.username}
+                  </span>
+                ) : null}
+              </Link>
+            ) : request.requestedBy ? (
+              <span className="font-mono text-[10px] text-stone-400">
+                {request.requestedBy.slice(0, 14)}…
+              </span>
+            ) : (
+              <span className="font-mono text-[10px] text-stone-400">
+                anonymous
+              </span>
+            )}
+
+            {/* Voter avatar stack */}
+            {top3.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="flex -space-x-2">
+                  {top3.map((v) =>
+                    v.imageUrl ? (
+                      // biome-ignore lint/performance/noImgElement: Clerk avatar
+                      <img
+                        key={v.handle}
+                        src={v.imageUrl}
+                        alt=""
+                        title={v.displayName ?? `@${v.handle}`}
+                        className="size-5 rounded-full ring-2 ring-white"
+                      />
+                    ) : (
+                      <span
+                        key={v.handle}
+                        title={v.displayName ?? `@${v.handle}`}
+                        className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[9px] font-semibold text-stone-700 ring-2 ring-white"
+                      >
+                        {(v.displayName ?? v.handle).slice(0, 1).toUpperCase()}
+                      </span>
+                    ),
+                  )}
+                </span>
+                {moreVoters > 0 ? (
+                  <span className="font-mono text-[10px] text-stone-500">
+                    +{moreVoters} more
+                  </span>
+                ) : null}
+              </span>
+            ) : null}
+
+            {/* Fulfilled-pet thumbnail */}
+            {fulfilledPet ? (
+              <Link
+                href={`/pets/${fulfilledPet.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-100"
+              >
+                <Sparkles className="size-3" />
+                <span className="font-medium">{fulfilledPet.displayName}</span>
+                <ExternalLink className="size-3" />
+              </Link>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <AdminRequestActions
+          id={request.id}
+          status={request.status as "open" | "fulfilled" | "dismissed"}
+          defaultSlug={request.fulfilledPetSlug ?? null}
+        />
       </div>
     </div>
   );

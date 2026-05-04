@@ -5,7 +5,8 @@ export type NotificationKind =
   | "pet_rejected"
   | "edit_approved"
   | "edit_rejected"
-  | "feedback_replied";
+  | "feedback_replied"
+  | "request_fulfilled";
 
 type CreateInput = {
   userId: string;

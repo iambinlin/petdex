@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   MessageSquare,
   Pencil,
+  Sparkles,
   XCircle,
 } from "lucide-react";
 
@@ -17,7 +18,8 @@ type Kind =
   | "pet_rejected"
   | "edit_approved"
   | "edit_rejected"
-  | "feedback_replied";
+  | "feedback_replied"
+  | "request_fulfilled";
 
 type Notif = {
   id: string;
@@ -57,6 +59,11 @@ const KIND_META: Record<
     tone: "bg-[#eef1ff] text-[#3847f5] ring-[#5266ea]/20",
     verb: "replied",
   },
+  request_fulfilled: {
+    icon: <Sparkles className="size-3.5" />,
+    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200",
+    verb: "your request shipped",
+  },
 };
 
 function describe(n: Notif): { title: string; sub?: string } {
@@ -80,6 +87,11 @@ function describe(n: Notif): { title: string; sub?: string } {
       return {
         title: "Hunter replied to your feedback",
         sub: p.excerpt,
+      };
+    case "request_fulfilled":
+      return {
+        title: `Your request "${p.requestQuery ?? "..."}" was fulfilled`,
+        sub: p.petName ? `Now live as ${p.petName}` : undefined,
       };
   }
 }

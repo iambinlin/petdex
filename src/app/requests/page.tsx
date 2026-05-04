@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-import { eq, sql } from "drizzle-orm";
+import { clerkClient } from "@clerk/nextjs/server";
+import { desc, inArray, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 
-import { RequestsView } from "@/components/requests-view";
+import { RequestsView, type RequestRow } from "@/components/requests-view";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -18,21 +19,112 @@ export const metadata = {
 };
 
 export default async function RequestsPage() {
+  // Pull everything (open + fulfilled + dismissed) so the sort tabs in
+  // RequestsView can switch instantly without a refetch. The list is
+  // small enough that 80 rows is fine.
   const rows = await db
-    .select({
-      id: schema.petRequests.id,
-      query: schema.petRequests.query,
-      upvoteCount: schema.petRequests.upvoteCount,
-      status: schema.petRequests.status,
-      fulfilledPetSlug: schema.petRequests.fulfilledPetSlug,
-      createdAt: schema.petRequests.createdAt,
-    })
+    .select()
     .from(schema.petRequests)
-    .where(eq(schema.petRequests.status, "open"))
     .orderBy(
       sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`,
     )
     .limit(80);
+
+  const requestIds = rows.map((r) => r.id);
+
+  type Vote = { requestId: string; userId: string };
+  const votes: Vote[] = requestIds.length
+    ? ((await db
+        .select({
+          requestId: schema.petRequestVotes.requestId,
+          userId: schema.petRequestVotes.userId,
+        })
+        .from(schema.petRequestVotes)
+        .where(inArray(schema.petRequestVotes.requestId, requestIds))
+        .orderBy(desc(schema.petRequestVotes.createdAt))) as Vote[])
+    : [];
+
+  const userIdSet = new Set<string>();
+  for (const r of rows) if (r.requestedBy) userIdSet.add(r.requestedBy);
+  for (const v of votes) userIdSet.add(v.userId);
+
+  type ClerkInfo = {
+    handle: string;
+    displayName: string | null;
+    username: string | null;
+    imageUrl: string | null;
+  };
+  const clerkInfo = new Map<string, ClerkInfo>();
+  if (userIdSet.size > 0) {
+    try {
+      const client = await clerkClient();
+      const all = [...userIdSet];
+      for (let i = 0; i < all.length; i += 100) {
+        const batch = await client.users.getUserList({
+          userId: all.slice(i, i + 100),
+          limit: 100,
+        });
+        for (const u of batch.data) {
+          const displayName = [u.firstName, u.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+          clerkInfo.set(u.id, {
+            handle: u.username
+              ? u.username.toLowerCase()
+              : u.id.slice(-8).toLowerCase(),
+            displayName: displayName || null,
+            username: u.username ?? null,
+            imageUrl: u.imageUrl ?? null,
+          });
+        }
+      }
+    } catch {
+      /* fine */
+    }
+  }
+
+  // Fulfilled pet thumbnails.
+  const fulfilledSlugs = rows
+    .filter((r) => r.status === "fulfilled" && r.fulfilledPetSlug)
+    .map((r) => r.fulfilledPetSlug!);
+  const fulfilledPets = fulfilledSlugs.length
+    ? await db
+        .select({
+          slug: schema.submittedPets.slug,
+          displayName: schema.submittedPets.displayName,
+          spritesheetUrl: schema.submittedPets.spritesheetUrl,
+        })
+        .from(schema.submittedPets)
+        .where(inArray(schema.submittedPets.slug, fulfilledSlugs))
+    : [];
+  const petBySlug = new Map(fulfilledPets.map((p) => [p.slug, p]));
+
+  const initial: RequestRow[] = rows.map((r) => {
+    const requester = r.requestedBy
+      ? clerkInfo.get(r.requestedBy) ?? null
+      : null;
+    const voters = votes
+      .filter((v) => v.requestId === r.id)
+      .map((v) => clerkInfo.get(v.userId))
+      .filter((v): v is ClerkInfo => Boolean(v))
+      .slice(0, 6);
+    const fulfilledPet = r.fulfilledPetSlug
+      ? petBySlug.get(r.fulfilledPetSlug) ?? null
+      : null;
+    return {
+      id: r.id,
+      query: r.query,
+      upvoteCount: r.upvoteCount,
+      status: r.status,
+      fulfilledPetSlug: r.fulfilledPetSlug,
+      createdAt: r.createdAt.toISOString(),
+      voted: false,
+      requester,
+      voters,
+      fulfilledPet,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
@@ -60,7 +152,7 @@ export default async function RequestsPage() {
           </Link>
         </header>
 
-        <RequestsView initial={rows.map((r) => ({ ...r, voted: false }))} />
+        <RequestsView initial={initial} />
       </section>
       <SiteFooter />
     </main>

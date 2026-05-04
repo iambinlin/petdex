@@ -163,6 +163,7 @@ export const notificationKind = pgEnum("notification_kind", [
   "edit_approved",
   "edit_rejected",
   "feedback_replied",
+  "request_fulfilled",
 ]);
 
 export const notifications = pgTable(
