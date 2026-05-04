@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { and, eq, ne, or } from "drizzle-orm";
+import { and, eq, ne, or, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { claimRatelimit } from "@/lib/ratelimit";
@@ -35,10 +35,18 @@ export async function GET(): Promise<Response> {
 
   const filters = [];
   if (ident.email) {
+    // ownerEmail is normalized to lowercase on insert; Clerk email is
+    // also lowercased above. Plain eq is fine.
     filters.push(eq(schema.submittedPets.ownerEmail, ident.email));
   }
   if (ident.githubUrl) {
-    filters.push(eq(schema.submittedPets.creditUrl, ident.githubUrl));
+    // GitHub usernames are case-insensitive (github.com/Episode0621
+    // and github.com/episode0621 resolve to the same profile), but
+    // credit_url historically stored whatever case the OAuth payload
+    // returned. Compare lowercased strings so cases don't drop matches.
+    filters.push(
+      sql`lower(${schema.submittedPets.creditUrl}) = ${ident.githubUrl.toLowerCase()}`,
+    );
   }
 
   const rows = await db
@@ -121,7 +129,9 @@ export async function POST(req: Request): Promise<Response> {
     !!ident.email &&
     row.ownerEmail.toLowerCase() === ident.email;
   const githubMatch =
-    !!row.creditUrl && !!ident.githubUrl && row.creditUrl === ident.githubUrl;
+    !!row.creditUrl &&
+    !!ident.githubUrl &&
+    row.creditUrl.toLowerCase() === ident.githubUrl.toLowerCase();
 
   if (!emailMatch && !githubMatch) {
     return NextResponse.json(
