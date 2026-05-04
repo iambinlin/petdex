@@ -6,10 +6,14 @@ import { and, eq } from "drizzle-orm";
 import { Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
-import { getMetricsForSlug } from "@/lib/db/metrics";
 import { formatDexNumber } from "@/lib/dex";
 import { resolveOwnerCreditFor } from "@/lib/owner-credit";
-import { getPet, getStaticPetSlugs } from "@/lib/pets";
+import { computeStats } from "@/lib/pet-stats";
+import {
+  getApprovedPetsWithMetrics,
+  getPet,
+  getStaticPetSlugs,
+} from "@/lib/pets";
 import { getVariantsFor } from "@/lib/variants";
 
 import { ClaimCTA } from "@/components/claim-cta";
@@ -18,6 +22,7 @@ import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
+import { PetRadar } from "@/components/pet-radar";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
@@ -91,14 +96,30 @@ export default async function PetPage({ params }: PageProps) {
     notFound();
   }
 
-  const [{ userId }, metrics, ownerRow, variants] = await Promise.all([
+  const [{ userId }, allPets, ownerRow, variants] = await Promise.all([
     auth(),
-    getMetricsForSlug(slug),
+    getApprovedPetsWithMetrics(),
     db.query.submittedPets.findFirst({
       where: eq(schema.submittedPets.slug, slug),
     }),
     getVariantsFor(slug),
   ]);
+  const petWithMetrics = allPets.find((candidate) => candidate.slug === slug);
+  const metrics = petWithMetrics?.metrics ?? {
+    installCount: 0,
+    zipDownloadCount: 0,
+    likeCount: 0,
+  };
+  const stats = computeStats(
+    {
+      importedAt: pet.importedAt,
+      metrics,
+    },
+    allPets.map((candidate) => ({
+      importedAt: candidate.importedAt,
+      metrics: candidate.metrics,
+    })),
+  );
   const initialLiked = userId
     ? Boolean(
         await db.query.petLikes.findFirst({
@@ -319,6 +340,11 @@ export default async function PetPage({ params }: PageProps) {
 
           <div className="space-y-4">
             <InstallCommand slug={pet.slug} displayName={pet.displayName} />
+            <InfoCard title="Dex Stats" icon={<Sparkles className="size-4" />}>
+              <div className="flex items-center justify-center">
+                <PetRadar {...stats} />
+              </div>
+            </InfoCard>
 
             {variants.length > 0 ? (
               <section className="rounded-3xl border border-border-base bg-surface/76 p-4 shadow-sm shadow-blue-950/5 backdrop-blur md:p-5">
