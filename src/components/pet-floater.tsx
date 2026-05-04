@@ -31,9 +31,20 @@ const RUN_TAIL_MS = 600;
 const SAFE_MARGIN_PX = 12;
 const DRAG_THRESHOLD_PX = 4;
 const SPRITE_SIZE_PX = 110;
+const THROW_MIN_VELOCITY = 0.05;
+const THROW_FRICTION_PER_FRAME = 0.92;
+const THROW_BOUNCE_DAMPING = -0.5;
+const THROW_SAMPLE_WINDOW_MS = 80;
+const THROW_SAMPLE_MAX = 4;
 
 const HINT_DURATION_MS = 3500;
 const HINT_STORAGE_KEY = "petdex_floater_hint_seen_v1";
+
+type DragSample = {
+  time: number;
+  x: number;
+  y: number;
+};
 
 // Interactive draggable pet that floats over the banner.
 //
@@ -61,12 +72,84 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [state, setState] = useState<PetStateId>("idle");
   const [dragging, setDragging] = useState(false);
+  const [throwing, setThrowing] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const posRef = useRef<{ x: number; y: number } | null>(null);
+  const boundsRef = useRef<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const throwRef = useRef<{ vx: number; vy: number; rafId: number | null }>({
+    vx: 0,
+    vy: 0,
+    rafId: null,
+  });
+  const tailTimeoutRef = useRef<number | null>(null);
+  const reactionTimeoutRef = useRef<number | null>(null);
+  const reducedMotionRef = useRef(false);
 
   // Mount flag for the portal — createPortal needs a DOM target which
   // doesn't exist during SSR.
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    posRef.current = pos;
+  }, [pos]);
+
+  useEffect(() => {
+    boundsRef.current = bounds;
+  }, [bounds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      reducedMotionRef.current = mediaQuery.matches;
+    };
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, []);
+
+  const cancelTailTimeout = useCallback(() => {
+    if (tailTimeoutRef.current !== null) {
+      window.clearTimeout(tailTimeoutRef.current);
+      tailTimeoutRef.current = null;
+    }
+  }, []);
+
+  const cancelReactionTimeout = useCallback(() => {
+    if (reactionTimeoutRef.current !== null) {
+      window.clearTimeout(reactionTimeoutRef.current);
+      reactionTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleIdle = useCallback(() => {
+    cancelTailTimeout();
+    tailTimeoutRef.current = window.setTimeout(() => {
+      tailTimeoutRef.current = null;
+      setState("idle");
+    }, RUN_TAIL_MS);
+  }, [cancelTailTimeout]);
+
+  const cancelThrow = useCallback(() => {
+    if (throwRef.current.rafId !== null) {
+      window.cancelAnimationFrame(throwRef.current.rafId);
+      throwRef.current.rafId = null;
+    }
+    throwRef.current.vx = 0;
+    throwRef.current.vy = 0;
+    setThrowing(false);
+  }, []);
+
+  const updatePos = useCallback((nextPos: { x: number; y: number }) => {
+    posRef.current = nextPos;
+    setPos(nextPos);
   }, []);
 
   // Show the hint glow on first visit.
@@ -143,7 +226,7 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
 
   // Idle-cycle ticker — paused while dragging.
   useEffect(() => {
-    if (dragging) return;
+    if (dragging || throwing) return;
     let cancelled = false;
     let i = 0;
     let timeoutId: number | null = null;
@@ -163,12 +246,26 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
       cancelled = true;
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [dragging]);
+  }, [dragging, throwing]);
 
   const triggerReaction = useCallback(() => {
+    cancelReactionTimeout();
+    cancelTailTimeout();
+    cancelThrow();
     setState((prev) => (prev === "waving" ? "jumping" : "waving"));
-    window.setTimeout(() => setState("idle"), REACTION_MS);
-  }, []);
+    reactionTimeoutRef.current = window.setTimeout(() => {
+      reactionTimeoutRef.current = null;
+      setState("idle");
+    }, REACTION_MS);
+  }, [cancelReactionTimeout, cancelTailTimeout, cancelThrow]);
+
+  useEffect(() => {
+    return () => {
+      cancelThrow();
+      cancelTailTimeout();
+      cancelReactionTimeout();
+    };
+  }, [cancelReactionTimeout, cancelTailTimeout, cancelThrow]);
 
   // Drag handler. Window-level listeners + each drag re-arms cleanly.
   // Coordinates are stored in banner-relative space (x, y inside the
@@ -188,6 +285,13 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
 
       let moved = false;
       let lastX = startClientX;
+      const samples: DragSample[] = [
+        { time: event.timeStamp, x: originX, y: originY },
+      ];
+
+      cancelThrow();
+      cancelTailTimeout();
+      cancelReactionTimeout();
 
       setDragging(true);
       dismissHint();
@@ -210,7 +314,13 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
           Math.max(originY + dy, SAFE_MARGIN_PX),
           startBounds.height - h - SAFE_MARGIN_PX,
         );
-        setPos({ x: nextX, y: nextY });
+        updatePos({ x: nextX, y: nextY });
+
+        samples.push({ time: ev.timeStamp, x: nextX, y: nextY });
+        const sampleCutoff = ev.timeStamp - THROW_SAMPLE_WINDOW_MS;
+        while (samples.length > THROW_SAMPLE_MAX || samples[1]?.time < sampleCutoff) {
+          samples.shift();
+        }
 
         const horizontal = ev.clientX - lastX;
         lastX = ev.clientX;
@@ -228,14 +338,112 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
           triggerReaction();
           return;
         }
-        window.setTimeout(() => setState("idle"), RUN_TAIL_MS);
+        if (reducedMotionRef.current) {
+          scheduleIdle();
+          return;
+        }
+
+        const endTime = ev.timeStamp;
+        const recentSamples = samples.filter(
+          (sample) => endTime - sample.time <= THROW_SAMPLE_WINDOW_MS,
+        );
+        const velocitySamples = recentSamples.length > 1 ? recentSamples : samples;
+        const firstSample = velocitySamples[0];
+        const lastSample = velocitySamples[velocitySamples.length - 1];
+        const dt = lastSample.time - firstSample.time;
+        const releaseVelocity =
+          dt > 0
+            ? {
+                vx: (lastSample.x - firstSample.x) / dt,
+                vy: (lastSample.y - firstSample.y) / dt,
+              }
+            : { vx: 0, vy: 0 };
+
+        if (
+          Math.abs(releaseVelocity.vx) < THROW_MIN_VELOCITY &&
+          Math.abs(releaseVelocity.vy) < THROW_MIN_VELOCITY
+        ) {
+          scheduleIdle();
+          return;
+        }
+
+        throwRef.current.vx = releaseVelocity.vx;
+        throwRef.current.vy = releaseVelocity.vy;
+        setThrowing(true);
+
+        let previousTime = performance.now();
+
+        const step = (now: number) => {
+          const currentBounds = boundsRef.current;
+          const currentPos = posRef.current;
+          if (!currentBounds || !currentPos) {
+            cancelThrow();
+            scheduleIdle();
+            return;
+          }
+
+          const dtMs = Math.max(now - previousTime, 1);
+          previousTime = now;
+
+          let nextVx = throwRef.current.vx;
+          let nextVy = throwRef.current.vy;
+          const maxX = currentBounds.width - SPRITE_SIZE_PX - SAFE_MARGIN_PX;
+          const maxY = currentBounds.height - SPRITE_SIZE_PX - SAFE_MARGIN_PX;
+
+          const unclampedX = currentPos.x + nextVx * dtMs;
+          const unclampedY = currentPos.y + nextVy * dtMs;
+
+          let nextX = Math.min(Math.max(unclampedX, SAFE_MARGIN_PX), maxX);
+          let nextY = Math.min(Math.max(unclampedY, SAFE_MARGIN_PX), maxY);
+
+          if (nextX !== unclampedX) {
+            nextVx *= THROW_BOUNCE_DAMPING;
+          }
+          if (nextY !== unclampedY) {
+            nextVy *= THROW_BOUNCE_DAMPING;
+          }
+
+          updatePos({ x: nextX, y: nextY });
+
+          if (nextVx > 0.01) setState("running-right");
+          else if (nextVx < -0.01) setState("running-left");
+
+          const friction = THROW_FRICTION_PER_FRAME ** (dtMs / (1000 / 60));
+          nextVx *= friction;
+          nextVy *= friction;
+
+          throwRef.current.vx = nextVx;
+          throwRef.current.vy = nextVy;
+
+          if (
+            Math.abs(nextVx) < THROW_MIN_VELOCITY &&
+            Math.abs(nextVy) < THROW_MIN_VELOCITY
+          ) {
+            cancelThrow();
+            scheduleIdle();
+            return;
+          }
+
+          throwRef.current.rafId = window.requestAnimationFrame(step);
+        };
+
+        throwRef.current.rafId = window.requestAnimationFrame(step);
       }
 
       window.addEventListener("pointermove", handleMove);
       window.addEventListener("pointerup", handleUp);
       window.addEventListener("pointercancel", handleUp);
     },
-    [bounds, pos, triggerReaction],
+    [
+      bounds,
+      cancelReactionTimeout,
+      cancelTailTimeout,
+      cancelThrow,
+      pos,
+      scheduleIdle,
+      triggerReaction,
+      updatePos,
+    ],
   );
 
   // The anchor span is what gets rendered in the React tree where
@@ -268,7 +476,7 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
         style={{
           left: bounds.left + pos.x,
           top: bounds.top + pos.y,
-          transitionDuration: dragging ? "0ms" : "180ms",
+          transitionDuration: dragging || throwing ? "0ms" : "180ms",
           touchAction: "none",
         }}
       >
