@@ -57,6 +57,15 @@ export default async function MyPetsPage() {
     approvedAt: row.approvedAt?.toISOString() ?? null,
     rejectedAt: row.rejectedAt?.toISOString() ?? null,
     rejectionReason: row.rejectionReason,
+    pending: row.pendingSubmittedAt
+      ? {
+          displayName: row.pendingDisplayName,
+          description: row.pendingDescription,
+          tags: (row.pendingTags as string[] | null) ?? null,
+          submittedAt: row.pendingSubmittedAt.toISOString(),
+        }
+      : null,
+    pendingRejectionReason: row.pendingRejectionReason,
     metrics: metrics.get(row.slug) ?? {
       installCount: 0,
       zipDownloadCount: 0,

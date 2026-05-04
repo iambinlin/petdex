@@ -15,6 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 
+import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetSprite } from "@/components/pet-sprite";
 
@@ -34,6 +35,13 @@ type Submission = {
   approvedAt: string | null;
   rejectedAt: string | null;
   rejectionReason: string | null;
+  pending: {
+    displayName: string | null;
+    description: string | null;
+    tags: string[] | null;
+    submittedAt: string;
+  } | null;
+  pendingRejectionReason: string | null;
   metrics: {
     installCount: number;
     zipDownloadCount: number;
@@ -340,6 +348,20 @@ function SubmissionCard({ submission }: { submission: Submission }) {
             </button>
           )}
         </div>
+
+        {submission.status === "approved" ? (
+          <div className="mt-3 border-t border-black/[0.05] pt-3">
+            <OwnerEditPanel
+              petId={submission.id}
+              slug={submission.slug}
+              currentDisplayName={submission.displayName}
+              currentDescription={submission.description}
+              currentTags={submission.tags}
+              initialPending={submission.pending}
+              initialRejection={submission.pendingRejectionReason}
+            />
+          </div>
+        ) : null}
 
         {error ? (
           <p className="font-mono text-[10px] tracking-[0.12em] text-rose-600 uppercase">
