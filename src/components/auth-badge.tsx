@@ -1,7 +1,7 @@
 "use client";
 
 import { Show, SignInButton, UserButton, useUser } from "@clerk/nextjs";
-import { MessageSquare, Shield, Sparkles } from "lucide-react";
+import { MessageSquare, Shield, Sparkles, UserSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { isAdminClientSafe } from "@/lib/admin";
@@ -32,6 +32,14 @@ function UserButtonWithAdminLink() {
   // isAdmin(). Tampering only exposes the entry, never escalates rights.
   const showAdmin = isAdminClientSafe(user?.id);
   const unread = useUnreadFeedback();
+  // Mirror the server-side handle resolver: prefer Clerk username,
+  // fall back to the last 8 chars of the userId so /u/<handle> always
+  // points somewhere even when the user hasn't set a username.
+  const handle = user?.username
+    ? user.username.toLowerCase()
+    : user?.id
+      ? user.id.slice(-8).toLowerCase()
+      : null;
 
   return (
     <div className="relative">
@@ -41,8 +49,15 @@ function UserButtonWithAdminLink() {
         }}
       >
         <UserButton.MenuItems>
+          {handle ? (
+            <UserButton.Link
+              label="My profile"
+              labelIcon={<UserSquare className="size-4" />}
+              href={`/u/${handle}`}
+            />
+          ) : null}
           <UserButton.Link
-            label="My pets"
+            label="My submissions"
             labelIcon={<Sparkles className="size-4" />}
             href="/my-pets"
           />

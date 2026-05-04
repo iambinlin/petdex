@@ -91,14 +91,26 @@ export function MyPetsView({
       <ClaimableBanner />
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
-          My submissions
+          Dashboard
         </p>
         <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl">
-          {counts.all} pet{counts.all === 1 ? "" : "s"} submitted
+          {counts.all === 1
+            ? "1 submission"
+            : `${counts.all} submissions`}
         </h1>
         <p className="mt-3 max-w-xl text-base leading-7 text-stone-600">
-          Track the status of every pet you've sent to Petdex. Approved pets
-          are public; pending stay private until reviewed.
+          Approved submissions go live on your{" "}
+          <a
+            href={`/u/${profile.handle}`}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-[#5266ea] underline-offset-2 hover:underline"
+          >
+            public profile
+          </a>
+          . Pending stay private until reviewed; rejected ones are gone.
+          Edit name, description or tags directly on each card — changes go
+          through a quick re-approval.
         </p>
       </header>
 
@@ -147,7 +159,7 @@ export function MyPetsView({
 
       {filtered.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-black/15 bg-white/70 p-10 text-center text-sm text-stone-600">
-          No pets in this state.
+          No submissions in this state.
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -563,23 +575,24 @@ function EmptyState() {
     <div className="space-y-6">
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
-          My submissions
+          Dashboard
         </p>
         <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl">
-          You haven't submitted a pet yet
+          No submissions yet
         </h1>
       </header>
       <div className="rounded-3xl border border-dashed border-black/15 bg-white/70 p-10">
         <p className="text-base leading-7 text-stone-700">
-          Send your first animated companion to Petdex. Submissions go through
-          a quick review and land here while they wait.
+          Send your first animated companion to Petdex. Submissions go
+          through a quick review and land here while they wait. Once
+          approved they show up on your public profile too.
         </p>
         <Link
           href="/submit"
           className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85"
         >
           <Plus className="size-4" />
-          Submit a pet
+          Submit your first pet
         </Link>
       </div>
     </div>

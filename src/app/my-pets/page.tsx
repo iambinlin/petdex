@@ -14,8 +14,9 @@ import { SiteHeader } from "@/components/site-header";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "My pets",
-  description: "Track the status of your Petdex submissions.",
+  title: "My submissions",
+  description:
+    "Track the status of every pet you've sent to Petdex, customize your profile, and edit live entries.",
   alternates: { canonical: "/my-pets" },
   robots: { index: false, follow: false },
 };
