@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { Sparkles } from "lucide-react";
+import { Shuffle, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
@@ -22,6 +22,7 @@ import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
+import { PetKeyboardNav } from "@/components/pet-keyboard-nav";
 import { PetRadar } from "@/components/pet-radar";
 import { PetSoundButton } from "@/components/pet-sound-button";
 import { PetSprite } from "@/components/pet-sprite";
@@ -302,98 +303,159 @@ export default async function PetPage({ params }: PageProps) {
     },
   ];
 
+  const shuffleHref = `/api/pets/random?exclude=${encodeURIComponent(pet.slug)}`;
+
   return (
     <main className="min-h-screen bg-background">
       <JsonLd data={jsonLd} />
 
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-5 md:px-8 md:py-5">
-        <SiteHeader />
-        <nav
-          aria-label="Dex navigation"
-          className="flex items-center justify-between gap-3"
-        >
-          <DexNavPill pet={prevPet} direction="prev" />
-          <DexNavPill pet={nextPet} direction="next" />
-        </nav>
+      {/* Wire keyboard shortcuts: ←/→ for prev/next, Space for shuffle.
+          Renders nothing — purely a side-effect listener. */}
+      <PetKeyboardNav
+        prevSlug={prevPet?.slug ?? null}
+        nextSlug={nextPet?.slug ?? null}
+        shuffleHref={shuffleHref}
+      />
+
+      {/* Hero banner — full-width petdex-cloud gradient like /u/[handle].
+          Houses the dex nav pills, the title block, the action row, and
+          (if the viewer owns the pet) the inline edit button. The
+          animated sprite + install command + secondary panels live
+          below in their own contained section. */}
+      <section className="petdex-cloud relative overflow-hidden">
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pt-5 pb-10 md:px-8 md:pb-14">
+          <SiteHeader />
+
+          {/* Dex nav pills + shuffle. Sit at the top edge of the banner
+              so they read like a Pokédex chrome strip, not page content. */}
+          <nav
+            aria-label="Dex navigation"
+            className="flex flex-wrap items-center justify-between gap-3"
+          >
+            <DexNavPill pet={prevPet} direction="prev" />
+            <Link
+              href={shuffleHref}
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-border-base bg-surface/80 px-4 text-sm font-medium text-foreground backdrop-blur transition hover:border-border-strong"
+              title="Shuffle to a random pet (Space)"
+            >
+              <Shuffle className="size-4" />
+              Shuffle
+              <kbd className="ml-1 rounded border border-border-base bg-surface px-1.5 py-0.5 font-mono text-[10px] tracking-[0.05em] text-muted-3">
+                Space
+              </kbd>
+            </Link>
+            <DexNavPill pet={nextPet} direction="next" />
+          </nav>
+
+          <header className="mt-6 flex flex-col gap-5">
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
+              <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
+                {pet.featured ? "Featured" : "Petdex entry"}
+              </p>
+              {currentDexNumber != null ? (
+                <p className="font-mono text-xs tracking-[0.22em] text-muted-3 uppercase">
+                  No. {formatDexNumber(currentDexNumber)}
+                </p>
+              ) : null}
+              <p className="font-mono text-xs tracking-[0.22em] text-muted-3 uppercase">
+                {pet.kind}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <h1 className="text-balance text-[44px] leading-[1] font-semibold tracking-tight text-foreground md:text-[64px]">
+                {pet.displayName}
+              </h1>
+              {ownerEditState ? (
+                <OwnerEditPanel
+                  petId={ownerEditState.petId}
+                  slug={pet.slug}
+                  currentDisplayName={pet.displayName}
+                  currentDescription={pet.description}
+                  currentTags={ownerEditState.currentTags}
+                  initialPending={ownerEditState.pending}
+                  initialRejection={ownerEditState.lastRejection}
+                />
+              ) : null}
+            </div>
+            <p className="max-w-3xl text-balance text-base leading-7 text-muted-1 md:text-lg">
+              {pet.description}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <LikeButton
+                slug={pet.slug}
+                initialCount={metrics.likeCount}
+                initialLiked={initialLiked}
+                signedIn={Boolean(userId)}
+              />
+              {pet.soundUrl ? (
+                <PetSoundButton
+                  soundUrl={pet.soundUrl}
+                  displayName={pet.displayName}
+                  labelPrefix="Play signature sound for"
+                />
+              ) : null}
+              <PetActionMenu
+                pet={{
+                  slug: pet.slug,
+                  displayName: pet.displayName,
+                  zipUrl: pet.zipUrl,
+                  description: pet.description,
+                }}
+                variant="detail"
+              />
+              <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+                {metrics.installCount} installs · {metrics.zipDownloadCount}{" "}
+                downloads
+              </span>
+            </div>
+
+            {pet.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {pet.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-brand dark:bg-brand-tint-dark"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Keyboard hint strip — minimal, mono-spaced, only on
+                pointer-fine media so we don't spam mobile users with
+                Esc/arrow chrome. */}
+            <p className="hidden flex-wrap items-center gap-3 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase md:flex">
+              <span>Tip:</span>
+              <span className="inline-flex items-center gap-1">
+                <kbd className="rounded border border-border-base bg-surface px-1.5 py-0.5 text-[10px] text-muted-2">
+                  ←
+                </kbd>
+                <kbd className="rounded border border-border-base bg-surface px-1.5 py-0.5 text-[10px] text-muted-2">
+                  →
+                </kbd>
+                browse
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <kbd className="rounded border border-border-base bg-surface px-1.5 py-0.5 text-[10px] text-muted-2">
+                  Space
+                </kbd>
+                shuffle
+              </span>
+            </p>
+          </header>
+        </div>
       </section>
 
-      {/* Hero: dex eyebrow + title side-by-side with a smaller stat strip,
-          description below, like a Pokédex entry. The state viewer comes
-          right after — the actual product (the animated sprite) lives
-          above the fold, not buried below the install column. */}
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 pb-12 md:px-8 md:pb-16">
-        <header className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-            <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
-              {pet.featured ? "Featured" : "Petdex entry"}
-            </p>
-            {currentDexNumber != null ? (
-              <p className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
-                No. {formatDexNumber(currentDexNumber)}
-              </p>
-            ) : null}
-            <p className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
-              {pet.kind}
-            </p>
-          </div>
-          <h1 className="text-5xl font-semibold tracking-tight text-foreground md:text-6xl">
-            {pet.displayName}
-          </h1>
-          <p className="max-w-3xl text-lg leading-8 text-muted-2">
-            {pet.description}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <LikeButton
-              slug={pet.slug}
-              initialCount={metrics.likeCount}
-              initialLiked={initialLiked}
-              signedIn={Boolean(userId)}
-            />
-            {pet.soundUrl ? (
-              <PetSoundButton
-                soundUrl={pet.soundUrl}
-                displayName={pet.displayName}
-                labelPrefix="Play signature sound for"
-              />
-            ) : null}
-            <PetActionMenu
-              pet={{
-                slug: pet.slug,
-                displayName: pet.displayName,
-                zipUrl: pet.zipUrl,
-                description: pet.description,
-              }}
-              variant="detail"
-            />
-            <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
-              {metrics.installCount} installs · {metrics.zipDownloadCount}{" "}
-              downloads
-            </span>
-          </div>
-
-          {pet.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {pet.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-brand-tint px-2.5 py-1 text-xs font-medium text-brand dark:bg-brand-tint-dark"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </header>
-
-        {/* The animated sprite is the product. Promote it above the
-            install column and the secondary panels. */}
+      <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
+        {/* The animated sprite is the product. Lives right after the
+            banner so it lands above the fold on most screens. */}
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
 
-        {/* Two-column lockup: install command (the conversion action) on
-            the left, secondary metadata (owner + claim CTA) on the right.
-            Stats radar + variants live below in their own row so the
-            install never gets pushed out of the first viewport. */}
+        {/* Two-column lockup: install command + owner credit aside.
+            Stats radar + variants live below so the install never
+            gets pushed out of the first viewport. */}
         <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
           <InstallCommand slug={pet.slug} displayName={pet.displayName} />
 
@@ -414,9 +476,6 @@ export default async function PetPage({ params }: PageProps) {
           ) : null}
         </div>
 
-        {/* Secondary panels — radar + variants. Side-by-side on desktop,
-            stacked on mobile. Both are nice-to-haves, neither is
-            mission-critical, so they can live below the fold. */}
         <div className="grid gap-6 md:grid-cols-2">
           <InfoCard title="Dex stats" icon={<Sparkles className="size-4" />}>
             <div className="flex items-center justify-center py-2">
@@ -461,18 +520,6 @@ export default async function PetPage({ params }: PageProps) {
             </section>
           ) : null}
         </div>
-
-        {ownerEditState ? (
-          <OwnerEditPanel
-            petId={ownerEditState.petId}
-            slug={pet.slug}
-            currentDisplayName={pet.displayName}
-            currentDescription={pet.description}
-            currentTags={ownerEditState.currentTags}
-            initialPending={ownerEditState.pending}
-            initialRejection={ownerEditState.lastRejection}
-          />
-        ) : null}
 
         {!ownerCredit ? (
           <InfoCard title="Submission" icon={<Sparkles className="size-4" />}>
