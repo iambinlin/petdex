@@ -132,6 +132,11 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
   return (
     <div
       ref={ref}
+      // While open, lift the wrapper above sibling cards. Sibling cards
+      // create their own stacking context via backdrop-blur, so a plain
+      // z-50 on the menu still gets occluded by the next card. Raising
+      // the wrapper's z-index keeps the menu above everything below.
+      style={open ? { zIndex: 60 } : undefined}
       className={
         variant === "card"
           ? "relative"
@@ -168,7 +173,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
       {open ? (
         <div
           role="menu"
-          className={`${menuPositionClassName} z-50 w-60 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15`}
+          className={`${menuPositionClassName} z-[60] w-60 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15`}
         >
           <div className="flex items-center justify-between border-b border-black/[0.06] px-3 py-2">
             <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
