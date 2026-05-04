@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@clerk/nextjs/server";
-import { and, desc, eq, gt, sql as dsql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, sql as dsql } from "drizzle-orm";
 
 import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
@@ -69,7 +69,7 @@ export async function GET() {
     .where(
       and(
         eq(schema.feedbackReplies.authorKind, "admin"),
-        dsql`${schema.feedbackReplies.feedbackId} = ANY(${ids})`,
+        inArray(schema.feedbackReplies.feedbackId, ids),
       ),
     )
     .groupBy(schema.feedbackReplies.feedbackId);

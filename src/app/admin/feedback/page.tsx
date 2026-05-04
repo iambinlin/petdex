@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { desc, sql as dsql } from "drizzle-orm";
+import { desc, inArray, sql as dsql } from "drizzle-orm";
 import {
   Bug,
   ExternalLink,
@@ -199,7 +199,7 @@ export default async function AdminFeedbackPage({
         lastUserReplyAt: dsql<Date | null>`MAX(${schema.feedbackReplies.createdAt}) FILTER (WHERE ${schema.feedbackReplies.authorKind} = 'user')`,
       })
       .from(schema.feedbackReplies)
-      .where(dsql`${schema.feedbackReplies.feedbackId} = ANY(${visibleIds})`)
+      .where(inArray(schema.feedbackReplies.feedbackId, visibleIds))
       .groupBy(schema.feedbackReplies.feedbackId);
     for (const r of aggRows) aggMap.set(r.feedbackId, r);
   }

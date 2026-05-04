@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
-import { and, asc, desc, eq, sql as dsql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql as dsql } from "drizzle-orm";
 import { Bug, Heart, Lightbulb, MessageSquare } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
@@ -90,7 +90,7 @@ export default async function MyFeedbackPage() {
         replyCount: dsql<number>`COUNT(*)::int`,
       })
       .from(schema.feedbackReplies)
-      .where(dsql`${schema.feedbackReplies.feedbackId} = ANY(${ids})`)
+      .where(inArray(schema.feedbackReplies.feedbackId, ids))
       .groupBy(schema.feedbackReplies.feedbackId);
     for (const r of latest) {
       latestMap.set(r.feedbackId, r);
