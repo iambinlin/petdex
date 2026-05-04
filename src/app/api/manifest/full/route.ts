@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
 import { getAllPetsPackPath } from "@/lib/downloads";
+import { logManifestFetch } from "@/lib/manifest-telemetry";
 import { getAllApprovedPets } from "@/lib/pets";
 
 export const runtime = "nodejs";
@@ -16,6 +17,7 @@ export async function GET(req: Request): Promise<Response> {
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  void logManifestFetch(req, "full");
 
   const origin = new URL(req.url).origin;
   const pets = await getAllApprovedPets();

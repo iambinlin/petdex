@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logManifestFetch } from "@/lib/manifest-telemetry";
 import { getAllApprovedPets } from "@/lib/pets";
 
 export const runtime = "nodejs";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
 //
 // The shape stays a JSON object with `pets: [...]` so older CLI
 // versions keep working — they just won't see fields they never read.
-export async function GET(): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
+  void logManifestFetch(req, "slim");
   const pets = await getAllApprovedPets();
 
   const items = pets.map((pet) => ({

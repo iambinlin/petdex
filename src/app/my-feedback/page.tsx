@@ -164,10 +164,11 @@ export default async function MyFeedbackPage({
   });
 
   return (
-    <>
-      <SiteHeader />
-      <main className="min-h-screen pb-20">
-        <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pt-10 pb-12 md:px-8 md:pt-14">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
+        <SiteHeader />
+      </section>
+      <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 pb-20 md:px-8">
           <header className="space-y-3">
             <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
               Threads
@@ -282,9 +283,8 @@ export default async function MyFeedbackPage({
               })}
             </ul>
           )}
-        </section>
-      </main>
+      </section>
       <SiteFooter />
-    </>
+    </main>
   );
 }

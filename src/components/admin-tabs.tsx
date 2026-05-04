@@ -28,6 +28,11 @@ const TABS: Array<{
     label: "Feedback",
     match: (p) => p.startsWith("/admin/feedback"),
   },
+  {
+    href: "/admin/manifest",
+    label: "Manifest",
+    match: (p) => p.startsWith("/admin/manifest"),
+  },
 ];
 
 export function AdminTabs() {

@@ -214,6 +214,32 @@ export const notifications = pgTable(
   }),
 );
 
+// Lightweight log of each /api/manifest fetch so we can spot
+// abnormal fetch volume in the admin view. We hash the IP because
+// raw IPs aren't useful for analytics and shouldn't sit around in
+// plaintext.
+export const manifestFetches = pgTable(
+  "manifest_fetches",
+  {
+    id: text("id").primaryKey(),
+    // sha256(ip + daily-salt) → stable per-day per-IP, can't reverse.
+    ipHash: text("ip_hash").notNull(),
+    userAgent: text("user_agent"),
+    country: text("country"),
+    region: text("region"),
+    referer: text("referer"),
+    // Which manifest variant — 'slim' (public) or 'full' (authed).
+    variant: text("variant").notNull().default("slim"),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    fetchedAtIdx: index("manifest_fetches_fetched_at_idx").on(table.fetchedAt),
+    ipHashIdx: index("manifest_fetches_ip_hash_idx").on(table.ipHash),
+  }),
+);
+
 export const userProfiles = pgTable("user_profiles", {
   // Clerk user id (string). PK because every user has at most one profile.
   userId: text("user_id").primaryKey(),
