@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { auth } from "@clerk/nextjs/server";
+import { getTranslations } from "next-intl/server";
 
 import { getCaughtSlugSet } from "@/lib/catch-status";
 import { getDexNumberMap } from "@/lib/dex";
@@ -26,6 +27,7 @@ const SITE_URL = "https://petdex.crafter.run";
 
 export default async function Home() {
   const { userId } = await auth();
+  const t = await getTranslations("home");
 
   // Read the visitor's shuffle seed (minted by the middleware on the
   // very first request, so every subsequent SSR + /api/pets/search call
@@ -56,8 +58,7 @@ export default async function Home() {
       "@id": `${SITE_URL}/#website`,
       name: "Petdex",
       url: `${SITE_URL}/`,
-      description:
-        "Public gallery of animated pixel pets for the Codex CLI. Install one with a single command.",
+      description: t("jsonLdDescription"),
       publisher: {
         "@type": "Organization",
         name: "Crafter Station",
@@ -75,7 +76,7 @@ export default async function Home() {
     {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      name: "Featured Codex pets",
+      name: t("jsonLdFeaturedPets"),
       numberOfItems: heroPets.length,
       itemListElement: heroPets.map((pet, i) => ({
         "@type": "ListItem",
@@ -95,16 +96,16 @@ export default async function Home() {
 
           <div className="mt-12 flex flex-col items-center text-center md:mt-16">
             <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-              The Codex pet index
+              {t("eyebrow")}
             </p>
             <h1 className="mt-3 text-[48px] leading-[0.98] font-semibold tracking-tight md:text-[80px]">
-              Petdex
+              {t("title")}
             </h1>
             <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
-              The public gallery of animated pixel pets for the{" "}
-              <strong>Codex CLI</strong>. Browse {totalPets}+ open-source
-              companions, preview their states, and install one with a single
-              command.
+              {t.rich("tagline", {
+                totalPets,
+                brand: () => <strong>Codex CLI</strong>,
+              })}
             </p>
             <CommandLine
               command="npx petdex install boba"
@@ -117,13 +118,13 @@ export default async function Home() {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <SubmitCTA className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover">
-              Submit a pet
+              {t("submitCta")}
             </SubmitCTA>
             <Link
               href="#gallery"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-surface"
             >
-              Browse gallery
+              {t("browseGallery")}
             </Link>
           </div>
         </div>
@@ -152,11 +153,16 @@ type HeroPetParadeProps = {
   pets: PetWithMetrics[];
 };
 
-function HeroPetParade({ pets }: HeroPetParadeProps) {
+async function HeroPetParade({ pets }: HeroPetParadeProps) {
   if (pets.length === 0) return null;
 
+  const t = await getTranslations("home");
+
   return (
-    <div className="mt-10 flex flex-wrap items-end justify-center gap-3 md:gap-5">
+    <div
+      className="mt-10 flex flex-wrap items-end justify-center gap-3 md:gap-5"
+      aria-label={t("petParadeAria")}
+    >
       {pets.map((pet, index) => {
         const tilt = index % 2 === 0 ? "rotate-[-3deg]" : "rotate-[3deg]";
         const lift = index % 3 === 1 ? "translate-y-1" : "-translate-y-1";
@@ -165,7 +171,7 @@ function HeroPetParade({ pets }: HeroPetParadeProps) {
           <Link
             key={pet.slug}
             href={`/pets/${pet.slug}`}
-            aria-label={`Open ${pet.displayName}`}
+            aria-label={t("openPet", { name: pet.displayName })}
             className={`group relative flex flex-col items-center rounded-2xl border border-border-base bg-surface/60 px-3 pt-3 pb-2 shadow-lg shadow-blue-900/10 backdrop-blur-md transition hover:-translate-y-1 hover:bg-surface ${tilt} ${lift}`}
           >
             <PetSprite
@@ -173,7 +179,7 @@ function HeroPetParade({ pets }: HeroPetParadeProps) {
               cycleStates
               cycleIntervalMs={1500}
               scale={0.55}
-              label={`${pet.displayName} animated`}
+              label={t("petAnimated", { name: pet.displayName })}
             />
             <span className="mt-1 font-mono text-[10px] tracking-[0.18em] text-muted-2 uppercase">
               {pet.displayName}

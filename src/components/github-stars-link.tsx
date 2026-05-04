@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { Star } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { GithubIcon } from "@/components/github-icon";
 
@@ -26,6 +27,7 @@ export function GithubStarsLink({
   size?: "nav" | "mobile";
 }) {
   const [stars, setStars] = useState<number | null>(null);
+  const t = useTranslations("header");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -82,7 +84,9 @@ export function GithubStarsLink({
       target="_blank"
       rel="noreferrer"
       aria-label={
-        stars !== null ? `Petdex on GitHub, ${stars} stars` : "Petdex on GitHub"
+        stars !== null
+          ? t("githubRepoAriaWithStars", { stars })
+          : t("githubRepoAria")
       }
       className={`inline-flex items-center gap-1.5 transition hover:text-foreground ${className}`}
     >

@@ -4,7 +4,8 @@
     "codexCli": "Codex CLI",
     "submitPet": "Enviar una mascota",
     "browseGallery": "Ver galería",
-    "github": "GitHub"
+    "github": "GitHub",
+    "petdexHome": "Inicio de Petdex"
   },
   "header": {
     "gallery": "Galería",
@@ -15,23 +16,28 @@
     "about": "Acerca de",
     "submitCta": "Enviar una mascota",
     "openMenu": "Abrir menú",
-    "closeMenu": "Cerrar menú"
+    "closeMenu": "Cerrar menú",
+    "githubRepoAria": "Petdex en GitHub",
+    "githubRepoAriaWithStars": "Petdex en GitHub, {stars} estrellas"
   },
   "footer": {
     "rightsNotice": "Las mascotas son fan art enviado por usuarios. Petdex no reclama derechos sobre ninguna propiedad intelectual subyacente.",
     "topCreators": "Creadores destacados",
     "takedown": "Retiro de contenido",
-    "github": "GitHub"
+    "github": "GitHub",
+    "sponsor": "Patrocinar",
+    "sponsorAria": "Patrocinar en GitHub"
   },
   "home": {
     "eyebrow": "El índice de mascotas de Codex",
     "title": "Petdex",
-    "tagline": "La galería pública de mascotas pixel art animadas para {brand}. Explora más de {totalPets} compañeros open source, previsualiza sus estados e instala uno con un solo comando.",
+    "tagline": "La galería pública de mascotas pixel art animadas para <brand />. Explora más de {totalPets} compañeros open source, previsualiza sus estados e instala uno con un solo comando.",
     "heroCommand": "npx petdex install boba",
     "submitCta": "Enviar una mascota",
     "browseGallery": "Ver galería",
     "openPet": "Abrir {name}",
     "petAnimated": "{name} animado",
+    "petParadeAria": "Mascotas destacadas",
     "jsonLdDescription": "Galería pública de mascotas pixel art animadas para Codex CLI. Instala una con un solo comando.",
     "jsonLdFeaturedPets": "Mascotas destacadas de Codex"
   }

@@ -4,7 +4,8 @@
     "codexCli": "Codex CLI",
     "submitPet": "Submit a pet",
     "browseGallery": "Browse gallery",
-    "github": "GitHub"
+    "github": "GitHub",
+    "petdexHome": "Petdex home"
   },
   "header": {
     "gallery": "Gallery",
@@ -15,23 +16,28 @@
     "about": "About",
     "submitCta": "Submit a pet",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "githubRepoAria": "Petdex on GitHub",
+    "githubRepoAriaWithStars": "Petdex on GitHub, {stars} stars"
   },
   "footer": {
     "rightsNotice": "Pets are user-submitted fan art. Petdex does not claim rights to any underlying IP.",
     "topCreators": "Top creators",
     "takedown": "Takedown",
-    "github": "GitHub"
+    "github": "GitHub",
+    "sponsor": "Sponsor",
+    "sponsorAria": "Sponsor on GitHub"
   },
   "home": {
     "eyebrow": "The Codex pet index",
     "title": "Petdex",
-    "tagline": "The public gallery of animated pixel pets for the {brand}. Browse {totalPets}+ open-source companions, preview their states, and install one with a single command.",
+    "tagline": "The public gallery of animated pixel pets for the <brand />. Browse {totalPets}+ open-source companions, preview their states, and install one with a single command.",
     "heroCommand": "npx petdex install boba",
     "submitCta": "Submit a pet",
     "browseGallery": "Browse gallery",
     "openPet": "Open {name}",
     "petAnimated": "{name} animated",
+    "petParadeAria": "Featured pets",
     "jsonLdDescription": "Public gallery of animated pixel pets for the Codex CLI. Install one with a single command.",
     "jsonLdFeaturedPets": "Featured Codex pets"
   }

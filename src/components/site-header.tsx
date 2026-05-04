@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Menu, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { AuthBadge } from "@/components/auth-badge";
 import { GithubStarsLink } from "@/components/github-stars-link";
@@ -18,6 +19,8 @@ type SiteHeaderProps = {
 
 export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("header");
+  const common = useTranslations("common");
 
   // Close menu on Escape + lock body scroll while open.
   useEffect(() => {
@@ -36,26 +39,26 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
   return (
     <>
       <nav className="flex items-center justify-between gap-3">
-        <PetdexLogo href="/" />
+        <PetdexLogo href="/" ariaLabel={common("petdexHome")} />
 
         <div className="hidden items-center gap-7 text-sm text-muted-2 md:flex">
           <Link href="/create" className="transition hover:text-foreground">
-            Create
+            {t("create")}
           </Link>
           <Link href="/docs" className="transition hover:text-foreground">
-            Docs
+            {t("docs")}
           </Link>
           <Link
             href="/leaderboard"
             className="transition hover:text-foreground"
           >
-            Top creators
+            {t("topCreators")}
           </Link>
           <Link href="/requests" className="transition hover:text-foreground">
-            Requests
+            {t("requests")}
           </Link>
           <Link href="/about" className="transition hover:text-foreground">
-            About
+            {t("about")}
           </Link>
           <GithubStarsLink />
         </div>
@@ -63,14 +66,14 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
         <div className="flex shrink-0 items-center gap-2">
           {hideSubmitCta ? null : (
             <SubmitCTA className="hidden h-10 items-center justify-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover md:inline-flex">
-              Submit a pet
+              {t("submitCta")}
             </SubmitCTA>
           )}
           <ThemeToggle />
           <AuthBadge />
           <button
             type="button"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t("closeMenu") : t("openMenu")}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
             className="grid size-10 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 transition hover:bg-surface md:hidden"
@@ -88,10 +91,10 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           }}
         >
           <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-            <PetdexLogo href="/" />
+            <PetdexLogo href="/" ariaLabel={common("petdexHome")} />
             <button
               type="button"
-              aria-label="Close menu"
+              aria-label={t("closeMenu")}
               onClick={() => setOpen(false)}
               className="grid size-10 place-items-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:bg-surface-muted"
             >
@@ -100,19 +103,19 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           </div>
           <nav className="mt-4 flex flex-col gap-1 px-5 text-lg">
             <MobileLink href="/create" onClick={() => setOpen(false)}>
-              Create
+              {t("create")}
             </MobileLink>
             <MobileLink href="/docs" onClick={() => setOpen(false)}>
-              Docs
+              {t("docs")}
             </MobileLink>
             <MobileLink href="/leaderboard" onClick={() => setOpen(false)}>
-              Top creators
+              {t("topCreators")}
             </MobileLink>
             <MobileLink href="/requests" onClick={() => setOpen(false)}>
-              Requests
+              {t("requests")}
             </MobileLink>
             <MobileLink href="/about" onClick={() => setOpen(false)}>
-              About
+              {t("about")}
             </MobileLink>
             <GithubStarsLink
               size="mobile"
@@ -123,7 +126,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           {!hideSubmitCta ? (
             <div className="mt-auto p-5">
               <SubmitCTA className="inline-flex h-12 w-full items-center justify-center rounded-full bg-inverse px-6 text-base font-medium text-on-inverse transition hover:bg-inverse-hover">
-                Submit a pet
+                {t("submitCta")}
               </SubmitCTA>
             </div>
           ) : null}

@@ -5,6 +5,7 @@ type PetdexLogoProps = {
   showWordmark?: boolean;
   className?: string;
   markClassName?: string;
+  ariaLabel?: string;
 };
 
 export function PetdexLogo({
@@ -12,6 +13,7 @@ export function PetdexLogo({
   showWordmark = true,
   className = "",
   markClassName = "size-10",
+  ariaLabel = "Petdex home",
 }: PetdexLogoProps) {
   const content = (
     <>
@@ -26,7 +28,7 @@ export function PetdexLogo({
 
   if (href) {
     return (
-      <Link href={href} className={classes} aria-label="Petdex home">
+      <Link href={href} className={classes} aria-label={ariaLabel}>
         {content}
       </Link>
     );

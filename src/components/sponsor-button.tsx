@@ -1,4 +1,5 @@
 import { Heart } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type SponsorButtonProps = {
   variant?: "nav" | "pill" | "inline";
@@ -7,6 +8,7 @@ type SponsorButtonProps = {
 const SPONSOR_URL = "https://github.com/sponsors/Railly";
 
 export function SponsorButton({ variant = "pill" }: SponsorButtonProps) {
+  const t = useTranslations("footer");
   const className =
     variant === "nav"
       ? "inline-flex items-center gap-1.5 transition hover:text-rose-600"
@@ -20,10 +22,10 @@ export function SponsorButton({ variant = "pill" }: SponsorButtonProps) {
       target="_blank"
       rel="noreferrer"
       className={className}
-      aria-label="Sponsor on GitHub"
+      aria-label={t("sponsorAria")}
     >
       <Heart className="size-4" />
-      Sponsor
+      {t("sponsor")}
     </a>
   );
 }
