@@ -1,6 +1,14 @@
 import Link from "next/link";
 
-import { ArrowRight, Hammer, Package, Settings, Upload } from "lucide-react";
+import {
+  ArrowRight,
+  Hammer,
+  Package,
+  Palette,
+  Settings,
+  Sparkles,
+  Upload,
+} from "lucide-react";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -136,22 +144,72 @@ export default function CreatePage() {
           </ul>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-black/10 bg-white/85 p-6 backdrop-blur dark:border-white/10">
-          <div>
-            <p className="text-base font-semibold text-foreground">
-              Already have a pet?
-            </p>
-            <p className="text-sm text-muted-2">
-              Drop the folder or zip and we'll publish it.
-            </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border-base bg-surface/85 p-6 backdrop-blur">
+            <div>
+              <p className="text-base font-semibold text-foreground">
+                Already have a pet?
+              </p>
+              <p className="mt-1 text-sm text-muted-2">
+                Drop the folder or zip and we'll publish it.
+              </p>
+            </div>
+            <Link
+              href="/submit"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
+            >
+              Submit your pet
+              <ArrowRight className="size-4" />
+            </Link>
           </div>
-          <Link
-            href="/submit"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
-          >
-            Submit your pet
-            <ArrowRight className="size-4" />
-          </Link>
+
+          {/* Steers users without Codex tokens (or who prefer the queue
+              path) toward /requests so the catalog grows even from
+              folks who can't run Hatch Pet themselves. */}
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border-base bg-surface/85 p-6 backdrop-blur">
+            <div>
+              <p className="text-base font-semibold text-foreground">
+                Burning through Codex tokens?
+              </p>
+              <p className="mt-1 text-sm text-muted-2">
+                Drop a wish in the request queue — the community (and we)
+                will pick it up.
+              </p>
+            </div>
+            <Link
+              href="/requests"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-border-base bg-surface px-5 text-sm font-medium text-foreground transition hover:border-border-strong"
+            >
+              Request a pet
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Spoiler banner — coming-soon teaser for the in-browser pet
+            studio. Brand-tinted so it reads as forward-looking, not as
+            another action card. Kept below the request queue so it
+            doesn't compete with the primary path (Hatch Pet via Codex). */}
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-brand/30 bg-brand-tint/70 p-6 backdrop-blur dark:bg-brand-tint-dark/60">
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/15 text-brand">
+              <Palette className="size-4" />
+            </span>
+            <div>
+              <p className="flex flex-wrap items-center gap-2 text-base font-semibold text-foreground">
+                Web pet creator
+                <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-white uppercase">
+                  <Sparkles className="size-3" />
+                  Soon
+                </span>
+              </p>
+              <p className="mt-1 max-w-2xl text-sm text-muted-2">
+                A browser-native studio so you can sketch, animate, and
+                preview your pet without ever leaving Petdex — no Codex
+                tokens required. Sign in to get notified when it lands.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
