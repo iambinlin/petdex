@@ -15,6 +15,12 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { cache } from "react";
 
+export type OwnerExternal = {
+  provider: "github" | "x";
+  username: string;
+  url: string;
+};
+
 export type OwnerCredit = {
   // Clerk user id; useful for /u/<handle> links
   userId: string;
@@ -23,8 +29,10 @@ export type OwnerCredit = {
   name: string;
   // /u/<handle>; built from username, falls back to last 8 chars of id
   handle: string;
-  // External profile (GitHub primary, X fallback) or stored row credit
-  url: string | null;
+  // Optional Clerk username for "@" rendering when present
+  username: string | null;
+  // External profiles (GitHub + X). Empty if none, in display priority.
+  externals: OwnerExternal[];
   // Avatar; clerk image first, stored credit second
   imageUrl: string | null;
 };
@@ -40,24 +48,33 @@ function fallbackHandle(userId: string): string {
   return userId.slice(-8).toLowerCase();
 }
 
-function externalUrlFor(
+function externalsFor(
   externalAccounts: Array<{ provider?: string; username?: string }>,
-): string | null {
-  // Same priority as the original submit flow: GitHub > X. We only fall
-  // through if the higher-priority provider has no username set.
-  let github: string | null = null;
-  let twitter: string | null = null;
+): OwnerExternal[] {
+  // GitHub first, then X. Each shows as its own chip in the UI.
+  let github: OwnerExternal | null = null;
+  let x: OwnerExternal | null = null;
   for (const acc of externalAccounts ?? []) {
     if (!acc.username) continue;
-    if (acc.provider === "oauth_github" && !github)
-      github = `https://github.com/${acc.username}`;
+    if (acc.provider === "oauth_github" && !github) {
+      github = {
+        provider: "github",
+        username: acc.username,
+        url: `https://github.com/${acc.username}`,
+      };
+    }
     if (
       (acc.provider === "oauth_x" || acc.provider === "oauth_twitter") &&
-      !twitter
-    )
-      twitter = `https://x.com/${acc.username}`;
+      !x
+    ) {
+      x = {
+        provider: "x",
+        username: acc.username,
+        url: `https://x.com/${acc.username}`,
+      };
+    }
   }
-  return github ?? twitter;
+  return [github, x].filter((v): v is OwnerExternal => Boolean(v));
 }
 
 function buildName(
@@ -67,10 +84,13 @@ function buildName(
   email: string | null,
   fallbackName: string | null,
 ): string {
+  // Prefer real first+last name in full. Initials looked weird ("Chris M.")
+  // and lost information. If there's no first/last, fall through to
+  // username -> email-prefix -> stored fallback -> anonymous.
   const first = firstName?.trim() || null;
   const last = lastName?.trim() || null;
-  if (first) {
-    return last ? `${first} ${last[0]}.` : first;
+  if (first || last) {
+    return [first, last].filter(Boolean).join(" ");
   }
   if (username) return username;
   if (email && email.includes("@")) return email.split("@")[0];
@@ -90,13 +110,37 @@ export const resolveOwnerCredits = cache(
 
     // Pre-fill from row fallbacks so even if Clerk fails entirely we
     // still return something for every owner.
+    const fallbackByOwner = new Map<string, RowCreditFallback>();
     for (const f of fallbacks) {
+      if (!fallbackByOwner.has(f.ownerId)) fallbackByOwner.set(f.ownerId, f);
       if (out.has(f.ownerId)) continue;
+      const externals: OwnerExternal[] = [];
+      if (f.creditUrl) {
+        try {
+          const u = new URL(f.creditUrl);
+          if (u.host === "github.com") {
+            externals.push({
+              provider: "github",
+              username: u.pathname.slice(1),
+              url: f.creditUrl,
+            });
+          } else if (u.host === "x.com" || u.host === "twitter.com") {
+            externals.push({
+              provider: "x",
+              username: u.pathname.slice(1),
+              url: f.creditUrl,
+            });
+          }
+        } catch {
+          /* ignore malformed stored URL */
+        }
+      }
       out.set(f.ownerId, {
         userId: f.ownerId,
         name: f.creditName?.trim() || "anonymous",
         handle: fallbackHandle(f.ownerId),
-        url: f.creditUrl,
+        username: null,
+        externals,
         imageUrl: f.creditImage,
       });
     }
@@ -116,7 +160,7 @@ export const resolveOwnerCredits = cache(
           limit: 100,
         });
         for (const u of list.data) {
-          const fallback = fallbacks.find((f) => f.ownerId === u.id);
+          const fallback = fallbackByOwner.get(u.id);
           const primary = u.emailAddresses.find(
             (e) => e.id === u.primaryEmailAddressId,
           );
@@ -124,7 +168,7 @@ export const resolveOwnerCredits = cache(
             provider?: string;
             username?: string;
           }>;
-          const externalUrl = externalUrlFor(externalAccounts);
+          const externals = externalsFor(externalAccounts);
           const name = buildName(
             u.username ?? null,
             u.firstName ?? null,
@@ -138,7 +182,8 @@ export const resolveOwnerCredits = cache(
             handle: u.username
               ? u.username.toLowerCase()
               : fallbackHandle(u.id),
-            url: externalUrl ?? fallback?.creditUrl ?? null,
+            username: u.username ?? null,
+            externals,
             imageUrl: u.imageUrl ?? fallback?.creditImage ?? null,
           });
         }
@@ -160,7 +205,8 @@ export async function resolveOwnerCreditFor(
       userId: row.ownerId,
       name: row.creditName?.trim() || "anonymous",
       handle: fallbackHandle(row.ownerId),
-      url: row.creditUrl,
+      username: null,
+      externals: [],
       imageUrl: row.creditImage,
     }
   );

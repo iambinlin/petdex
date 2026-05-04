@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
-import { FileJson, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
@@ -114,7 +114,6 @@ export default async function PetPage({ params }: PageProps) {
         creditImage: ownerRow.creditImage,
       })
     : null;
-  const ownerHandle = ownerCredit?.handle ?? null;
 
   let ownerEditState:
     | {
@@ -169,7 +168,9 @@ export default async function PetPage({ params }: PageProps) {
             creator: {
               "@type": "Person",
               name: ownerCredit.name,
-              ...(ownerCredit.url ? { url: ownerCredit.url } : {}),
+              ...(ownerCredit.externals[0]
+                ? { url: ownerCredit.externals[0].url }
+                : {}),
               ...(ownerCredit.imageUrl
                 ? { image: ownerCredit.imageUrl }
                 : {}),
@@ -231,6 +232,13 @@ export default async function PetPage({ params }: PageProps) {
             <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-700">
               {pet.description}
             </p>
+
+            {ownerCredit ? (
+              <div className="mt-6 max-w-md">
+                <SubmittedBy credit={ownerCredit} />
+              </div>
+            ) : null}
+
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <LikeButton
                 slug={pet.slug}
@@ -285,33 +293,14 @@ export default async function PetPage({ params }: PageProps) {
 
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
 
-        <section className="grid gap-4 lg:grid-cols-2">
-          {ownerCredit ? (
-            <SubmittedBy
-              credit={{
-                name: ownerCredit.name,
-                url: ownerCredit.url ?? undefined,
-                imageUrl: ownerCredit.imageUrl ?? undefined,
-              }}
-              handle={ownerHandle}
-            />
-          ) : (
+        {!ownerCredit ? (
+          <section className="grid gap-4 lg:grid-cols-2">
             <InfoCard title="Submission" icon={<Sparkles className="size-4" />}>
               <p>Curated entry.</p>
               <p>Updated {new Date(pet.importedAt).toLocaleDateString()}</p>
             </InfoCard>
-          )}
-          <InfoCard title="Package" icon={<FileJson className="size-4" />}>
-            <p>
-              <span className="font-medium text-stone-950">pet.json:</span>{" "}
-              <span className="break-all">{pet.petJsonPath}</span>
-            </p>
-            <p>
-              <span className="font-medium text-stone-950">spritesheet:</span>{" "}
-              <span className="break-all">{pet.spritesheetPath}</span>
-            </p>
-          </InfoCard>
-        </section>
+          </section>
+        ) : null}
       </section>
       <SiteFooter />
     </main>
