@@ -46,6 +46,7 @@ export const submittedPets = pgTable(
     tags: jsonb("tags").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
     dominantColor: text("dominant_color"),
     colorFamily: text("color_family"),
+    soundUrl: text("sound_url"),
     featured: boolean("featured").notNull().default(false),
     // 64-bit dHash of the first idle frame as a 16-char hex string. Used
     // for fast perceptual-similarity dedup at admin review time.

@@ -1,3 +1,9 @@
+// Server-only Drizzle client. Importing this from a client component
+// will throw a build-time error (via the `server-only` package) which
+// is far easier to debug than a runtime "DATABASE_URL is not set" in
+// the browser console.
+import "server-only";
+
 import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 

@@ -7,6 +7,8 @@ import { useUser } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
 import { Download, Heart, Loader2, Share2, TerminalSquare } from "lucide-react";
 
+import { PetSoundButton } from "@/components/pet-sound-button";
+
 // Inline footer bar at the bottom of each gallery card. Surfaces the
 // four most-used actions (like, install, download, share) without
 // forcing the user to open the pet page or the overflow menu.
@@ -17,6 +19,7 @@ export function PetCardFooter({
   slug,
   displayName,
   zipUrl,
+  soundUrl,
   installCount,
   likeCount,
   initialLiked,
@@ -24,6 +27,7 @@ export function PetCardFooter({
   slug: string;
   displayName: string;
   zipUrl?: string;
+  soundUrl: string | null;
   installCount: number;
   likeCount: number;
   initialLiked?: boolean;
@@ -155,6 +159,10 @@ export function PetCardFooter({
           <FooterBtn onClick={download} label={`Download ${displayName}`}>
             <Download className="size-3.5" />
           </FooterBtn>
+        ) : null}
+
+        {soundUrl ? (
+          <PetSoundButton soundUrl={soundUrl} displayName={displayName} />
         ) : null}
 
         <FooterBtn onClick={share} label={`Share ${displayName}`}>

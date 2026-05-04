@@ -123,6 +123,7 @@ export function rowToPet(
     spritesheetPath: row.spritesheetUrl,
     petJsonPath: row.petJsonUrl,
     zipUrl: row.zipUrl,
+    soundUrl: row.soundUrl,
     approvalState: "approved",
     featured: row.featured,
     kind: row.kind as PetKind,

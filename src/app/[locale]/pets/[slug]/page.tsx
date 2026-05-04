@@ -23,6 +23,7 @@ import { LikeButton } from "@/components/like-button";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetRadar } from "@/components/pet-radar";
+import { PetSoundButton } from "@/components/pet-sound-button";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
@@ -351,6 +352,13 @@ export default async function PetPage({ params }: PageProps) {
                 initialLiked={initialLiked}
                 signedIn={Boolean(userId)}
               />
+              {pet.soundUrl ? (
+                <PetSoundButton
+                  soundUrl={pet.soundUrl}
+                  displayName={pet.displayName}
+                  labelPrefix="Play signature sound for"
+                />
+              ) : null}
               <PetActionMenu
                 pet={{
                   slug: pet.slug,

@@ -654,6 +654,7 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
           slug={pet.slug}
           displayName={pet.displayName}
           zipUrl={pet.zipUrl}
+          soundUrl={pet.soundUrl}
           installCount={installCount}
           likeCount={likeCount}
         />

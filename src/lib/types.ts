@@ -35,6 +35,7 @@ export type PetdexPet = {
   petJsonPath: string;
   /** R2 URL to the pet's zip pack (always set after the curated backfill). */
   zipUrl?: string;
+  soundUrl: string | null;
   approvalState: ApprovalState;
   featured?: boolean;
   kind: PetKind;

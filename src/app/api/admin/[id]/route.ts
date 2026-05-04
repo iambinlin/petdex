@@ -9,6 +9,7 @@ import { classifyPet } from "@/lib/auto-tag";
 import { classifyColorFamily, extractDominantColor } from "@/lib/color-extract";
 import { db, schema } from "@/lib/db/client";
 import { createNotification } from "@/lib/notifications";
+import { getApprovedPetMissingSoundBySlug, processPetSound } from "@/lib/pet-sound";
 import { requireSameOrigin } from "@/lib/same-origin";
 import { refreshSimilarityFor } from "@/lib/similarity";
 
@@ -174,6 +175,16 @@ export async function PATCH(
         }
       })();
     }
+
+    void (async () => {
+      try {
+        const pet = await getApprovedPetMissingSoundBySlug(row.slug);
+        if (!pet) return;
+        await processPetSound(pet, { workerKey: `approve-${row.slug}` });
+      } catch (e) {
+        console.error("sound gen failed", e);
+      }
+    })();
   }
 
   // Notify owner only on status change (approve/reject), not pure edits.

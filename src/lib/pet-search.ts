@@ -17,8 +17,8 @@ import {
 } from "drizzle-orm";
 
 import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
+import { getAvailableBatches } from "@/lib/dex-batch.server";
 import { db, schema } from "@/lib/db/client";
-import { getAvailableBatches } from "@/lib/dex-batch";
 import type { PetWithMetrics } from "@/lib/pets";
 import { rowToPet } from "@/lib/pets";
 import { embedQuery, looksLikeVibeQuery } from "@/lib/query-embed";
@@ -221,7 +221,7 @@ async function vibeSearch(args: {
   const rows = (await rawSql`
     SELECT
       sp.id, sp.slug, sp.display_name, sp.description,
-      sp.spritesheet_url, sp.pet_json_url, sp.zip_url,
+      sp.spritesheet_url, sp.pet_json_url, sp.zip_url, sp.sound_url,
       sp.kind, sp.vibes, sp.tags, sp.dominant_color, sp.color_family,
       sp.featured, sp.status, sp.source,
       sp.owner_id, sp.owner_email,
@@ -274,6 +274,7 @@ function rowToSchema(
     spritesheetUrl: row.spritesheet_url as string,
     petJsonUrl: row.pet_json_url as string,
     zipUrl: row.zip_url as string,
+    soundUrl: (row.sound_url as string | null) ?? null,
     kind: row.kind as "creature" | "object" | "character",
     vibes: row.vibes as string[],
     tags: row.tags as string[],
