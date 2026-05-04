@@ -448,8 +448,8 @@
   "petStateViewer": {
     "eyebrow": "State viewer",
     "frames": "{count} frames",
-    "rowFrames": "Row {row} - {frames} frames",
-    "animationLabel": "{name} {state} animation",
+    "rowFrames": "Row {row} - {count} frames",
+    "animationLabel": "{petName} {state} animation",
     "states": {
       "idle": {
         "label": "Idle",

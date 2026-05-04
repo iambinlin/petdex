@@ -448,8 +448,8 @@
   "petStateViewer": {
     "eyebrow": "Visor de estados",
     "frames": "{count} frames",
-    "rowFrames": "Fila {row} - {frames} frames",
-    "animationLabel": "{name} animación {state}",
+    "rowFrames": "Fila {row} - {count} frames",
+    "animationLabel": "{petName} animación {state}",
     "states": {
       "idle": {
         "label": "Inactivo",
