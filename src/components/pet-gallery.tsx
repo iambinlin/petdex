@@ -385,7 +385,7 @@ function FilterChips({
             className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] capitalize transition ${
               isActive
                 ? "border-inverse bg-inverse text-on-inverse"
-                : "border-black/10 bg-surface text-muted-2 hover:border-black/30 dark:hover:border-white/30"
+                : "border-border-base bg-surface text-muted-2 hover:border-border-strong"
             }`}
           >
             {!isActive ? (
@@ -394,7 +394,7 @@ function FilterChips({
             <span>{value}</span>
             <span
               className={`font-mono text-[9px] ${
-                isActive ? "text-white/60" : "text-stone-400"
+                isActive ? "text-on-inverse/60" : "text-muted-3"
               }`}
             >
               {count}
