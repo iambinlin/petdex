@@ -13,6 +13,7 @@ import { getOwnerRank } from "@/lib/leaderboard";
 import { petStates } from "@/lib/pet-states";
 import { type PetWithMetrics, rowToPet } from "@/lib/pets";
 import { MAX_PINNED_PETS } from "@/lib/profiles";
+import { getCatchProgress } from "@/lib/catch-status";
 
 import { JsonLd } from "@/components/json-ld";
 import { PetCard } from "@/components/pet-gallery";
@@ -159,6 +160,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   // Viewer detection.
   const { userId: viewerId } = await auth();
   const isOwner = viewerId === ownerId;
+  const catchProgress = isOwner ? await getCatchProgress(viewerId) : null;
 
   const fallbackInitial = (displayName ?? username ?? handle)
     .slice(0, 1)
@@ -215,6 +217,12 @@ export default async function UserProfilePage({ params }: PageProps) {
                 <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
                   Petdex creator
                 </p>
+                {catchProgress ? (
+                  <p className="font-mono text-xs tracking-[0.22em] text-muted-3 uppercase">
+                    YOUR ALBUM: {catchProgress.caught}/{catchProgress.total} (
+                    {catchProgress.pct}%)
+                  </p>
+                ) : null}
                 {isOwnerAdmin ? (
                   <span
                     className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-white uppercase"

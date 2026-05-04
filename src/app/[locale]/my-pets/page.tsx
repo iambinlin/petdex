@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
+import { getCatchProgress } from "@/lib/catch-status";
 import { handleFromClerk } from "@/lib/handles";
 
 import { MyPetsView } from "@/components/my-pets-view";
@@ -93,6 +94,7 @@ export default async function MyPetsPage() {
   const profile = await db.query.userProfiles.findFirst({
     where: eq(schema.userProfiles.userId, userId),
   });
+  const catchProgress = await getCatchProgress(userId);
 
   const approvedSummaries = submissions
     .filter((s) => s.status === "approved")
@@ -110,6 +112,7 @@ export default async function MyPetsPage() {
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-20 md:px-8">
         <MyPetsView
           submissions={submissions}
+          catchProgress={catchProgress}
           profile={{
             handle,
             displayName,

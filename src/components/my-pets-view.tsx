@@ -54,9 +54,11 @@ type Tab = "all" | "pending" | "approved" | "rejected";
 
 export function MyPetsView({
   submissions,
+  catchProgress,
   profile,
 }: {
   submissions: Submission[];
+  catchProgress: { caught: number; total: number; pct: number };
   profile: ProfileData;
 }) {
   const [tab, setTab] = useState<Tab>("all");
@@ -80,6 +82,7 @@ export function MyPetsView({
       <>
         <ProfileCard profile={profile} />
         <ClaimableBanner />
+        <AlbumProgress catchProgress={catchProgress} />
         <EmptyState />
       </>
     );
@@ -111,6 +114,8 @@ export function MyPetsView({
           quick re-approval.
         </p>
       </header>
+
+      <AlbumProgress catchProgress={catchProgress} />
 
       <div className="flex flex-wrap items-center gap-2 border-b border-black/[0.08] pb-3 dark:border-white/[0.08]">
         <TabButton
@@ -167,6 +172,28 @@ export function MyPetsView({
         </div>
       )}
     </div>
+  );
+}
+
+function AlbumProgress({
+  catchProgress,
+}: {
+  catchProgress: { caught: number; total: number; pct: number };
+}) {
+  return (
+    <section className="rounded-3xl border border-black/10 bg-surface/80 p-5 backdrop-blur dark:border-white/10">
+      <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
+        Your album
+      </p>
+      <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-foreground">
+        {catchProgress.caught}/{catchProgress.total} ({catchProgress.pct}%)
+      </p>
+      <p className="mt-2 text-sm leading-6 text-muted-2">
+        {catchProgress.caught === 0
+          ? "You have not liked any pets yet — catch them with the heart button"
+          : "Liked pets count toward your personal Petdex album progress."}
+      </p>
+    </section>
   );
 }
 
