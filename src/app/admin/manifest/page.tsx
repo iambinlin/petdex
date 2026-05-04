@@ -159,7 +159,12 @@ export default async function AdminManifestPage() {
                     {row.ipHash.slice(0, 12)}…
                   </td>
                   <td className="py-2 pr-3 font-mono text-[11px] text-stone-700">
-                    {row.lastCountry ?? "—"}
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-sm leading-none">
+                        {countryFlag(row.lastCountry)}
+                      </span>
+                      {row.lastCountry ?? "—"}
+                    </span>
                   </td>
                   <td className="max-w-[24rem] truncate py-2 pr-3 text-xs text-stone-600">
                     {row.lastUa ?? "—"}
@@ -204,8 +209,13 @@ export default async function AdminManifestPage() {
                 key={c.country ?? "none"}
                 className="flex items-center justify-between rounded-xl bg-stone-50 px-3 py-2 text-xs"
               >
-                <span className="font-mono text-[11px] tracking-[0.1em] text-stone-600 uppercase">
-                  {c.country ?? "—"}
+                <span className="flex items-center gap-1.5">
+                  <span className="text-base leading-none">
+                    {countryFlag(c.country)}
+                  </span>
+                  <span className="font-mono text-[11px] tracking-[0.1em] text-stone-600 uppercase">
+                    {c.country ?? "—"}
+                  </span>
                 </span>
                 <span className="font-mono text-[11px] font-semibold text-stone-900">
                   {c.count.toLocaleString()}
@@ -246,5 +256,20 @@ function Card({
       </h2>
       <div className="mt-4">{children}</div>
     </section>
+  );
+}
+
+// ISO-3166 alpha-2 -> Unicode regional-indicator pair. The flag glyph
+// is composed of the two letters offset by 0x1F1A5 from their ASCII
+// codepoints. Renders natively on every modern OS (macOS, iOS, Android,
+// most Linux distros), Windows uses ZZ-style fallback but still prints
+// the country code so we keep the label next to it. Returns a globe
+// when the input is null/missing/non-2-char.
+function countryFlag(code: string | null): string {
+  if (!code || code.length !== 2 || !/^[a-z]{2}$/i.test(code)) return "🌐";
+  const upper = code.toUpperCase();
+  return String.fromCodePoint(
+    upper.charCodeAt(0) + 0x1f1a5,
+    upper.charCodeAt(1) + 0x1f1a5,
   );
 }
