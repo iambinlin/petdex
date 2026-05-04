@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 
 import { AnnouncementModal } from "@/components/announcement-modal";
+import { ProfileAnnouncementModal } from "@/components/profile-announcement-modal";
 import { FeedbackWidget } from "@/components/feedback-widget";
 import { OnboardingTour } from "@/components/onboarding-tour";
 
@@ -98,6 +99,7 @@ export default function RootLayout({
           <FeedbackWidget />
           <OnboardingTour />
           <AnnouncementModal />
+          <ProfileAnnouncementModal />
           <Analytics />
         </body>
       </html>

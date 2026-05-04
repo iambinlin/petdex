@@ -82,3 +82,11 @@ export const editRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(5, "24 h"),
   prefix: "petdex:edit",
 });
+
+// User profile edits (bio, featured pet pin). Self-expression, no
+// admin review, so we only need to stop spam loops. Keyed by userId.
+export const profileEditRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "24 h"),
+  prefix: "petdex:profile-edit",
+});

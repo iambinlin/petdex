@@ -6,6 +6,7 @@ import { FileJson, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
+import { handleForUser } from "@/lib/handles";
 import { getPet, getStaticPetSlugs } from "@/lib/pets";
 
 import { InstallCommand } from "@/components/install-command";
@@ -97,7 +98,13 @@ export default async function PetPage({ params }: PageProps) {
       )
     : false;
 
-  // Owner-only: pull editing state. Anonymous viewers skip the query.
+  // Pull the underlying row once: gives us the ownerId for the profile
+  // link plus the pending-edit state when the viewer is the owner.
+  const ownerRow = await db.query.submittedPets.findFirst({
+    where: eq(schema.submittedPets.slug, slug),
+  });
+  const ownerHandle = ownerRow ? await handleForUser(ownerRow.ownerId) : null;
+
   let ownerEditState:
     | {
         isOwner: boolean;
@@ -112,29 +119,24 @@ export default async function PetPage({ params }: PageProps) {
         lastRejection: string | null;
       }
     | null = null;
-  if (userId) {
-    const row = await db.query.submittedPets.findFirst({
-      where: eq(schema.submittedPets.slug, slug),
-    });
-    if (row && row.ownerId === userId) {
-      const hasPending = Boolean(row.pendingSubmittedAt);
-      ownerEditState = {
-        isOwner: true,
-        petId: row.id,
-        currentTags: (row.tags as string[]) ?? [],
-        pending: hasPending
-          ? {
-              displayName: row.pendingDisplayName,
-              description: row.pendingDescription,
-              tags: (row.pendingTags as string[] | null) ?? null,
-              submittedAt: row.pendingSubmittedAt
-                ? row.pendingSubmittedAt.toISOString()
-                : null,
-            }
-          : null,
-        lastRejection: row.pendingRejectionReason,
-      };
-    }
+  if (userId && ownerRow && ownerRow.ownerId === userId) {
+    const hasPending = Boolean(ownerRow.pendingSubmittedAt);
+    ownerEditState = {
+      isOwner: true,
+      petId: ownerRow.id,
+      currentTags: (ownerRow.tags as string[]) ?? [],
+      pending: hasPending
+        ? {
+            displayName: ownerRow.pendingDisplayName,
+            description: ownerRow.pendingDescription,
+            tags: (ownerRow.pendingTags as string[] | null) ?? null,
+            submittedAt: ownerRow.pendingSubmittedAt
+              ? ownerRow.pendingSubmittedAt.toISOString()
+              : null,
+          }
+        : null,
+      lastRejection: ownerRow.pendingRejectionReason,
+    };
   }
 
   const url = `${SITE_URL}/pets/${pet.slug}`;
@@ -274,7 +276,7 @@ export default async function PetPage({ params }: PageProps) {
 
         <section className="grid gap-4 lg:grid-cols-2">
           {pet.submittedBy ? (
-            <SubmittedBy credit={pet.submittedBy} />
+            <SubmittedBy credit={pet.submittedBy} handle={ownerHandle} />
           ) : (
             <InfoCard title="Submission" icon={<Sparkles className="size-4" />}>
               <p>Curated entry.</p>

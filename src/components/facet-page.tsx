@@ -99,7 +99,7 @@ export function FacetPage({
   );
 }
 
-function PetCard({
+export function PetCard({
   pet,
   index,
   stateCount,

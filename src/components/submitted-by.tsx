@@ -1,19 +1,23 @@
+import Link from "next/link";
+
+import { ExternalLink } from "lucide-react";
+
 import type { PetCredit } from "@/lib/types";
 import { isAllowedAvatarUrl, isSafeExternalUrl } from "@/lib/url-allowlist";
 
 type SubmittedByProps = {
   credit: PetCredit;
+  // When the pet has a known Petdex creator, link the body to their
+  // internal profile and keep the original credit URL as a small icon
+  // for attribution.
+  handle?: string | null;
 };
 
-export function SubmittedBy({ credit }: SubmittedByProps) {
-  // Render the avatar only if it's on the allowlist. Falls back to a letter
-  // tile so unsafe URLs never become tracking pixels for visitors.
+export function SubmittedBy({ credit, handle }: SubmittedByProps) {
   const showAvatar = credit.imageUrl && isAllowedAvatarUrl(credit.imageUrl);
-  // Same for the profile link — block anything that isn't https:// to a
-  // real hostname so a malicious credit can't reverse-tab-nab visitors.
-  const showLink = credit.url && isSafeExternalUrl(credit.url);
+  const showExternal = credit.url && isSafeExternalUrl(credit.url);
 
-  const inner = (
+  const innerBody = (
     <>
       {showAvatar ? (
         // biome-ignore lint/performance/noImgElement: external avatar URL
@@ -38,7 +42,34 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
     </>
   );
 
-  if (showLink) {
+  // Internal profile link wins when a handle is known.
+  if (handle) {
+    return (
+      <div className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur transition hover:border-black/30 hover:bg-white">
+        <Link
+          href={`/u/${handle}`}
+          className="flex flex-1 items-center gap-3 focus:outline-none"
+        >
+          {innerBody}
+        </Link>
+        {showExternal ? (
+          <a
+            href={credit.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="External profile"
+            title={credit.url}
+            className="grid size-8 shrink-0 place-items-center rounded-full border border-black/10 bg-white text-stone-500 transition hover:border-black/30 hover:text-stone-900"
+          >
+            <ExternalLink className="size-3.5" />
+          </a>
+        ) : null}
+      </div>
+    );
+  }
+
+  // Fallback: external-only link, original behavior.
+  if (showExternal) {
     return (
       <a
         href={credit.url}
@@ -46,14 +77,14 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
         rel="noopener noreferrer"
         className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur transition hover:border-black/30 hover:bg-white"
       >
-        {inner}
+        {innerBody}
       </a>
     );
   }
 
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur">
-      {inner}
+      {innerBody}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetSprite } from "@/components/pet-sprite";
+import { ProfileCard, type ProfileData } from "@/components/profile-card";
 
 type Submission = {
   id: string;
@@ -51,7 +52,13 @@ type Submission = {
 
 type Tab = "all" | "pending" | "approved" | "rejected";
 
-export function MyPetsView({ submissions }: { submissions: Submission[] }) {
+export function MyPetsView({
+  submissions,
+  profile,
+}: {
+  submissions: Submission[];
+  profile: ProfileData;
+}) {
   const [tab, setTab] = useState<Tab>("all");
 
   const counts = useMemo(() => {
@@ -71,6 +78,7 @@ export function MyPetsView({ submissions }: { submissions: Submission[] }) {
   if (submissions.length === 0) {
     return (
       <>
+        <ProfileCard profile={profile} />
         <ClaimableBanner />
         <EmptyState />
       </>
@@ -79,6 +87,7 @@ export function MyPetsView({ submissions }: { submissions: Submission[] }) {
 
   return (
     <div className="space-y-8">
+      <ProfileCard profile={profile} />
       <ClaimableBanner />
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">

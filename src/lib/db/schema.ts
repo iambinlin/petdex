@@ -157,6 +157,18 @@ export const feedback = pgTable(
   }),
 );
 
+export const userProfiles = pgTable("user_profiles", {
+  // Clerk user id (string). PK because every user has at most one profile.
+  userId: text("user_id").primaryKey(),
+  bio: text("bio"),
+  // Slug of an approved pet to pin to the top of the user's gallery.
+  // Validated server-side to belong to the same userId before save.
+  featuredPetSlug: text("featured_pet_slug"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const feedbackAuthorKind = pgEnum("feedback_author_kind", [
   "admin",
   "user",

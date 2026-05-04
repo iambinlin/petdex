@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
+import { handleFromClerk } from "@/lib/handles";
 
 import { MyPetsView } from "@/components/my-pets-view";
 import { SiteFooter } from "@/components/site-footer";
@@ -73,13 +74,50 @@ export default async function MyPetsPage() {
     },
   }));
 
+  // Profile data for the inline editor.
+  let handle = userId.slice(-8).toLowerCase();
+  let displayName: string | null = null;
+  let avatarUrl: string | null = null;
+  try {
+    const client = await clerkClient();
+    const u = await client.users.getUser(userId);
+    handle = handleFromClerk({ username: u.username, id: u.id });
+    const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+    displayName = name || u.username || null;
+    avatarUrl = u.imageUrl ?? null;
+  } catch {
+    /* fall back to id suffix */
+  }
+
+  const profile = await db.query.userProfiles.findFirst({
+    where: eq(schema.userProfiles.userId, userId),
+  });
+
+  const approvedSummaries = submissions
+    .filter((s) => s.status === "approved")
+    .map((s) => ({
+      slug: s.slug,
+      displayName: s.displayName,
+      spritesheetUrl: s.spritesheetUrl,
+    }));
+
   return (
     <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-20 md:px-8">
-        <MyPetsView submissions={submissions} />
+        <MyPetsView
+          submissions={submissions}
+          profile={{
+            handle,
+            displayName,
+            avatarUrl,
+            bio: profile?.bio ?? null,
+            featuredPetSlug: profile?.featuredPetSlug ?? null,
+            approvedPets: approvedSummaries,
+          }}
+        />
       </section>
       <SiteFooter />
     </main>
