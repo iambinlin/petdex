@@ -6,7 +6,7 @@ import { FileJson, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsForSlug } from "@/lib/db/metrics";
-import { handleForUser } from "@/lib/handles";
+import { resolveOwnerCreditFor } from "@/lib/owner-credit";
 import { getPet, getStaticPetSlugs } from "@/lib/pets";
 
 import { InstallCommand } from "@/components/install-command";
@@ -103,7 +103,18 @@ export default async function PetPage({ params }: PageProps) {
   const ownerRow = await db.query.submittedPets.findFirst({
     where: eq(schema.submittedPets.slug, slug),
   });
-  const ownerHandle = ownerRow ? await handleForUser(ownerRow.ownerId) : null;
+  // Resolve the "submitted by" credit live from Clerk so name/url/avatar
+  // reflect the user's *current* profile (not the snapshot taken at
+  // submit time). Falls back to row.credit_* for orphan rows.
+  const ownerCredit = ownerRow
+    ? await resolveOwnerCreditFor({
+        ownerId: ownerRow.ownerId,
+        creditName: ownerRow.creditName,
+        creditUrl: ownerRow.creditUrl,
+        creditImage: ownerRow.creditImage,
+      })
+    : null;
+  const ownerHandle = ownerCredit?.handle ?? null;
 
   let ownerEditState:
     | {
@@ -153,14 +164,14 @@ export default async function PetPage({ params }: PageProps) {
       genre: pet.kind,
       datePublished: pet.importedAt,
       isPartOf: { "@type": "WebSite", "@id": `${SITE_URL}/#website` },
-      ...(pet.submittedBy
+      ...(ownerCredit
         ? {
             creator: {
               "@type": "Person",
-              name: pet.submittedBy.name,
-              ...(pet.submittedBy.url ? { url: pet.submittedBy.url } : {}),
-              ...(pet.submittedBy.imageUrl
-                ? { image: pet.submittedBy.imageUrl }
+              name: ownerCredit.name,
+              ...(ownerCredit.url ? { url: ownerCredit.url } : {}),
+              ...(ownerCredit.imageUrl
+                ? { image: ownerCredit.imageUrl }
                 : {}),
             },
           }
@@ -275,8 +286,15 @@ export default async function PetPage({ params }: PageProps) {
         <PetStateViewer src={pet.spritesheetPath} petName={pet.displayName} />
 
         <section className="grid gap-4 lg:grid-cols-2">
-          {pet.submittedBy ? (
-            <SubmittedBy credit={pet.submittedBy} handle={ownerHandle} />
+          {ownerCredit ? (
+            <SubmittedBy
+              credit={{
+                name: ownerCredit.name,
+                url: ownerCredit.url ?? undefined,
+                imageUrl: ownerCredit.imageUrl ?? undefined,
+              }}
+              handle={ownerHandle}
+            />
           ) : (
             <InfoCard title="Submission" icon={<Sparkles className="size-4" />}>
               <p>Curated entry.</p>
