@@ -56,7 +56,7 @@ export function AnnouncementModal({ onClose }: AnnouncementModalProps) {
         }`}
       >
         {/* Hero image */}
-        <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b">
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b sm:aspect-[3/2]">
           {/* biome-ignore lint/performance/noImgElement: AI-generated marketing illustration */}
           <img
             src="/announcements/vibe-search.webp"

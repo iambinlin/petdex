@@ -121,8 +121,8 @@ export function PetCardFooter({
   }
 
   return (
-    <div className="flex items-center justify-between gap-2 border-t border-black/[0.05] px-2 py-2 dark:border-white/[0.05]">
-      <div className="flex items-center gap-0.5">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.05] px-2 py-2 dark:border-white/[0.05]">
+      <div className="flex min-w-0 flex-wrap items-center gap-0.5">
         <FooterBtn
           onClick={toggleLike}
           active={liked}

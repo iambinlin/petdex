@@ -53,7 +53,7 @@ export function GithubStarModal({ onClose }: GithubStarModalProps) {
         {/* Hero — gpt-image-2 illustration. Mirror the
             AnnouncementModal's 3:2 aspect so the two modals feel
             consistent. */}
-        <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b">
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b sm:aspect-[3/2]">
           {/* biome-ignore lint/performance/noImgElement: AI-generated marketing illustration */}
           <img
             src="/announcements/github-star.webp"
