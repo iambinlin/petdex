@@ -1,8 +1,5 @@
 import Link from "next/link";
 
-import { Download } from "lucide-react";
-
-import { getAllPetsPackPath } from "@/lib/downloads";
 import { searchPets } from "@/lib/pet-search";
 import {
   type PetWithMetrics,
@@ -16,7 +13,7 @@ import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { TrackOnClick } from "@/components/track-on-click";
+import { SubmitCTA } from "@/components/submit-cta";
 
 export const dynamic = "force-dynamic";
 
@@ -96,27 +93,14 @@ export default async function Home() {
           <HeroPetParade pets={heroPets} />
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <TrackOnClick
-              event="pack_downloaded"
-              payload={{ scope: "all" }}
-              href={getAllPetsPackPath()}
-              download
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200"
-            >
-              <Download className="size-4" />
-              Download all pets
-            </TrackOnClick>
+            <SubmitCTA className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover">
+              Submit a pet
+            </SubmitCTA>
             <Link
               href="#gallery"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-100 dark:hover:bg-stone-800"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-surface"
             >
               Browse gallery
-            </Link>
-            <Link
-              href="/docs"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white/70 px-6 text-sm font-medium text-black backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-100 dark:hover:bg-stone-800"
-            >
-              CLI docs
             </Link>
           </div>
         </div>
@@ -154,7 +138,7 @@ function HeroPetParade({ pets }: HeroPetParadeProps) {
             key={pet.slug}
             href={`/pets/${pet.slug}`}
             aria-label={`Open ${pet.displayName}`}
-            className={`group relative flex flex-col items-center rounded-2xl border border-white/70 bg-white/55 px-3 pt-3 pb-2 shadow-lg shadow-blue-900/10 backdrop-blur-md transition hover:-translate-y-1 hover:bg-white ${tilt} ${lift} dark:bg-stone-900/55 dark:hover:bg-stone-800`}
+            className={`group relative flex flex-col items-center rounded-2xl border border-border-base bg-surface/60 px-3 pt-3 pb-2 shadow-lg shadow-blue-900/10 backdrop-blur-md transition hover:-translate-y-1 hover:bg-surface ${tilt} ${lift}`}
           >
             <PetSprite
               src={pet.spritesheetPath}
@@ -163,7 +147,7 @@ function HeroPetParade({ pets }: HeroPetParadeProps) {
               scale={0.55}
               label={`${pet.displayName} animated`}
             />
-            <span className="mt-1 font-mono text-[10px] tracking-[0.18em] text-stone-700 uppercase dark:text-stone-300">
+            <span className="mt-1 font-mono text-[10px] tracking-[0.18em] text-muted-2 uppercase">
               {pet.displayName}
             </span>
           </Link>

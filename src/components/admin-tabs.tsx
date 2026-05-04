@@ -41,7 +41,7 @@ export function AdminTabs() {
   return (
     <nav
       aria-label="Admin sections"
-      className="flex items-center gap-1 border-b border-black/10 dark:border-white/10"
+      className="flex items-center gap-1 border-b border-border-base"
     >
       {TABS.map((tab) => {
         const active = tab.match(pathname);
@@ -52,8 +52,8 @@ export function AdminTabs() {
             aria-current={active ? "page" : undefined}
             className={`-mb-px relative inline-flex h-10 items-center px-4 text-sm transition ${
               active
-                ? "font-medium text-stone-950"
-                : "text-stone-500 hover:text-stone-900"
+                ? "font-medium text-foreground"
+                : "text-muted-3 hover:text-muted-1"
             }`}
           >
             {tab.label}

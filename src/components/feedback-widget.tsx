@@ -114,13 +114,13 @@ export function FeedbackWidget() {
   return (
     <div ref={popoverRef} className="fixed right-4 bottom-4 z-40 md:right-6 md:bottom-6">
       {open ? (
-        <div className="w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-black/10 bg-white shadow-2xl shadow-blue-950/20 dark:border-white/10 dark:bg-stone-900">
-          <div className="flex items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
+        <div className="w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-border-base bg-surface shadow-2xl shadow-blue-950/20">
+          <div className="flex items-center justify-between border-b border-border-base px-4 py-3">
             <div className="flex items-center gap-2">
               <span className="grid size-7 place-items-center rounded-full bg-brand-tint text-brand dark:bg-brand-tint-dark">
                 <MessageCircle className="size-3.5" />
               </span>
-              <span className="text-sm font-semibold text-stone-950 dark:text-stone-100">
+              <span className="text-sm font-semibold text-foreground">
                 Send feedback
               </span>
             </div>
@@ -128,7 +128,7 @@ export function FeedbackWidget() {
               type="button"
               aria-label="Close"
               onClick={() => setOpen(false)}
-              className="grid size-7 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
+              className="grid size-7 place-items-center rounded-full text-muted-3 transition hover:bg-surface-muted hover:text-foreground"
             >
               <X className="size-4" />
             </button>
@@ -136,13 +136,13 @@ export function FeedbackWidget() {
 
           {state.tag === "ok" ? (
             <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
-              <span className="grid size-12 place-items-center rounded-full bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <span className="grid size-12 place-items-center rounded-full bg-chip-success-bg text-chip-success-fg ring-1 ring-chip-success-fg/20">
                 <Check className="size-5" />
               </span>
-              <p className="text-base font-medium text-stone-950 dark:text-stone-100">
+              <p className="text-base font-medium text-foreground">
                 Thanks. Got it.
               </p>
-              <p className="text-xs text-stone-500 dark:text-stone-400">
+              <p className="text-xs text-muted-3">
                 Every note lands in the queue. We read them all.
               </p>
             </div>
@@ -159,9 +159,9 @@ export function FeedbackWidget() {
                       aria-pressed={active}
                       className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
                         active
-                          ? "border-black bg-black text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-950"
-                          : "border-black/10 bg-white text-stone-700 hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
-            }`}
+                          ? "border-inverse bg-inverse text-on-inverse"
+                          : "border-border-base bg-surface text-muted-2 hover:border-border-strong"
+                      }`}
                     >
                       {k.icon}
                       {k.label}
@@ -188,7 +188,7 @@ export function FeedbackWidget() {
                 }
                 rows={4}
                 maxLength={4000}
-                className="w-full resize-none rounded-2xl border border-black/10 bg-white px-3 py-2.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
+                className="w-full resize-none rounded-2xl border border-border-base bg-surface px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-muted-4 focus:border-border-strong"
               />
 
               <input
@@ -196,28 +196,28 @@ export function FeedbackWidget() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="email (optional, only if you want a reply)"
-                className="h-10 w-full rounded-full border border-black/10 bg-white px-3.5 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
+                className="h-10 w-full rounded-full border border-border-base bg-surface px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-4 focus:border-border-strong"
               />
 
               {state.tag === "error" ? (
-                <p className="text-xs text-rose-700 dark:text-rose-300">{state.reason}</p>
+                <p className="text-xs text-chip-danger-fg">{state.reason}</p>
               ) : null}
 
               <div className="flex items-center justify-between gap-2">
-                <p className="font-mono text-[10px] tracking-tight text-stone-400 dark:text-stone-500">
+                <p className="font-mono text-[10px] tracking-tight text-muted-4">
                   {message.length}/4000
                 </p>
                 <button
                   type="submit"
                   disabled={state.tag === "submitting" || message.length < 4}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85 disabled:opacity-50 dark:bg-stone-100 dark:hover:bg-stone-200"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover disabled:opacity-50"
                 >
                   <Send className="size-3.5" />
                   {state.tag === "submitting" ? "Sending…" : "Send"}
                 </button>
               </div>
 
-              <p className="border-t border-black/[0.06] pt-3 text-[11px] leading-5 text-stone-500 dark:border-white/[0.06] dark:text-stone-400">
+              <p className="border-t border-border-base pt-3 text-[11px] leading-5 text-muted-3">
                 Found a bug or want to dig into the source?{" "}
                 <a
                   href={githubIssueUrlFor(kind, message)}
@@ -236,7 +236,7 @@ export function FeedbackWidget() {
           type="button"
           aria-label="Send feedback"
           onClick={() => setOpen(true)}
-          className="group inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 shadow-lg shadow-blue-950/10 transition hover:border-black/30 hover:text-black hover:shadow-xl dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30 dark:hover:text-stone-100"
+          className="group inline-flex items-center gap-2 rounded-full border border-border-base bg-surface px-4 py-2.5 text-sm font-medium text-muted-2 shadow-lg shadow-blue-950/10 transition hover:border-border-strong hover:text-foreground hover:shadow-xl"
         >
           <MessageCircle className="size-4 text-brand" />
           <span>Feedback</span>

@@ -38,17 +38,20 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
       <nav className="flex items-center justify-between gap-3">
         <PetdexLogo href="/" />
 
-        <div className="hidden items-center gap-7 text-sm text-muted-4 md:flex">
-          <Link href="/#gallery" className="transition hover:text-black dark:hover:text-stone-100">
+        <div className="hidden items-center gap-7 text-sm text-muted-2 md:flex">
+          <Link href="/#gallery" className="transition hover:text-foreground">
             Gallery
           </Link>
-          <Link href="/create" className="transition hover:text-black dark:hover:text-stone-100">
+          <Link href="/create" className="transition hover:text-foreground">
             Create
           </Link>
-          <Link href="/requests" className="transition hover:text-black dark:hover:text-stone-100">
+          <Link href="/docs" className="transition hover:text-foreground">
+            Docs
+          </Link>
+          <Link href="/requests" className="transition hover:text-foreground">
             Requests
           </Link>
-          <Link href="/about" className="transition hover:text-black dark:hover:text-stone-100">
+          <Link href="/about" className="transition hover:text-foreground">
             About
           </Link>
           <GithubStarsLink />
@@ -56,7 +59,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
 
         <div className="flex shrink-0 items-center gap-2">
           {hideSubmitCta ? null : (
-            <SubmitCTA className="hidden h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85 md:inline-flex dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200">
+            <SubmitCTA className="hidden h-10 items-center justify-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover md:inline-flex">
               Submit a pet
             </SubmitCTA>
           )}
@@ -67,7 +70,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-full border border-black/10 bg-white/70 text-stone-700 transition hover:bg-white md:hidden dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:bg-stone-800"
+            className="grid size-10 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 transition hover:bg-surface md:hidden"
           >
             {open ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
@@ -87,7 +90,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
               type="button"
               aria-label="Close menu"
               onClick={() => setOpen(false)}
-              className="grid size-10 place-items-center rounded-full border border-black/10 bg-white text-stone-700 transition hover:bg-stone-100 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800"
+              className="grid size-10 place-items-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:bg-surface-muted"
             >
               <X className="size-4" />
             </button>
@@ -99,6 +102,9 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             <MobileLink href="/create" onClick={() => setOpen(false)}>
               Create
             </MobileLink>
+            <MobileLink href="/docs" onClick={() => setOpen(false)}>
+              Docs
+            </MobileLink>
             <MobileLink href="/requests" onClick={() => setOpen(false)}>
               Requests
             </MobileLink>
@@ -107,13 +113,13 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             </MobileLink>
             <GithubStarsLink
               size="mobile"
-              className="rounded-2xl px-4 py-3 hover:bg-white dark:hover:bg-stone-800"
+              className="rounded-2xl px-4 py-3 hover:bg-surface-muted"
             />
           </nav>
 
           {!hideSubmitCta ? (
             <div className="mt-auto p-5">
-              <SubmitCTA className="inline-flex h-12 w-full items-center justify-center rounded-full bg-black px-6 text-base font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200">
+              <SubmitCTA className="inline-flex h-12 w-full items-center justify-center rounded-full bg-inverse px-6 text-base font-medium text-on-inverse transition hover:bg-inverse-hover">
                 Submit a pet
               </SubmitCTA>
             </div>

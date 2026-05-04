@@ -27,7 +27,7 @@ function tokenize(command: string): React.ReactNode {
     }
     if (p === "|" || p === "&&" || p === "||" || p === ";") {
       return (
-        <span key={i} className="text-stone-400 dark:text-stone-500">
+        <span key={i} className="text-muted-4">
           {p}
         </span>
       );
@@ -51,13 +51,13 @@ function tokenize(command: string): React.ReactNode {
     if (cmdSeen && /^[a-z][a-z0-9-]*$/.test(p)) {
       cmdSeen = false;
       return (
-        <span key={i} className="font-medium text-[#1a1d2e] dark:text-stone-100">
+        <span key={i} className="font-medium text-foreground">
           {p}
         </span>
       );
     }
     return (
-      <span key={i} className="text-stone-700 dark:text-stone-300">
+      <span key={i} className="text-muted-2">
         {p}
       </span>
     );
@@ -92,11 +92,11 @@ export function CommandLine({
       onClick={() => void handleCopy()}
       aria-label="Copy command"
       style={{ fontFamily: "var(--font-geist-mono), ui-monospace, monospace" }}
-      className={`group inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/76 px-3 py-2 text-left text-[12px] text-[#1a1d2e] dark:text-stone-100 backdrop-blur transition hover:border-brand-light/40 hover:bg-white ${className} dark:border-white/10 dark:bg-stone-900/76 dark:hover:bg-stone-800`}
+      className={`group inline-flex items-center gap-2 rounded-xl border border-border-base bg-surface/80 px-3 py-2 text-left text-[12px] text-foreground backdrop-blur transition hover:border-brand-light/40 hover:bg-surface ${className}`}
     >
-      <span className="select-none text-brand-deep/60">{prefix}</span>
+      <span className="select-none text-brand">{prefix}</span>
       <span className="flex-1 truncate">{tokenize(command)}</span>
-      <span className="grid size-6 shrink-0 place-items-center rounded-md text-stone-500 transition group-hover:bg-brand-tint group-hover:text-brand-deep dark:text-stone-400">
+      <span className="grid size-6 shrink-0 place-items-center rounded-md text-muted-3 transition group-hover:bg-brand-tint group-hover:text-brand-deep">
         {copied ? (
           <Check className="size-3.5 text-brand-deep" />
         ) : (
