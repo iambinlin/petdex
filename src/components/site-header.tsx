@@ -48,6 +48,12 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           <Link href="/docs" className="transition hover:text-foreground">
             Docs
           </Link>
+          <Link
+            href="/leaderboard"
+            className="transition hover:text-foreground"
+          >
+            Top creators
+          </Link>
           <Link href="/requests" className="transition hover:text-foreground">
             Requests
           </Link>
@@ -105,6 +111,9 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             <MobileLink href="/docs" onClick={() => setOpen(false)}>
               Docs
             </MobileLink>
+            <MobileLink href="/leaderboard" onClick={() => setOpen(false)}>
+              Top creators
+            </MobileLink>
             <MobileLink href="/requests" onClick={() => setOpen(false)}>
               Requests
             </MobileLink>
@@ -143,7 +152,7 @@ function MobileLink({
     <Link
       href={href}
       onClick={onClick}
-      className="rounded-2xl px-4 py-3 text-stone-800 transition hover:bg-white dark:text-stone-200 dark:hover:bg-stone-800"
+      className="rounded-2xl px-4 py-3 text-foreground transition hover:bg-white dark:hover:bg-stone-800"
     >
       {children}
     </Link>
