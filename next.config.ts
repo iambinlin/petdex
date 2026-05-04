@@ -24,7 +24,11 @@ const cspDirectives = [
   "img-src 'self' data: blob: https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev https://yu2vz9gndp.ufs.sh https://img.clerk.com https://images.clerk.dev https://avatars.githubusercontent.com https://pbs.twimg.com https://storage.googleapis.com",
   "media-src 'self' https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev",
   "font-src 'self' data:",
-  "connect-src 'self' https://clerk.petdex.crafter.run https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev https://yu2vz9gndp.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+  // R2 reads via pub-*.r2.dev, R2 PUT uploads via the account-specific
+  // S3 endpoint (*.r2.cloudflarestorage.com). Both must be on the
+  // connect-src allowlist or browser fetch / XHR fail with a generic
+  // network error (root cause of issues #22-#80+).
+  "connect-src 'self' https://clerk.petdex.crafter.run https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev https://*.r2.cloudflarestorage.com https://yu2vz9gndp.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "upgrade-insecure-requests",
