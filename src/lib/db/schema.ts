@@ -127,8 +127,51 @@ export const feedback = pgTable(
   }),
 );
 
+export const petRequests = pgTable(
+  "pet_requests",
+  {
+    id: text("id").primaryKey(),
+    // What the user typed verbatim (preserved for display).
+    query: text("query").notNull(),
+    // Lowercased + collapsed-whitespace key for dedup look-ups.
+    normalized: text("normalized").notNull(),
+    // OpenAI embedding lives in a pgvector column added via raw SQL.
+    requestedBy: text("requested_by"),
+    upvoteCount: integer("upvote_count").notNull().default(1),
+    // open / fulfilled / dismissed
+    status: text("status").notNull().default("open"),
+    fulfilledPetSlug: text("fulfilled_pet_slug"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    normalizedIdx: index("pet_requests_normalized_idx").on(table.normalized),
+    upvoteIdx: index("pet_requests_upvote_idx").on(table.upvoteCount),
+    statusIdx: index("pet_requests_status_idx").on(table.status),
+  }),
+);
+
+export const petRequestVotes = pgTable(
+  "pet_request_votes",
+  {
+    requestId: text("request_id").notNull(),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.requestId, table.userId] }),
+  }),
+);
+
 export type SubmittedPet = typeof submittedPets.$inferSelect;
 export type NewSubmittedPet = typeof submittedPets.$inferInsert;
 export type PetLike = typeof petLikes.$inferSelect;
 export type PetMetric = typeof petMetrics.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
+export type PetRequest = typeof petRequests.$inferSelect;

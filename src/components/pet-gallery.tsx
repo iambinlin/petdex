@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  Check,
   ChevronDown,
   Heart,
   Loader2,
+  Plus,
   Search,
+  Sparkles,
   TerminalSquare,
   X,
 } from "lucide-react";
@@ -30,10 +33,13 @@ type Facets = {
   vibes: Record<string, number>;
 };
 
+type SearchMode = "vibe" | "keyword" | "all";
+
 type SearchPayload = {
   pets: PetWithMetrics[];
   total: number;
   nextCursor: number | null;
+  searchMode?: SearchMode;
   facets: Facets;
 };
 
@@ -65,6 +71,9 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
     initial.nextCursor,
   );
   const [facets, setFacets] = useState<Facets>(initial.facets);
+  const [searchMode, setSearchMode] = useState<SearchMode>(
+    initial.searchMode ?? "all",
+  );
   const [loadingPage, setLoadingPage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -102,6 +111,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
         setTotal(data.total);
         setNextCursor(data.nextCursor);
         setFacets(data.facets);
+        setSearchMode(data.searchMode ?? "all");
       } catch {
         // soft-fail: keep whatever's already on screen
       } finally {
@@ -175,7 +185,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search pets, vibes"
+              placeholder="Try 'cozy night programmer' or 'fierce dragon'"
               className="h-11 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-black/40"
             />
             {query.length > 0 ? (
@@ -241,6 +251,19 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
         ) : null}
       </div>
 
+      {searchMode === "vibe" && pets.length > 0 ? (
+        <div className="flex items-center gap-2 rounded-2xl border border-[#6478f6]/35 bg-[#eef1ff]/70 px-4 py-2.5 text-sm text-[#202127]">
+          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#5266ea] text-white">
+            <Sparkles className="size-3" />
+          </span>
+          <span>
+            Showing pets that vibe with{" "}
+            <span className="font-medium">"{query.trim()}"</span>. Closer to
+            the top means stronger match.
+          </span>
+        </div>
+      ) : null}
+
       <div
         className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-5 ${
           loadingPage ? "opacity-60 transition" : ""
@@ -257,20 +280,12 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
       </div>
 
       {pets.length === 0 && !loadingPage ? (
-        <div className="rounded-2xl border border-dashed border-black/15 bg-white/70 p-10 text-center">
-          <p className="text-sm font-medium text-stone-950">
-            No pets match this view.
-          </p>
-          {filtersActive ? (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="mt-3 inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-black/30"
-            >
-              Clear filters
-            </button>
-          ) : null}
-        </div>
+        <NoResults
+          query={query.trim()}
+          mode={searchMode}
+          filtersActive={filtersActive}
+          onClearFilters={clearFilters}
+        />
       ) : null}
 
       {nextCursor != null ? (
@@ -499,4 +514,129 @@ function compactNumber(n: number): string {
   if (n < 1000) return n.toString();
   if (n < 10_000) return `${(n / 1000).toFixed(1)}k`;
   return `${Math.round(n / 1000)}k`;
+}
+
+// NoResults — empty state. When the user hit a vibe search with no
+// matches we offer them to "request this pet": POSTs the query to
+// /api/pet-requests which dedup-upvotes if the same idea was already
+// asked for, otherwise creates a new request. Captures demand for the
+// admin queue at /admin/requests.
+function NoResults({
+  query,
+  mode,
+  filtersActive,
+  onClearFilters,
+}: {
+  query: string;
+  mode: SearchMode;
+  filtersActive: boolean;
+  onClearFilters: () => void;
+}) {
+  const [state, setState] = useState<
+    | { tag: "idle" }
+    | { tag: "submitting" }
+    | { tag: "ok"; mode: "created" | "upvoted"; count: number }
+    | { tag: "error"; reason: string }
+  >({ tag: "idle" });
+
+  const canRequest = mode === "vibe" && query.length >= 4;
+
+  async function submitRequest() {
+    if (!canRequest || state.tag === "submitting") return;
+    setState({ tag: "submitting" });
+    try {
+      const res = await fetch("/api/pet-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          setState({
+            tag: "error",
+            reason: "Sign in to request a pet.",
+          });
+          return;
+        }
+        const data = (await res.json().catch(() => ({}))) as {
+          message?: string;
+          error?: string;
+        };
+        setState({
+          tag: "error",
+          reason:
+            data.message ?? data.error ?? `Request failed (${res.status}).`,
+        });
+        return;
+      }
+      const data = (await res.json()) as {
+        mode: "created" | "upvoted";
+        upvoteCount: number;
+      };
+      setState({
+        tag: "ok",
+        mode: data.mode,
+        count: data.upvoteCount,
+      });
+    } catch {
+      setState({ tag: "error", reason: "Network error, try again." });
+    }
+  }
+
+  return (
+    <div className="rounded-3xl border border-dashed border-black/15 bg-white/70 p-8 text-center md:p-10">
+      <p className="text-sm font-medium text-stone-950">
+        No pets match {query ? `"${query}"` : "this view"}.
+      </p>
+
+      {canRequest ? (
+        state.tag === "ok" ? (
+          <div className="mt-4 inline-flex flex-col items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+              <Check className="size-3.5" />
+              {state.mode === "created"
+                ? "Requested. We'll prioritize popular requests."
+                : `Upvoted. ${state.count} people want this pet.`}
+            </span>
+            <Link
+              href="/requests"
+              className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase underline-offset-4 hover:text-black hover:underline"
+            >
+              See all requests
+            </Link>
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-col items-center gap-3">
+            <p className="max-w-md text-sm text-stone-600">
+              Want a pet that matches{" "}
+              <span className="font-medium">"{query}"</span>? Request it and
+              other people can upvote.
+            </p>
+            <button
+              type="button"
+              onClick={submitRequest}
+              disabled={state.tag === "submitting"}
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#5266ea] px-4 text-sm font-medium text-white transition hover:bg-[#3847f5] disabled:opacity-60"
+            >
+              <Plus className="size-4" />
+              {state.tag === "submitting" ? "Sending…" : "Request this pet"}
+            </button>
+            {state.tag === "error" ? (
+              <p className="font-mono text-[10px] tracking-[0.12em] text-rose-700 uppercase">
+                {state.reason}
+              </p>
+            ) : null}
+          </div>
+        )
+      ) : filtersActive ? (
+        <button
+          type="button"
+          onClick={onClearFilters}
+          className="mt-3 inline-flex h-9 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-black/30"
+        >
+          Clear filters
+        </button>
+      ) : null}
+    </div>
+  );
 }

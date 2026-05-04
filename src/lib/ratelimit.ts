@@ -49,6 +49,14 @@ export const likeRatelimit = new Ratelimit({
   prefix: "petdex:like",
 });
 
+// Pet requests + upvotes share a generous bucket — one user can shape the
+// roadmap up to 30 actions / 10 min before we slow them down.
+export const petRequestRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "10 m"),
+  prefix: "petdex:requests",
+});
+
 // R2 presign requests. Without this, a logged-in attacker can request
 // thousands of presigned PUT URLs in a loop and waste R2 storage cost
 // even if they never call /api/submit/register afterwards.

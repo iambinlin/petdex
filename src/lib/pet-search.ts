@@ -14,11 +14,15 @@ import {
   or,
   sql,
 } from "drizzle-orm";
+import { neon } from "@neondatabase/serverless";
 
 import { db, schema } from "@/lib/db/client";
 import type { PetWithMetrics } from "@/lib/pets";
 import { rowToPet } from "@/lib/pets";
+import { embedQuery, looksLikeVibeQuery } from "@/lib/query-embed";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
+
+const rawSql = neon(process.env.DATABASE_URL ?? "");
 
 export type SortKey = "curated" | "popular" | "installed" | "alpha";
 
@@ -35,6 +39,9 @@ export type SearchOutput = {
   pets: PetWithMetrics[];
   total: number;
   nextCursor: number | null;
+  /** Which path produced the results. 'vibe' = embedding cosine match,
+   *  'keyword' = ILIKE filter, 'all' = no q. Lets the UI render hints. */
+  searchMode: "vibe" | "keyword" | "all";
   facets: {
     kinds: Record<string, number>;
     vibes: Record<string, number>;
@@ -51,6 +58,22 @@ export async function searchPets(
   const limit = clamp(input.limit ?? DEFAULT_LIMIT, 1, MAX_LIMIT);
   const cursor = Math.max(0, input.cursor ?? 0);
   const q = input.q?.trim() ?? "";
+
+  // Vibe path: natural-language query, no other filters / non-default sort.
+  // Embedding-only ranking has its own tradeoffs (kinds/vibes filters
+  // would tighten what's returned and break cosine ranking semantics)
+  // so we only branch when the query truly looks vibey.
+  const isVibe =
+    sortKey === "curated" &&
+    looksLikeVibeQuery(q) &&
+    !(input.kinds && input.kinds.length > 0) &&
+    !(input.vibes && input.vibes.length > 0);
+
+  if (isVibe) {
+    const out = await vibeSearch({ q, limit, cursor });
+    if (out) return out;
+    // fall through to keyword if embedding failed
+  }
 
   const filters = [eq(schema.submittedPets.status, "approved")];
 
@@ -135,7 +158,99 @@ export async function searchPets(
     pets,
     total,
     nextCursor: hasNext ? cursor + limit : null,
+    searchMode: q ? "keyword" : "all",
     facets,
+  };
+}
+
+// Vector search via pgvector. We rank everything by cosine similarity to
+// the embedded query, then page through that ranked list. Only includes
+// rows whose similarity clears MIN_VIBE_SCORE so 'no results' is a real
+// signal we can surface as a 'request this pet' CTA.
+// 0.30 calibrated against the live catalog: 'cozy night programmer'
+// returns 5+ hits, 'qwerty asdf' returns 0. Anything below feels like
+// noise in early testing.
+const MIN_VIBE_SCORE = 0.3;
+
+async function vibeSearch(args: {
+  q: string;
+  limit: number;
+  cursor: number;
+}): Promise<SearchOutput | null> {
+  const vec = await embedQuery(args.q);
+  if (!vec) return null;
+  const literal = `[${vec.join(",")}]`;
+
+  // pgvector cosine distance: <=> returns 0 (identical) -> 2 (opposite).
+  // similarity = 1 - distance, so 1.0 = perfect match.
+  const rows = (await rawSql`
+    SELECT
+      sp.id, sp.slug, sp.display_name, sp.description,
+      sp.spritesheet_url, sp.pet_json_url, sp.zip_url,
+      sp.kind, sp.vibes, sp.tags, sp.featured, sp.status,
+      sp.owner_id, sp.owner_email,
+      sp.credit_name, sp.credit_url, sp.credit_image,
+      sp.created_at, sp.approved_at, sp.rejected_at, sp.rejection_reason,
+      coalesce(pm.install_count, 0) as install_count,
+      coalesce(pm.like_count, 0) as like_count,
+      coalesce(pm.zip_download_count, 0) as zip_download_count,
+      1 - (sp.embedding <=> ${literal}::vector) as similarity
+    FROM submitted_pets sp
+    LEFT JOIN pet_metrics pm ON pm.pet_slug = sp.slug
+    WHERE sp.status = 'approved' AND sp.embedding IS NOT NULL
+    ORDER BY sp.embedding <=> ${literal}::vector
+    LIMIT ${args.limit + args.cursor + 1}
+  `) as Array<Record<string, unknown> & { similarity: number }>;
+
+  const ranked = rows.filter((r) => r.similarity >= MIN_VIBE_SCORE);
+  const slice = ranked.slice(args.cursor, args.cursor + args.limit);
+  const hasNext = ranked.length > args.cursor + args.limit;
+
+  const pets: PetWithMetrics[] = slice.map((row) => ({
+    ...rowToPet(rowToSchema(row)),
+    metrics: {
+      installCount: Number(row.install_count) || 0,
+      likeCount: Number(row.like_count) || 0,
+      zipDownloadCount: Number(row.zip_download_count) || 0,
+    },
+  }));
+
+  return {
+    pets,
+    total: ranked.length,
+    nextCursor: hasNext ? args.cursor + args.limit : null,
+    searchMode: "vibe",
+    facets: await loadFacets(),
+  };
+}
+
+// Map a snake_case row out of the raw query into the camelCase shape
+// rowToPet expects. Drizzle's findFirst would do this for us but raw SQL
+// gives us the embedding ordering we need.
+function rowToSchema(row: Record<string, unknown>): typeof schema.submittedPets.$inferSelect {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    displayName: row.display_name as string,
+    description: row.description as string,
+    spritesheetUrl: row.spritesheet_url as string,
+    petJsonUrl: row.pet_json_url as string,
+    zipUrl: row.zip_url as string,
+    kind: row.kind as "creature" | "object" | "character",
+    vibes: row.vibes as string[],
+    tags: row.tags as string[],
+    featured: row.featured as boolean,
+    dhash: (row.dhash as string | null) ?? null,
+    status: row.status as "approved" | "pending" | "rejected",
+    ownerId: row.owner_id as string,
+    ownerEmail: (row.owner_email as string | null) ?? null,
+    creditName: (row.credit_name as string | null) ?? null,
+    creditUrl: (row.credit_url as string | null) ?? null,
+    creditImage: (row.credit_image as string | null) ?? null,
+    createdAt: new Date(row.created_at as string),
+    approvedAt: row.approved_at ? new Date(row.approved_at as string) : null,
+    rejectedAt: row.rejected_at ? new Date(row.rejected_at as string) : null,
+    rejectionReason: (row.rejection_reason as string | null) ?? null,
   };
 }
 
