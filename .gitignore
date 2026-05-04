@@ -52,3 +52,7 @@ next-env.d.ts
 # Local scratch space (db dumps, sample fixtures, throwaway scripts)
 .scratch/
 seed/
+
+# End-of-session handoff doc — local only, not committed
+HANDOFF.md
+.handoff-archive/
