@@ -214,8 +214,8 @@ export function NotificationsBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-[60] mt-2 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15">
-          <div className="flex items-center justify-between border-b border-black/[0.06] px-4 py-3">
+        <div className="absolute right-0 z-[60] mt-2 flex max-h-[min(70vh,520px)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15">
+          <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-4 py-3">
             <span className="text-sm font-semibold text-stone-950">
               Notifications
             </span>
@@ -236,7 +236,7 @@ export function NotificationsBell() {
               You're all caught up.
             </div>
           ) : (
-            <ul className="max-h-[60vh] divide-y divide-black/[0.06] overflow-y-auto">
+            <ul className="min-h-0 flex-1 divide-y divide-black/[0.06] overflow-y-auto">
               {items.map((n) => {
                 const meta = KIND_META[n.kind];
                 const { title, sub } = describe(n);

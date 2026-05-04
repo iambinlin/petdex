@@ -112,6 +112,12 @@ export default async function PetPage({ params }: PageProps) {
         creditName: ownerRow.creditName,
         creditUrl: ownerRow.creditUrl,
         creditImage: ownerRow.creditImage,
+        // For 'discover' rows the ownerId is the admin who imported
+        // on the author's behalf, NOT the author. Use stored credit_*
+        // exclusively so the author keeps the byline. After someone
+        // claims the row source flips to 'claimed' and we go back to
+        // resolving from the live Clerk profile.
+        ownerIsProxy: ownerRow.source === "discover",
       })
     : null;
 

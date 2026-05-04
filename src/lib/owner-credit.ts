@@ -42,6 +42,14 @@ export type RowCreditFallback = {
   creditName: string | null;
   creditUrl: string | null;
   creditImage: string | null;
+  /**
+   * When true, the ownerId points at an admin (or whoever did the
+   * import on someone else's behalf), NOT the actual author. In that
+   * case we ignore the live Clerk profile of the ownerId and trust
+   * the stored credit_* fields exclusively — they're what credits
+   * the real author. Set this for any row whose source = 'discover'.
+   */
+  ownerIsProxy?: boolean;
 };
 
 function fallbackHandle(userId: string): string {
@@ -152,8 +160,16 @@ export const resolveOwnerCredits = cache(
       return out;
     }
 
-    for (let i = 0; i < ids.length; i += 100) {
-      const batch = ids.slice(i, i + 100);
+    // We only resolve live Clerk data for owners whose Clerk profile
+    // actually represents the author. Proxy owners (an admin who
+    // imported the row on someone else's behalf) keep the row-level
+    // credit_* values we already pre-filled above.
+    const idsToFetch = ids.filter(
+      (id) => !fallbackByOwner.get(id)?.ownerIsProxy,
+    );
+
+    for (let i = 0; i < idsToFetch.length; i += 100) {
+      const batch = idsToFetch.slice(i, i + 100);
       try {
         const list = await client.users.getUserList({
           userId: batch,
