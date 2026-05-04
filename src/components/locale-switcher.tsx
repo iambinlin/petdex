@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Suspense, useEffect, useRef, useState, useTransition } from "react";
 
 import { useAuth } from "@clerk/nextjs";
 import { Globe } from "lucide-react";
@@ -19,7 +19,25 @@ const OPTIONS: Array<{ locale: Locale; code: string; label: string }> = [
   { locale: "zh", code: "ZH", label: "中文" },
 ];
 
+// Suspense wrapper — useSearchParams forces Next to bail out of static
+// generation unless the consumer is inside a Suspense boundary. Wrapping
+// the inner component here means every <SiteHeader /> can keep rendering
+// statically; only the locale switcher hydrates client-side.
 export function LocaleSwitcher() {
+  return (
+    <Suspense
+      fallback={
+        <span className="grid size-10 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2">
+          <Globe className="size-4" />
+        </span>
+      }
+    >
+      <LocaleSwitcherInner />
+    </Suspense>
+  );
+}
+
+function LocaleSwitcherInner() {
   const locale = useLocale();
   const currentLocale = hasLocale(locale) ? locale : "en";
   const current =

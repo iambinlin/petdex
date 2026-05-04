@@ -250,58 +250,88 @@
     },
     "threadPage": {
       "back": "← 收件箱"
-    },
-    "leaderboard": {
-      "eyebrow": "热门创作者",
-      "title": "Petdex 排行榜",
-      "subtitle": "发布宠物最多、最受喜爱、安装量最高的创作者。实时更新。",
-      "categoryAria": "排行榜分类",
-      "secondaryStats": {
-        "pets": "宠物",
-        "likes": "点赞",
-        "installs": "安装"
-      },
-      "tabs": {
-        "pets": {
-          "label": "宠物最多",
-          "unit": "已批准",
-          "blurb": "按目录中已批准宠物数量排序的创作者。",
-          "empty": "还没有已批准的投稿。"
-        },
-        "likes": {
-          "label": "最受喜爱",
-          "unit": "点赞",
-          "blurb": "创作者所有宠物累计获得的点赞总数。",
-          "empty": "还没有人的宠物收到点赞。"
-        },
-        "installs": {
-          "label": "安装最多",
-          "unit": "安装",
-          "blurb": "创作者所有宠物累计获得的 CLI 安装总数。",
-          "empty": "还没有记录到安装。"
-        },
-        "rising": {
-          "label": "上升中",
-          "unit": "本周",
-          "blurb": "过去 7 天内获批的宠物。火起来了？继续发。",
-          "empty": "本周还没有新宠物获批。"
-        }
-      }
-    },
-    "notFound": {
-      "eyebrow": "错误 404",
-      "title": "这只宠物走丢了",
-      "body": "你要访问的页面不在索引里。可能是拼写错误、投稿已撤回，或这只宠物还没有通过审核。试试下面这些替代选项。",
-      "lostPetAnimated": "{name} 正在轮播各个状态",
-      "caughtWandering": "游荡时抓到：{name}",
-      "browsePets": "浏览 {count}+ 只宠物",
-      "browseGallery": "浏览图库",
-      "about": "关于 Petdex",
-      "submit": "提交宠物",
-      "featuredEyebrow": "试试精选宠物",
-      "featuredTitle": "这些宠物肯定还在",
-      "featuredPetAnimated": "{name} 动画",
-      "terminalEyebrow": "或者直接在终端安装一只"
     }
+  },
+  "notFound": {
+    "eyebrow": "错误 404",
+    "title": "这只宠物走丢了",
+    "body": "你要访问的页面不在索引里。可能是拼写错误、投稿已撤回，或这只宠物还没有通过审核。试试下面这些替代选项。",
+    "lostPetAnimated": "{name} 正在轮播各个状态",
+    "caughtWandering": "游荡时抓到：{name}",
+    "browsePets": "浏览 {count}+ 只宠物",
+    "browseGallery": "浏览图库",
+    "about": "关于 Petdex",
+    "submit": "提交宠物",
+    "featuredEyebrow": "试试精选宠物",
+    "featuredTitle": "这些宠物肯定还在",
+    "featuredPetAnimated": "{name} 动画",
+    "terminalEyebrow": "或者直接在终端安装一只"
+  },
+  "leaderboard": {
+    "eyebrow": "热门创作者",
+    "title": "Petdex 排行榜",
+    "subtitle": "发布宠物最多、最受喜爱、安装量最高的创作者。实时更新。",
+    "categoryAria": "排行榜分类",
+    "secondaryStats": {
+      "pets": "宠物",
+      "likes": "点赞",
+      "installs": "安装"
+    },
+    "tabs": {
+      "pets": {
+        "label": "宠物最多",
+        "unit": "已批准",
+        "blurb": "按目录中已批准宠物数量排序的创作者。",
+        "empty": "还没有已批准的投稿。"
+      },
+      "likes": {
+        "label": "最受喜爱",
+        "unit": "点赞",
+        "blurb": "创作者所有宠物累计获得的点赞总数。",
+        "empty": "还没有人的宠物收到点赞。"
+      },
+      "installs": {
+        "label": "安装最多",
+        "unit": "安装",
+        "blurb": "创作者所有宠物累计获得的 CLI 安装总数。",
+        "empty": "还没有记录到安装。"
+      },
+      "rising": {
+        "label": "上升中",
+        "unit": "本周",
+        "blurb": "过去 7 天内获批的宠物。火起来了？继续发。",
+        "empty": "本周还没有新宠物获批。"
+      }
+    }
+  },
+  "claim": {
+    "cta": "登录以认领",
+    "body": "这是你的宠物吗，<strong>{author}</strong>？使用 GitHub 登录以认领 {petName}，编辑详细信息，并跟踪安装数据。"
+  },
+  "submittedBy": {
+    "eyebrow": "提交者",
+    "viewProfile": "查看 {name} 的主页"
+  },
+  "installCommand": {
+    "installStep": "1. 安装",
+    "activateStep": "2. 在 Codex 中激活",
+    "dropsInto": "将宠物包放入",
+    "methodAria": "安装方式",
+    "platformAria": "安装平台",
+    "tabs": {
+      "cli": "CLI"
+    },
+    "steps": {
+      "openCodex": "打开 Codex，",
+      "insideCodex": "在 Codex 中唤醒它或将其收起。",
+      "andClick": "并点击",
+      "use": "使用"
+    }
+  },
+  "petStateViewer": {
+    "eyebrow": "状态查看器",
+    "frames": "{count} 帧",
+    "rowFrames": "第 {row} 行 - {frames} 帧",
+    "animationLabel": "{name} {state} 动画"
   }
 }

@@ -228,58 +228,88 @@
     },
     "threadPage": {
       "back": "← Inbox"
-    },
-    "leaderboard": {
-      "eyebrow": "Creadores destacados",
-      "title": "Ranking de Petdex",
-      "subtitle": "Los artistas que publican más mascotas, reciben más cariño y logran más instalaciones. Se actualiza en vivo.",
-      "categoryAria": "Categoría del ranking",
-      "secondaryStats": {
-        "pets": "mascotas",
-        "likes": "me gusta",
-        "installs": "instalaciones"
-      },
-      "tabs": {
-        "pets": {
-          "label": "Más mascotas",
-          "unit": "aprobadas",
-          "blurb": "Creadores ordenados por mascotas aprobadas en el catálogo.",
-          "empty": "Todavía no hay envíos aprobados."
-        },
-        "likes": {
-          "label": "Más queridas",
-          "unit": "me gusta",
-          "blurb": "Total de me gusta acumulados entre todas las mascotas que publicó un creador.",
-          "empty": "Las mascotas de nadie han recibido me gusta todavía."
-        },
-        "installs": {
-          "label": "Más instaladas",
-          "unit": "instalaciones",
-          "blurb": "Total de instalaciones por CLI acumuladas entre las mascotas de un creador.",
-          "empty": "Todavía no hay instalaciones registradas."
-        },
-        "rising": {
-          "label": "En ascenso",
-          "unit": "esta semana",
-          "blurb": "Mascotas aprobadas en los últimos 7 días. ¿Se encendió? Publica más.",
-          "empty": "No se aprobaron mascotas nuevas esta semana."
-        }
-      }
-    },
-    "notFound": {
-      "eyebrow": "Error 404",
-      "title": "Esta mascota se perdió",
-      "body": "La página que intentaste abrir no está en el índice. Puede ser un error de escritura, un envío retirado o una mascota que todavía no ha sido aprobada. Prueba con una de estas opciones.",
-      "lostPetAnimated": "{name} recorriendo sus estados",
-      "caughtWandering": "Encontrada deambulando: {name}",
-      "browsePets": "Ver {count}+ mascotas",
-      "browseGallery": "Ver la galería",
-      "about": "Acerca de Petdex",
-      "submit": "Enviar una mascota",
-      "featuredEyebrow": "Prueba una destacada",
-      "featuredTitle": "Mascotas que sí están aquí",
-      "featuredPetAnimated": "{name} animada",
-      "terminalEyebrow": "O instala una desde la terminal"
     }
+  },
+  "notFound": {
+    "eyebrow": "Error 404",
+    "title": "Esta mascota se perdió",
+    "body": "La página que intentaste abrir no está en el índice. Puede ser un error de escritura, un envío retirado o una mascota que todavía no ha sido aprobada. Prueba con una de estas opciones.",
+    "lostPetAnimated": "{name} recorriendo sus estados",
+    "caughtWandering": "Encontrada deambulando: {name}",
+    "browsePets": "Ver {count}+ mascotas",
+    "browseGallery": "Ver la galería",
+    "about": "Acerca de Petdex",
+    "submit": "Enviar una mascota",
+    "featuredEyebrow": "Prueba una destacada",
+    "featuredTitle": "Mascotas que sí están aquí",
+    "featuredPetAnimated": "{name} animada",
+    "terminalEyebrow": "O instala una desde la terminal"
+  },
+  "leaderboard": {
+    "eyebrow": "Creadores destacados",
+    "title": "Ranking de Petdex",
+    "subtitle": "Los artistas que publican más mascotas, reciben más cariño y logran más instalaciones. Se actualiza en vivo.",
+    "categoryAria": "Categoría del ranking",
+    "secondaryStats": {
+      "pets": "mascotas",
+      "likes": "me gusta",
+      "installs": "instalaciones"
+    },
+    "tabs": {
+      "pets": {
+        "label": "Más mascotas",
+        "unit": "aprobadas",
+        "blurb": "Creadores ordenados por mascotas aprobadas en el catálogo.",
+        "empty": "Todavía no hay envíos aprobados."
+      },
+      "likes": {
+        "label": "Más queridas",
+        "unit": "me gusta",
+        "blurb": "Total de me gusta acumulados entre todas las mascotas que publicó un creador.",
+        "empty": "Las mascotas de nadie han recibido me gusta todavía."
+      },
+      "installs": {
+        "label": "Más instaladas",
+        "unit": "instalaciones",
+        "blurb": "Total de instalaciones por CLI acumuladas entre las mascotas de un creador.",
+        "empty": "Todavía no hay instalaciones registradas."
+      },
+      "rising": {
+        "label": "En ascenso",
+        "unit": "esta semana",
+        "blurb": "Mascotas aprobadas en los últimos 7 días. ¿Se encendió? Publica más.",
+        "empty": "No se aprobaron mascotas nuevas esta semana."
+      }
+    }
+  },
+  "claim": {
+    "cta": "Inicia sesión para reclamar",
+    "body": "¿Es tu mascota, <strong>{author}</strong>? Inicia sesión con GitHub para reclamar {petName}, editar los detalles y ver las instalaciones."
+  },
+  "submittedBy": {
+    "eyebrow": "Publicado por",
+    "viewProfile": "Ver el perfil de {name}"
+  },
+  "installCommand": {
+    "installStep": "1. Instalar",
+    "activateStep": "2. Activar en Codex",
+    "dropsInto": "Coloca el paquete del pet en",
+    "methodAria": "Método de instalación",
+    "platformAria": "Plataforma de instalación",
+    "tabs": {
+      "cli": "CLI"
+    },
+    "steps": {
+      "openCodex": "Abre Codex,",
+      "insideCodex": "dentro de Codex para activarlo u ocultarlo.",
+      "andClick": "y haz clic en",
+      "use": "Usa"
+    }
+  },
+  "petStateViewer": {
+    "eyebrow": "Visor de estados",
+    "frames": "{count} frames",
+    "rowFrames": "Fila {row} - {frames} frames",
+    "animationLabel": "{name} animación {state}"
   }
 }

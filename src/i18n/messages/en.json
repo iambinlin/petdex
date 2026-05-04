@@ -228,58 +228,88 @@
     },
     "threadPage": {
       "back": "← Inbox"
-    },
-    "leaderboard": {
-      "eyebrow": "Top creators",
-      "title": "Petdex leaderboard",
-      "subtitle": "The artists shipping the most pets, getting the most love, and landing the most installs. Updated live.",
-      "categoryAria": "Leaderboard category",
-      "secondaryStats": {
-        "pets": "pets",
-        "likes": "likes",
-        "installs": "installs"
-      },
-      "tabs": {
-        "pets": {
-          "label": "Most pets",
-          "unit": "approved",
-          "blurb": "Creators ranked by approved pets in the catalog.",
-          "empty": "No approved submissions yet."
-        },
-        "likes": {
-          "label": "Most loved",
-          "unit": "likes",
-          "blurb": "Total likes earned across every pet a creator has shipped.",
-          "empty": "Nobody's pets have collected likes yet."
-        },
-        "installs": {
-          "label": "Most installed",
-          "unit": "installs",
-          "blurb": "Total CLI installs aggregated across a creator's pets.",
-          "empty": "No installs recorded yet."
-        },
-        "rising": {
-          "label": "Rising",
-          "unit": "this week",
-          "blurb": "Pets approved in the last 7 days. Caught fire? Ship more.",
-          "empty": "No new pets approved this week."
-        }
-      }
-    },
-    "notFound": {
-      "eyebrow": "Error 404",
-      "title": "This pet wandered off",
-      "body": "The page you tried to reach isn't in the index. Could be a typo, a withdrawn submission, or a pet that hasn't been approved yet. Try one of these instead.",
-      "lostPetAnimated": "{name} cycling through states",
-      "caughtWandering": "Caught wandering: {name}",
-      "browsePets": "Browse {count}+ pets",
-      "browseGallery": "Browse the gallery",
-      "about": "About Petdex",
-      "submit": "Submit a pet",
-      "featuredEyebrow": "Try a featured one",
-      "featuredTitle": "Pets that are definitely here",
-      "featuredPetAnimated": "{name} animated",
-      "terminalEyebrow": "Or install one from the terminal"
     }
+  },
+  "notFound": {
+    "eyebrow": "Error 404",
+    "title": "This pet wandered off",
+    "body": "The page you tried to reach isn't in the index. Could be a typo, a withdrawn submission, or a pet that hasn't been approved yet. Try one of these instead.",
+    "lostPetAnimated": "{name} cycling through states",
+    "caughtWandering": "Caught wandering: {name}",
+    "browsePets": "Browse {count}+ pets",
+    "browseGallery": "Browse the gallery",
+    "about": "About Petdex",
+    "submit": "Submit a pet",
+    "featuredEyebrow": "Try a featured one",
+    "featuredTitle": "Pets that are definitely here",
+    "featuredPetAnimated": "{name} animated",
+    "terminalEyebrow": "Or install one from the terminal"
+  },
+  "leaderboard": {
+    "eyebrow": "Top creators",
+    "title": "Petdex leaderboard",
+    "subtitle": "The artists shipping the most pets, getting the most love, and landing the most installs. Updated live.",
+    "categoryAria": "Leaderboard category",
+    "secondaryStats": {
+      "pets": "pets",
+      "likes": "likes",
+      "installs": "installs"
+    },
+    "tabs": {
+      "pets": {
+        "label": "Most pets",
+        "unit": "approved",
+        "blurb": "Creators ranked by approved pets in the catalog.",
+        "empty": "No approved submissions yet."
+      },
+      "likes": {
+        "label": "Most loved",
+        "unit": "likes",
+        "blurb": "Total likes earned across every pet a creator has shipped.",
+        "empty": "Nobody's pets have collected likes yet."
+      },
+      "installs": {
+        "label": "Most installed",
+        "unit": "installs",
+        "blurb": "Total CLI installs aggregated across a creator's pets.",
+        "empty": "No installs recorded yet."
+      },
+      "rising": {
+        "label": "Rising",
+        "unit": "this week",
+        "blurb": "Pets approved in the last 7 days. Caught fire? Ship more.",
+        "empty": "No new pets approved this week."
+      }
+    }
+  },
+  "claim": {
+    "cta": "Sign in to claim",
+    "body": "Is this your pet, <strong>{author}</strong>? Sign in with GitHub to claim {petName}, edit details, and track installs."
+  },
+  "submittedBy": {
+    "eyebrow": "Submitted by",
+    "viewProfile": "View {name}'s profile"
+  },
+  "installCommand": {
+    "installStep": "1. Install",
+    "activateStep": "2. Activate in Codex",
+    "dropsInto": "Drops the pet pack into",
+    "methodAria": "Install method",
+    "platformAria": "Install platform",
+    "tabs": {
+      "cli": "CLI"
+    },
+    "steps": {
+      "openCodex": "Open Codex,",
+      "insideCodex": "inside Codex to wake or tuck it away.",
+      "andClick": "and click",
+      "use": "Use"
+    }
+  },
+  "petStateViewer": {
+    "eyebrow": "State viewer",
+    "frames": "{count} frames",
+    "rowFrames": "Row {row} - {frames} frames",
+    "animationLabel": "{name} {state} animation"
   }
 }
