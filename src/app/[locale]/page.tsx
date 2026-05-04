@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getDexNumberMap } from "@/lib/dex";
 import { searchPets } from "@/lib/pet-search";
 import {
   type PetWithMetrics,
@@ -29,11 +30,16 @@ export default async function Home() {
   // See lib/shuffle-seed.ts + proxy.ts for context.
   const shuffleSeed = (await readShuffleSeed()) ?? undefined;
 
-  const [heroPets, totalPets, initialSearch] = await Promise.all([
+  const [heroPets, totalPets, initialSearch, dexEntries] = await Promise.all([
     getFeaturedPetsWithMetrics(6),
     getApprovedPetCount(),
     searchPets({ sort: "curated", shuffleSeed }),
+    getDexNumberMap(),
   ]);
+
+  // Plain-object so the server -> client serializer doesn't choke on a
+  // Map. Same source of truth either way.
+  const dexMap = Object.fromEntries(dexEntries.entries());
 
   const jsonLd = [
     {
@@ -120,7 +126,11 @@ export default async function Home() {
         className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-5 py-12 md:px-8 md:py-16"
       >
         {totalPets > 0 ? (
-          <PetGallery initial={initialSearch} totalPets={totalPets} />
+          <PetGallery
+            initial={initialSearch}
+            totalPets={totalPets}
+            dexMap={dexMap}
+          />
         ) : null}
       </section>
 

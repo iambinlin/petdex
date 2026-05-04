@@ -43,6 +43,14 @@ type SearchPayload = {
 type PetGalleryProps = {
   initial: SearchPayload;
   totalPets: number;
+  /**
+   * slug -> canonical dex number (ROW_NUMBER over approved_at). Built
+   * once on the server for the whole approved catalog and shipped to
+   * the client so every PetCard — including pets that arrive via the
+   * /api/pets/search infinite-scroll — can show the right number
+   * without a per-row lookup.
+   */
+  dexMap?: Record<string, number>;
 };
 
 type SortKey = "curated" | "popular" | "installed" | "alpha";
@@ -56,7 +64,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 
 const PAGE_SIZE = 24;
 
-export function PetGallery({ initial, totalPets }: PetGalleryProps) {
+export function PetGallery({ initial, totalPets, dexMap }: PetGalleryProps) {
   const [query, setQuery] = useState("");
   const [activeKinds, setActiveKinds] = useState<Set<PetKind>>(new Set());
   const [activeVibes, setActiveVibes] = useState<Set<PetVibe>>(new Set());
@@ -304,6 +312,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
             pet={pet}
             index={index}
             stateCount={stateCount}
+            dexNumber={dexMap?.[pet.slug] ?? null}
           />
         ))}
       </div>
@@ -415,10 +424,24 @@ type PetCardProps = {
    * label — install count is shown instead.
    */
   stateCount?: number;
+  /**
+   * Canonical pokédex number derived from `approved_at` order. When
+   * provided, the card shows "No. 042" — the real album slot, not the
+   * positional index in the current view (which would change with
+   * sort/shuffle/filter and confuse users into thinking pets had
+   * moved). Falls back to the positional index when missing so the
+   * card never renders a blank slot.
+   */
+  dexNumber?: number | null;
 };
 
-export function PetCard({ pet, index }: PetCardProps) {
-  const dexNumber = String(index + 1).padStart(3, "0");
+export function PetCard({ pet, index, dexNumber }: PetCardProps) {
+  const dexLabel =
+    dexNumber != null
+      ? dexNumber < 1000
+        ? dexNumber.toString().padStart(3, "0")
+        : dexNumber.toString()
+      : String(index + 1).padStart(3, "0");
   const { likeCount, installCount } = pet.metrics;
   const isDiscovered = pet.source === "discover";
   const href = `/pets/${pet.slug}`;
@@ -438,7 +461,7 @@ export function PetCard({ pet, index }: PetCardProps) {
       >
         <div className="flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pr-12 pb-3 dark:border-white/[0.06]">
           <span className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
-            No. {dexNumber}
+            No. {dexLabel}
           </span>
         </div>
 
