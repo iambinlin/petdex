@@ -46,23 +46,25 @@ function UserButtonWithAdminLinks() {
           href="/my-pets"
         />
         {showAdmin ? (
-          <>
-            <UserButton.Link
-              label="Admin · review queue"
-              labelIcon={<Shield className="size-4" />}
-              href="/admin"
-            />
-            <UserButton.Link
-              label="Admin · requests"
-              labelIcon={<Inbox className="size-4" />}
-              href="/admin/requests"
-            />
-            <UserButton.Link
-              label="Admin · feedback"
-              labelIcon={<MessageSquare className="size-4" />}
-              href="/admin/feedback"
-            />
-          </>
+          <UserButton.Link
+            label="Admin · review queue"
+            labelIcon={<Shield className="size-4" />}
+            href="/admin"
+          />
+        ) : null}
+        {showAdmin ? (
+          <UserButton.Link
+            label="Admin · requests"
+            labelIcon={<Inbox className="size-4" />}
+            href="/admin/requests"
+          />
+        ) : null}
+        {showAdmin ? (
+          <UserButton.Link
+            label="Admin · feedback"
+            labelIcon={<MessageSquare className="size-4" />}
+            href="/admin/feedback"
+          />
         ) : null}
       </UserButton.MenuItems>
     </UserButton>
