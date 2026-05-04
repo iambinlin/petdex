@@ -1,11 +1,12 @@
 import Link from "next/link";
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { desc, eq, inArray, sql as dsql } from "drizzle-orm";
+import { desc, sql as dsql, eq, inArray } from "drizzle-orm";
 import { ExternalLink, Sparkles } from "lucide-react";
 
-import { AdminRequestActions } from "@/components/admin-request-actions";
 import { db, schema } from "@/lib/db/client";
+
+import { AdminRequestActions } from "@/components/admin-request-actions";
 
 export const metadata = {
   title: "Petdex — Admin · Requests",
@@ -60,21 +61,18 @@ async function loadClerkInfo(
   return out;
 }
 
-const STATUS_META: Record<
-  string,
-  { label: string; tone: string }
-> = {
+const STATUS_META: Record<string, { label: string; tone: string }> = {
   open: {
     label: "Open",
-    tone: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/60",
+    tone: "bg-chip-warning-bg text-chip-warning-fg ring-chip-warning-fg/20",
   },
   fulfilled: {
     label: "Fulfilled",
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
+    tone: "bg-chip-success-bg text-chip-success-fg ring-chip-success-fg/20",
   },
   dismissed: {
     label: "Dismissed",
-    tone: "bg-stone-100 text-stone-600 ring-stone-200 dark:bg-stone-800 dark:text-stone-300 dark:ring-stone-700",
+    tone: "bg-surface-muted text-stone-600 ring-stone-200 dark:text-stone-300 dark:ring-stone-700",
   },
 };
 
@@ -146,9 +144,9 @@ export default async function AdminRequestsPage() {
         <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
           Pet requests
         </h1>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
-          {open.length} open · {fulfilled.length} fulfilled ·{" "}
-          {dismissed.length} dismissed
+        <p className="mt-3 text-sm text-muted-2">
+          {open.length} open · {fulfilled.length} fulfilled · {dismissed.length}{" "}
+          dismissed
         </p>
       </header>
 
@@ -235,27 +233,29 @@ function RequestRow({
   const moreVoters = Math.max(0, request.upvoteCount - top3.length);
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/80 p-4 backdrop-blur dark:border-white/10 dark:bg-stone-900/80">
+    <div className="rounded-2xl border border-border-base bg-surface/80 p-4 backdrop-blur">
       <div className="flex items-start gap-3">
         {/* Vote tile */}
-        <div className="flex shrink-0 flex-col items-center rounded-xl border border-black/10 bg-white px-3 py-2 text-stone-700 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300">
+        <div className="flex shrink-0 flex-col items-center rounded-xl border border-border-base bg-surface px-3 py-2 text-muted-2">
           <span className="font-mono text-base font-semibold leading-none">
             {request.upvoteCount}
           </span>
-          <span className="font-mono text-[9px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
+          <span className="font-mono text-[9px] tracking-[0.18em] text-muted-4 uppercase">
             votes
           </span>
         </div>
 
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-base text-stone-900 dark:text-stone-100">{request.query}</p>
+            <p className="text-base text-stone-900 dark:text-stone-100">
+              {request.query}
+            </p>
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${statusMeta.tone}`}
             >
               {statusMeta.label}
             </span>
-            <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
+            <span className="font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
               {new Date(request.createdAt).toLocaleDateString(undefined, {
                 month: "short",
                 day: "numeric",
@@ -263,14 +263,14 @@ function RequestRow({
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-stone-500 dark:text-stone-400">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-3">
             {/* Requester */}
             {requester ? (
               <Link
                 href={`/u/${requester.handle}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full bg-stone-50 px-2 py-1 transition hover:bg-stone-100 hover:text-stone-900 dark:bg-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+                className="inline-flex items-center gap-1.5 rounded-full bg-surface-muted px-2 py-1 transition hover:bg-surface-muted hover:text-stone-900 dark:hover:text-stone-100"
               >
                 {requester.imageUrl ? (
                   // biome-ignore lint/performance/noImgElement: Clerk avatar
@@ -280,27 +280,27 @@ function RequestRow({
                     className="size-5 rounded-full ring-1 ring-black/10"
                   />
                 ) : (
-                  <span className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[9px] font-semibold text-stone-700 dark:bg-stone-700 dark:text-stone-300">
+                  <span className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[9px] font-semibold text-muted-2 dark:bg-stone-700">
                     {(requester.displayName ?? requester.handle)
                       .slice(0, 1)
                       .toUpperCase()}
                   </span>
                 )}
-                <span className="text-stone-800 dark:text-stone-200">
+                <span className="text-foreground">
                   {requester.displayName ?? `@${requester.handle}`}
                 </span>
                 {requester.username ? (
-                  <span className="font-mono text-[10px] text-stone-400 dark:text-stone-500">
+                  <span className="font-mono text-[10px] text-muted-4">
                     @{requester.username}
                   </span>
                 ) : null}
               </Link>
             ) : request.requestedBy ? (
-              <span className="font-mono text-[10px] text-stone-400 dark:text-stone-500">
+              <span className="font-mono text-[10px] text-muted-4">
                 {request.requestedBy.slice(0, 14)}…
               </span>
             ) : (
-              <span className="font-mono text-[10px] text-stone-400 dark:text-stone-500">
+              <span className="font-mono text-[10px] text-muted-4">
                 anonymous
               </span>
             )}
@@ -323,7 +323,7 @@ function RequestRow({
                       <span
                         key={v.handle}
                         title={v.displayName ?? `@${v.handle}`}
-                        className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[9px] font-semibold text-stone-700 ring-2 ring-white dark:bg-stone-700 dark:text-stone-300"
+                        className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[9px] font-semibold text-muted-2 ring-2 ring-white dark:bg-stone-700"
                       >
                         {(v.displayName ?? v.handle).slice(0, 1).toUpperCase()}
                       </span>
@@ -331,7 +331,7 @@ function RequestRow({
                   )}
                 </span>
                 {moreVoters > 0 ? (
-                  <span className="font-mono text-[10px] text-stone-500 dark:text-stone-400">
+                  <span className="font-mono text-[10px] text-muted-3">
                     +{moreVoters} more
                   </span>
                 ) : null}
@@ -344,7 +344,7 @@ function RequestRow({
                 href={`/pets/${fulfilledPet.slug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/40"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-chip-success-bg px-2 py-1 text-chip-success-fg transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800/60 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/40"
               >
                 <Sparkles className="size-3" />
                 <span className="font-medium">{fulfilledPet.displayName}</span>
@@ -378,7 +378,7 @@ function Section({
     <section className="space-y-3">
       <div className="flex items-baseline justify-between">
         <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        <span className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
+        <span className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
           {count}
         </span>
       </div>
@@ -389,7 +389,7 @@ function Section({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-6 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
+    <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-6 text-center text-sm text-muted-2">
       {children}
     </div>
   );

@@ -3,13 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import {
-  Check,
-  Loader2,
-  RotateCcw,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Check, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 
 type Status = "open" | "fulfilled" | "dismissed";
 
@@ -44,9 +38,9 @@ export function AdminRequestActions({
         body: JSON.stringify({ action, ...payload }),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const j = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         setError(j?.error ?? res.statusText);
         return;
       }
@@ -80,7 +74,7 @@ export function AdminRequestActions({
             onClick={() => void run("dismiss")}
             aria-label="Dismiss"
             title="Dismiss"
-            className="inline-flex size-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-900 transition hover:border-rose-300 hover:bg-rose-100 disabled:opacity-60 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/40"
+            className="inline-flex size-8 items-center justify-center rounded-full border border-rose-200 bg-chip-danger-bg text-chip-danger-fg transition hover:border-rose-300 hover:bg-rose-100 disabled:opacity-60 dark:border-rose-800/60 dark:hover:border-rose-700 dark:hover:bg-rose-900/40"
           >
             {busy === "dismiss" ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -96,7 +90,7 @@ export function AdminRequestActions({
             onClick={() => void run("reopen")}
             aria-label="Re-open"
             title="Re-open"
-            className="inline-flex size-8 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-900 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:border-amber-700 dark:hover:bg-amber-900/40"
+            className="inline-flex size-8 items-center justify-center rounded-full border border-amber-200 bg-chip-warning-bg text-chip-warning-fg transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/60 dark:hover:border-amber-700 dark:hover:bg-amber-900/40"
           >
             {busy === "reopen" ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -113,9 +107,9 @@ export function AdminRequestActions({
             e.preventDefault();
             void run("fulfill", { petSlug: slug });
           }}
-          className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-2 py-1 dark:border-white/10 dark:bg-stone-900"
+          className="flex items-center gap-1.5 rounded-full border border-border-base bg-surface px-2 py-1"
         >
-          <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
+          <span className="font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
             slug
           </span>
           <input
@@ -123,7 +117,7 @@ export function AdminRequestActions({
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="cool-clippy"
-            className="h-7 w-44 bg-transparent text-xs text-stone-900 outline-none placeholder:text-stone-400 dark:text-stone-100"
+            className="h-7 w-44 bg-transparent text-xs text-stone-900 outline-none placeholder:text-muted-4 dark:text-stone-100"
             autoFocus
           />
           <button

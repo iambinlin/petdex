@@ -21,7 +21,9 @@ export default async function AdminManifestPage() {
   const last24Rows = await db
     .select({ c: dsql<number>`COUNT(*)::int` })
     .from(schema.manifestFetches)
-    .where(dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '24 hours'`);
+    .where(
+      dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '24 hours'`,
+    );
   const last24 = last24Rows[0]?.c ?? 0;
 
   const distinctIpsRows = await db
@@ -29,7 +31,9 @@ export default async function AdminManifestPage() {
       c: dsql<number>`COUNT(DISTINCT ${schema.manifestFetches.ipHash})::int`,
     })
     .from(schema.manifestFetches)
-    .where(dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '24 hours'`);
+    .where(
+      dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '24 hours'`,
+    );
   const distinct24 = distinctIpsRows[0]?.c ?? 0;
 
   const byDay = await db
@@ -40,10 +44,10 @@ export default async function AdminManifestPage() {
       full: dsql<number>`COUNT(*) FILTER (WHERE variant = 'full')::int`,
     })
     .from(schema.manifestFetches)
-    .where(dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '14 days'`)
-    .groupBy(
-      dsql`date_trunc('day', ${schema.manifestFetches.fetchedAt})`,
+    .where(
+      dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '14 days'`,
     )
+    .groupBy(dsql`date_trunc('day', ${schema.manifestFetches.fetchedAt})`)
     .orderBy(
       desc(dsql`date_trunc('day', ${schema.manifestFetches.fetchedAt})`),
     );
@@ -54,7 +58,9 @@ export default async function AdminManifestPage() {
       count: dsql<number>`COUNT(*)::int`,
     })
     .from(schema.manifestFetches)
-    .where(dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '7 days'`)
+    .where(
+      dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '7 days'`,
+    )
     .groupBy(schema.manifestFetches.country)
     .orderBy(desc(dsql`COUNT(*)`))
     .limit(10);
@@ -63,12 +69,18 @@ export default async function AdminManifestPage() {
     .select({
       ipHash: schema.manifestFetches.ipHash,
       count: dsql<number>`COUNT(*)::int`,
-      lastUa: dsql<string | null>`(ARRAY_AGG(${schema.manifestFetches.userAgent} ORDER BY ${schema.manifestFetches.fetchedAt} DESC))[1]`,
-      lastCountry: dsql<string | null>`(ARRAY_AGG(${schema.manifestFetches.country} ORDER BY ${schema.manifestFetches.fetchedAt} DESC))[1]`,
+      lastUa: dsql<
+        string | null
+      >`(ARRAY_AGG(${schema.manifestFetches.userAgent} ORDER BY ${schema.manifestFetches.fetchedAt} DESC))[1]`,
+      lastCountry: dsql<
+        string | null
+      >`(ARRAY_AGG(${schema.manifestFetches.country} ORDER BY ${schema.manifestFetches.fetchedAt} DESC))[1]`,
       lastSeen: dsql<Date>`MAX(${schema.manifestFetches.fetchedAt})`,
     })
     .from(schema.manifestFetches)
-    .where(dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '7 days'`)
+    .where(
+      dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '7 days'`,
+    )
     .groupBy(schema.manifestFetches.ipHash)
     .orderBy(desc(dsql`COUNT(*)`))
     .limit(20);
@@ -79,7 +91,9 @@ export default async function AdminManifestPage() {
       count: dsql<number>`COUNT(*)::int`,
     })
     .from(schema.manifestFetches)
-    .where(dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '7 days'`)
+    .where(
+      dsql`${schema.manifestFetches.fetchedAt} > NOW() - INTERVAL '7 days'`,
+    )
     .groupBy(schema.manifestFetches.userAgent)
     .orderBy(desc(dsql`COUNT(*)`))
     .limit(15);
@@ -93,9 +107,9 @@ export default async function AdminManifestPage() {
         <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
           Manifest fetches
         </h1>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
-          Who's pulling /api/manifest. IPs are SHA-256 hashed daily so
-          they group within a day but can't be reversed.
+        <p className="mt-3 text-sm text-muted-2">
+          Who's pulling /api/manifest. IPs are SHA-256 hashed daily so they
+          group within a day but can't be reversed.
         </p>
       </header>
 
@@ -115,7 +129,7 @@ export default async function AdminManifestPage() {
               const pct = max > 0 ? Math.round((d.count / max) * 100) : 0;
               return (
                 <li key={d.day} className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 font-mono text-[11px] text-stone-500 dark:text-stone-400">
+                  <span className="w-24 shrink-0 font-mono text-[11px] text-muted-3">
                     {d.day}
                   </span>
                   <span className="flex-1">
@@ -124,9 +138,9 @@ export default async function AdminManifestPage() {
                       style={{ width: `${pct}%` }}
                     />
                   </span>
-                  <span className="w-24 text-right font-mono text-[11px] text-stone-700 dark:text-stone-300">
+                  <span className="w-24 text-right font-mono text-[11px] text-muted-2">
                     {d.count.toLocaleString()}{" "}
-                    <span className="text-stone-400 dark:text-stone-500">
+                    <span className="text-muted-4">
                       ({d.slim}s/{d.full}f)
                     </span>
                   </span>
@@ -142,7 +156,7 @@ export default async function AdminManifestPage() {
         <Card title="Loudest IPs · last 7d">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
+              <tr className="text-left font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase">
                 <th className="pb-2 font-normal">IP hash</th>
                 <th className="pb-2 font-normal">Country</th>
                 <th className="pb-2 font-normal">Last UA</th>
@@ -155,10 +169,10 @@ export default async function AdminManifestPage() {
                   key={row.ipHash}
                   className="border-t border-black/[0.06] align-top dark:border-white/[0.06]"
                 >
-                  <td className="py-2 pr-3 font-mono text-[11px] text-stone-700 dark:text-stone-300">
+                  <td className="py-2 pr-3 font-mono text-[11px] text-muted-2">
                     {row.ipHash.slice(0, 12)}…
                   </td>
-                  <td className="py-2 pr-3 font-mono text-[11px] text-stone-700 dark:text-stone-300">
+                  <td className="py-2 pr-3 font-mono text-[11px] text-muted-2">
                     <span className="inline-flex items-center gap-1">
                       <span className="text-sm leading-none">
                         {countryFlag(row.lastCountry)}
@@ -166,7 +180,7 @@ export default async function AdminManifestPage() {
                       {row.lastCountry ?? "—"}
                     </span>
                   </td>
-                  <td className="max-w-[24rem] truncate py-2 pr-3 text-xs text-stone-600 dark:text-stone-400">
+                  <td className="max-w-[24rem] truncate py-2 pr-3 text-xs text-muted-2">
                     {row.lastUa ?? "—"}
                   </td>
                   <td className="py-2 pr-2 text-right font-mono text-xs font-semibold text-stone-900 dark:text-stone-100">
@@ -188,11 +202,11 @@ export default async function AdminManifestPage() {
                 key={`${u.userAgent ?? "none"}-${i}`}
                 className="flex items-baseline gap-3 border-t border-black/[0.04] pt-1.5 first:border-0 first:pt-0"
               >
-                <span className="w-16 shrink-0 text-right font-mono text-[11px] font-semibold text-stone-700 dark:text-stone-300">
+                <span className="w-16 shrink-0 text-right font-mono text-[11px] font-semibold text-muted-2">
                   {u.count.toLocaleString()}
                 </span>
-                <span className="truncate text-xs text-stone-600 dark:text-stone-400">
-                  {u.userAgent ?? <em className="text-stone-400 dark:text-stone-500">no UA</em>}
+                <span className="truncate text-xs text-muted-2">
+                  {u.userAgent ?? <em className="text-muted-4">no UA</em>}
                 </span>
               </li>
             ))}
@@ -207,13 +221,13 @@ export default async function AdminManifestPage() {
             {byCountry.map((c) => (
               <li
                 key={c.country ?? "none"}
-                className="flex items-center justify-between rounded-xl bg-stone-50 px-3 py-2 text-xs dark:bg-stone-900"
+                className="flex items-center justify-between rounded-xl bg-surface-muted px-3 py-2 text-xs"
               >
                 <span className="flex items-center gap-1.5">
                   <span className="text-base leading-none">
                     {countryFlag(c.country)}
                   </span>
-                  <span className="font-mono text-[11px] tracking-[0.1em] text-stone-600 uppercase dark:text-stone-400">
+                  <span className="font-mono text-[11px] tracking-[0.1em] text-muted-2 uppercase">
                     {c.country ?? "—"}
                   </span>
                 </span>
@@ -231,11 +245,11 @@ export default async function AdminManifestPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
-      <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+    <div className="rounded-2xl border border-border-base bg-surface/76 p-4 backdrop-blur">
+      <p className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
         {label}
       </p>
-      <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-stone-950 dark:text-stone-100">
+      <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-foreground">
         {value}
       </p>
     </div>
@@ -250,7 +264,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-black/10 bg-white/76 p-5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
+    <section className="rounded-2xl border border-border-base bg-surface/76 p-5 backdrop-blur">
       <h2 className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
         {title}
       </h2>

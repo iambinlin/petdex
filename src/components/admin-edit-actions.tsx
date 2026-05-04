@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+
+import { Check, Loader2, X } from "lucide-react";
 
 export function AdminEditActions({ id }: { id: string }) {
   const router = useRouter();
@@ -23,9 +24,9 @@ export function AdminEditActions({ id }: { id: string }) {
         body: JSON.stringify({ action, reason }),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const j = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         alert(`Failed: ${j?.error ?? res.statusText}`);
         return;
       }
@@ -56,7 +57,7 @@ export function AdminEditActions({ id }: { id: string }) {
         type="button"
         disabled={disabled}
         onClick={() => void run("reject")}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-3 text-xs font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-100 disabled:opacity-60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/40"
+        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rose-300 bg-chip-danger-bg px-3 text-xs font-medium text-chip-danger-fg transition hover:border-rose-400 hover:bg-rose-100 disabled:opacity-60 dark:hover:bg-rose-900/40"
       >
         {busy === "reject" ? (
           <Loader2 className="size-3.5 animate-spin" />

@@ -2,8 +2,9 @@ import Link from "next/link";
 
 import { desc, isNotNull } from "drizzle-orm";
 
-import { AdminEditActions } from "@/components/admin-edit-actions";
 import { db, schema } from "@/lib/db/client";
+
+import { AdminEditActions } from "@/components/admin-edit-actions";
 
 export const metadata = {
   title: "Petdex — Admin · Edits",
@@ -22,15 +23,15 @@ function DiffField({
   after: string;
 }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/80 p-3 dark:border-white/10 dark:bg-stone-900/80">
-      <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
+    <div className="rounded-2xl border border-border-base bg-surface/80 p-3">
+      <p className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase">
         {label}
       </p>
       <div className="mt-1 grid gap-2 md:grid-cols-2">
-        <div className="rounded-xl bg-rose-50/60 p-2 text-sm leading-6 text-rose-900 line-through ring-1 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300">
+        <div className="rounded-xl bg-chip-danger-bg p-2 text-sm leading-6 text-chip-danger-fg line-through ring-1 ring-chip-danger-fg/20">
           {before || <span className="italic opacity-60">empty</span>}
         </div>
-        <div className="rounded-xl bg-emerald-50/60 p-2 text-sm leading-6 text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <div className="rounded-xl bg-chip-success-bg p-2 text-sm leading-6 text-chip-success-fg ring-1 ring-chip-success-fg/20">
           {after || <span className="italic opacity-60">empty</span>}
         </div>
       </div>
@@ -38,13 +39,7 @@ function DiffField({
   );
 }
 
-function TagDiff({
-  before,
-  after,
-}: {
-  before: string[];
-  after: string[];
-}) {
+function TagDiff({ before, after }: { before: string[]; after: string[] }) {
   const beforeSet = new Set(before);
   const afterSet = new Set(after);
   const removed = before.filter((t) => !afterSet.has(t));
@@ -52,15 +47,15 @@ function TagDiff({
   const kept = before.filter((t) => afterSet.has(t));
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/80 p-3 dark:border-white/10 dark:bg-stone-900/80">
-      <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
+    <div className="rounded-2xl border border-border-base bg-surface/80 p-3">
+      <p className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase">
         Tags
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {kept.map((t) => (
           <span
             key={`kept-${t}`}
-            className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 dark:bg-stone-800 dark:text-stone-400"
+            className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-muted-2"
           >
             {t}
           </span>
@@ -68,7 +63,7 @@ function TagDiff({
         {removed.map((t) => (
           <span
             key={`rm-${t}`}
-            className="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-900 line-through ring-1 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300"
+            className="rounded-full bg-chip-danger-bg px-2 py-0.5 text-xs text-chip-danger-fg line-through ring-1 ring-chip-danger-fg/20"
           >
             {t}
           </span>
@@ -76,13 +71,13 @@ function TagDiff({
         {added.map((t) => (
           <span
             key={`add-${t}`}
-            className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-900 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300"
+            className="rounded-full bg-chip-success-bg px-2 py-0.5 text-xs font-medium text-chip-success-fg ring-1 ring-chip-success-fg/20"
           >
             +{t}
           </span>
         ))}
         {kept.length + removed.length + added.length === 0 ? (
-          <span className="text-xs italic text-stone-400 dark:text-stone-500">No changes</span>
+          <span className="text-xs italic text-muted-4">No changes</span>
         ) : null}
       </div>
     </div>
@@ -105,14 +100,14 @@ export default async function AdminEditsPage() {
         <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
           Pending edits
         </h1>
-        <p className="text-sm text-stone-600 dark:text-stone-400">
-          Owner-submitted text changes awaiting re-approval. The live page
-          keeps showing the approved values until you act.
+        <p className="text-sm text-muted-2">
+          Owner-submitted text changes awaiting re-approval. The live page keeps
+          showing the approved values until you act.
         </p>
       </header>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
+        <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
           No pending edits.
         </div>
       ) : (
@@ -123,7 +118,7 @@ export default async function AdminEditsPage() {
             return (
               <li
                 key={r.id}
-                className="rounded-2xl border border-black/10 bg-white/60 p-4 backdrop-blur dark:border-white/10 dark:bg-stone-900/60"
+                className="rounded-2xl border border-border-base bg-surface/60 p-4 backdrop-blur"
               >
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <Link
@@ -134,10 +129,10 @@ export default async function AdminEditsPage() {
                   >
                     {r.displayName}
                   </Link>
-                  <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
+                  <span className="font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
                     /{r.slug}
                   </span>
-                  <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
+                  <span className="font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
                     · submitted{" "}
                     {r.pendingSubmittedAt
                       ? new Date(r.pendingSubmittedAt).toLocaleString()
@@ -169,7 +164,7 @@ export default async function AdminEditsPage() {
                   {!r.pendingDisplayName &&
                   !r.pendingDescription &&
                   !pendingTags ? (
-                    <p className="text-sm italic text-stone-400 dark:text-stone-500">
+                    <p className="text-sm italic text-muted-4">
                       Edit submitted but no changes detected. Reject to clear.
                     </p>
                   ) : null}

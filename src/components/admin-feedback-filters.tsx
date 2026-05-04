@@ -52,9 +52,9 @@ export function AdminFeedbackFilters({
               href={buildHref(f.value, currentKind)}
               className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
                 active
-                  ? "border-black bg-black text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-950"
-                  : "border-black/10 bg-white text-stone-700 hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
-            }`}
+                  ? "border-inverse bg-inverse text-on-inverse"
+                  : "border-black/10 bg-surface text-muted-2 hover:border-black/30 dark:border-white/10 dark:hover:border-white/30"
+              }`}
             >
               {f.label}
               <span
@@ -79,8 +79,8 @@ export function AdminFeedbackFilters({
               className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] transition ${
                 active
                   ? "border-brand bg-brand/10 text-brand"
-                  : "border-black/10 bg-white text-stone-500 hover:border-black/30"
-              } dark:bg-stone-900 dark:text-stone-400`}
+                  : "border-black/10 bg-surface text-muted-3 hover:border-black/30"
+              }`}
             >
               {f.label}
               <span
