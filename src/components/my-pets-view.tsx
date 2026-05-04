@@ -93,12 +93,10 @@ export function MyPetsView({
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard
         </p>
-        <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl dark:text-stone-100">
-          {counts.all === 1
-            ? "1 submission"
-            : `${counts.all} submissions`}
+        <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+          {counts.all === 1 ? "1 submission" : `${counts.all} submissions`}
         </h1>
-        <p className="mt-3 max-w-xl text-base leading-7 text-stone-600 dark:text-stone-400">
+        <p className="mt-3 max-w-xl text-base leading-7 text-muted-2">
           Approved submissions go live on your{" "}
           <a
             href={`/u/${profile.handle}`}
@@ -108,9 +106,9 @@ export function MyPetsView({
           >
             public profile
           </a>
-          . Pending stay private until reviewed; rejected ones are gone.
-          Edit name, description or tags directly on each card — changes go
-          through a quick re-approval.
+          . Pending stay private until reviewed; rejected ones are gone. Edit
+          name, description or tags directly on each card — changes go through a
+          quick re-approval.
         </p>
       </header>
 
@@ -150,7 +148,7 @@ export function MyPetsView({
         ) : null}
         <Link
           href="/submit"
-          className="ml-auto inline-flex h-9 items-center gap-2 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+          className="ml-auto inline-flex h-9 items-center gap-2 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
         >
           <Plus className="size-3.5" />
           Submit another
@@ -158,7 +156,7 @@ export function MyPetsView({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-black/15 bg-white/70 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/70 dark:text-stone-400">
+        <p className="rounded-2xl border border-dashed border-border-base bg-surface/70 p-10 text-center text-sm text-muted-2">
           No submissions in this state.
         </p>
       ) : (
@@ -179,11 +177,11 @@ function SubmissionCard({ submission }: { submission: Submission }) {
 
   if (withdrawn) {
     return (
-      <article className="rounded-3xl border border-dashed border-black/15 bg-white/70 p-6 text-center dark:border-white/15 dark:bg-stone-900/70">
-        <p className="font-mono text-[10px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
+      <article className="rounded-3xl border border-dashed border-border-base bg-surface/70 p-6 text-center">
+        <p className="font-mono text-[10px] tracking-[0.22em] text-muted-3 uppercase">
           Withdrawn
         </p>
-        <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">
+        <p className="mt-2 text-sm text-muted-2">
           {submission.displayName} has been removed from the queue.
         </p>
       </article>
@@ -191,7 +189,11 @@ function SubmissionCard({ submission }: { submission: Submission }) {
   }
 
   const handleWithdraw = () => {
-    if (!window.confirm(`Withdraw "${submission.displayName}"? This can't be undone.`)) {
+    if (
+      !window.confirm(
+        `Withdraw "${submission.displayName}"? This can't be undone.`,
+      )
+    ) {
       return;
     }
     setError(null);
@@ -216,21 +218,24 @@ function SubmissionCard({ submission }: { submission: Submission }) {
     pending: {
       label: "Pending review",
       icon: <Clock className="size-3.5" />,
-      className: "bg-amber-50 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-950/40",
+      className:
+        "bg-amber-50 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-950/40",
       timeLabel: "Submitted",
       time: submission.createdAt,
     },
     approved: {
       label: "Approved · live",
       icon: <CheckCircle2 className="size-3.5" />,
-      className: "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950/40",
+      className:
+        "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950/40",
       timeLabel: "Approved",
       time: submission.approvedAt ?? submission.createdAt,
     },
     rejected: {
       label: "Rejected",
       icon: <XCircle className="size-3.5" />,
-      className: "bg-rose-50 text-rose-800 ring-1 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300",
+      className:
+        "bg-rose-50 text-rose-800 ring-1 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300",
       timeLabel: "Rejected",
       time: submission.rejectedAt ?? submission.createdAt,
     },
@@ -243,11 +248,11 @@ function SubmissionCard({ submission }: { submission: Submission }) {
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-white/76 backdrop-blur transition ${
+      className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-surface/76 backdrop-blur transition ${
         submission.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-black/10 shadow-sm shadow-blue-950/5"
-      } dark:bg-stone-900/76`}
+      }`}
     >
       <div className="flex items-center justify-between border-b border-black/[0.06] px-5 pt-4 pb-3 dark:border-white/[0.06]">
         <span
@@ -280,17 +285,17 @@ function SubmissionCard({ submission }: { submission: Submission }) {
 
       <div className="flex flex-col gap-2 border-t border-black/[0.06] px-5 py-4 dark:border-white/[0.06]">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-lg font-semibold tracking-tight text-stone-950 dark:text-stone-100">
+          <h3 className="text-lg font-semibold tracking-tight text-foreground">
             {submission.displayName}
           </h3>
-          <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
+          <span className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
             {submission.kind}
           </span>
         </div>
-        <p className="line-clamp-2 text-sm leading-6 text-stone-600 dark:text-stone-400">
+        <p className="line-clamp-2 text-sm leading-6 text-muted-2">
           {submission.description}
         </p>
-        <p className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
+        <p className="font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
           {statusConfig.timeLabel}{" "}
           {new Date(statusConfig.time).toLocaleDateString(undefined, {
             year: "numeric",
@@ -300,7 +305,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
         </p>
 
         {submission.status === "rejected" && submission.rejectionReason ? (
-          <div className="mt-2 rounded-2xl border border-rose-200 bg-rose-50/70 p-3 text-sm text-rose-900 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300">
+          <div className="mt-2 rounded-2xl border border-rose-200 bg-chip-danger-bg p-3 text-sm text-chip-danger-fg dark:border-rose-800/60">
             <div className="flex items-center gap-1.5 font-medium">
               <AlertTriangle className="size-3.5" />
               Reason
@@ -310,7 +315,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
         ) : null}
 
         {showMetrics ? (
-          <div className="mt-2 flex items-center gap-4 border-t border-black/[0.05] pt-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:border-white/[0.05] dark:text-stone-400">
+          <div className="mt-2 flex items-center gap-4 border-t border-black/[0.05] pt-3 font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase dark:border-white/[0.05]">
             {likeCount > 0 ? (
               <span className="inline-flex items-center gap-1">
                 <Heart className="size-3" />
@@ -336,7 +341,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
             <>
               <Link
                 href={`/pets/${submission.slug}`}
-                className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-inverse px-3 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
               >
                 View public page
               </Link>
@@ -353,7 +358,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
           ) : submission.status === "rejected" ? (
             <Link
               href="/submit"
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-full bg-inverse px-3 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
               Submit a new version
             </Link>
@@ -408,7 +413,7 @@ function TabButton({
   tone?: "default" | "amber" | "emerald" | "rose";
 }) {
   const toneClass = active
-    ? "border-black bg-black text-white"
+    ? "border-black bg-inverse text-on-inverse"
     : tone === "amber"
       ? "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300"
       : tone === "emerald"
@@ -500,7 +505,7 @@ function ClaimableBanner() {
   const remaining = pets.filter((p) => !claimed.has(p.id));
   if (remaining.length === 0) {
     return (
-      <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5 text-sm text-emerald-900 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+      <div className="rounded-3xl border border-emerald-200 bg-chip-success-bg p-5 text-sm text-chip-success-fg dark:border-emerald-800/60">
         Claimed. Refresh to see them in your list.
       </div>
     );
@@ -526,18 +531,18 @@ function ClaimableBanner() {
                 {githubUrl.replace("https://", "")}
               </span>
             ) : null}
-            . Click claim to move each one to your current account so you
-            can manage and re-submit edits.
+            . Click claim to move each one to your current account so you can
+            manage and re-submit edits.
           </p>
           <ul className="mt-2 space-y-2">
             {remaining.map((pet) => (
               <li
                 key={pet.id}
-                className="flex items-center justify-between gap-3 rounded-2xl bg-white/80 px-3 py-2 dark:bg-stone-900/80"
+                className="flex items-center justify-between gap-3 rounded-2xl bg-surface/80 px-3 py-2"
               >
-                <div className="flex items-center gap-2 text-sm text-stone-800 dark:text-stone-200">
+                <div className="flex items-center gap-2 text-sm text-foreground">
                   <span className="font-semibold">{pet.displayName}</span>
-                  <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+                  <span className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
                     {pet.status}
                   </span>
                 </div>
@@ -577,19 +582,19 @@ function EmptyState() {
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard
         </p>
-        <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl dark:text-stone-100">
+        <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
           No submissions yet
         </h1>
       </header>
-      <div className="rounded-3xl border border-dashed border-black/15 bg-white/70 p-10 dark:border-white/15 dark:bg-stone-900/70">
-        <p className="text-base leading-7 text-stone-700 dark:text-stone-300">
-          Send your first animated companion to Petdex. Submissions go
-          through a quick review and land here while they wait. Once
-          approved they show up on your public profile too.
+      <div className="rounded-3xl border border-dashed border-border-base bg-surface/70 p-10">
+        <p className="text-base leading-7 text-muted-2">
+          Send your first animated companion to Petdex. Submissions go through a
+          quick review and land here while they wait. Once approved they show up
+          on your public profile too.
         </p>
         <Link
           href="/submit"
-          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
         >
           <Plus className="size-4" />
           Submit your first pet

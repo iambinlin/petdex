@@ -66,9 +66,9 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
         }),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const j = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         setError(j?.error ?? res.statusText);
         return;
       }
@@ -87,24 +87,18 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
     });
   }
 
-  const fallbackInitial = (
-    profile.displayName ??
-    profile.handle ??
-    "?"
-  )
+  const fallbackInitial = (profile.displayName ?? profile.handle ?? "?")
     .slice(0, 1)
     .toUpperCase();
 
   const pinnedDetails = profile.featuredPetSlugs
-    .map((slug) =>
-      profile.approvedPets.find((p) => p.slug === slug),
-    )
+    .map((slug) => profile.approvedPets.find((p) => p.slug === slug))
     .filter((p): p is ApprovedPet => Boolean(p));
 
   return (
     <section
       id="profile"
-      className="rounded-3xl border border-black/10 bg-white/76 p-5 backdrop-blur md:p-6 dark:border-white/10 dark:bg-stone-900/76"
+      className="rounded-3xl border border-border-base bg-surface/76 p-5 backdrop-blur md:p-6"
     >
       <div className="flex flex-wrap items-center gap-4">
         {profile.avatarUrl ? (
@@ -115,7 +109,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
             className="size-14 shrink-0 rounded-2xl ring-1 ring-black/10"
           />
         ) : (
-          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-stone-100 font-mono text-base font-semibold text-stone-700 ring-1 ring-black/10 dark:bg-stone-800 dark:text-stone-300">
+          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-surface-muted font-mono text-base font-semibold text-muted-2 ring-1 ring-black/10">
             {fallbackInitial}
           </div>
         )}
@@ -123,10 +117,10 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
             Public profile
           </p>
-          <p className="mt-1 truncate text-base font-medium text-stone-950 dark:text-stone-100">
+          <p className="mt-1 truncate text-base font-medium text-foreground">
             {profile.displayName ?? `@${profile.handle}`}
           </p>
-          <p className="font-mono text-[11px] tracking-[0.06em] text-stone-500 dark:text-stone-400">
+          <p className="font-mono text-[11px] tracking-[0.06em] text-muted-3">
             petdex.crafter.run/u/{profile.handle}
           </p>
         </div>
@@ -135,7 +129,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
             href={`/u/${profile.handle}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:border-border-strong"
           >
             <ExternalLink className="size-3.5" />
             View public
@@ -143,7 +137,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-3 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
           >
             <Pencil className="size-3.5" />
             Customize
@@ -155,17 +149,17 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
         <div className="mt-4 grid gap-3 border-t border-black/[0.06] pt-4 md:grid-cols-2 dark:border-white/[0.06]">
           {profile.bio ? (
             <div>
-              <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+              <p className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
                 Bio
               </p>
-              <p className="mt-1.5 text-sm leading-6 text-stone-700 dark:text-stone-300">
+              <p className="mt-1.5 text-sm leading-6 text-muted-2">
                 {profile.bio}
               </p>
             </div>
           ) : null}
           {pinnedDetails.length > 0 ? (
             <div>
-              <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+              <p className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
                 Pinned ({pinnedDetails.length}/{MAX_PINNED_PETS})
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -183,7 +177,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           ) : null}
         </div>
       ) : (
-        <div className="mt-3 rounded-2xl border border-dashed border-black/10 bg-brand-tint/40 p-3 text-xs text-stone-600 dark:border-white/10 dark:text-stone-400">
+        <div className="mt-3 rounded-2xl border border-dashed border-border-base bg-brand-tint/40 p-3 text-xs text-muted-2">
           Add a bio and pin up to {MAX_PINNED_PETS} pets so visitors land
           somewhere opinionated. Hit{" "}
           <button
@@ -206,13 +200,13 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-stone-900">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
                   Customize profile
                 </h2>
-                <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                <p className="mt-1 text-xs text-muted-3">
                   Lives at petdex.crafter.run/u/{profile.handle}. Changes go
                   live instantly — no admin review.
                 </p>
@@ -220,7 +214,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
+                className="rounded-full p-1 text-muted-4 hover:bg-surface-muted hover:text-foreground"
               >
                 <X className="size-4" />
               </button>
@@ -236,7 +230,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
               <div>
                 <label
                   htmlFor="profile-bio"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400"
+                  className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
                   Bio
                 </label>
@@ -247,19 +241,19 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                   maxLength={280}
                   rows={4}
                   placeholder="Pixel art, cozy creatures, and the occasional shrimp."
-                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full resize-none rounded-xl border border-border-base bg-surface px-3 py-2 text-sm focus:border-brand focus:outline-none"
                 />
-                <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
+                <p className="mt-1 font-mono text-[10px] text-muted-4">
                   {bio.length}/280
                 </p>
               </div>
 
               <div>
-                <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
+                <p className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase">
                   Pinned pets ({pinned.length}/{MAX_PINNED_PETS})
                 </p>
                 {profile.approvedPets.length === 0 ? (
-                  <p className="mt-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
+                  <p className="mt-2 font-mono text-[10px] text-muted-4">
                     Once a pet is approved you can pin it here.
                   </p>
                 ) : (
@@ -284,8 +278,8 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                           className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                             active
                               ? "border-brand bg-brand text-white hover:bg-brand-deep"
-                              : "border-black/10 bg-white text-stone-700 hover:border-black/30"
-                          } dark:bg-stone-900 dark:text-stone-300`}
+                              : "border-black/10 bg-surface text-muted-2 hover:border-black/30"
+                          }`}
                         >
                           <Pin className="size-3" />
                           {p.displayName}
@@ -294,14 +288,14 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                     })}
                   </div>
                 )}
-                <p className="mt-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
-                  Tip: each pet card on your profile has a one-click Pin
-                  button too.
+                <p className="mt-2 font-mono text-[10px] text-muted-4">
+                  Tip: each pet card on your profile has a one-click Pin button
+                  too.
                 </p>
               </div>
 
               {error ? (
-                <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                <p className="rounded-xl bg-chip-danger-bg px-3 py-2 text-xs text-chip-danger-fg">
                   {error.replace(/_/g, " ")}
                 </p>
               ) : null}
@@ -310,14 +304,14 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+                  className="inline-flex h-9 items-center rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:border-border-strong"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-60 dark:bg-stone-100"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-stone-800 disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
                   Save

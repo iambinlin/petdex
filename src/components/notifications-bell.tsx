@@ -36,22 +36,22 @@ const KIND_META: Record<
 > = {
   pet_approved: {
     icon: <CheckCircle2 className="size-3.5" />,
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
+    tone: "bg-chip-success-bg text-chip-success-fg ring-chip-success-fg/20",
     verb: "approved",
   },
   pet_rejected: {
     icon: <XCircle className="size-3.5" />,
-    tone: "bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800/60",
+    tone: "bg-chip-danger-bg text-chip-danger-fg ring-chip-danger-fg/20",
     verb: "needs changes",
   },
   edit_approved: {
     icon: <Pencil className="size-3.5" />,
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
+    tone: "bg-chip-success-bg text-chip-success-fg ring-chip-success-fg/20",
     verb: "edit approved",
   },
   edit_rejected: {
     icon: <Pencil className="size-3.5" />,
-    tone: "bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800/60",
+    tone: "bg-chip-danger-bg text-chip-danger-fg ring-chip-danger-fg/20",
     verb: "edit needs changes",
   },
   feedback_replied: {
@@ -61,7 +61,7 @@ const KIND_META: Record<
   },
   request_fulfilled: {
     icon: <Sparkles className="size-3.5" />,
-    tone: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/60",
+    tone: "bg-chip-success-bg text-chip-success-fg ring-chip-success-fg/20",
     verb: "your request shipped",
   },
 };
@@ -159,7 +159,9 @@ export function NotificationsBell() {
   async function markAll() {
     setUnread(0);
     setItems((prev) =>
-      prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() })),
+      prev.map((n) =>
+        n.readAt ? n : { ...n, readAt: new Date().toISOString() },
+      ),
     );
     try {
       await fetch("/api/notifications/read", {
@@ -200,7 +202,7 @@ export function NotificationsBell() {
           unread > 0 ? `${unread} unread notifications` : "Notifications"
         }
         onClick={() => setOpen((v) => !v)}
-        className="relative grid size-10 place-items-center rounded-full border border-black/10 bg-white/70 text-stone-700 backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:bg-stone-800"
+        className="relative grid size-10 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
       >
         <Bell className="size-4" />
         {unread > 0 ? (
@@ -214,9 +216,9 @@ export function NotificationsBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-[60] mt-2 flex max-h-[min(70vh,520px)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15 dark:border-white/10 dark:bg-stone-900">
+        <div className="absolute right-0 z-[60] mt-2 flex max-h-[min(70vh,520px)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border-base bg-surface shadow-xl shadow-blue-950/15">
           <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
-            <span className="text-sm font-semibold text-stone-950 dark:text-stone-100">
+            <span className="text-sm font-semibold text-foreground">
               Notifications
             </span>
             {unread > 0 ? (
@@ -232,7 +234,7 @@ export function NotificationsBell() {
           </div>
 
           {items.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-stone-500 dark:text-stone-400">
+            <div className="px-4 py-10 text-center text-sm text-muted-3">
               You're all caught up.
             </div>
           ) : (
@@ -265,8 +267,8 @@ export function NotificationsBell() {
                           <p
                             className={`truncate text-sm ${
                               isUnread
-                                ? "font-medium text-stone-950 dark:text-stone-100"
-                                : "text-stone-700 dark:text-stone-300"
+                                ? "font-medium text-foreground"
+                                : "text-muted-2"
                             }`}
                           >
                             {title}
@@ -274,12 +276,12 @@ export function NotificationsBell() {
                           {isUnread ? (
                             <span className="size-1.5 shrink-0 rounded-full bg-brand" />
                           ) : null}
-                          <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
+                          <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
                             {relativeTime(n.createdAt)}
                           </span>
                         </div>
                         {sub ? (
-                          <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-stone-500 dark:text-stone-400">
+                          <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-3">
                             {sub}
                           </p>
                         ) : null}

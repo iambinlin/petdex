@@ -1,16 +1,11 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
-import { track } from "@vercel/analytics";
-import {
-  Download,
-  Heart,
-  Loader2,
-  Share2,
-  TerminalSquare,
-} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { useUser } from "@clerk/nextjs";
+import { track } from "@vercel/analytics";
+import { Download, Heart, Loader2, Share2, TerminalSquare } from "lucide-react";
 
 // Inline footer bar at the bottom of each gallery card. Surfaces the
 // four most-used actions (like, install, download, share) without
@@ -109,9 +104,7 @@ export function PetCardFooter({
     const url = `${typeof window !== "undefined" ? window.location.origin : ""}/pets/${slug}`;
     track("pet_shared", { slug, source: "card-footer" });
     if (navigator.share) {
-      navigator
-        .share({ title: displayName, url })
-        .catch(() => {});
+      navigator.share({ title: displayName, url }).catch(() => {});
       return;
     }
     try {
@@ -152,7 +145,7 @@ export function PetCardFooter({
         >
           <TerminalSquare className="size-3.5" />
           {installCount > 0 ? (
-            <span className="font-mono text-[11px] text-stone-500 dark:text-stone-400">
+            <span className="font-mono text-[11px] text-muted-3">
               {installCount}
             </span>
           ) : null}
@@ -169,9 +162,7 @@ export function PetCardFooter({
         </FooterBtn>
       </div>
 
-      {busy ? (
-        <Loader2 className="size-3.5 animate-spin text-stone-400 dark:text-stone-500" />
-      ) : null}
+      {busy ? <Loader2 className="size-3.5 animate-spin text-muted-4" /> : null}
     </div>
   );
 }
@@ -195,8 +186,8 @@ function FooterBtn({
       title={label}
       className={`inline-flex h-8 items-center gap-1 rounded-full px-2 transition ${
         active
-          ? "bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-stone-100"
-          : "text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          ? "bg-stone-100 text-stone-900 dark:text-stone-100"
+          : "text-stone-500 hover:bg-surface-muted hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
       }`}
     >
       {children}

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { useUser } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
@@ -72,9 +72,9 @@ export function ProfileAnnouncementModal() {
       />
 
       <div
-        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-black/10 bg-white shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
+        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-border-base bg-white shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
           closing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
-        } dark:border-white/10 dark:bg-stone-900`}
+        } dark:bg-stone-900`}
       >
         {/* Hero — preview of the user's actual profile URL with their avatar. */}
         <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-brand-tint via-white to-[#dbe2ff]">
@@ -87,12 +87,12 @@ export function ProfileAnnouncementModal() {
                 className="size-20 rounded-3xl object-cover ring-2 ring-white shadow-[0_18px_45px_-22px_rgba(82,102,234,0.5)]"
               />
             ) : (
-              <div className="grid size-20 place-items-center rounded-3xl bg-white font-mono text-2xl font-semibold text-stone-700 ring-2 ring-white shadow-[0_18px_45px_-22px_rgba(82,102,234,0.5)] dark:bg-stone-900 dark:text-stone-300">
+              <div className="grid size-20 place-items-center rounded-3xl bg-surface font-mono text-2xl font-semibold text-muted-2 ring-2 ring-white shadow-[0_18px_45px_-22px_rgba(82,102,234,0.5)]">
                 {displayName.slice(0, 1).toUpperCase()}
               </div>
             )}
-            <div className="rounded-2xl border border-black/10 bg-white/90 px-4 py-2 backdrop-blur dark:border-white/10 dark:bg-stone-900/90">
-              <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+            <div className="rounded-2xl border border-border-base bg-surface/90 px-4 py-2 backdrop-blur">
+              <p className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
                 Live at
               </p>
               <p className="font-mono text-sm tracking-[0.04em] text-stone-900 dark:text-stone-100">
@@ -104,7 +104,7 @@ export function ProfileAnnouncementModal() {
             type="button"
             onClick={() => close("dismiss")}
             aria-label="Close"
-            className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-white/90 text-stone-700 shadow-sm transition hover:bg-white hover:text-black dark:bg-stone-900/90 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+            className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-surface/90 text-muted-2 shadow-sm transition hover:bg-white hover:text-foreground dark:hover:bg-stone-800"
           >
             <X className="size-4" />
           </button>
@@ -119,17 +119,17 @@ export function ProfileAnnouncementModal() {
               New · Public profiles
             </p>
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-stone-950 dark:text-stone-100">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             You have your own profile now
           </h2>
-          <p className="text-sm leading-6 text-stone-600 dark:text-stone-400">
+          <p className="text-sm leading-6 text-muted-2">
             Every Petdex creator gets a public page with all their approved
             pets, an avatar, links, and an optional pinned favorite. Drop the
             URL in your bio.
           </p>
-          <p className="text-sm leading-6 text-stone-600 dark:text-stone-400">
+          <p className="text-sm leading-6 text-muted-2">
             Add a bio and pin a pet from{" "}
-            <span className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs text-stone-900 dark:bg-stone-800 dark:text-stone-100">
+            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-stone-900 dark:text-stone-100">
               /my-pets
             </span>{" "}
             so visitors land somewhere opinionated.
@@ -139,7 +139,7 @@ export function ProfileAnnouncementModal() {
             <Link
               href={`/u/${handle}`}
               onClick={() => close("cta_view")}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
               View my profile
               <ArrowRight className="size-4" />
@@ -147,7 +147,7 @@ export function ProfileAnnouncementModal() {
             <Link
               href="/my-pets#profile"
               onClick={() => close("cta_customize")}
-              className="inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
             >
               Customize
             </Link>

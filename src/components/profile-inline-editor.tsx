@@ -56,9 +56,9 @@ export function ProfileInlineEditor({
         }),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const j = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         setError(j?.error ?? res.statusText);
         return;
       }
@@ -177,9 +177,9 @@ export function ProfileInlineEditor({
                     })}
                   </div>
                 )}
-                <p className="mt-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
-                  Tip: each pet card on your profile has a one-click Pin
-                  button too.
+                <p className="mt-2 font-mono text-[10px] text-muted-4">
+                  Tip: each pet card on your profile has a one-click Pin button
+                  too.
                 </p>
               </div>
 

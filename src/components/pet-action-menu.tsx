@@ -5,13 +5,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
 import {
   Check,
+  X as CloseIcon,
   Copy,
   Download,
   ExternalLink,
   Link2,
   MoreHorizontal,
   Terminal,
-  X as CloseIcon,
 } from "lucide-react";
 
 const SITE_URL = "https://petdex.crafter.run";
@@ -116,8 +116,8 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
   // the like button. Card variant: compact circular icon in a corner.
   const triggerClassName =
     variant === "detail"
-      ? "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
-      : "inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white/90 text-stone-600 transition hover:border-black/30 hover:text-black dark:border-white/10 dark:bg-stone-900/90 dark:text-stone-400 dark:hover:border-white/30 dark:hover:text-stone-100";
+      ? "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
+      : "inline-flex size-8 items-center justify-center rounded-full border border-border-base bg-surface/90 text-muted-2 transition hover:border-border-strong hover:text-foreground";
 
   // Both variants open downward — the trigger lives in the top of its row,
   // so down has more room than up. Card variant aligns the menu's right
@@ -137,11 +137,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
       // z-50 on the menu still gets occluded by the next card. Raising
       // the wrapper's z-index keeps the menu above everything below.
       style={open ? { zIndex: 60 } : undefined}
-      className={
-        variant === "card"
-          ? "relative"
-          : "relative inline-flex"
-      }
+      className={variant === "card" ? "relative" : "relative inline-flex"}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         // Stop card-level navigation when this lives inside an <a> wrapper.
@@ -173,10 +169,10 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
       {open ? (
         <div
           role="menu"
-          className={`${menuPositionClassName} z-[60] w-60 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15 dark:border-white/10 dark:bg-stone-900`}
+          className={`${menuPositionClassName} z-[60] w-60 overflow-hidden rounded-2xl border border-border-base bg-surface shadow-xl shadow-blue-950/15`}
         >
           <div className="flex items-center justify-between border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]">
-            <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+            <span className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
               {pet.displayName}
             </span>
             <button
@@ -186,7 +182,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                 e.preventDefault();
                 setOpen(false);
               }}
-              className="grid size-6 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
+              className="grid size-6 place-items-center rounded-full text-muted-4 transition hover:bg-surface-muted hover:text-foreground"
             >
               <CloseIcon className="size-3.5" />
             </button>
@@ -242,7 +238,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                   target="_blank"
                   rel="noreferrer"
                   onClick={onZipClick}
-                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-stone-700 transition hover:bg-[#f4f6ff] hover:text-black dark:border-white/[0.06] dark:text-stone-300 dark:hover:text-stone-100"
+                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-muted-2 transition hover:bg-[#f4f6ff] hover:text-foreground dark:border-white/[0.06]"
                 >
                   <Download className="size-4" />
                   <span className="flex-1">Download ZIP</span>
@@ -273,13 +269,13 @@ function MenuItem({ icon, label, hint, onClick }: MenuItemProps) {
           e.preventDefault();
           onClick();
         }}
-        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-[#f4f6ff] hover:text-black dark:text-stone-300 dark:hover:text-stone-100"
+        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-muted-2 transition hover:bg-[#f4f6ff] hover:text-foreground"
       >
         {icon}
         <span className="flex flex-col">
           <span>{label}</span>
           {hint ? (
-            <span className="font-mono text-[10px] tracking-tight text-stone-400 dark:text-stone-500">
+            <span className="font-mono text-[10px] tracking-tight text-muted-4">
               {hint}
             </span>
           ) : null}

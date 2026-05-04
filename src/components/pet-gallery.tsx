@@ -16,19 +16,14 @@ import {
   X,
 } from "lucide-react";
 
-import type { PetWithMetrics } from "@/lib/pets";
 import { petStates } from "@/lib/pet-states";
-import {
-  PET_KINDS,
-  PET_VIBES,
-  type PetKind,
-  type PetVibe,
-} from "@/lib/types";
+import type { PetWithMetrics } from "@/lib/pets";
+import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
+import { isAllowedAvatarUrl } from "@/lib/url-allowlist";
 
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetCardFooter } from "@/components/pet-card-footer";
 import { PetSprite } from "@/components/pet-sprite";
-import { isAllowedAvatarUrl } from "@/lib/url-allowlist";
 
 type Facets = {
   kinds: Record<string, number>;
@@ -87,10 +82,8 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
       const p = new URLSearchParams();
       const trimmed = query.trim();
       if (trimmed) p.set("q", trimmed);
-      if (activeKinds.size > 0)
-        p.set("kinds", [...activeKinds].join(","));
-      if (activeVibes.size > 0)
-        p.set("vibes", [...activeVibes].join(","));
+      if (activeKinds.size > 0) p.set("kinds", [...activeKinds].join(","));
+      if (activeVibes.size > 0) p.set("vibes", [...activeVibes].join(","));
       if (sort !== "curated") p.set("sort", sort);
       if (cursor > 0) p.set("cursor", String(cursor));
       p.set("limit", String(PAGE_SIZE));
@@ -200,7 +193,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
           </h2>
         </div>
         {filtersActive ? (
-          <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+          <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
             <span>
               {total} match{total === 1 ? "" : "es"}
             </span>
@@ -210,7 +203,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
                 track("filters_cleared");
                 clearFilters();
               }}
-              className="rounded-full border border-black/10 bg-white px-2.5 py-1 text-stone-700 transition hover:border-black/30 hover:text-black dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30 dark:hover:text-stone-100"
+              className="rounded-full border border-border-base bg-surface px-2.5 py-1 text-muted-2 transition hover:border-border-strong hover:text-black dark:hover:text-stone-100"
             >
               Clear all
             </button>
@@ -219,25 +212,25 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
       </div>
 
       {/* Unified control bar: search input takes full width, sort sits to the
-          right, filter chips wrap below. Whole thing gets the same subtle
-          shadow as the announcement modal so it reads as one cohesive
-          surface and the search bar feels like a primary action. */}
-      <div className="space-y-3 rounded-3xl border border-black/[0.06] bg-white px-3 py-3 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)] md:px-4 md:py-4 dark:border-white/[0.06] dark:bg-stone-900">
+ right, filter chips wrap below. Whole thing gets the same subtle
+ shadow as the announcement modal so it reads as one cohesive
+ surface and the search bar feels like a primary action. */}
+      <div className="space-y-3 rounded-3xl border border-black/[0.06] bg-surface px-3 py-3 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)] md:px-4 md:py-4 dark:border-white/[0.06]">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="relative block w-full flex-1">
-            <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-4 size-4 text-stone-500 dark:text-stone-400" />
+            <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-4 size-4 text-muted-3" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Try 'cozy night programmer' or 'fierce dragon'"
-              className="h-11 w-full rounded-full border border-black/10 bg-white pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-brand/60 focus:ring-2 focus:ring-brand/15 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
+              className="h-11 w-full rounded-full border border-border-base bg-surface pr-10 pl-11 text-sm text-stone-900 outline-none transition placeholder:text-muted-4 focus:border-brand/60 focus:ring-2 focus:ring-brand/15"
             />
             {query.length > 0 ? (
               <button
                 type="button"
                 onClick={() => setQuery("")}
                 aria-label="Clear search"
-                className="-translate-y-1/2 absolute top-1/2 right-3 grid size-6 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
+                className="-translate-y-1/2 absolute top-1/2 right-3 grid size-6 place-items-center rounded-full text-muted-4 transition hover:bg-surface-muted hover:text-foreground"
               >
                 <X className="size-3.5" />
               </button>
@@ -252,7 +245,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
                 setSort(next);
               }}
               aria-label="Sort pets"
-              className="h-11 w-full cursor-pointer appearance-none rounded-full border border-black/10 bg-white pr-9 pl-4 text-sm text-stone-900 outline-none transition hover:border-black/30 focus:border-black/40 sm:w-auto sm:min-w-[160px] dark:border-white/10 dark:bg-stone-900 dark:text-stone-100 dark:hover:border-white/30"
+              className="h-11 w-full cursor-pointer appearance-none rounded-full border border-border-base bg-surface pr-9 pl-4 text-sm text-stone-900 outline-none transition hover:border-black/30 focus:border-black/40 sm:w-auto sm:min-w-[160px] dark:hover:border-white/30"
             >
               {(Object.entries(SORT_LABELS) as [SortKey, string][]).map(
                 ([key, label]) => (
@@ -262,13 +255,13 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
                 ),
               )}
             </select>
-            <ChevronDown className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 size-4 text-stone-500 dark:text-stone-400" />
+            <ChevronDown className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 size-4 text-muted-3" />
           </div>
         </div>
 
         {/* Filter chips: kind + vibe in one continuous wrap row. Saves a
-            whole horizontal label column and roughly half the height vs
-            the previous two-row layout. */}
+ whole horizontal label column and roughly half the height vs
+ the previous two-row layout. */}
         <div className="flex flex-wrap gap-1.5 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
           <FilterChips
             options={PET_KINDS}
@@ -294,8 +287,8 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
           </span>
           <span>
             Showing pets that vibe with{" "}
-            <span className="font-medium">"{query.trim()}"</span>. Closer to
-            the top means stronger match.
+            <span className="font-medium">"{query.trim()}"</span>. Closer to the
+            top means stronger match.
           </span>
         </div>
       ) : null}
@@ -331,7 +324,7 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
           aria-hidden="true"
         >
           {loadingMore ? (
-            <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
+            <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
               <Loader2 className="size-3.5 animate-spin" />
               Loading more
             </span>
@@ -339,14 +332,14 @@ export function PetGallery({ initial, totalPets }: PetGalleryProps) {
             <button
               type="button"
               onClick={loadMore}
-              className="rounded-full border border-black/10 bg-white px-4 py-2 font-mono text-[11px] tracking-[0.12em] text-stone-700 uppercase transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+              className="rounded-full border border-border-base bg-surface px-4 py-2 font-mono text-[11px] tracking-[0.12em] text-muted-2 uppercase transition hover:border-black/30 dark:hover:border-white/30"
             >
               Load more
             </button>
           )}
         </div>
       ) : pets.length > 0 ? (
-        <p className="py-6 text-center font-mono text-[10px] tracking-[0.22em] text-stone-400 uppercase dark:text-stone-500">
+        <p className="py-6 text-center font-mono text-[10px] tracking-[0.22em] text-muted-4 uppercase">
           End of gallery — {total} shown
         </p>
       ) : null}
@@ -375,8 +368,7 @@ function FilterChips({
         const count = counts[value] ?? 0;
         if (count === 0) return null;
         const isActive = active.has(value);
-        const dotClass =
-          tone === "kind" ? "bg-[#0a0a0a]/70" : "bg-brand";
+        const dotClass = tone === "kind" ? "bg-[#0a0a0a]/70" : "bg-brand";
         return (
           <button
             key={value}
@@ -392,8 +384,8 @@ function FilterChips({
             aria-pressed={isActive}
             className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] capitalize transition ${
               isActive
-                ? "border-black bg-black text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-950"
-                : "border-black/10 bg-white text-stone-700 hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+                ? "border-inverse bg-inverse text-on-inverse"
+                : "border-black/10 bg-surface text-muted-2 hover:border-black/30 dark:hover:border-white/30"
             }`}
           >
             {!isActive ? (
@@ -433,11 +425,11 @@ export function PetCard({ pet, index }: PetCardProps) {
 
   return (
     <article
-      className={`group relative rounded-3xl border bg-white/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
+      className={`group relative rounded-3xl border bg-surface/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-black/10 shadow-sm shadow-blue-950/5"
-      } dark:bg-stone-900/76 dark:hover:bg-stone-800`}
+      } dark:hover:bg-stone-800`}
     >
       <Link
         href={href}
@@ -445,7 +437,7 @@ export function PetCard({ pet, index }: PetCardProps) {
         className="flex flex-col rounded-3xl"
       >
         <div className="flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pr-12 pb-3 dark:border-white/[0.06]">
-          <span className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
+          <span className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
             No. {dexNumber}
           </span>
         </div>
@@ -458,7 +450,7 @@ export function PetCard({ pet, index }: PetCardProps) {
             label={`${pet.displayName} animated`}
           />
           {installCount > 0 ? (
-            <span className="pointer-events-none absolute right-5 bottom-2 font-mono text-[10px] tracking-[0.22em] text-stone-400 uppercase dark:text-stone-500">
+            <span className="pointer-events-none absolute right-5 bottom-2 font-mono text-[10px] tracking-[0.22em] text-muted-4 uppercase">
               {compactNumber(installCount)} install
               {installCount === 1 ? "" : "s"}
             </span>
@@ -467,7 +459,7 @@ export function PetCard({ pet, index }: PetCardProps) {
 
         <div className="flex flex-col gap-2 border-t border-black/[0.06] px-5 pt-4 pb-3 dark:border-white/[0.06]">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold tracking-tight text-stone-950 dark:text-stone-100">
+            <h3 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold tracking-tight text-foreground">
               <span className="truncate">{pet.displayName}</span>
               {pet.featured ? (
                 <span
@@ -479,11 +471,11 @@ export function PetCard({ pet, index }: PetCardProps) {
                 </span>
               ) : null}
             </h3>
-            <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
+            <span className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
               {pet.kind}
             </span>
           </div>
-          <p className="line-clamp-2 text-sm leading-6 text-stone-600 dark:text-stone-400">
+          <p className="line-clamp-2 text-sm leading-6 text-muted-2">
             {pet.description}
           </p>
           {pet.vibes.length > 0 ? (
@@ -491,7 +483,7 @@ export function PetCard({ pet, index }: PetCardProps) {
               {pet.vibes.map((vibe) => (
                 <span
                   key={vibe}
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400"
+                  className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
                   #{vibe}
                 </span>
@@ -500,7 +492,7 @@ export function PetCard({ pet, index }: PetCardProps) {
           ) : null}
           {isDiscovered ? (
             <span
-              className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-amber-900 uppercase ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300"
+              className="inline-flex w-fit items-center gap-1 rounded-full bg-chip-warning-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-warning-fg uppercase ring-1 ring-chip-warning-fg/20"
               title="Added on behalf of the original author. Not yet claimed."
             >
               <Sparkles className="size-3" />
@@ -509,7 +501,7 @@ export function PetCard({ pet, index }: PetCardProps) {
           ) : null}
 
           {pet.submittedBy ? (
-            <div className="mt-2 flex items-center gap-1.5 border-t border-black/[0.05] pt-2 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:border-white/[0.05] dark:text-stone-400">
+            <div className="mt-2 flex items-center gap-1.5 border-t border-black/[0.05] pt-2 font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase dark:border-white/[0.05]">
               {pet.submittedBy.imageUrl &&
               isAllowedAvatarUrl(pet.submittedBy.imageUrl) ? (
                 // biome-ignore lint/performance/noImgElement: avatar allowlisted above
@@ -538,7 +530,7 @@ export function PetCard({ pet, index }: PetCardProps) {
       </div>
 
       {/* Action menu lives outside the Link so its clicks don't navigate.
-          Absolute-positioned to overlap the featured badge corner. */}
+ Absolute-positioned to overlap the featured badge corner. */}
       <div className="absolute top-3 right-4 z-20">
         <PetActionMenu
           pet={{
@@ -642,8 +634,8 @@ function NoResults({
   }
 
   return (
-    <div className="rounded-3xl border border-dashed border-black/15 bg-white/70 p-8 text-center md:p-10 dark:border-white/15 dark:bg-stone-900/70">
-      <p className="text-sm font-medium text-stone-950 dark:text-stone-100">
+    <div className="rounded-3xl border border-dashed border-border-base bg-white/70 p-8 text-center md:p-10 dark:bg-stone-900/70">
+      <p className="text-sm font-medium text-foreground">
         No pets match {query ? `"${query}"` : "this view"}.
       </p>
 
@@ -665,7 +657,7 @@ function NoResults({
           </div>
         ) : (
           <div className="mt-4 flex flex-col items-center gap-3">
-            <p className="max-w-md text-sm text-stone-600 dark:text-stone-400">
+            <p className="max-w-md text-sm text-muted-2">
               Want a pet that matches{" "}
               <span className="font-medium">"{query}"</span>? Request it and
               other people can upvote.

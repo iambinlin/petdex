@@ -1,10 +1,12 @@
 "use client";
 
-import { Show, SignInButton, UserButton, useUser } from "@clerk/nextjs";
-import { MessageSquare, Shield, Sparkles, UserSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { Show, SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import { MessageSquare, Shield, Sparkles, UserSquare } from "lucide-react";
+
 import { isAdminClientSafe } from "@/lib/admin";
+
 import { NotificationsBell } from "@/components/notifications-bell";
 
 export function AuthBadge() {
@@ -14,7 +16,7 @@ export function AuthBadge() {
         <SignInButton mode="modal">
           <button
             type="button"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-white/70 px-4 text-sm font-medium text-black backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-100 dark:hover:bg-stone-800"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface/70 px-4 text-sm font-medium text-foreground backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
           >
             Sign in
           </button>

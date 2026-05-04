@@ -1,8 +1,9 @@
 "use client";
 
-import { Loader2, Pencil, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+
+import { Loader2, Pencil, X } from "lucide-react";
 
 type Pending = {
   displayName: string | null;
@@ -126,7 +127,7 @@ export function OwnerEditPanel({
   return (
     <>
       {hasPending ? (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/50 dark:text-amber-300">
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200 bg-chip-warning-bg px-3 py-2 text-xs text-chip-warning-fg dark:border-amber-800/60">
           <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
             Pending review
           </span>
@@ -135,12 +136,13 @@ export function OwnerEditPanel({
             {pending && pending.submittedAt
               ? new Date(pending.submittedAt).toLocaleDateString()
               : ""}
-            . The page below shows the live approved version until Hunter signs off.
+            . The page below shows the live approved version until Hunter signs
+            off.
           </span>
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="ml-auto inline-flex h-7 items-center rounded-full border border-amber-300 bg-white px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100 dark:bg-stone-900 dark:text-amber-300 dark:hover:bg-amber-900/40"
+            className="ml-auto inline-flex h-7 items-center rounded-full border border-amber-300 bg-surface px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
           >
             View edit
           </button>
@@ -148,7 +150,7 @@ export function OwnerEditPanel({
             type="button"
             onClick={() => void withdraw()}
             disabled={busy}
-            className="inline-flex h-7 items-center rounded-full border border-amber-300 bg-white px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100 disabled:opacity-60 dark:bg-stone-900 dark:text-amber-300 dark:hover:bg-amber-900/40"
+            className="inline-flex h-7 items-center rounded-full border border-amber-300 bg-surface px-2.5 text-[11px] font-medium text-amber-900 transition hover:bg-amber-100 disabled:opacity-60 dark:text-amber-300 dark:hover:bg-amber-900/40"
           >
             Withdraw
           </button>
@@ -162,7 +164,7 @@ export function OwnerEditPanel({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="ml-auto inline-flex h-7 items-center rounded-full border border-rose-300 bg-white px-2.5 text-[11px] font-medium text-rose-900 transition hover:bg-rose-100 dark:bg-stone-900 dark:text-rose-300 dark:hover:bg-rose-900/40"
+            className="ml-auto inline-flex h-7 items-center rounded-full border border-rose-300 bg-surface px-2.5 text-[11px] font-medium text-rose-900 transition hover:bg-rose-100 dark:text-rose-300 dark:hover:bg-rose-900/40"
           >
             Try again
           </button>
@@ -173,7 +175,7 @@ export function OwnerEditPanel({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-black/15 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/40 dark:border-white/15 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/40"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:border-black/40 dark:hover:border-white/40"
         >
           <Pencil className="size-3.5" />
           Edit name & description
@@ -189,22 +191,22 @@ export function OwnerEditPanel({
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-stone-900">
+          <div className="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
                   Edit pet metadata
                 </h2>
-                <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                <p className="mt-1 text-xs text-muted-3">
                   Goes back through admin review. Sprites and zip can't be
-                  changed here — those need a fresh /submit so the dedup +
-                  scan pipeline runs again.
+                  changed here — those need a fresh /submit so the dedup + scan
+                  pipeline runs again.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
+                className="rounded-full p-1 text-muted-4 hover:bg-surface-muted hover:text-foreground"
               >
                 <X className="size-4" />
               </button>
@@ -220,7 +222,7 @@ export function OwnerEditPanel({
               <div>
                 <label
                   htmlFor="edit-display-name"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400"
+                  className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
                   Display name
                 </label>
@@ -229,9 +231,9 @@ export function OwnerEditPanel({
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   maxLength={60}
-                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full rounded-xl border border-border-base bg-surface px-3 py-2 text-sm focus:border-brand focus:outline-none"
                 />
-                <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
+                <p className="mt-1 font-mono text-[10px] text-muted-4">
                   {displayName.length}/60
                 </p>
               </div>
@@ -239,7 +241,7 @@ export function OwnerEditPanel({
               <div>
                 <label
                   htmlFor="edit-description"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400"
+                  className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
                   Description
                 </label>
@@ -249,9 +251,9 @@ export function OwnerEditPanel({
                   onChange={(e) => setDescription(e.target.value)}
                   maxLength={280}
                   rows={4}
-                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full resize-none rounded-xl border border-border-base bg-surface px-3 py-2 text-sm focus:border-brand focus:outline-none"
                 />
-                <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
+                <p className="mt-1 font-mono text-[10px] text-muted-4">
                   {description.length}/280
                 </p>
               </div>
@@ -259,7 +261,7 @@ export function OwnerEditPanel({
               <div>
                 <label
                   htmlFor="edit-tags"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400"
+                  className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
                 >
                   Tags
                 </label>
@@ -268,15 +270,15 @@ export function OwnerEditPanel({
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
                   placeholder="cat, desk-companion, cuddly"
-                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-brand focus:outline-none dark:border-white/10 dark:bg-stone-900"
+                  className="mt-1 w-full rounded-xl border border-border-base bg-surface px-3 py-2 text-sm focus:border-brand focus:outline-none"
                 />
-                <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
+                <p className="mt-1 font-mono text-[10px] text-muted-4">
                   Comma- or space-separated. Lowercase, max 8, hyphens ok.
                 </p>
               </div>
 
               {error ? (
-                <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                <p className="rounded-xl bg-chip-danger-bg px-3 py-2 text-xs text-chip-danger-fg">
                   {error.replace(/_/g, " ")}
                 </p>
               ) : null}
@@ -285,18 +287,16 @@ export function OwnerEditPanel({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+                  className="inline-flex h-9 items-center rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:border-border-strong"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-60 dark:bg-stone-100"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-stone-800 disabled:opacity-60"
                 >
-                  {busy ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : null}
+                  {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
                   Submit edit for review
                 </button>
               </div>

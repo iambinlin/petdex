@@ -192,7 +192,9 @@ export function PetSubmitForm() {
         }
 
         petJsonString = petJsonEntry ? await petJsonEntry.async("string") : "";
-        spritesheetBlob = spriteEntry ? await spriteEntry.async("blob") : new Blob();
+        spritesheetBlob = spriteEntry
+          ? await spriteEntry.async("blob")
+          : new Blob();
         zipBlob = new Blob([buf], { type: "application/zip" });
         zipFileName = zipFile.name;
         petIdFromName = zipFile.name.replace(/\.zip$/i, "");
@@ -374,7 +376,12 @@ export function PetSubmitForm() {
         ct: string;
       }> = [
         // petjson first — smallest, validates auth/CORS/presign quickly.
-        { role: "petjson", slot: petJsonSlot, body: petJsonFile, ct: "application/json" },
+        {
+          role: "petjson",
+          slot: petJsonSlot,
+          body: petJsonFile,
+          ct: "application/json",
+        },
         { role: "sprite", slot: spriteSlot, body: spriteFile, ct: spriteMime },
         { role: "zip", slot: zipSlot, body: zipFile, ct: "application/zip" },
       ];
@@ -483,10 +490,13 @@ export function PetSubmitForm() {
         <span className="grid size-16 place-items-center rounded-2xl bg-inverse text-on-inverse">
           <Upload className="size-7" />
         </span>
-        <span className="mt-6 text-2xl font-medium text-foreground">Upload a pet package</span>
+        <span className="mt-6 text-2xl font-medium text-foreground">
+          Upload a pet package
+        </span>
         <span className="mt-3 max-w-md text-sm leading-6 text-muted-2">
           Drop a folder or a ZIP with{" "}
-          <code className="rounded bg-surface-muted px-1 py-0.5">pet.json</code> and{" "}
+          <code className="rounded bg-surface-muted px-1 py-0.5">pet.json</code>{" "}
+          and{" "}
           <code className="rounded bg-surface-muted px-1 py-0.5">
             spritesheet.webp
           </code>{" "}
@@ -557,13 +567,13 @@ export function PetSubmitForm() {
                 {parsed.description}
               </p>
               {parsed.spritesheetWidth ? (
-                <p className="mt-2 font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
+                <p className="mt-2 font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
                   {parsed.spritesheetWidth}×{parsed.spritesheetHeight}
                 </p>
               ) : null}
             </div>
             {parsed.issues.length > 0 ? (
-              <div className="flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-sm leading-6 text-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
+              <div className="flex items-start gap-2 rounded-2xl bg-chip-warning-bg p-4 text-sm leading-6 text-chip-warning-fg">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                 <ul className="space-y-1">
                   {parsed.issues.map((issue) => (
@@ -572,7 +582,7 @@ export function PetSubmitForm() {
                 </ul>
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <div className="flex items-center gap-2 rounded-2xl bg-chip-success-bg p-4 text-sm text-chip-success-fg">
                 <CheckCircle2 className="size-4" />
                 Looks ready to submit.
               </div>
@@ -590,7 +600,7 @@ export function PetSubmitForm() {
             />
 
             {submission.kind === "error" ? (
-              <div className="space-y-2 rounded-2xl bg-rose-50 p-3 text-sm text-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+              <div className="space-y-2 rounded-2xl bg-chip-danger-bg p-3 text-sm text-chip-danger-fg">
                 <p>{submission.message}</p>
                 <p className="text-xs leading-5 text-rose-800/80">
                   Stuck?{" "}
@@ -608,7 +618,7 @@ export function PetSubmitForm() {
             ) : null}
 
             {submission.kind === "success" ? (
-              <p className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <p className="rounded-2xl bg-chip-success-bg p-3 text-sm text-chip-success-fg">
                 {submission.displayName} is in review. You'll be notified when
                 it's approved.
               </p>
@@ -624,7 +634,7 @@ export function PetSubmitForm() {
 
       <p className="col-span-full inline-flex flex-wrap items-center gap-2 text-xs text-muted-2">
         Pet assets live in
-        <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono dark:bg-stone-900/70">
+        <code className="rounded bg-surface/70 px-1.5 py-0.5 font-mono">
           {PETS_DIR}
         </code>
         <CopyPathButton path={PETS_DIR} />
@@ -671,7 +681,7 @@ function CopyPathButton({ path }: { path: string }) {
       type="button"
       aria-label={copied ? "Path copied" : "Copy path to clipboard"}
       onClick={(e) => void handleClick(e)}
-      className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-[#3a3a44] transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:hover:bg-stone-800"
+      className="inline-flex items-center gap-1 rounded-full border border-border-base bg-surface/70 px-2 py-0.5 text-[11px] font-medium text-[#3a3a44] transition hover:bg-white dark:hover:bg-stone-800"
     >
       {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
       {copied ? "Copied" : "Copy"}
@@ -704,7 +714,7 @@ function SubmitButton({
       type="button"
       onClick={onSubmit}
       disabled={disabled}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-stone-100 dark:hover:bg-stone-200"
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover disabled:cursor-not-allowed disabled:opacity-60"
     >
       {submission.kind === "uploading" ? (
         <Loader2 className="size-4 animate-spin" />
@@ -730,7 +740,7 @@ function SpritePreview({ src }: { src: string }) {
   }, []);
 
   return (
-    <div className="w-fit rounded-2xl border border-black/10 bg-background p-3 dark:border-white/10">
+    <div className="w-fit rounded-2xl border border-border-base bg-background p-3">
       <div
         className="pet-sprite-frame"
         role="img"
@@ -913,9 +923,7 @@ async function walkEntry(
       reader.readEntries(resolve, reject),
     );
     await Promise.all(
-      entries.map((child) =>
-        walkEntry(child, `${prefix}${entry.name}/`, out),
-      ),
+      entries.map((child) => walkEntry(child, `${prefix}${entry.name}/`, out)),
     );
   }
 }

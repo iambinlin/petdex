@@ -226,7 +226,7 @@ export function OnboardingTour() {
         role="dialog"
         aria-label="Petdex feature tour"
         style={tooltipStyle}
-        className="z-[60] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-black/10 bg-white shadow-2xl shadow-blue-950/25 dark:border-white/10 dark:bg-stone-900"
+        className="z-[60] w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-border-base bg-surface shadow-2xl shadow-blue-950/25"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
@@ -234,7 +234,7 @@ export function OnboardingTour() {
             <Sparkles className="size-3.5" />
             {current.eyebrow}
             <span className="text-stone-300 dark:text-stone-600">·</span>
-            <span className="text-stone-500 dark:text-stone-400">
+            <span className="text-muted-3">
               {step + 1}/{steps.length}
             </span>
           </div>
@@ -242,26 +242,24 @@ export function OnboardingTour() {
             type="button"
             aria-label="Skip tour"
             onClick={close}
-            className="grid size-7 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
+            className="grid size-7 place-items-center rounded-full text-muted-4 transition hover:bg-surface-muted hover:text-foreground"
           >
             <X className="size-4" />
           </button>
         </div>
 
         <div className="px-4 py-4">
-          <h2 className="text-base font-semibold text-stone-950 dark:text-stone-100">
+          <h2 className="text-base font-semibold text-foreground">
             {current.title}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-stone-600 dark:text-stone-400">
-            {current.body}
-          </p>
+          <p className="mt-1 text-sm leading-6 text-muted-2">{current.body}</p>
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t border-black/[0.06] bg-background px-4 py-3 dark:border-white/[0.06]">
           <button
             type="button"
             onClick={close}
-            className="text-xs font-medium text-stone-500 transition hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200"
+            className="text-xs font-medium text-muted-3 transition hover:text-stone-800 dark:hover:text-stone-200"
           >
             Skip
           </button>
@@ -270,7 +268,7 @@ export function OnboardingTour() {
               <button
                 type="button"
                 onClick={prev}
-                className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3.5 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+                className="inline-flex h-9 items-center rounded-full border border-border-base bg-surface px-3.5 text-xs font-medium text-muted-2 transition hover:border-border-strong"
               >
                 Back
               </button>
@@ -278,7 +276,7 @@ export function OnboardingTour() {
             <button
               type="button"
               onClick={next}
-              className="inline-flex h-9 items-center rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+              className="inline-flex h-9 items-center rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
               {step === steps.length - 1 ? "Done" : "Next"}
             </button>

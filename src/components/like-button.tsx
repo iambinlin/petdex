@@ -63,15 +63,13 @@ export function LikeButton({
       className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium transition disabled:opacity-60 ${
         liked
           ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
-          : "border-black/10 bg-white text-stone-700 hover:border-rose-300 hover:text-rose-700"
-      } dark:bg-rose-950/40 dark:text-rose-300 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-rose-700`}
+          : "border-black/10 bg-surface text-muted-2 hover:border-rose-300 hover:text-rose-700"
+      } dark:bg-rose-950/40 dark:text-rose-300 dark:hover:border-rose-700`}
     >
       <Heart
         className={`size-4 transition ${liked ? "fill-rose-500 text-rose-500" : ""}`}
       />
-      <span className="font-mono text-xs tracking-[0.08em]">
-        {count}
-      </span>
+      <span className="font-mono text-xs tracking-[0.08em]">{count}</span>
     </button>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { Loader2, Pin, PinOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+
+import { Loader2, Pin, PinOff } from "lucide-react";
 
 // One-click pin/unpin for an approved pet on the owner's /u/[handle]
 // page. Calls /api/profile with a pin or unpin action so the server
@@ -40,9 +41,9 @@ export function ProfilePinButton({
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const j = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         if (j?.error === "pin_cap_reached") {
           alert(`You can pin up to ${maxPins} pets. Unpin one first.`);
         } else {
@@ -73,8 +74,8 @@ export function ProfilePinButton({
       className={`inline-flex size-8 items-center justify-center rounded-full border backdrop-blur transition disabled:cursor-not-allowed disabled:opacity-60 ${
         isPinned
           ? "border-brand/40 bg-brand text-white hover:bg-brand-deep"
-          : "border-black/10 bg-white/90 text-stone-600 hover:border-black/30 hover:text-black"
-      } dark:bg-stone-900/90 dark:text-stone-400 dark:hover:border-white/30`}
+          : "border-black/10 bg-surface/90 text-muted-2 hover:border-border-strong hover:text-black"
+      }`}
     >
       {busy ? (
         <Loader2 className="size-3.5 animate-spin" />

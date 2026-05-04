@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { track } from "@vercel/analytics";
 import { ArrowRight, Sparkles, X } from "lucide-react";
@@ -32,7 +32,9 @@ export function AnnouncementModal() {
     return () => window.clearTimeout(t);
   }, []);
 
-  function close(reason: "dismiss" | "cta_search" | "cta_requests" = "dismiss") {
+  function close(
+    reason: "dismiss" | "cta_search" | "cta_requests" = "dismiss",
+  ) {
     track("announcement_closed", {
       announcement: "vibe_search",
       reason,
@@ -56,7 +58,7 @@ export function AnnouncementModal() {
       aria-label="Petdex new feature announcement"
     >
       {/* Subtle backdrop — dismisses on click but doesn't dim heavily so the
-          modal feels like a soft FYI, not a blocker. */}
+ modal feels like a soft FYI, not a blocker. */}
       <button
         type="button"
         aria-label="Dismiss"
@@ -67,9 +69,9 @@ export function AnnouncementModal() {
       />
 
       <div
-        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-black/10 bg-white shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
+        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-border-base bg-white shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
           closing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
-        } dark:border-white/10 dark:bg-stone-900`}
+        }`}
       >
         {/* Hero image */}
         <div className="relative aspect-[3/2] w-full overflow-hidden bg-gradient-to-br from-gradient-a via-background to-gradient-b">
@@ -83,7 +85,7 @@ export function AnnouncementModal() {
             type="button"
             onClick={() => close("dismiss")}
             aria-label="Close"
-            className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-white/90 text-stone-700 shadow-sm transition hover:bg-white hover:text-black dark:bg-stone-900/90 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+            className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-surface/90 text-muted-2 shadow-sm transition hover:bg-white hover:text-black dark:hover:bg-stone-800 dark:hover:text-stone-100"
           >
             <X className="size-4" />
           </button>
@@ -99,31 +101,33 @@ export function AnnouncementModal() {
               New · Vibe search
             </p>
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-stone-950 dark:text-stone-100">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             Search by what a pet feels like
           </h2>
-          <p className="text-sm leading-6 text-stone-600 dark:text-stone-400">
+          <p className="text-sm leading-6 text-muted-2">
             Type{" "}
-            <span className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs text-stone-900 dark:bg-stone-800 dark:text-stone-100">
+            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-stone-900">
               cozy night programmer
             </span>{" "}
             or{" "}
-            <span className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs text-stone-900 dark:bg-stone-800 dark:text-stone-100">
+            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-stone-900">
               fierce dragon
             </span>{" "}
             and Petdex finds the closest matches by vibe — not just keyword.
           </p>
-          <p className="text-sm leading-6 text-stone-600 dark:text-stone-400">
+          <p className="text-sm leading-6 text-muted-2">
             Doesn't find what you wanted?{" "}
-            <strong className="text-stone-900 dark:text-stone-100">Request the pet</strong> and the
-            community can upvote it. Most-asked land in the queue first.
+            <strong className="text-stone-900 dark:text-stone-100">
+              Request the pet
+            </strong>{" "}
+            and the community can upvote it. Most-asked land in the queue first.
           </p>
 
           <div className="flex items-center gap-2 pt-1">
             <Link
               href="/#gallery"
               onClick={() => close("cta_search")}
-              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+              className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
               Try the search
               <ArrowRight className="size-4" />
@@ -131,7 +135,7 @@ export function AnnouncementModal() {
             <Link
               href="/requests"
               onClick={() => close("cta_requests")}
-              className="inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
             >
               See requests
             </Link>
