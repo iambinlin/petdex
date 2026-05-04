@@ -51,7 +51,7 @@ export function AnnouncementModal({ onClose }: AnnouncementModalProps) {
       />
 
       <div
-        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-border-base bg-white shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
+        className={`relative w-full max-w-md overflow-hidden rounded-3xl border border-border-base bg-surface text-foreground shadow-[0_30px_80px_-20px_rgba(56,71,245,0.45)] transition-all duration-200 ${
           closing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
@@ -88,20 +88,18 @@ export function AnnouncementModal({ onClose }: AnnouncementModalProps) {
           </h2>
           <p className="text-sm leading-6 text-muted-2">
             Type{" "}
-            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-stone-900">
+            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
               cozy night programmer
             </span>{" "}
             or{" "}
-            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-stone-900">
+            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-foreground">
               fierce dragon
             </span>{" "}
             and Petdex finds the closest matches by vibe — not just keyword.
           </p>
           <p className="text-sm leading-6 text-muted-2">
             Doesn't find what you wanted?{" "}
-            <strong className="text-stone-900 dark:text-stone-100">
-              Request the pet
-            </strong>{" "}
+            <strong className="text-foreground">Request the pet</strong>{" "}
             and the community can upvote it. Most-asked land in the queue first.
           </p>
 
