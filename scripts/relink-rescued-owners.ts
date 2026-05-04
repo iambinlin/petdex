@@ -34,6 +34,9 @@ async function clerkFetch<T>(path: string): Promise<T> {
   // Synchronous because the CLI is fast and we're already in a serial
   // pagination loop. If the CLI isn't logged in or the app id is wrong,
   // the JSON will contain { error }.
+  // Don't pass --mode=agent: 1.0.3 of the CLI returns "[]" when both
+  // --mode=agent and a non-TTY stdio are present. Plain invocation
+  // works fine in piped contexts.
   const out = execFileSync(
     "clerk",
     [
@@ -41,7 +44,6 @@ async function clerkFetch<T>(path: string): Promise<T> {
       path,
       `--app=${PETDEX_CLERK_APP}`,
       `--instance=${PETDEX_CLERK_INSTANCE}`,
-      "--mode=agent",
     ],
     { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
