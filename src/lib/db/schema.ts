@@ -161,9 +161,15 @@ export const userProfiles = pgTable("user_profiles", {
   // Clerk user id (string). PK because every user has at most one profile.
   userId: text("user_id").primaryKey(),
   bio: text("bio"),
-  // Slug of an approved pet to pin to the top of the user's gallery.
-  // Validated server-side to belong to the same userId before save.
-  featuredPetSlug: text("featured_pet_slug"),
+  // Up to 6 approved pets the user has pinned to the top of their public
+  // gallery, in the order they were added. Validated server-side: every
+  // slug must belong to the same userId and currently be approved.
+  // Kept as jsonb to mirror the rest of the array columns in this schema
+  // (vibes, tags, pendingTags) and keep migrations boring.
+  featuredPetSlugs: jsonb("featured_pet_slugs")
+    .$type<string[]>()
+    .notNull()
+    .default(sql`'[]'::jsonb`),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

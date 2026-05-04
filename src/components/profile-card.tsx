@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
-import { ExternalLink, Loader2, Pencil, Star, X } from "lucide-react";
+import { ExternalLink, Loader2, Pencil, Pin, Star, X } from "lucide-react";
+
+import { MAX_PINNED_PETS } from "@/lib/profiles";
 
 type ApprovedPet = {
   slug: string;
@@ -17,7 +19,7 @@ export type ProfileData = {
   displayName: string | null;
   avatarUrl: string | null;
   bio: string | null;
-  featuredPetSlug: string | null;
+  featuredPetSlugs: string[];
   approvedPets: ApprovedPet[];
 };
 
@@ -25,7 +27,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [bio, setBio] = useState(profile.bio ?? "");
-  const [featured, setFeatured] = useState(profile.featuredPetSlug ?? "");
+  const [pinned, setPinned] = useState<string[]>(profile.featuredPetSlugs);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -33,17 +35,16 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
   useEffect(() => {
     if (!open) {
       setBio(profile.bio ?? "");
-      setFeatured(profile.featuredPetSlug ?? "");
+      setPinned(profile.featuredPetSlugs);
       setError(null);
     }
-  }, [open, profile.bio, profile.featuredPetSlug]);
+  }, [open, profile.bio, profile.featuredPetSlugs]);
 
   // Honor /my-pets#profile by auto-opening the editor.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.location.hash === "#profile") {
       setOpen(true);
-      // Clear so a refresh doesn't re-open.
       window.history.replaceState(
         null,
         "",
@@ -61,7 +62,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           bio: bio.trim() || null,
-          featuredPetSlug: featured || null,
+          featuredPetSlugs: pinned,
         }),
       });
       if (!res.ok) {
@@ -78,6 +79,14 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
     }
   }
 
+  function togglePin(slug: string) {
+    setPinned((prev) => {
+      if (prev.includes(slug)) return prev.filter((s) => s !== slug);
+      if (prev.length >= MAX_PINNED_PETS) return prev;
+      return [...prev, slug];
+    });
+  }
+
   const fallbackInitial = (
     profile.displayName ??
     profile.handle ??
@@ -85,6 +94,12 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
   )
     .slice(0, 1)
     .toUpperCase();
+
+  const pinnedDetails = profile.featuredPetSlugs
+    .map((slug) =>
+      profile.approvedPets.find((p) => p.slug === slug),
+    )
+    .filter((p): p is ApprovedPet => Boolean(p));
 
   return (
     <section
@@ -136,7 +151,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
         </div>
       </div>
 
-      {profile.bio || profile.featuredPetSlug ? (
+      {profile.bio || pinnedDetails.length > 0 ? (
         <div className="mt-4 grid gap-3 border-t border-black/[0.06] pt-4 md:grid-cols-2">
           {profile.bio ? (
             <div>
@@ -148,24 +163,29 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
               </p>
             </div>
           ) : null}
-          {profile.featuredPetSlug ? (
+          {pinnedDetails.length > 0 ? (
             <div>
               <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
-                Pinned pet
+                Pinned ({pinnedDetails.length}/{MAX_PINNED_PETS})
               </p>
-              <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-stone-700">
-                <Star className="size-3.5 text-[#5266ea]" />
-                {profile.approvedPets.find(
-                  (p) => p.slug === profile.featuredPetSlug,
-                )?.displayName ?? profile.featuredPetSlug}
-              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {pinnedDetails.map((p) => (
+                  <span
+                    key={p.slug}
+                    className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea]"
+                  >
+                    <Star className="size-3" />
+                    {p.displayName}
+                  </span>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>
       ) : (
         <div className="mt-3 rounded-2xl border border-dashed border-black/10 bg-[#eef1ff]/40 p-3 text-xs text-stone-600">
-          Add a bio and pin your favorite pet so visitors land somewhere
-          opinionated. Hit{" "}
+          Add a bio and pin up to {MAX_PINNED_PETS} pets so visitors land
+          somewhere opinionated. Hit{" "}
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -181,20 +201,20 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
         <div
           aria-modal
           role="dialog"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
                   Customize profile
                 </h2>
                 <p className="mt-1 text-xs text-stone-500">
-                  Lives at petdex.crafter.run/u/{profile.handle}. No admin
-                  review — your changes go live instantly.
+                  Lives at petdex.crafter.run/u/{profile.handle}. Changes go
+                  live instantly — no admin review.
                 </p>
               </div>
               <button
@@ -235,30 +255,49 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
               </div>
 
               <div>
-                <label
-                  htmlFor="profile-featured"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
-                >
-                  Pinned pet
-                </label>
-                <select
-                  id="profile-featured"
-                  value={featured}
-                  onChange={(e) => setFeatured(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none"
-                >
-                  <option value="">— None —</option>
-                  {profile.approvedPets.map((p) => (
-                    <option key={p.slug} value={p.slug}>
-                      {p.displayName} ({p.slug})
-                    </option>
-                  ))}
-                </select>
+                <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+                  Pinned pets ({pinned.length}/{MAX_PINNED_PETS})
+                </p>
                 {profile.approvedPets.length === 0 ? (
-                  <p className="mt-1 font-mono text-[10px] text-stone-400">
+                  <p className="mt-2 font-mono text-[10px] text-stone-400">
                     Once a pet is approved you can pin it here.
                   </p>
-                ) : null}
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {profile.approvedPets.map((p) => {
+                      const active = pinned.includes(p.slug);
+                      const capped =
+                        !active && pinned.length >= MAX_PINNED_PETS;
+                      return (
+                        <button
+                          type="button"
+                          key={p.slug}
+                          onClick={() => togglePin(p.slug)}
+                          disabled={capped}
+                          title={
+                            capped
+                              ? `Max ${MAX_PINNED_PETS} pinned — unpin one first`
+                              : active
+                                ? "Click to unpin"
+                                : "Click to pin"
+                          }
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            active
+                              ? "border-[#5266ea] bg-[#5266ea] text-white hover:bg-[#3847f5]"
+                              : "border-black/10 bg-white text-stone-700 hover:border-black/30"
+                          }`}
+                        >
+                          <Pin className="size-3" />
+                          {p.displayName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="mt-2 font-mono text-[10px] text-stone-400">
+                  Tip: each pet card on your profile has a one-click Pin
+                  button too.
+                </p>
               </div>
 
               {error ? (

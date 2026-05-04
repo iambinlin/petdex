@@ -216,6 +216,18 @@ export function FeedbackWidget() {
                   {state.tag === "submitting" ? "Sending…" : "Send"}
                 </button>
               </div>
+
+              <p className="border-t border-black/[0.06] pt-3 text-[11px] leading-5 text-stone-500">
+                Found a bug or want to dig into the source?{" "}
+                <a
+                  href={githubIssueUrlFor(kind, message)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-[#5266ea] underline-offset-2 hover:underline"
+                >
+                  Open an issue on GitHub →
+                </a>
+              </p>
             </form>
           )}
         </div>
@@ -232,4 +244,31 @@ export function FeedbackWidget() {
       )}
     </div>
   );
+}
+
+// Build a pre-filled GitHub issue URL using the user's current draft so
+// dropping into the repo doesn't waste their typing. Truncate the body
+// to keep the URL well under the 8KB practical limit GitHub honors.
+function githubIssueUrlFor(kind: string, message: string): string {
+  const repo = "crafter-station/petdex";
+  const labelMap: Record<string, string> = {
+    bug: "bug",
+    suggestion: "enhancement",
+    praise: "good first issue",
+    other: "question",
+  };
+  const titleByKind: Record<string, string> = {
+    bug: "Bug: ",
+    suggestion: "Suggestion: ",
+    praise: "Note: ",
+    other: "",
+  };
+  const titleSeed = (message.split("\n")[0] ?? "").slice(0, 70);
+  const title = `${titleByKind[kind] ?? ""}${titleSeed}`.trim() || "Feedback";
+  const body = message.slice(0, 6000);
+  const params = new URLSearchParams();
+  params.set("title", title);
+  params.set("labels", labelMap[kind] ?? "");
+  if (body) params.set("body", body);
+  return `https://github.com/${repo}/issues/new?${params.toString()}`;
 }

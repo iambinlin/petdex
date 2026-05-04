@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { Loader2, Pencil, X } from "lucide-react";
+import { Loader2, Pencil, Pin, X } from "lucide-react";
+
+import { MAX_PINNED_PETS } from "@/lib/profiles";
 
 type ApprovedPet = {
   slug: string;
@@ -13,25 +15,33 @@ type ApprovedPet = {
 // Inline editor used on /u/[handle] when the viewer owns the profile.
 // Lighter than ProfileCard (which is the dashboard summary in /my-pets):
 // here the surrounding hero already shows handle/avatar, so we only need
-// the bio + pinned pet form. Optimistic — no admin re-approval.
+// the bio + pinned pets form. Optimistic — no admin re-approval.
 export function ProfileInlineEditor({
   handle,
   initialBio,
-  initialFeatured,
+  initialFeaturedSlugs,
   approvedPets,
 }: {
   handle: string;
   initialBio: string | null;
-  initialFeatured: string | null;
+  initialFeaturedSlugs: string[];
   approvedPets: ApprovedPet[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [bio, setBio] = useState(initialBio ?? "");
-  const [featured, setFeatured] = useState(initialFeatured ?? "");
+  const [pinned, setPinned] = useState<string[]>(initialFeaturedSlugs);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  function togglePin(slug: string) {
+    setPinned((prev) => {
+      if (prev.includes(slug)) return prev.filter((s) => s !== slug);
+      if (prev.length >= MAX_PINNED_PETS) return prev;
+      return [...prev, slug];
+    });
+  }
 
   async function save() {
     setBusy(true);
@@ -42,7 +52,7 @@ export function ProfileInlineEditor({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           bio: bio.trim() || null,
-          featuredPetSlug: featured || null,
+          featuredPetSlugs: pinned,
         }),
       });
       if (!res.ok) {
@@ -79,7 +89,7 @@ export function ProfileInlineEditor({
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
@@ -128,35 +138,49 @@ export function ProfileInlineEditor({
               </div>
 
               <div>
-                <label
-                  htmlFor="profile-inline-featured"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
-                >
-                  Pinned pet
-                </label>
-                <select
-                  id="profile-inline-featured"
-                  value={featured}
-                  onChange={(e) => setFeatured(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none"
-                >
-                  <option value="">— None —</option>
-                  {approvedPets.map((p) => (
-                    <option key={p.slug} value={p.slug}>
-                      {p.displayName} ({p.slug})
-                    </option>
-                  ))}
-                </select>
+                <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+                  Pinned pets ({pinned.length}/{MAX_PINNED_PETS})
+                </p>
                 {approvedPets.length === 0 ? (
-                  <p className="mt-1 font-mono text-[10px] text-stone-400">
-                    Once a pet is approved you can pin it here. Tip: each
-                    pet card below has a Pin button too.
+                  <p className="mt-2 font-mono text-[10px] text-stone-400">
+                    Once a pet is approved you can pin it here.
                   </p>
                 ) : (
-                  <p className="mt-1 font-mono text-[10px] text-stone-400">
-                    Tip: each pet card below has a one-click Pin button.
-                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {approvedPets.map((p) => {
+                      const active = pinned.includes(p.slug);
+                      const capped =
+                        !active && pinned.length >= MAX_PINNED_PETS;
+                      return (
+                        <button
+                          type="button"
+                          key={p.slug}
+                          onClick={() => togglePin(p.slug)}
+                          disabled={capped}
+                          title={
+                            capped
+                              ? `Max ${MAX_PINNED_PETS} pinned — unpin one first`
+                              : active
+                                ? "Click to unpin"
+                                : "Click to pin"
+                          }
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            active
+                              ? "border-[#5266ea] bg-[#5266ea] text-white hover:bg-[#3847f5]"
+                              : "border-black/10 bg-white text-stone-700 hover:border-black/30"
+                          }`}
+                        >
+                          <Pin className="size-3" />
+                          {p.displayName}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
+                <p className="mt-2 font-mono text-[10px] text-stone-400">
+                  Tip: each pet card on your profile has a one-click Pin
+                  button too.
+                </p>
               </div>
 
               {error ? (

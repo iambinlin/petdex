@@ -5,35 +5,49 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 // One-click pin/unpin for an approved pet on the owner's /u/[handle]
-// page. Calls /api/profile with featuredPetSlug.
+// page. Calls /api/profile with a pin or unpin action so the server
+// reads the current set, applies the diff, and re-validates.
 export function ProfilePinButton({
   slug,
   isPinned,
+  pinnedCount,
+  maxPins,
 }: {
   slug: string;
   isPinned: boolean;
+  pinnedCount: number;
+  maxPins: number;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
 
+  const capReached = !isPinned && pinnedCount >= maxPins;
+
   async function toggle(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (capReached) {
+      alert(`You can pin up to ${maxPins} pets. Unpin one first.`);
+      return;
+    }
     setBusy(true);
     try {
+      const body = isPinned ? { unpin: { slug } } : { pin: { slug } };
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          featuredPetSlug: isPinned ? null : slug,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const j = (await res.json().catch(() => null)) as
           | { error?: string }
           | null;
-        alert(`Failed: ${j?.error ?? res.statusText}`);
+        if (j?.error === "pin_cap_reached") {
+          alert(`You can pin up to ${maxPins} pets. Unpin one first.`);
+        } else {
+          alert(`Failed: ${j?.error ?? res.statusText}`);
+        }
         return;
       }
       startTransition(() => router.refresh());
@@ -42,15 +56,21 @@ export function ProfilePinButton({
     }
   }
 
+  const title = isPinned
+    ? "Unpin from profile"
+    : capReached
+      ? `Pin cap reached (${maxPins})`
+      : "Pin to profile";
+
   return (
     <button
       type="button"
       onClick={toggle}
-      disabled={busy}
-      title={isPinned ? "Unpin from profile" : "Pin to profile"}
-      aria-label={isPinned ? "Unpin from profile" : "Pin to profile"}
+      disabled={busy || capReached}
+      title={title}
+      aria-label={title}
       style={{ zIndex: 30 }}
-      className={`inline-flex size-8 items-center justify-center rounded-full border backdrop-blur transition disabled:opacity-60 ${
+      className={`inline-flex size-8 items-center justify-center rounded-full border backdrop-blur transition disabled:cursor-not-allowed disabled:opacity-60 ${
         isPinned
           ? "border-[#5266ea]/40 bg-[#5266ea] text-white hover:bg-[#3847f5]"
           : "border-black/10 bg-white/90 text-stone-600 hover:border-black/30 hover:text-black"

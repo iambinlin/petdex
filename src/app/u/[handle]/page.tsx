@@ -3,17 +3,20 @@ import { notFound } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, desc, eq } from "drizzle-orm";
-import { ExternalLink, Heart, TerminalSquare } from "lucide-react";
+import { Heart, TerminalSquare } from "lucide-react";
 
 import { handleFromClerk, userIdForHandle } from "@/lib/handles";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { rowToPet, type PetWithMetrics } from "@/lib/pets";
 import { petStates } from "@/lib/pet-states";
+import { MAX_PINNED_PETS } from "@/lib/profiles";
 
 import { JsonLd } from "@/components/json-ld";
 import { PetCard } from "@/components/facet-page";
 import { PetSprite } from "@/components/pet-sprite";
+import { ProfileAnalytics } from "@/components/profile-analytics";
+import { ProfileExternalLink } from "@/components/profile-external-link";
 import { ProfileInlineEditor } from "@/components/profile-inline-editor";
 import { ProfilePinButton } from "@/components/profile-pin-button";
 import { SiteFooter } from "@/components/site-footer";
@@ -96,7 +99,8 @@ export default async function UserProfilePage({ params }: PageProps) {
     where: eq(schema.userProfiles.userId, ownerId),
   });
   const bio = profile?.bio ?? null;
-  const featuredSlug = profile?.featuredPetSlug ?? null;
+  const featuredSlugs =
+    (profile?.featuredPetSlugs as string[] | undefined) ?? [];
 
   // Approved pets by this user.
   const rows = await db
@@ -124,16 +128,14 @@ export default async function UserProfilePage({ params }: PageProps) {
     },
   }));
 
-  // Pin featured slug to the front if it's still approved.
-  let featuredPet: PetWithMetrics | null = null;
-  let restPets = pets;
-  if (featuredSlug) {
-    const idx = pets.findIndex((p) => p.slug === featuredSlug);
-    if (idx >= 0) {
-      featuredPet = pets[idx];
-      restPets = [...pets.slice(0, idx), ...pets.slice(idx + 1)];
-    }
-  }
+  // Resolve pinned slugs to full pet objects, preserving owner-chosen
+  // order. Drop any that are no longer approved (would otherwise break
+  // the layout with empty cards).
+  const featuredSet = new Set(featuredSlugs);
+  const featuredPets = featuredSlugs
+    .map((slug) => pets.find((p) => p.slug === slug))
+    .filter((p): p is PetWithMetrics => Boolean(p));
+  const restPets = pets.filter((p) => !featuredSet.has(p.slug));
 
   // Aggregate stats.
   const totalLikes = pets.reduce((acc, p) => acc + p.metrics.likeCount, 0);
@@ -164,6 +166,12 @@ export default async function UserProfilePage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
       <JsonLd data={jsonLd} />
+      <ProfileAnalytics
+        handle={handle}
+        petCount={pets.length}
+        pinnedCount={featuredPets.length}
+        viewerIsOwner={isOwner}
+      />
 
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
@@ -237,16 +245,12 @@ export default async function UserProfilePage({ params }: PageProps) {
               {externalUrls.length > 0 ? (
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                   {externalUrls.map((e) => (
-                    <a
+                    <ProfileExternalLink
                       key={e.url}
-                      href={e.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-3 font-mono text-[11px] tracking-[0.06em] text-stone-700 transition hover:border-black/30 hover:bg-white"
-                    >
-                      <ExternalLink className="size-3" />
-                      {e.label}
-                    </a>
+                      handle={handle}
+                      url={e.url}
+                      label={e.label}
+                    />
                   ))}
                 </div>
               ) : null}
@@ -258,7 +262,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 <ProfileInlineEditor
                   handle={handle}
                   initialBio={bio}
-                  initialFeatured={featuredSlug}
+                  initialFeaturedSlugs={featuredSlugs}
                   approvedPets={pets.map((p) => ({
                     slug: p.slug,
                     displayName: p.displayName,
@@ -292,35 +296,92 @@ export default async function UserProfilePage({ params }: PageProps) {
           </div>
         ) : (
           <>
-            {featuredPet ? (
-              <div className="relative">
-                {isOwner ? (
-                  <div className="absolute top-4 right-4">
-                    <ProfilePinButton slug={featuredPet.slug} isPinned />
+            {featuredPets.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-mono text-[11px] tracking-[0.22em] text-[#5266ea] uppercase">
+                    ★ Pinned
+                  </p>
+                  <p className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
+                    {featuredPets.length} of {MAX_PINNED_PETS}
+                  </p>
+                </div>
+                {featuredPets.length === 1 ? (
+                  <div className="relative">
+                    {isOwner ? (
+                      <div className="absolute top-4 right-4">
+                        <ProfilePinButton
+                          slug={featuredPets[0].slug}
+                          isPinned
+                          pinnedCount={featuredPets.length}
+                          maxPins={MAX_PINNED_PETS}
+                        />
+                      </div>
+                    ) : null}
+                    <FeaturedPin pet={featuredPets[0]} />
                   </div>
-                ) : null}
-                <FeaturedPin pet={featuredPet} />
+                ) : (
+                  <div
+                    className={`grid gap-4 md:gap-5 ${
+                      featuredPets.length === 2
+                        ? "sm:grid-cols-2"
+                        : "sm:grid-cols-2 lg:grid-cols-3"
+                    }`}
+                  >
+                    {featuredPets.map((pet, index) => (
+                      <div key={pet.slug} className="relative">
+                        <PetCard
+                          pet={pet}
+                          index={index}
+                          stateCount={petStates.length}
+                        />
+                        {isOwner ? (
+                          <div className="absolute top-3 right-14">
+                            <ProfilePinButton
+                              slug={pet.slug}
+                              isPinned
+                              pinnedCount={featuredPets.length}
+                              maxPins={MAX_PINNED_PETS}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : null}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-5">
-              {restPets.map((pet, index) => (
-                <div key={pet.slug} className="relative">
-                  <PetCard
-                    pet={pet}
-                    index={index + (featuredPet ? 1 : 0)}
-                    stateCount={petStates.length}
-                  />
-                  {isOwner ? (
-                    <div className="absolute top-3 right-14">
-                      <ProfilePinButton
-                        slug={pet.slug}
-                        isPinned={featuredSlug === pet.slug}
+
+            {restPets.length > 0 ? (
+              <div className="space-y-4">
+                {featuredPets.length > 0 ? (
+                  <p className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
+                    All pets
+                  </p>
+                ) : null}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-5">
+                  {restPets.map((pet, index) => (
+                    <div key={pet.slug} className="relative">
+                      <PetCard
+                        pet={pet}
+                        index={index + featuredPets.length}
+                        stateCount={petStates.length}
                       />
+                      {isOwner ? (
+                        <div className="absolute top-3 right-14">
+                          <ProfilePinButton
+                            slug={pet.slug}
+                            isPinned={false}
+                            pinnedCount={featuredPets.length}
+                            maxPins={MAX_PINNED_PETS}
+                          />
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : null}
           </>
         )}
       </section>

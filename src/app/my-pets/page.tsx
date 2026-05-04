@@ -115,7 +115,8 @@ export default async function MyPetsPage() {
             displayName,
             avatarUrl,
             bio: profile?.bio ?? null,
-            featuredPetSlug: profile?.featuredPetSlug ?? null,
+            featuredPetSlugs:
+              (profile?.featuredPetSlugs as string[] | undefined) ?? [],
             approvedPets: approvedSummaries,
           }}
         />
