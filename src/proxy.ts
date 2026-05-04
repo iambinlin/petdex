@@ -1,9 +1,37 @@
+import { randomBytes } from "node:crypto";
+
 import { NextResponse } from "next/server";
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import createMiddleware from "next-intl/middleware";
 
 import { defaultLocale, locales } from "@/i18n/config";
+
+// Per-visitor stable shuffle seed used by the curated gallery sort
+// (see lib/shuffle-seed.ts). Minted here rather than from the page
+// because Next 16 forbids cookies().set() from Server Components.
+const SHUFFLE_COOKIE = "petdex_shuffle_seed";
+const SHUFFLE_PATTERN = /^[a-f0-9]{16}$/;
+const ONE_MONTH_SECONDS = 60 * 60 * 24 * 30;
+
+function ensureShuffleSeed(req: Request, res: NextResponse): void {
+  const existing = req.headers
+    .get("cookie")
+    ?.split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${SHUFFLE_COOKIE}=`))
+    ?.split("=")[1];
+
+  if (existing && SHUFFLE_PATTERN.test(existing)) return;
+
+  const seed = randomBytes(8).toString("hex");
+  res.cookies.set(SHUFFLE_COOKIE, seed, {
+    maxAge: ONE_MONTH_SECONDS,
+    httpOnly: false,
+    sameSite: "lax",
+    path: "/",
+  });
+}
 
 const isProtected = createRouteMatcher([
   "/submit",
@@ -40,10 +68,14 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   if (req.nextUrl.pathname.startsWith("/api")) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    ensureShuffleSeed(req, res);
+    return res;
   }
 
-  return handleI18nRouting(req);
+  const res = handleI18nRouting(req);
+  ensureShuffleSeed(req, res);
+  return res;
 });
 
 export const config = {

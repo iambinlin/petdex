@@ -39,9 +39,6 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
         <PetdexLogo href="/" />
 
         <div className="hidden items-center gap-7 text-sm text-muted-2 md:flex">
-          <Link href="/#gallery" className="transition hover:text-foreground">
-            Gallery
-          </Link>
           <Link href="/create" className="transition hover:text-foreground">
             Create
           </Link>
@@ -102,9 +99,6 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             </button>
           </div>
           <nav className="mt-4 flex flex-col gap-1 px-5 text-lg">
-            <MobileLink href="/#gallery" onClick={() => setOpen(false)}>
-              Gallery
-            </MobileLink>
             <MobileLink href="/create" onClick={() => setOpen(false)}>
               Create
             </MobileLink>
