@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 
 import { AnnouncementModal } from "@/components/announcement-modal";
-import { ProfileAnnouncementModal } from "@/components/profile-announcement-modal";
+import { AppProviders } from "@/components/theme-providers";
 import { FeedbackWidget } from "@/components/feedback-widget";
 import { OnboardingTour } from "@/components/onboarding-tour";
+import { ProfileAnnouncementModal } from "@/components/profile-announcement-modal";
 
 import "./globals.css";
 
@@ -89,20 +89,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html
-        lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-full flex flex-col">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-[#f7f8ff] text-stone-950 dark:bg-stone-950 dark:text-stone-100">
+        <AppProviders>
           {children}
           <FeedbackWidget />
           <OnboardingTour />
           <AnnouncementModal />
           <ProfileAnnouncementModal />
           <Analytics />
-        </body>
-      </html>
-    </ClerkProvider>
+        </AppProviders>
+      </body>
+    </html>
   );
 }

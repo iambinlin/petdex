@@ -127,7 +127,7 @@ export default async function RequestsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
@@ -136,17 +136,17 @@ export default async function RequestsPage() {
           <p className="font-mono text-xs tracking-[0.22em] text-[#5266ea] uppercase">
             Community wishlist
           </p>
-          <h1 className="text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl">
+          <h1 className="text-balance text-4xl font-semibold tracking-tight text-stone-950 md:text-5xl dark:text-stone-100">
             Pets people are asking for
           </h1>
-          <p className="max-w-2xl text-base leading-7 text-stone-600">
+          <p className="max-w-2xl text-base leading-7 text-stone-600 dark:text-stone-400">
             When someone searches for a pet that doesn't exist yet, they can
             request it. Upvote the ones you'd want too — most-upvoted go to the
             top of the curation list.
           </p>
           <Link
             href="/#gallery"
-            className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-black/30"
+            className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
           >
             ← Back to gallery
           </Link>

@@ -164,7 +164,7 @@ export default async function MyFeedbackPage({
   });
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
@@ -176,7 +176,7 @@ export default async function MyFeedbackPage({
             <h1 className="text-4xl font-medium tracking-tight md:text-5xl">
               My feedback
             </h1>
-            <p className="text-sm text-stone-600">
+            <p className="text-sm text-stone-600 dark:text-stone-400">
               Conversations with the Petdex team about feedback you've sent.
             </p>
             {decorated.length > 0 ? (
@@ -188,12 +188,12 @@ export default async function MyFeedbackPage({
           </header>
 
           {decorated.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600">
+            <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
               You haven't sent any feedback yet. Use the Feedback button to
               share thoughts.
             </div>
           ) : visible.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600">
+            <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
               No threads in this view.
             </div>
           ) : (
@@ -211,8 +211,8 @@ export default async function MyFeedbackPage({
                       className={`block rounded-2xl border p-4 transition hover:bg-white ${
                         unread
                           ? "border-[#5266ea]/40 bg-white shadow-[0_0_0_1px_rgba(82,102,234,0.18),0_18px_45px_-26px_rgba(82,102,234,0.4)]"
-                          : "border-black/10 bg-white/80 hover:border-black/30"
-                      }`}
+                          : "border-black/10 bg-white/80 hover:border-black/30 dark:border-white/10 dark:bg-stone-900/80 dark:hover:border-white/30"
+            }`}
                     >
                       <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
@@ -228,25 +228,25 @@ export default async function MyFeedbackPage({
                                 New reply
                               </span>
                             ) : replied ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900 uppercase ring-1 ring-emerald-200">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900 uppercase ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
                                 Replied
                               </span>
                             ) : waiting ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-amber-900 uppercase ring-1 ring-amber-200">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-amber-900 uppercase ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300">
                                 Waiting
                               </span>
                             ) : null}
-                            <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+                            <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
                               {new Date(r.createdAt).toLocaleDateString()}
                             </span>
                           </div>
 
-                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-800">
+                          <p className="mt-2 line-clamp-2 text-sm leading-6 text-stone-800 dark:text-stone-200">
                             {r.message}
                           </p>
 
                           {lastAdminBody ? (
-                            <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50/40 p-2.5">
+                            <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50/40 p-2.5 dark:border-emerald-800/40 dark:bg-emerald-950/30">
                               <div className="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-600 font-mono text-[10px] font-semibold text-white">
                                 H
                               </div>
@@ -263,14 +263,14 @@ export default async function MyFeedbackPage({
                                     </span>
                                   ) : null}
                                 </div>
-                                <p className="mt-0.5 line-clamp-2 text-sm leading-6 text-emerald-900">
+                                <p className="mt-0.5 line-clamp-2 text-sm leading-6 text-emerald-900 dark:text-emerald-300">
                                   {lastAdminBody}
                                 </p>
                               </div>
                             </div>
                           ) : null}
 
-                          <p className="mt-2 text-xs text-stone-500">
+                          <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
                             {replyCount > 0
                               ? `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`
                               : "No replies yet"}

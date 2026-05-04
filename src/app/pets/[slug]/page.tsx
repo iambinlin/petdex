@@ -221,7 +221,7 @@ export default async function PetPage({ params }: PageProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff]">
+    <main className="min-h-screen bg-[#f7f8ff] dark:bg-stone-950">
       <JsonLd data={jsonLd} />
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
@@ -233,10 +233,10 @@ export default async function PetPage({ params }: PageProps) {
             <p className="text-sm font-semibold tracking-[0.18em] text-cyan-700 uppercase">
               {pet.featured ? "Featured Petdex entry" : "Petdex entry"}
             </p>
-            <h1 className="mt-3 text-5xl font-semibold text-stone-950 md:text-7xl">
+            <h1 className="mt-3 text-5xl font-semibold text-stone-950 md:text-7xl dark:text-stone-100">
               {pet.displayName}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-700">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-stone-700 dark:text-stone-300">
               {pet.description}
             </p>
 
@@ -276,7 +276,7 @@ export default async function PetPage({ params }: PageProps) {
                 }}
                 variant="detail"
               />
-              <span className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase">
+              <span className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
                 {metrics.installCount} installs · {metrics.zipDownloadCount} zip
                 downloads
               </span>
@@ -286,7 +286,7 @@ export default async function PetPage({ params }: PageProps) {
                 {pet.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea]"
+                    className="rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea] dark:bg-[#1f2240]"
                   >
                     {tag}
                   </span>
@@ -338,12 +338,12 @@ function InfoCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
-      <div className="flex items-center gap-2 text-sm font-semibold text-stone-950">
+    <div className="rounded-2xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
+      <div className="flex items-center gap-2 text-sm font-semibold text-stone-950 dark:text-stone-100">
         {icon}
         {title}
       </div>
-      <div className="mt-4 space-y-2 break-words text-sm leading-6 text-stone-600">
+      <div className="mt-4 space-y-2 break-words text-sm leading-6 text-stone-600 dark:text-stone-400">
         {children}
       </div>
     </div>

@@ -200,7 +200,7 @@ export function NotificationsBell() {
           unread > 0 ? `${unread} unread notifications` : "Notifications"
         }
         onClick={() => setOpen((v) => !v)}
-        className="relative grid size-10 place-items-center rounded-full border border-black/10 bg-white/70 text-stone-700 backdrop-blur transition hover:bg-white"
+        className="relative grid size-10 place-items-center rounded-full border border-black/10 bg-white/70 text-stone-700 backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:bg-stone-800"
       >
         <Bell className="size-4" />
         {unread > 0 ? (
@@ -214,9 +214,9 @@ export function NotificationsBell() {
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-[60] mt-2 flex max-h-[min(70vh,520px)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15">
-          <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-4 py-3">
-            <span className="text-sm font-semibold text-stone-950">
+        <div className="absolute right-0 z-[60] mt-2 flex max-h-[min(70vh,520px)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15 dark:border-white/10 dark:bg-stone-900">
+          <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
+            <span className="text-sm font-semibold text-stone-950 dark:text-stone-100">
               Notifications
             </span>
             {unread > 0 ? (
@@ -232,7 +232,7 @@ export function NotificationsBell() {
           </div>
 
           {items.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-stone-500">
+            <div className="px-4 py-10 text-center text-sm text-stone-500 dark:text-stone-400">
               You're all caught up.
             </div>
           ) : (
@@ -251,7 +251,7 @@ export function NotificationsBell() {
                       }}
                       className={`flex items-start gap-3 px-4 py-3 transition hover:bg-stone-50 ${
                         isUnread ? "bg-[#eef1ff]/40" : ""
-                      }`}
+                      } dark:hover:bg-stone-800/60`}
                     >
                       <span
                         className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full ring-1 ${meta.tone}`}
@@ -272,12 +272,12 @@ export function NotificationsBell() {
                           {isUnread ? (
                             <span className="size-1.5 shrink-0 rounded-full bg-[#5266ea]" />
                           ) : null}
-                          <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+                          <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
                             {relativeTime(n.createdAt)}
                           </span>
                         </div>
                         {sub ? (
-                          <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-stone-500">
+                          <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-stone-500 dark:text-stone-400">
                             {sub}
                           </p>
                         ) : null}

@@ -98,9 +98,9 @@ export function FeedbackThread({
   return (
     <div className="space-y-5">
       {/* Header card */}
-      <div className="rounded-2xl border border-black/10 bg-white/80 p-4 backdrop-blur">
+      <div className="rounded-2xl border border-black/10 bg-white/80 p-4 backdrop-blur dark:border-white/10 dark:bg-stone-900/80">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+          <span className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
             {KIND_LABEL[feedback.kind] ?? "Feedback"}
           </span>
           <span
@@ -110,18 +110,18 @@ export function FeedbackThread({
           >
             {feedback.status}
           </span>
-          <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+          <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
             {new Date(feedback.createdAt).toLocaleString()}
           </span>
         </div>
-        <p className="mt-3 text-sm leading-6 whitespace-pre-wrap text-stone-800">
+        <p className="mt-3 text-sm leading-6 whitespace-pre-wrap text-stone-800 dark:text-stone-200">
           {feedback.message}
         </p>
         {viewerKind === "user" ? (
           <button
             type="button"
             onClick={() => void toggleNotify()}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-stone-600 transition hover:border-black/30"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 py-1 text-[11px] text-stone-600 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-400 dark:hover:border-white/30"
           >
             {notify ? (
               <Bell className="size-3.5" />
@@ -136,7 +136,7 @@ export function FeedbackThread({
       {/* Replies */}
       <ol className="space-y-2">
         {replies.length === 0 ? (
-          <li className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-6 text-center text-xs text-stone-500">
+          <li className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-6 text-center text-xs text-stone-500 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
             No replies yet. Send a follow-up below to keep the thread going.
           </li>
         ) : (
@@ -152,7 +152,7 @@ export function FeedbackThread({
                     fromAdmin
                       ? "bg-white text-stone-900 ring-black/10"
                       : "bg-[#5266ea] text-white ring-[#5266ea]/30"
-                  }`}
+                  } dark:text-stone-100`}
                 >
                   <div
                     className={`mb-1 flex items-center gap-2 font-mono text-[10px] tracking-[0.12em] uppercase ${
@@ -180,7 +180,7 @@ export function FeedbackThread({
             void send();
           });
         }}
-        className="rounded-2xl border border-black/10 bg-white/80 p-3 backdrop-blur"
+        className="rounded-2xl border border-black/10 bg-white/80 p-3 backdrop-blur dark:border-white/10 dark:bg-stone-900/80"
       >
         <textarea
           value={draft}
@@ -198,16 +198,16 @@ export function FeedbackThread({
               ? "Reply to the user… (⌘+Enter to send)"
               : "Add a follow-up… (⌘+Enter to send)"
           }
-          className="w-full resize-none bg-transparent text-sm leading-6 text-stone-900 placeholder:text-stone-400 focus:outline-none"
+          className="w-full resize-none bg-transparent text-sm leading-6 text-stone-900 placeholder:text-stone-400 focus:outline-none dark:text-stone-100"
         />
         <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+          <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
             {draft.length}/2000
           </span>
           <button
             type="submit"
             disabled={busy || draft.trim().length === 0}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-50"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-50 dark:bg-stone-100"
           >
             {busy ? (
               <Loader2 className="size-3.5 animate-spin" />

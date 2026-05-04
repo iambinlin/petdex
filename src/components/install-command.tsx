@@ -83,15 +83,15 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
   const shellLabel = isWin ? "PowerShell" : "Curl";
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
+    <div className="rounded-2xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm font-semibold text-stone-950">
+        <div className="flex items-center gap-2 text-sm font-semibold text-stone-950 dark:text-stone-100">
           <Terminal className="size-4" />1. Install
         </div>
         <PlatformToggle platform={platform} onChange={setPlatform} />
       </div>
 
-      <p className="mt-2 text-xs leading-5 text-stone-500">
+      <p className="mt-2 text-xs leading-5 text-stone-500 dark:text-stone-400">
         Drops the pet pack into{" "}
         <code className="break-all">
           {isWin
@@ -103,7 +103,7 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
       <div
         role="tablist"
         aria-label="Install method"
-        className="mt-3 flex items-center gap-0.5 rounded-full border border-black/10 bg-white/70 p-0.5 self-start w-fit"
+        className="mt-3 flex items-center gap-0.5 rounded-full border border-black/10 bg-white/70 p-0.5 self-start w-fit dark:border-white/10 dark:bg-stone-900/70"
       >
         <TabButton
           icon={<Package className="size-3.5" />}
@@ -125,23 +125,23 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
         className="mt-2 w-full"
       />
 
-      <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-stone-950">
+      <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-stone-950 dark:text-stone-100">
         <MousePointerClick className="size-4" />2. Activate in Codex
       </div>
-      <ol className="mt-2 space-y-1 text-xs leading-5 text-stone-600">
+      <ol className="mt-2 space-y-1 text-xs leading-5 text-stone-600 dark:text-stone-400">
         <li>
           Open Codex,{" "}
-          <span className="font-mono text-stone-800">Settings</span>,{" "}
-          <span className="font-mono text-stone-800">Appearance</span>,{" "}
-          <span className="font-mono text-stone-800">Pets</span>.
+          <span className="font-mono text-stone-800 dark:text-stone-200">Settings</span>,{" "}
+          <span className="font-mono text-stone-800 dark:text-stone-200">Appearance</span>,{" "}
+          <span className="font-mono text-stone-800 dark:text-stone-200">Pets</span>.
         </li>
         <li>
-          Find <strong className="text-stone-800">{displayName}</strong> under{" "}
-          <span className="font-mono text-stone-800">Custom pets</span> and
-          click <span className="font-mono text-stone-800">Select</span>.
+          Find <strong className="text-stone-800 dark:text-stone-200">{displayName}</strong> under{" "}
+          <span className="font-mono text-stone-800 dark:text-stone-200">Custom pets</span> and
+          click <span className="font-mono text-stone-800 dark:text-stone-200">Select</span>.
         </li>
         <li>
-          Use <code className="rounded bg-stone-100 px-1.5 py-0.5">/pet</code>{" "}
+          Use <code className="rounded bg-stone-100 px-1.5 py-0.5 dark:bg-stone-800">/pet</code>{" "}
           inside Codex to wake or tuck it away.
         </li>
       </ol>
@@ -160,7 +160,7 @@ function PlatformToggle({
     <div
       role="tablist"
       aria-label="Install platform"
-      className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-black/10 bg-white/70 p-0.5"
+      className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-black/10 bg-white/70 p-0.5 dark:border-white/10 dark:bg-stone-900/70"
     >
       <PlatformBtn
         active={platform === "macos"}

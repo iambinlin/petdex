@@ -75,23 +75,23 @@ export default async function AdminFeedbackThreadPage({
     <section className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 pb-12 md:px-8 md:pb-16">
       <Link
         href="/admin/feedback"
-        className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase hover:text-stone-900"
+        className="font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
       >
         ← Inbox
       </Link>
 
       {author ? (
-        <div className="rounded-2xl border border-black/10 bg-white/60 p-3 text-xs text-stone-600">
-          <span className="font-medium text-stone-900">
+        <div className="rounded-2xl border border-black/10 bg-white/60 p-3 text-xs text-stone-600 dark:border-white/10 dark:bg-stone-900/60 dark:text-stone-400">
+          <span className="font-medium text-stone-900 dark:text-stone-100">
             {author.displayName ?? author.username ?? "Anonymous"}
           </span>
           {author.username ? (
-            <span className="ml-2 font-mono text-[10px] text-stone-400">
+            <span className="ml-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
               @{author.username}
             </span>
           ) : null}
           {author.primaryEmail ? (
-            <span className="ml-2 font-mono text-[10px] text-stone-400">
+            <span className="ml-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
               {author.primaryEmail}
             </span>
           ) : null}

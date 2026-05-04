@@ -56,7 +56,7 @@ export function AdminEditActions({ id }: { id: string }) {
         type="button"
         disabled={disabled}
         onClick={() => void run("reject")}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-3 text-xs font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-100 disabled:opacity-60"
+        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-rose-300 bg-rose-50 px-3 text-xs font-medium text-rose-900 transition hover:border-rose-400 hover:bg-rose-100 disabled:opacity-60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/40"
       >
         {busy === "reject" ? (
           <Loader2 className="size-3.5 animate-spin" />

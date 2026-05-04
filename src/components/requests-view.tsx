@@ -225,15 +225,15 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       {/* Always-visible request form */}
       <form
         onSubmit={submitForm}
-        className="space-y-3 rounded-3xl border border-black/[0.06] bg-white px-4 py-4 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)]"
+        className="space-y-3 rounded-3xl border border-black/[0.06] bg-white px-4 py-4 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)] dark:border-white/[0.06] dark:bg-stone-900"
       >
         <div className="flex items-center gap-2">
           <span className="grid size-7 place-items-center rounded-full bg-[#5266ea] text-white">
             <Sparkles className="size-3.5" />
           </span>
-          <p className="text-sm font-semibold text-stone-950">Request a pet</p>
+          <p className="text-sm font-semibold text-stone-950 dark:text-stone-100">Request a pet</p>
         </div>
-        <p className="text-xs text-stone-500">
+        <p className="text-xs text-stone-500 dark:text-stone-400">
           Describe the pet you'd like to see — character, theme, vibe. If
           someone else already asked for the same thing, your submission turns
           into an upvote on theirs.
@@ -249,9 +249,9 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
               }}
               placeholder="e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig"
               maxLength={MAX_LEN}
-              className="h-11 w-full rounded-full border border-black/10 bg-white px-4 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#5266ea]/60 focus:ring-2 focus:ring-[#5266ea]/15"
+              className="h-11 w-full rounded-full border border-black/10 bg-white px-4 text-sm text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[#5266ea]/60 focus:ring-2 focus:ring-[#5266ea]/15 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
             />
-            <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 font-mono text-[10px] text-stone-300">
+            <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 font-mono text-[10px] text-stone-300 dark:text-stone-600">
               {draft.length}/{MAX_LEN}
             </span>
           </label>
@@ -265,12 +265,12 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
           </button>
         </div>
         {formError ? (
-          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800">
+          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300">
             {formError}
           </p>
         ) : null}
         {lastResult ? (
-          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-900">
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-900 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300">
             <Check className="-mt-0.5 mr-1 inline-block size-3.5" />
             {lastResult.mode === "created"
               ? `Requested "${lastResult.query}". Others can upvote it now.`
@@ -304,12 +304,12 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
             count={counts.fulfilled}
           />
           <label className="relative ml-auto block w-48">
-            <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-3.5 text-stone-400" />
+            <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-3.5 text-stone-400 dark:text-stone-500" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search requests…"
-              className="h-9 w-full rounded-full border border-black/10 bg-white pr-3 pl-8 text-xs text-stone-900 outline-none placeholder:text-stone-400 focus:border-[#5266ea]/60"
+              className="h-9 w-full rounded-full border border-black/10 bg-white pr-3 pl-8 text-xs text-stone-900 outline-none placeholder:text-stone-400 focus:border-[#5266ea]/60 dark:border-white/10 dark:bg-stone-900 dark:text-stone-100"
             />
           </label>
         </div>
@@ -317,7 +317,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
 
       {/* List */}
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800">
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300">
           {error}
         </p>
       ) : null}
@@ -325,7 +325,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       {requests.length === 0 ? (
         <EmptyState />
       ) : visible.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-black/15 bg-white/70 p-8 text-center text-sm text-stone-600">
+        <div className="rounded-3xl border border-dashed border-black/15 bg-white/70 p-8 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/70 dark:text-stone-400">
           {search
             ? `No requests match "${search}".`
             : "Nothing in this view yet."}
@@ -365,9 +365,9 @@ function SortTab({
       onClick={onClick}
       className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
         active
-          ? "border-black bg-black text-white"
-          : "border-black/10 bg-white text-stone-700 hover:border-black/30"
-      }`}
+          ? "border-black bg-black text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-950"
+          : "border-black/10 bg-white text-stone-700 hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
+            }`}
     >
       {icon}
       {label}
@@ -401,7 +401,7 @@ function RequestCard({
         fulfilled
           ? "border-emerald-200 hover:border-emerald-300"
           : "border-black/10 hover:border-[#5266ea]/40 hover:shadow-[0_18px_45px_-26px_rgba(82,102,234,0.4)]"
-      }`}
+      } dark:bg-stone-900`}
     >
       <div className="flex items-start gap-3">
         {/* Vote button */}
@@ -417,7 +417,7 @@ function RequestCard({
             request.voted
               ? "border-[#5266ea] bg-[#5266ea] text-white"
               : "border-black/10 bg-white text-stone-700 hover:border-[#5266ea]/40 hover:bg-[#eef1ff]"
-          } disabled:cursor-not-allowed disabled:opacity-60`}
+          } disabled:cursor-not-allowed disabled:opacity-60 dark:bg-stone-900 dark:text-stone-300`}
         >
           {request.voted ? (
             <Check className="size-4" />
@@ -432,16 +432,16 @@ function RequestCard({
         {/* Body */}
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-baseline gap-2">
-            <p className="text-sm leading-6 font-medium text-stone-900">
+            <p className="text-sm leading-6 font-medium text-stone-900 dark:text-stone-100">
               {request.query}
             </p>
             {fulfilled ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900 uppercase ring-1 ring-emerald-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-emerald-900 uppercase ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300">
                 <Check className="size-3" />
                 Fulfilled
               </span>
             ) : null}
-            <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+            <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
               {new Date(request.createdAt).toLocaleDateString(undefined, {
                 month: "short",
                 day: "numeric",
@@ -454,7 +454,7 @@ function RequestCard({
             {request.requester ? (
               <Link
                 href={`/u/${request.requester.handle}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-stone-50 px-2 py-0.5 text-stone-700 transition hover:bg-stone-100 hover:text-stone-900"
+                className="inline-flex items-center gap-1.5 rounded-full bg-stone-50 px-2 py-0.5 text-stone-700 transition hover:bg-stone-100 hover:text-stone-900 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
               >
                 {request.requester.imageUrl ? (
                   // biome-ignore lint/performance/noImgElement: Clerk avatar
@@ -464,7 +464,7 @@ function RequestCard({
                     className="size-4 rounded-full ring-1 ring-black/10"
                   />
                 ) : (
-                  <span className="grid size-4 place-items-center rounded-full bg-stone-200 font-mono text-[8px] font-semibold text-stone-700">
+                  <span className="grid size-4 place-items-center rounded-full bg-stone-200 font-mono text-[8px] font-semibold text-stone-700 dark:bg-stone-700 dark:text-stone-300">
                     {(request.requester.displayName ??
                       request.requester.handle)
                       .slice(0, 1)
@@ -480,7 +480,7 @@ function RequestCard({
 
             {/* Voter avatar stack */}
             {top3.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 text-stone-500">
+              <span className="inline-flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
                 <span className="flex -space-x-1.5">
                   {top3.map((v) =>
                     v.imageUrl ? (
@@ -496,7 +496,7 @@ function RequestCard({
                       <span
                         key={v.handle}
                         title={v.displayName ?? `@${v.handle}`}
-                        className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[8px] font-semibold text-stone-700 ring-2 ring-white"
+                        className="grid size-5 place-items-center rounded-full bg-stone-200 font-mono text-[8px] font-semibold text-stone-700 ring-2 ring-white dark:bg-stone-700 dark:text-stone-300"
                       >
                         {(v.displayName ?? v.handle).slice(0, 1).toUpperCase()}
                       </span>
@@ -515,7 +515,7 @@ function RequestCard({
             {fulfilled && request.fulfilledPet ? (
               <Link
                 href={`/pets/${request.fulfilledPet.slug}`}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] tracking-[0.04em] text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-100"
+                className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] tracking-[0.04em] text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:border-emerald-700 dark:hover:bg-emerald-900/40"
               >
                 <Sparkles className="size-3" />
                 {request.fulfilledPet.displayName}
@@ -531,14 +531,14 @@ function RequestCard({
 
 function EmptyState() {
   return (
-    <div className="space-y-3 rounded-3xl border border-dashed border-black/15 bg-white/70 p-8 text-center">
-      <span className="mx-auto grid size-10 place-items-center rounded-full bg-[#eef1ff] text-[#5266ea]">
+    <div className="space-y-3 rounded-3xl border border-dashed border-black/15 bg-white/70 p-8 text-center dark:border-white/15 dark:bg-stone-900/70">
+      <span className="mx-auto grid size-10 place-items-center rounded-full bg-[#eef1ff] text-[#5266ea] dark:bg-[#1f2240]">
         <Sparkles className="size-4" />
       </span>
-      <p className="text-sm font-medium text-stone-950">
+      <p className="text-sm font-medium text-stone-950 dark:text-stone-100">
         No requests yet — be the first.
       </p>
-      <p className="text-xs text-stone-500">
+      <p className="text-xs text-stone-500 dark:text-stone-400">
         Or search{" "}
         <a
           href="/#gallery"

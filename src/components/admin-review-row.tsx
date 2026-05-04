@@ -126,7 +126,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
         isUntitled
           ? "border-amber-300 bg-amber-50/60"
           : "border-black/10"
-      }`}
+      } dark:bg-stone-900/76`}
     >
       <SpritePreview src={pet.spritesheetUrl} />
 
@@ -138,14 +138,14 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Pet display name"
               maxLength={60}
-              className="w-full rounded-lg border border-black/15 bg-white px-3 py-1.5 text-base font-semibold text-stone-950 outline-none focus:border-black/40"
+              className="w-full rounded-lg border border-black/15 bg-white px-3 py-1.5 text-base font-semibold text-stone-950 outline-none focus:border-black/40 dark:border-white/15 dark:bg-stone-900 dark:text-stone-100"
             />
             <input
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder="slug (url-safe)"
               maxLength={40}
-              className="w-full rounded-lg border border-black/15 bg-white px-3 py-1.5 font-mono text-xs text-stone-700 outline-none focus:border-black/40"
+              className="w-full rounded-lg border border-black/15 bg-white px-3 py-1.5 font-mono text-xs text-stone-700 outline-none focus:border-black/40 dark:border-white/15 dark:bg-stone-900 dark:text-stone-300"
             />
             <textarea
               value={description}
@@ -153,21 +153,21 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
               placeholder="Description"
               rows={2}
               maxLength={280}
-              className="w-full rounded-lg border border-black/15 bg-white px-3 py-1.5 text-sm text-stone-700 outline-none focus:border-black/40"
+              className="w-full rounded-lg border border-black/15 bg-white px-3 py-1.5 text-sm text-stone-700 outline-none focus:border-black/40 dark:border-white/15 dark:bg-stone-900 dark:text-stone-300"
             />
           </div>
         ) : (
           <>
             <div className="flex flex-wrap items-baseline gap-2">
-              <h3 className="text-lg font-semibold text-stone-950">
+              <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-100">
                 {displayName}
                 {isUntitled ? (
-                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 align-middle font-mono text-[10px] tracking-[0.15em] text-amber-900 uppercase">
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 align-middle font-mono text-[10px] tracking-[0.15em] text-amber-900 uppercase dark:text-amber-300">
                     Needs name
                   </span>
                 ) : null}
               </h3>
-              <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
+              <span className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
                 /{slug}
               </span>
               <StatusBadge status={status} />
@@ -175,16 +175,16 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
                 type="button"
                 onClick={() => setEditing(true)}
                 aria-label="Edit pet"
-                className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-stone-600 uppercase transition hover:border-black/30 hover:text-black"
+                className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-stone-600 uppercase transition hover:border-black/30 hover:text-black dark:border-white/10 dark:bg-stone-900 dark:text-stone-400 dark:hover:border-white/30 dark:hover:text-stone-100"
               >
                 <Pencil className="size-3" />
                 Edit
               </button>
             </div>
-            <p className="line-clamp-2 text-sm text-stone-600">{description}</p>
+            <p className="line-clamp-2 text-sm text-stone-600 dark:text-stone-400">{description}</p>
           </>
         )}
-        <div className="flex flex-wrap gap-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+        <div className="flex flex-wrap gap-3 font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
           {pet.ownerEmail ? (
             <span className="inline-flex items-center gap-1">
               <Mail className="size-3" />
@@ -202,7 +202,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
             href={pet.zipUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-stone-700 underline underline-offset-4 hover:text-black"
+            className="inline-flex items-center gap-1 text-stone-700 underline underline-offset-4 hover:text-black dark:text-stone-300 dark:hover:text-stone-100"
           >
             <ExternalLink className="size-3" />
             zip
@@ -211,7 +211,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
             href={pet.spritesheetUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-stone-700 underline underline-offset-4 hover:text-black"
+            className="inline-flex items-center gap-1 text-stone-700 underline underline-offset-4 hover:text-black dark:text-stone-300 dark:hover:text-stone-100"
           >
             <ExternalLink className="size-3" />
             sprite
@@ -220,14 +220,14 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
             href={pet.petJsonUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-stone-700 underline underline-offset-4 hover:text-black"
+            className="inline-flex items-center gap-1 text-stone-700 underline underline-offset-4 hover:text-black dark:text-stone-300 dark:hover:text-stone-100"
           >
             <ExternalLink className="size-3" />
             pet.json
           </a>
         </div>
         {error ? (
-          <p className="rounded-md bg-rose-50 px-2 py-1 text-xs text-rose-900">
+          <p className="rounded-md bg-rose-50 px-2 py-1 text-xs text-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
             {error}
           </p>
         ) : null}
@@ -240,7 +240,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
               type="button"
               onClick={() => void saveEdit()}
               disabled={busy}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85 disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85 disabled:opacity-60 dark:bg-stone-100 dark:hover:bg-stone-200"
             >
               {busy ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -253,7 +253,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
               type="button"
               onClick={cancelEdit}
               disabled={busy}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-black/30 disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-black/30 disabled:opacity-60 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
             >
               <X className="size-3.5" />
               Cancel
@@ -278,7 +278,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
               type="button"
               onClick={() => void decide("reject")}
               disabled={busy}
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-rose-400 hover:text-rose-700 disabled:opacity-60"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-stone-300 bg-white px-4 text-xs font-medium text-stone-700 transition hover:border-rose-400 hover:text-rose-700 disabled:opacity-60 dark:bg-stone-900 dark:text-stone-300"
             >
               <X className="size-3.5" />
               Reject
@@ -289,7 +289,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
             type="button"
             onClick={() => void decide("revive")}
             disabled={busy}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-4 text-xs font-medium text-amber-900 transition hover:border-amber-400 hover:bg-amber-100 disabled:opacity-60"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-4 text-xs font-medium text-amber-900 transition hover:border-amber-400 hover:bg-amber-100 disabled:opacity-60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/40"
           >
             {busy ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -308,7 +308,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
 function StatusBadge({ status }: { status: SubmittedPet["status"] }) {
   if (status === "pending") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-amber-900 uppercase">
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-amber-900 uppercase dark:text-amber-300">
         <Clock className="size-3" />
         Pending
       </span>
@@ -316,14 +316,14 @@ function StatusBadge({ status }: { status: SubmittedPet["status"] }) {
   }
   if (status === "approved") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-emerald-900 uppercase">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-emerald-900 uppercase dark:text-emerald-300">
         <Check className="size-3" />
         Approved
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-rose-900 uppercase">
+    <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-rose-900 uppercase dark:text-rose-300">
       <Slash className="size-3" />
       Rejected
     </span>
@@ -342,7 +342,7 @@ function SpritePreview({ src }: { src: string }) {
   }, []);
 
   return (
-    <div className="w-fit rounded-2xl border border-black/10 bg-[#f7f8ff] p-3">
+    <div className="w-fit rounded-2xl border border-black/10 bg-[#f7f8ff] p-3 dark:border-white/10 dark:bg-stone-950">
       <div
         className="pet-sprite-frame"
         role="img"
@@ -469,9 +469,9 @@ function SimilarPanel({ petId, status }: { petId: string; status: string }) {
               href={`/pets/${m.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex flex-col gap-1 rounded-lg border border-black/10 bg-white p-2 transition hover:border-black/30"
+              className="group flex flex-col gap-1 rounded-lg border border-black/10 bg-white p-2 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:hover:border-white/30"
             >
-              <div className="aspect-square overflow-hidden rounded-md bg-stone-100">
+              <div className="aspect-square overflow-hidden rounded-md bg-stone-100 dark:bg-stone-800">
                 {/* biome-ignore lint/performance/noImgElement: admin-only sprite preview */}
                 <img
                   src={m.spritesheetUrl}
@@ -480,11 +480,11 @@ function SimilarPanel({ petId, status }: { petId: string; status: string }) {
                   style={{ imageRendering: "pixelated" }}
                 />
               </div>
-              <div className="flex items-center gap-1 truncate text-[11px] font-medium text-stone-900">
+              <div className="flex items-center gap-1 truncate text-[11px] font-medium text-stone-900 dark:text-stone-100">
                 {m.featured ? "★ " : ""}
                 {m.displayName}
               </div>
-              <div className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-tight text-stone-500">
+              <div className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-tight text-stone-500 dark:text-stone-400">
                 <span
                   className={
                     m.status === "approved"

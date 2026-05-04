@@ -93,7 +93,7 @@ export default async function AdminManifestPage() {
         <h1 className="mt-2 text-4xl font-medium tracking-tight md:text-5xl">
           Manifest fetches
         </h1>
-        <p className="mt-3 text-sm text-stone-600">
+        <p className="mt-3 text-sm text-stone-600 dark:text-stone-400">
           Who's pulling /api/manifest. IPs are SHA-256 hashed daily so
           they group within a day but can't be reversed.
         </p>
@@ -115,7 +115,7 @@ export default async function AdminManifestPage() {
               const pct = max > 0 ? Math.round((d.count / max) * 100) : 0;
               return (
                 <li key={d.day} className="flex items-center gap-3">
-                  <span className="w-24 shrink-0 font-mono text-[11px] text-stone-500">
+                  <span className="w-24 shrink-0 font-mono text-[11px] text-stone-500 dark:text-stone-400">
                     {d.day}
                   </span>
                   <span className="flex-1">
@@ -124,9 +124,9 @@ export default async function AdminManifestPage() {
                       style={{ width: `${pct}%` }}
                     />
                   </span>
-                  <span className="w-24 text-right font-mono text-[11px] text-stone-700">
+                  <span className="w-24 text-right font-mono text-[11px] text-stone-700 dark:text-stone-300">
                     {d.count.toLocaleString()}{" "}
-                    <span className="text-stone-400">
+                    <span className="text-stone-400 dark:text-stone-500">
                       ({d.slim}s/{d.full}f)
                     </span>
                   </span>
@@ -142,7 +142,7 @@ export default async function AdminManifestPage() {
         <Card title="Loudest IPs · last 7d">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+              <tr className="text-left font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
                 <th className="pb-2 font-normal">IP hash</th>
                 <th className="pb-2 font-normal">Country</th>
                 <th className="pb-2 font-normal">Last UA</th>
@@ -153,12 +153,12 @@ export default async function AdminManifestPage() {
               {topIps.map((row) => (
                 <tr
                   key={row.ipHash}
-                  className="border-t border-black/[0.06] align-top"
+                  className="border-t border-black/[0.06] align-top dark:border-white/[0.06]"
                 >
-                  <td className="py-2 pr-3 font-mono text-[11px] text-stone-700">
+                  <td className="py-2 pr-3 font-mono text-[11px] text-stone-700 dark:text-stone-300">
                     {row.ipHash.slice(0, 12)}…
                   </td>
-                  <td className="py-2 pr-3 font-mono text-[11px] text-stone-700">
+                  <td className="py-2 pr-3 font-mono text-[11px] text-stone-700 dark:text-stone-300">
                     <span className="inline-flex items-center gap-1">
                       <span className="text-sm leading-none">
                         {countryFlag(row.lastCountry)}
@@ -166,10 +166,10 @@ export default async function AdminManifestPage() {
                       {row.lastCountry ?? "—"}
                     </span>
                   </td>
-                  <td className="max-w-[24rem] truncate py-2 pr-3 text-xs text-stone-600">
+                  <td className="max-w-[24rem] truncate py-2 pr-3 text-xs text-stone-600 dark:text-stone-400">
                     {row.lastUa ?? "—"}
                   </td>
-                  <td className="py-2 pr-2 text-right font-mono text-xs font-semibold text-stone-900">
+                  <td className="py-2 pr-2 text-right font-mono text-xs font-semibold text-stone-900 dark:text-stone-100">
                     {row.count.toLocaleString()}
                   </td>
                 </tr>
@@ -188,11 +188,11 @@ export default async function AdminManifestPage() {
                 key={`${u.userAgent ?? "none"}-${i}`}
                 className="flex items-baseline gap-3 border-t border-black/[0.04] pt-1.5 first:border-0 first:pt-0"
               >
-                <span className="w-16 shrink-0 text-right font-mono text-[11px] font-semibold text-stone-700">
+                <span className="w-16 shrink-0 text-right font-mono text-[11px] font-semibold text-stone-700 dark:text-stone-300">
                   {u.count.toLocaleString()}
                 </span>
-                <span className="truncate text-xs text-stone-600">
-                  {u.userAgent ?? <em className="text-stone-400">no UA</em>}
+                <span className="truncate text-xs text-stone-600 dark:text-stone-400">
+                  {u.userAgent ?? <em className="text-stone-400 dark:text-stone-500">no UA</em>}
                 </span>
               </li>
             ))}
@@ -207,17 +207,17 @@ export default async function AdminManifestPage() {
             {byCountry.map((c) => (
               <li
                 key={c.country ?? "none"}
-                className="flex items-center justify-between rounded-xl bg-stone-50 px-3 py-2 text-xs"
+                className="flex items-center justify-between rounded-xl bg-stone-50 px-3 py-2 text-xs dark:bg-stone-900"
               >
                 <span className="flex items-center gap-1.5">
                   <span className="text-base leading-none">
                     {countryFlag(c.country)}
                   </span>
-                  <span className="font-mono text-[11px] tracking-[0.1em] text-stone-600 uppercase">
+                  <span className="font-mono text-[11px] tracking-[0.1em] text-stone-600 uppercase dark:text-stone-400">
                     {c.country ?? "—"}
                   </span>
                 </span>
-                <span className="font-mono text-[11px] font-semibold text-stone-900">
+                <span className="font-mono text-[11px] font-semibold text-stone-900 dark:text-stone-100">
                   {c.count.toLocaleString()}
                 </span>
               </li>
@@ -231,11 +231,11 @@ export default async function AdminManifestPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur">
-      <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+    <div className="rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
+      <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
         {label}
       </p>
-      <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-stone-950">
+      <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-stone-950 dark:text-stone-100">
         {value}
       </p>
     </div>
@@ -250,7 +250,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-black/10 bg-white/76 p-5 backdrop-blur">
+    <section className="rounded-2xl border border-black/10 bg-white/76 p-5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
       <h2 className="font-mono text-[11px] tracking-[0.22em] text-[#5266ea] uppercase">
         {title}
       </h2>

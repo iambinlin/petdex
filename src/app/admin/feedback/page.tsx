@@ -228,7 +228,7 @@ export default async function AdminFeedbackPage({
       </header>
 
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600">
+        <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
           No feedback in this view.
         </div>
       ) : (
@@ -271,7 +271,7 @@ export default async function AdminFeedbackPage({
                   r.status === "archived"
                     ? "border-black/5 opacity-70"
                     : "border-black/10"
-                }`}
+                } dark:bg-stone-900/80`}
               >
                 {/* Top row: identity + tags on left, action cluster on right */}
                 <div className="flex items-start justify-between gap-3">
@@ -279,11 +279,11 @@ export default async function AdminFeedbackPage({
                     <Avatar info={info} email={r.email} />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="truncate text-sm font-medium text-stone-900">
+                        <span className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
                           {displayName}
                         </span>
                         {info?.username ? (
-                          <span className="font-mono text-[10px] text-stone-400">
+                          <span className="font-mono text-[10px] text-stone-400 dark:text-stone-500">
                             @{info.username}
                           </span>
                         ) : null}
@@ -298,7 +298,7 @@ export default async function AdminFeedbackPage({
                         >
                           {statusMeta.label}
                         </span>
-                        <span className="font-mono text-[10px] text-stone-400">
+                        <span className="font-mono text-[10px] text-stone-400 dark:text-stone-500">
                           {new Date(r.createdAt).toLocaleString(undefined, {
                             month: "short",
                             day: "numeric",
@@ -307,13 +307,13 @@ export default async function AdminFeedbackPage({
                           })}
                         </span>
                       </div>
-                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-stone-500">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-stone-500 dark:text-stone-400">
                         {replyEmail ? (
                           <span className="inline-flex items-center gap-1">
                             <Mail className="size-3" />
                             {replyEmail}
                             {!r.email && info?.primaryEmail ? (
-                              <span className="text-[10px] text-stone-400">
+                              <span className="text-[10px] text-stone-400 dark:text-stone-500">
                                 (clerk)
                               </span>
                             ) : null}
@@ -324,7 +324,7 @@ export default async function AdminFeedbackPage({
                             href={r.pageUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                            className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline dark:hover:text-stone-200"
                           >
                             <ExternalLink className="size-3" />
                             {(() => {
@@ -342,7 +342,7 @@ export default async function AdminFeedbackPage({
                             href={url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                            className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline dark:hover:text-stone-200"
                           >
                             <ExternalLink className="size-3" />
                             {url.replace(/^https?:\/\//, "")}
@@ -363,7 +363,7 @@ export default async function AdminFeedbackPage({
                         ? `Thread (${replyCount})`
                         : "Thread"}
                       {adminUnread ? (
-                        <span className="ml-0.5 size-1.5 rounded-full bg-white" />
+                        <span className="ml-0.5 size-1.5 rounded-full bg-white dark:bg-stone-900" />
                       ) : null}
                     </Link>
                     {info?.handle ? (
@@ -372,7 +372,7 @@ export default async function AdminFeedbackPage({
                         target="_blank"
                         rel="noreferrer"
                         title={`View @${info.handle}'s profile`}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 text-[11px] text-stone-600 transition hover:border-black/30 hover:text-stone-900"
+                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 text-[11px] text-stone-600 transition hover:border-black/30 hover:text-stone-900 dark:border-white/10 dark:bg-stone-900 dark:text-stone-400 dark:hover:border-white/30 dark:hover:text-stone-100"
                       >
                         <UserSquare className="size-3" />
                         Profile
@@ -382,7 +382,7 @@ export default async function AdminFeedbackPage({
                       <a
                         href={mailtoHref}
                         title="Send email instead"
-                        className="inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white text-stone-600 transition hover:border-black/30 hover:text-stone-900"
+                        className="inline-flex size-8 items-center justify-center rounded-full border border-black/10 bg-white text-stone-600 transition hover:border-black/30 hover:text-stone-900 dark:border-white/10 dark:bg-stone-900 dark:text-stone-400 dark:hover:border-white/30 dark:hover:text-stone-100"
                       >
                         <Mail className="size-3.5" />
                       </a>
@@ -392,7 +392,7 @@ export default async function AdminFeedbackPage({
                 </div>
 
                 {/* Message */}
-                <p className="mt-2.5 text-sm leading-6 whitespace-pre-wrap text-stone-800">
+                <p className="mt-2.5 text-sm leading-6 whitespace-pre-wrap text-stone-800 dark:text-stone-200">
                   {r.message}
                 </p>
               </li>
@@ -423,7 +423,7 @@ function Avatar({
   }
   const seed = info?.displayName ?? info?.username ?? email ?? "?";
   return (
-    <div className="grid size-8 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-xs font-semibold text-stone-700 ring-1 ring-black/10">
+    <div className="grid size-8 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-xs font-semibold text-stone-700 ring-1 ring-black/10 dark:bg-stone-700 dark:text-stone-300">
       {seed.slice(0, 1).toUpperCase()}
     </div>
   );

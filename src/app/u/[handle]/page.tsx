@@ -164,7 +164,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
       <JsonLd data={jsonLd} />
       <ProfileAnalytics
         handle={handle}
@@ -188,7 +188,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                   className="size-28 rounded-3xl object-cover ring-1 ring-black/10 md:size-32"
                 />
               ) : (
-                <div className="grid size-28 place-items-center rounded-3xl bg-white font-mono text-3xl font-semibold text-stone-700 ring-1 ring-black/10 md:size-32">
+                <div className="grid size-28 place-items-center rounded-3xl bg-white font-mono text-3xl font-semibold text-stone-700 ring-1 ring-black/10 md:size-32 dark:bg-stone-900 dark:text-stone-300">
                   {fallbackInitial}
                 </div>
               )}
@@ -203,7 +203,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 {displayName ?? `@${handle}`}
               </h1>
               {username ? (
-                <p className="mt-2 font-mono text-sm tracking-[0.08em] text-stone-500">
+                <p className="mt-2 font-mono text-sm tracking-[0.08em] text-stone-500 dark:text-stone-400">
                   @{username}
                 </p>
               ) : null}
@@ -214,7 +214,7 @@ export default async function UserProfilePage({ params }: PageProps) {
               ) : null}
 
               {/* Stats row */}
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase lg:justify-start">
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase lg:justify-start dark:text-stone-400">
                 <span>
                   {pets.length} {pets.length === 1 ? "pet" : "pets"}
                 </span>
@@ -276,11 +276,11 @@ export default async function UserProfilePage({ params }: PageProps) {
 
       <section className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-5 py-12 md:px-8 md:py-16">
         {pets.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-black/15 bg-white/60 p-12 text-center">
-            <p className="font-mono text-xs tracking-[0.22em] text-stone-500 uppercase">
+          <div className="rounded-3xl border border-dashed border-black/15 bg-white/60 p-12 text-center dark:border-white/15 dark:bg-stone-900/60">
+            <p className="font-mono text-xs tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
               No approved pets yet
             </p>
-            <p className="mt-3 text-base text-stone-700">
+            <p className="mt-3 text-base text-stone-700 dark:text-stone-300">
               {isOwner
                 ? "Once you submit a pet and it gets approved, it'll show up here."
                 : "This creator hasn't shipped a public pet yet."}
@@ -288,7 +288,7 @@ export default async function UserProfilePage({ params }: PageProps) {
             {isOwner ? (
               <Link
                 href="/submit"
-                className="mt-5 inline-flex h-10 items-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85"
+                className="mt-5 inline-flex h-10 items-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
               >
                 Submit your first pet
               </Link>
@@ -302,7 +302,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                   <p className="font-mono text-[11px] tracking-[0.22em] text-[#5266ea] uppercase">
                     ★ Pinned
                   </p>
-                  <p className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
                     {featuredPets.length} of {MAX_PINNED_PETS}
                   </p>
                 </div>
@@ -367,7 +367,7 @@ export default async function UserProfilePage({ params }: PageProps) {
             {restPets.length > 0 ? (
               <div className="space-y-4">
                 {featuredPets.length > 0 ? (
-                  <p className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
+                  <p className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
                     All pets
                   </p>
                 ) : null}
@@ -408,7 +408,7 @@ function FeaturedPin({ pet }: { pet: PetWithMetrics }) {
     <Link
       href={`/pets/${pet.slug}`}
       aria-label={`Open ${pet.displayName}`}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-[#6478f6]/45 bg-white/80 backdrop-blur transition hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 md:flex-row md:items-stretch"
+      className="group relative flex flex-col overflow-hidden rounded-3xl border border-[#6478f6]/45 bg-white/80 backdrop-blur transition hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 md:flex-row md:items-stretch dark:bg-stone-900/80 dark:hover:bg-stone-800"
       style={{
         boxShadow:
           "0 0 0 1px rgba(100,120,246,0.18), 0 18px 45px -22px rgba(82,102,234,0.5)",
@@ -428,17 +428,17 @@ function FeaturedPin({ pet }: { pet: PetWithMetrics }) {
           label={`${pet.displayName} animated`}
         />
       </div>
-      <div className="flex flex-1 flex-col justify-center gap-3 border-t border-black/[0.06] p-6 md:border-t-0 md:border-l">
+      <div className="flex flex-1 flex-col justify-center gap-3 border-t border-black/[0.06] p-6 md:border-t-0 md:border-l dark:border-white/[0.06]">
         <span className="font-mono text-[11px] tracking-[0.22em] text-[#5266ea] uppercase">
           ★ Pinned
         </span>
-        <h2 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-4xl">
+        <h2 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-4xl dark:text-stone-100">
           {pet.displayName}
         </h2>
-        <p className="max-w-2xl text-base leading-7 text-stone-700">
+        <p className="max-w-2xl text-base leading-7 text-stone-700 dark:text-stone-300">
           {pet.description}
         </p>
-        <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+        <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
           {pet.metrics.likeCount > 0 ? (
             <span className="inline-flex items-center gap-1.5">
               <Heart className="size-3" />

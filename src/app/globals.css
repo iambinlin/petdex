@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
+/* Enable Tailwind v4's `dark:` variant via the .dark class on <html>,
+   which is what next-themes (attribute="class") writes. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f7f8ff;
   --foreground: #050505;
+}
+
+.dark {
+  --background: #0a0a0c;
+  --foreground: #f0f0f3;
 }
 
 @theme inline {

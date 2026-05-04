@@ -35,7 +35,7 @@ export function FacetPage({
   const cmd = `npx petdex install ${exampleSlug ?? pets[0]?.slug ?? "boba"}`;
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
@@ -54,7 +54,7 @@ export function FacetPage({
               source="facet-hero"
               className="mt-5 w-full max-w-sm"
             />
-            <p className="mt-3 font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase">
+            <p className="mt-3 font-mono text-[11px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
               {count} pets in this collection
             </p>
           </div>
@@ -69,8 +69,8 @@ export function FacetPage({
         </div>
 
         {related.length > 0 ? (
-          <aside className="mt-8 rounded-2xl border border-black/[0.08] bg-white/55 px-5 py-6 backdrop-blur md:px-7">
-            <p className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase">
+          <aside className="mt-8 rounded-2xl border border-black/[0.08] bg-white/55 px-5 py-6 backdrop-blur md:px-7 dark:border-white/[0.08] dark:bg-stone-900/55">
+            <p className="font-mono text-[11px] tracking-[0.22em] text-stone-500 uppercase dark:text-stone-400">
               {relatedLabel}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -78,10 +78,10 @@ export function FacetPage({
                 <Link
                   key={r.href}
                   href={r.href}
-                  className="inline-flex h-9 items-center gap-2 rounded-full border border-black/10 bg-white px-3 font-mono text-[11px] tracking-[0.08em] capitalize text-stone-700 transition hover:border-black/30"
+                  className="inline-flex h-9 items-center gap-2 rounded-full border border-black/10 bg-white px-3 font-mono text-[11px] tracking-[0.08em] capitalize text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
                 >
                   <span>{r.label}</span>
-                  <span className="text-[10px] text-stone-400">{r.count}</span>
+                  <span className="text-[10px] text-stone-400 dark:text-stone-500">{r.count}</span>
                 </Link>
               ))}
             </div>

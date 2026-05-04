@@ -173,10 +173,10 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
       {open ? (
         <div
           role="menu"
-          className={`${menuPositionClassName} z-[60] w-60 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15`}
+          className={`${menuPositionClassName} z-[60] w-60 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl shadow-blue-950/15 dark:border-white/10 dark:bg-stone-900`}
         >
-          <div className="flex items-center justify-between border-b border-black/[0.06] px-3 py-2">
-            <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+          <div className="flex items-center justify-between border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]">
+            <span className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
               {pet.displayName}
             </span>
             <button
@@ -186,7 +186,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                 e.preventDefault();
                 setOpen(false);
               }}
-              className="grid size-6 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+              className="grid size-6 place-items-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
             >
               <CloseIcon className="size-3.5" />
             </button>
@@ -242,7 +242,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                   target="_blank"
                   rel="noreferrer"
                   onClick={onZipClick}
-                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-stone-700 transition hover:bg-[#f4f6ff] hover:text-black"
+                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-stone-700 transition hover:bg-[#f4f6ff] hover:text-black dark:border-white/[0.06] dark:text-stone-300 dark:hover:text-stone-100"
                 >
                   <Download className="size-4" />
                   <span className="flex-1">Download ZIP</span>
@@ -273,19 +273,19 @@ function MenuItem({ icon, label, hint, onClick }: MenuItemProps) {
           e.preventDefault();
           onClick();
         }}
-        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-[#f4f6ff] hover:text-black"
+        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-[#f4f6ff] hover:text-black dark:text-stone-300 dark:hover:text-stone-100"
       >
         {icon}
         <span className="flex flex-col">
           <span>{label}</span>
           {hint ? (
-            <span className="font-mono text-[10px] tracking-tight text-stone-400">
+            <span className="font-mono text-[10px] tracking-tight text-stone-400 dark:text-stone-500">
               {hint}
             </span>
           ) : null}
         </span>
         {label.startsWith("Copy") ? (
-          <Copy className="ml-auto size-3.5 text-stone-300" />
+          <Copy className="ml-auto size-3.5 text-stone-300 dark:text-stone-600" />
         ) : null}
       </button>
     </li>

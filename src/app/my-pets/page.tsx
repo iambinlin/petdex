@@ -103,7 +103,7 @@ export default async function MyPetsPage() {
     }));
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>

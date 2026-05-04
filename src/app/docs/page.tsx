@@ -25,7 +25,7 @@ const SKILL_URL = `${REPO_URL}/blob/main/.claude/skills/petdex/SKILL.md`;
 
 export default function DocsPage() {
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 py-5 md:px-8 md:py-5">
         <SiteHeader />
       </section>
@@ -58,7 +58,7 @@ export default function DocsPage() {
             <h1 className="text-5xl font-medium tracking-tight md:text-6xl">
               Docs
             </h1>
-            <p className="max-w-2xl text-lg leading-8 text-stone-700">
+            <p className="max-w-2xl text-lg leading-8 text-stone-700 dark:text-stone-300">
               The Petdex CLI lets you install, browse, and submit Codex pets
               from your terminal. Authentication is OAuth 2.0 + PKCE through
               Clerk. Tokens persist in your OS keychain. Same auth works
@@ -69,7 +69,7 @@ export default function DocsPage() {
                 href={NPM_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium transition hover:border-black/30"
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:hover:border-white/30"
               >
                 npmjs.com/petdex
                 <ArrowRight className="size-4" />
@@ -78,7 +78,7 @@ export default function DocsPage() {
                 href={REPO_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium transition hover:border-black/30"
+                className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:hover:border-white/30"
               >
                 <GithubIcon className="size-4" />
                 Repo
@@ -163,7 +163,7 @@ export default function DocsPage() {
               source="docs-auth-login"
               className="w-full max-w-xl"
             />
-            <p className="text-sm text-stone-600">
+            <p className="text-sm text-stone-600 dark:text-stone-400">
               The flow is OAuth 2.0 + PKCE: the CLI opens your browser, you
               sign in with Clerk on{" "}
               <code>accounts.petdex.crafter.run</code>, and the browser
@@ -225,7 +225,7 @@ export default function DocsPage() {
               Publish your pet(s) to the gallery. The CLI accepts three
               shapes:
             </p>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700">
+            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
               <li>
                 <strong>Single folder</strong>:{" "}
                 <code>petdex submit ~/.codex/pets/boba</code>
@@ -258,7 +258,7 @@ export default function DocsPage() {
               command. Here's the full lifecycle:
             </p>
 
-            <ol className="ml-6 list-decimal space-y-3 text-stone-700">
+            <ol className="ml-6 list-decimal space-y-3 text-stone-700 dark:text-stone-300">
               <li>
                 <strong>Create.</strong> In Codex Desktop, install the{" "}
                 <strong>Hatch Pet</strong> skill and run <code>/pet</code>.
@@ -312,7 +312,7 @@ export default function DocsPage() {
 
           <Section id="validation" title="Validation rules">
             <p>The server enforces these rules; the CLI checks locally too.</p>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700">
+            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
               <li>
                 <code>pet.json</code> and{" "}
                 <code>spritesheet.webp</code> (or <code>.png</code>) must be
@@ -339,9 +339,9 @@ export default function DocsPage() {
           </Section>
 
           <Section id="failure" title="Failure modes">
-            <div className="overflow-x-auto rounded-2xl border border-black/10 bg-white">
+            <div className="overflow-x-auto rounded-2xl border border-black/10 bg-white dark:border-white/10 dark:bg-stone-900">
               <table className="w-full min-w-[520px] text-sm">
-                <thead className="border-b border-black/10 bg-stone-50">
+                <thead className="border-b border-black/10 bg-stone-50 dark:border-white/10 dark:bg-stone-900">
                   <tr>
                     <Th>Symptom</Th>
                     <Th>Cause</Th>
@@ -411,7 +411,7 @@ export default function DocsPage() {
             </p>
 
             <h3 className="mt-6 font-semibold">What this enables</h3>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700">
+            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
               <li>
                 Say{" "}
                 <em>"install something cozy for my Codex"</em> in any agent
@@ -474,7 +474,7 @@ export default function DocsPage() {
               only need to override env vars if you're testing against a
               non-production deployment.
             </p>
-            <ul className="ml-6 list-disc space-y-1 text-stone-700">
+            <ul className="ml-6 list-disc space-y-1 text-stone-700 dark:text-stone-300">
               <li>
                 <code>PETDEX_URL</code>: base URL, default{" "}
                 <code>https://petdex.crafter.run</code>
@@ -491,9 +491,9 @@ export default function DocsPage() {
           </Section>
 
           <Section id="contribute" title="Contribute">
-            <ul className="space-y-3 text-stone-700">
+            <ul className="space-y-3 text-stone-700 dark:text-stone-300">
               <li className="flex items-start gap-2">
-                <Check className="mt-1 size-4 shrink-0 text-stone-500" />
+                <Check className="mt-1 size-4 shrink-0 text-stone-500 dark:text-stone-400" />
                 <span>
                   PRs welcome at{" "}
                   <a
@@ -507,7 +507,7 @@ export default function DocsPage() {
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="mt-1 size-4 shrink-0 text-stone-500" />
+                <Check className="mt-1 size-4 shrink-0 text-stone-500 dark:text-stone-400" />
                 <span>
                   Bug reports and feature requests:{" "}
                   <a
@@ -521,7 +521,7 @@ export default function DocsPage() {
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="mt-1 size-4 shrink-0 text-stone-500" />
+                <Check className="mt-1 size-4 shrink-0 text-stone-500 dark:text-stone-400" />
                 <span>
                   Sponsor on{" "}
                   <a
@@ -547,7 +547,7 @@ export default function DocsPage() {
 
 function NavHeader({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mt-3 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase first:mt-0">
+    <p className="mt-3 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase first:mt-0 dark:text-stone-400">
       {children}
     </p>
   );
@@ -563,7 +563,7 @@ function NavLink({
   return (
     <a
       href={href}
-      className="rounded px-2 py-1 text-stone-700 transition hover:bg-white hover:text-black"
+      className="rounded px-2 py-1 text-stone-700 transition hover:bg-white hover:text-black dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
     >
       {children}
     </a>
@@ -584,7 +584,7 @@ function Section({
       <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
         {title}
       </h2>
-      <div className="space-y-4 text-base leading-7 text-stone-700">
+      <div className="space-y-4 text-base leading-7 text-stone-700 dark:text-stone-300">
         {children}
       </div>
     </section>
@@ -593,7 +593,7 @@ function Section({
 
 function Callout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[#6478f6]/40 bg-[#eef1ff] p-4 text-sm leading-6 text-[#33333a]">
+    <div className="rounded-2xl border border-[#6478f6]/40 bg-[#eef1ff] p-4 text-sm leading-6 text-[#33333a] dark:bg-[#1f2240]">
       {children}
     </div>
   );
@@ -601,7 +601,7 @@ function Callout({ children }: { children: React.ReactNode }) {
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
-    <th className="px-4 py-2 text-left font-mono text-[10px] tracking-[0.18em] text-stone-600 uppercase">
+    <th className="px-4 py-2 text-left font-mono text-[10px] tracking-[0.18em] text-stone-600 uppercase dark:text-stone-400">
       {children}
     </th>
   );
@@ -617,12 +617,12 @@ function Tr({
   fix: React.ReactNode;
 }) {
   return (
-    <tr className="border-b border-black/[0.06] last:border-b-0">
-      <td className="px-4 py-3 align-top font-mono text-xs text-rose-700">
+    <tr className="border-b border-black/[0.06] last:border-b-0 dark:border-white/[0.06]">
+      <td className="px-4 py-3 align-top font-mono text-xs text-rose-700 dark:text-rose-300">
         {sym}
       </td>
-      <td className="px-4 py-3 align-top text-stone-700">{cause}</td>
-      <td className="px-4 py-3 align-top text-stone-800">{fix}</td>
+      <td className="px-4 py-3 align-top text-stone-700 dark:text-stone-300">{cause}</td>
+      <td className="px-4 py-3 align-top text-stone-800 dark:text-stone-200">{fix}</td>
     </tr>
   );
 }

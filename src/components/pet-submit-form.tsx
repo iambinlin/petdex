@@ -480,14 +480,14 @@ export function PetSubmitForm() {
           });
         }}
       >
-        <span className="grid size-16 place-items-center rounded-2xl bg-black text-white">
+        <span className="grid size-16 place-items-center rounded-2xl bg-black text-white dark:bg-stone-100">
           <Upload className="size-7" />
         </span>
         <span className="mt-6 text-2xl font-medium">Upload a pet package</span>
         <span className="mt-3 max-w-md text-sm leading-6 text-[#5d5d66]">
           Drop a folder or a ZIP with{" "}
-          <code className="rounded bg-white/70 px-1 py-0.5">pet.json</code> and{" "}
-          <code className="rounded bg-white/70 px-1 py-0.5">
+          <code className="rounded bg-white/70 px-1 py-0.5 dark:bg-stone-900/70">pet.json</code> and{" "}
+          <code className="rounded bg-white/70 px-1 py-0.5 dark:bg-stone-900/70">
             spritesheet.webp
           </code>{" "}
           (or .png). Recommended {REQUIRED.width}×{REQUIRED.height}, 8×9 frame
@@ -495,7 +495,7 @@ export function PetSubmitForm() {
         </span>
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85">
+          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200">
             <Upload className="size-3.5" />
             Pick folder
             <input
@@ -512,7 +512,7 @@ export function PetSubmitForm() {
               }
             />
           </label>
-          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-4 text-xs font-medium text-black transition hover:bg-white">
+          <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-4 text-xs font-medium text-black transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:text-stone-100 dark:hover:bg-stone-800">
             <FileArchive className="size-3.5" />
             Pick .zip
             <input
@@ -529,14 +529,14 @@ export function PetSubmitForm() {
         </div>
 
         {!isLoaded ? null : !isSignedIn ? (
-          <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100/70 px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-amber-900 uppercase">
+          <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-amber-100/70 px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-amber-900 uppercase dark:text-amber-300">
             Sign in to submit
           </span>
         ) : null}
       </div>
 
-      <aside className="rounded-3xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
-        <div className="flex items-center gap-2 text-sm font-medium text-black">
+      <aside className="rounded-3xl border border-black/10 bg-white/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur dark:border-white/10 dark:bg-stone-900/76">
+        <div className="flex items-center gap-2 text-sm font-medium text-black dark:text-stone-100">
           <FileArchive className="size-4" />
           Submission check
         </div>
@@ -557,13 +557,13 @@ export function PetSubmitForm() {
                 {parsed.description}
               </p>
               {parsed.spritesheetWidth ? (
-                <p className="mt-2 font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase">
+                <p className="mt-2 font-mono text-[10px] tracking-[0.18em] text-stone-400 uppercase dark:text-stone-500">
                   {parsed.spritesheetWidth}×{parsed.spritesheetHeight}
                 </p>
               ) : null}
             </div>
             {parsed.issues.length > 0 ? (
-              <div className="flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+              <div className="flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-sm leading-6 text-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                 <ul className="space-y-1">
                   {parsed.issues.map((issue) => (
@@ -572,7 +572,7 @@ export function PetSubmitForm() {
                 </ul>
               </div>
             ) : (
-              <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
+              <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
                 <CheckCircle2 className="size-4" />
                 Looks ready to submit.
               </div>
@@ -590,7 +590,7 @@ export function PetSubmitForm() {
             />
 
             {submission.kind === "error" ? (
-              <div className="space-y-2 rounded-2xl bg-rose-50 p-3 text-sm text-rose-900">
+              <div className="space-y-2 rounded-2xl bg-rose-50 p-3 text-sm text-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                 <p>{submission.message}</p>
                 <p className="text-xs leading-5 text-rose-800/80">
                   Stuck?{" "}
@@ -608,7 +608,7 @@ export function PetSubmitForm() {
             ) : null}
 
             {submission.kind === "success" ? (
-              <p className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-900">
+              <p className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
                 {submission.displayName} is in review. You'll be notified when
                 it's approved.
               </p>
@@ -624,7 +624,7 @@ export function PetSubmitForm() {
 
       <p className="col-span-full inline-flex flex-wrap items-center gap-2 text-xs text-[#5d5d66]">
         Pet assets live in
-        <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono">
+        <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono dark:bg-stone-900/70">
           {PETS_DIR}
         </code>
         <CopyPathButton path={PETS_DIR} />
@@ -671,7 +671,7 @@ function CopyPathButton({ path }: { path: string }) {
       type="button"
       aria-label={copied ? "Path copied" : "Copy path to clipboard"}
       onClick={(e) => void handleClick(e)}
-      className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-[#3a3a44] transition hover:bg-white"
+      className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-white/70 px-2 py-0.5 text-[11px] font-medium text-[#3a3a44] transition hover:bg-white dark:border-white/10 dark:bg-stone-900/70 dark:hover:bg-stone-800"
     >
       {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
       {copied ? "Copied" : "Copy"}
@@ -704,7 +704,7 @@ function SubmitButton({
       type="button"
       onClick={onSubmit}
       disabled={disabled}
-      className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-stone-100 dark:hover:bg-stone-200"
     >
       {submission.kind === "uploading" ? (
         <Loader2 className="size-4 animate-spin" />
@@ -730,7 +730,7 @@ function SpritePreview({ src }: { src: string }) {
   }, []);
 
   return (
-    <div className="w-fit rounded-2xl border border-black/10 bg-[#f7f8ff] p-3">
+    <div className="w-fit rounded-2xl border border-black/10 bg-[#f7f8ff] p-3 dark:border-white/10 dark:bg-stone-950">
       <div
         className="pet-sprite-frame"
         role="img"

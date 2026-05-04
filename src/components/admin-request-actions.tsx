@@ -80,7 +80,7 @@ export function AdminRequestActions({
             onClick={() => void run("dismiss")}
             aria-label="Dismiss"
             title="Dismiss"
-            className="inline-flex size-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-900 transition hover:border-rose-300 hover:bg-rose-100 disabled:opacity-60"
+            className="inline-flex size-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-900 transition hover:border-rose-300 hover:bg-rose-100 disabled:opacity-60 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:border-rose-700 dark:hover:bg-rose-900/40"
           >
             {busy === "dismiss" ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -96,7 +96,7 @@ export function AdminRequestActions({
             onClick={() => void run("reopen")}
             aria-label="Re-open"
             title="Re-open"
-            className="inline-flex size-8 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-900 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60"
+            className="inline-flex size-8 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-900 transition hover:border-amber-300 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:border-amber-700 dark:hover:bg-amber-900/40"
           >
             {busy === "reopen" ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -113,9 +113,9 @@ export function AdminRequestActions({
             e.preventDefault();
             void run("fulfill", { petSlug: slug });
           }}
-          className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-2 py-1"
+          className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-2 py-1 dark:border-white/10 dark:bg-stone-900"
         >
-          <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+          <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase dark:text-stone-500">
             slug
           </span>
           <input
@@ -123,7 +123,7 @@ export function AdminRequestActions({
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="cool-clippy"
-            className="h-7 w-44 bg-transparent text-xs text-stone-900 outline-none placeholder:text-stone-400"
+            className="h-7 w-44 bg-transparent text-xs text-stone-900 outline-none placeholder:text-stone-400 dark:text-stone-100"
             autoFocus
           />
           <button

@@ -74,7 +74,7 @@ export function ProfilePinButton({
         isPinned
           ? "border-[#5266ea]/40 bg-[#5266ea] text-white hover:bg-[#3847f5]"
           : "border-black/10 bg-white/90 text-stone-600 hover:border-black/30 hover:text-black"
-      }`}
+      } dark:bg-stone-900/90 dark:text-stone-400 dark:hover:border-white/30`}
     >
       {busy ? (
         <Loader2 className="size-3.5 animate-spin" />

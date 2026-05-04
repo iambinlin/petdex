@@ -124,7 +124,7 @@ export function PetCardFooter({
   }
 
   return (
-    <div className="flex items-center justify-between gap-2 border-t border-black/[0.05] px-2 py-2">
+    <div className="flex items-center justify-between gap-2 border-t border-black/[0.05] px-2 py-2 dark:border-white/[0.05]">
       <div className="flex items-center gap-0.5">
         <FooterBtn
           onClick={toggleLike}
@@ -152,7 +152,7 @@ export function PetCardFooter({
         >
           <TerminalSquare className="size-3.5" />
           {installCount > 0 ? (
-            <span className="font-mono text-[11px] text-stone-500">
+            <span className="font-mono text-[11px] text-stone-500 dark:text-stone-400">
               {installCount}
             </span>
           ) : null}
@@ -170,7 +170,7 @@ export function PetCardFooter({
       </div>
 
       {busy ? (
-        <Loader2 className="size-3.5 animate-spin text-stone-400" />
+        <Loader2 className="size-3.5 animate-spin text-stone-400 dark:text-stone-500" />
       ) : null}
     </div>
   );
@@ -197,7 +197,7 @@ function FooterBtn({
         active
           ? "bg-stone-100 text-stone-900"
           : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
-      }`}
+      } dark:hover:bg-stone-800`}
     >
       {children}
     </button>

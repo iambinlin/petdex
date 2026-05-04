@@ -83,7 +83,7 @@ export default async function AboutPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff] text-[#050505]">
+    <main className="min-h-screen bg-[#f7f8ff] text-[#050505] dark:bg-stone-950">
       <JsonLd data={jsonLd} />
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-10 md:px-8">
@@ -111,16 +111,16 @@ export default async function AboutPage() {
 
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-12 px-5 py-14 md:px-8 md:py-20">
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl dark:text-stone-100">
             What Petdex is
           </h2>
-          <p className="text-base leading-7 text-stone-700 md:text-lg">
+          <p className="text-base leading-7 text-stone-700 md:text-lg dark:text-stone-300">
             Petdex is a public, open-source registry. Every entry is a pet
             pack — a tiny bundle of metadata and pixel art that the Codex CLI
             knows how to display while you work. Think of it as a Pokédex for
             terminal companions.
           </p>
-          <p className="text-base leading-7 text-stone-700 md:text-lg">
+          <p className="text-base leading-7 text-stone-700 md:text-lg dark:text-stone-300">
             The platform takes the guesswork out: there's a CLI for installing
             and submitting, a tagged gallery so finding the right companion
             doesn't require scrolling, and per-vibe collections like{" "}
@@ -142,37 +142,37 @@ export default async function AboutPage() {
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl dark:text-stone-100">
             How a pet pack works
           </h2>
-          <p className="text-base leading-7 text-stone-700 md:text-lg">
-            Each pet is two files. <code className="rounded bg-[#eef1ff] px-1 py-0.5 text-[#5266ea]">pet.json</code>{" "}
+          <p className="text-base leading-7 text-stone-700 md:text-lg dark:text-stone-300">
+            Each pet is two files. <code className="rounded bg-[#eef1ff] px-1 py-0.5 text-[#5266ea] dark:bg-[#1f2240]">pet.json</code>{" "}
             defines the metadata — name, the 9 animation states, frame durations
             — and{" "}
-            <code className="rounded bg-[#eef1ff] px-1 py-0.5 text-[#5266ea]">spritesheet.webp</code>{" "}
+            <code className="rounded bg-[#eef1ff] px-1 py-0.5 text-[#5266ea] dark:bg-[#1f2240]">spritesheet.webp</code>{" "}
             holds the pixel art as a horizontal strip. Codex loads them at
             startup and swaps states based on what's happening in your session.
           </p>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl dark:text-stone-100">
             FAQ
           </h2>
           <div className="space-y-6">
             {FAQ.map((item) => (
               <article key={item.q} className="space-y-2">
-                <h3 className="text-lg font-semibold text-stone-950">
+                <h3 className="text-lg font-semibold text-stone-950 dark:text-stone-100">
                   {item.q}
                 </h3>
-                <p className="text-base leading-7 text-stone-700">{item.a}</p>
+                <p className="text-base leading-7 text-stone-700 dark:text-stone-300">{item.a}</p>
               </article>
             ))}
           </div>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-stone-950 md:text-3xl dark:text-stone-100">
             Browse by kind or vibe
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -189,7 +189,7 @@ export default async function AboutPage() {
               <Link
                 key={href}
                 href={href}
-                className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-sm text-stone-700 transition hover:border-black/30"
+                className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-sm text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
               >
                 {label}
               </Link>

@@ -41,7 +41,7 @@ export function AdminTabs() {
   return (
     <nav
       aria-label="Admin sections"
-      className="flex items-center gap-1 border-b border-black/10"
+      className="flex items-center gap-1 border-b border-black/10 dark:border-white/10"
     >
       {TABS.map((tab) => {
         const active = tab.match(pathname);

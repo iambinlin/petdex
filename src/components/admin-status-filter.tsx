@@ -45,8 +45,8 @@ export function AdminStatusFilter({
             href={href}
             className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
               active
-                ? "border-black bg-black text-white"
-                : "border-black/10 bg-white text-stone-700 hover:border-black/30"
+                ? "border-black bg-black text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-950"
+                : "border-black/10 bg-white text-stone-700 hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
             }`}
           >
             {f.label}

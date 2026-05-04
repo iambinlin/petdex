@@ -52,7 +52,7 @@ export default async function AdminPage({
       </header>
 
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600">
+        <div className="rounded-2xl border border-dashed border-black/15 bg-white/60 p-10 text-center text-sm text-stone-600 dark:border-white/15 dark:bg-stone-900/60 dark:text-stone-400">
           No pets in this view.
         </div>
       ) : (

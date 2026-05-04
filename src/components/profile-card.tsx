@@ -104,7 +104,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
   return (
     <section
       id="profile"
-      className="rounded-3xl border border-black/10 bg-white/76 p-5 backdrop-blur md:p-6"
+      className="rounded-3xl border border-black/10 bg-white/76 p-5 backdrop-blur md:p-6 dark:border-white/10 dark:bg-stone-900/76"
     >
       <div className="flex flex-wrap items-center gap-4">
         {profile.avatarUrl ? (
@@ -115,7 +115,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
             className="size-14 shrink-0 rounded-2xl ring-1 ring-black/10"
           />
         ) : (
-          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-stone-100 font-mono text-base font-semibold text-stone-700 ring-1 ring-black/10">
+          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-stone-100 font-mono text-base font-semibold text-stone-700 ring-1 ring-black/10 dark:bg-stone-800 dark:text-stone-300">
             {fallbackInitial}
           </div>
         )}
@@ -123,10 +123,10 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           <p className="font-mono text-[10px] tracking-[0.22em] text-[#5266ea] uppercase">
             Public profile
           </p>
-          <p className="mt-1 truncate text-base font-medium text-stone-950">
+          <p className="mt-1 truncate text-base font-medium text-stone-950 dark:text-stone-100">
             {profile.displayName ?? `@${profile.handle}`}
           </p>
-          <p className="font-mono text-[11px] tracking-[0.06em] text-stone-500">
+          <p className="font-mono text-[11px] tracking-[0.06em] text-stone-500 dark:text-stone-400">
             petdex.crafter.run/u/{profile.handle}
           </p>
         </div>
@@ -135,7 +135,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
             href={`/u/${profile.handle}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
           >
             <ExternalLink className="size-3.5" />
             View public
@@ -143,7 +143,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-black/85"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
           >
             <Pencil className="size-3.5" />
             Customize
@@ -152,27 +152,27 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
       </div>
 
       {profile.bio || pinnedDetails.length > 0 ? (
-        <div className="mt-4 grid gap-3 border-t border-black/[0.06] pt-4 md:grid-cols-2">
+        <div className="mt-4 grid gap-3 border-t border-black/[0.06] pt-4 md:grid-cols-2 dark:border-white/[0.06]">
           {profile.bio ? (
             <div>
-              <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+              <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
                 Bio
               </p>
-              <p className="mt-1.5 text-sm leading-6 text-stone-700">
+              <p className="mt-1.5 text-sm leading-6 text-stone-700 dark:text-stone-300">
                 {profile.bio}
               </p>
             </div>
           ) : null}
           {pinnedDetails.length > 0 ? (
             <div>
-              <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+              <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
                 Pinned ({pinnedDetails.length}/{MAX_PINNED_PETS})
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {pinnedDetails.map((p) => (
                   <span
                     key={p.slug}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea]"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#eef1ff] px-2.5 py-1 text-xs font-medium text-[#5266ea] dark:bg-[#1f2240]"
                   >
                     <Star className="size-3" />
                     {p.displayName}
@@ -183,7 +183,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
           ) : null}
         </div>
       ) : (
-        <div className="mt-3 rounded-2xl border border-dashed border-black/10 bg-[#eef1ff]/40 p-3 text-xs text-stone-600">
+        <div className="mt-3 rounded-2xl border border-dashed border-black/10 bg-[#eef1ff]/40 p-3 text-xs text-stone-600 dark:border-white/10 dark:text-stone-400">
           Add a bio and pin up to {MAX_PINNED_PETS} pets so visitors land
           somewhere opinionated. Hit{" "}
           <button
@@ -201,18 +201,18 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
         <div
           aria-modal
           role="dialog"
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4 dark:bg-black/60"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-stone-900">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
                   Customize profile
                 </h2>
-                <p className="mt-1 text-xs text-stone-500">
+                <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                   Lives at petdex.crafter.run/u/{profile.handle}. Changes go
                   live instantly — no admin review.
                 </p>
@@ -220,7 +220,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+                className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
               >
                 <X className="size-4" />
               </button>
@@ -236,7 +236,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
               <div>
                 <label
                   htmlFor="profile-bio"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
+                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400"
                 >
                   Bio
                 </label>
@@ -247,19 +247,19 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                   maxLength={280}
                   rows={4}
                   placeholder="Pixel art, cozy creatures, and the occasional shrimp."
-                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none"
+                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none dark:border-white/10 dark:bg-stone-900"
                 />
-                <p className="mt-1 font-mono text-[10px] text-stone-400">
+                <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   {bio.length}/280
                 </p>
               </div>
 
               <div>
-                <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+                <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
                   Pinned pets ({pinned.length}/{MAX_PINNED_PETS})
                 </p>
                 {profile.approvedPets.length === 0 ? (
-                  <p className="mt-2 font-mono text-[10px] text-stone-400">
+                  <p className="mt-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                     Once a pet is approved you can pin it here.
                   </p>
                 ) : (
@@ -285,7 +285,7 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                             active
                               ? "border-[#5266ea] bg-[#5266ea] text-white hover:bg-[#3847f5]"
                               : "border-black/10 bg-white text-stone-700 hover:border-black/30"
-                          }`}
+                          } dark:bg-stone-900 dark:text-stone-300`}
                         >
                           <Pin className="size-3" />
                           {p.displayName}
@@ -294,14 +294,14 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                     })}
                   </div>
                 )}
-                <p className="mt-2 font-mono text-[10px] text-stone-400">
+                <p className="mt-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   Tip: each pet card on your profile has a one-click Pin
                   button too.
                 </p>
               </div>
 
               {error ? (
-                <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-900">
+                <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                   {error.replace(/_/g, " ")}
                 </p>
               ) : null}
@@ -310,14 +310,14 @@ export function ProfileCard({ profile }: { profile: ProfileData }) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30"
+                  className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-60"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-60 dark:bg-stone-100"
                 >
                   {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
                   Save

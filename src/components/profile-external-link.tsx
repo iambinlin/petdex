@@ -20,7 +20,7 @@ export function ProfileExternalLink({
       onClick={() => {
         track("profile_external_clicked", { handle, host: hostFor(url) });
       }}
-      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-3 font-mono text-[11px] tracking-[0.06em] text-stone-700 transition hover:border-black/30 hover:bg-white"
+      className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-3 font-mono text-[11px] tracking-[0.06em] text-stone-700 transition hover:border-black/30 hover:bg-white dark:border-white/10 dark:bg-stone-900/80 dark:text-stone-300 dark:hover:border-white/30 dark:hover:bg-stone-800"
     >
       <ExternalLink className="size-3" />
       {label}

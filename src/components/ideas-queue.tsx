@@ -18,11 +18,11 @@ export function IdeasQueue({ ideas }: IdeasQueueProps) {
           <p className="text-sm font-semibold tracking-[0.18em] text-cyan-700 uppercase">
             Hatch queue
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-stone-950">
+          <h2 className="mt-2 text-2xl font-semibold text-stone-950 dark:text-stone-100">
             Planned pets
           </h2>
         </div>
-        <div className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700">
+        <div className="rounded-md border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300">
           {ideas.length} ideas
         </div>
       </div>
@@ -31,18 +31,18 @@ export function IdeasQueue({ ideas }: IdeasQueueProps) {
         {ideas.map((idea) => (
           <article
             key={idea.id}
-            className="rounded-lg border border-stone-200 bg-white p-4"
+            className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-700 dark:bg-stone-900"
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="rounded-md bg-amber-50 p-2 text-amber-800">
+              <div className="rounded-md bg-amber-50 p-2 text-amber-800 dark:bg-amber-950/40">
                 <Lightbulb className="size-4" />
               </div>
-              <span className="rounded-md bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-600">
+              <span className="rounded-md bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-600 dark:bg-stone-800 dark:text-stone-400">
                 {idea.featured ? "featured" : idea.status}
               </span>
             </div>
-            <h3 className="mt-4 font-semibold text-stone-950">{idea.name}</h3>
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600">
+            <h3 className="mt-4 font-semibold text-stone-950 dark:text-stone-100">{idea.name}</h3>
+            <p className="mt-2 line-clamp-3 text-sm leading-6 text-stone-600 dark:text-stone-400">
               {idea.description}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">

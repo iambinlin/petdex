@@ -86,11 +86,11 @@ export function GithubStarsLink({
           ? `Petdex on GitHub, ${stars} stars`
           : "Petdex on GitHub"
       }
-      className={`inline-flex items-center gap-1.5 transition hover:text-black ${className}`}
+      className={`inline-flex items-center gap-1.5 transition hover:text-black ${className} dark:hover:text-stone-100`}
     >
       <GithubIcon className={iconSize} />
       {stars !== null ? (
-        <span className="inline-flex items-center gap-0.5 font-mono text-[11px] text-stone-600">
+        <span className="inline-flex items-center gap-0.5 font-mono text-[11px] text-stone-600 dark:text-stone-400">
           <Star className="size-3" fill="currentColor" />
           {compact(stars)}
         </span>

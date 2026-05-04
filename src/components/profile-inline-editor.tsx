@@ -74,7 +74,7 @@ export function ProfileInlineEditor({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-black/85"
+        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
       >
         <Pencil className="size-3.5" />
         Edit profile
@@ -84,18 +84,18 @@ export function ProfileInlineEditor({
         <div
           aria-modal
           role="dialog"
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4 dark:bg-black/60"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-stone-900">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
                   Edit your profile
                 </h2>
-                <p className="mt-1 text-xs text-stone-500">
+                <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                   Lives at petdex.crafter.run/u/{handle}. Changes go live
                   instantly — no admin review.
                 </p>
@@ -103,7 +103,7 @@ export function ProfileInlineEditor({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+                className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:text-stone-500 dark:hover:bg-stone-800"
               >
                 <X className="size-4" />
               </button>
@@ -119,7 +119,7 @@ export function ProfileInlineEditor({
               <div>
                 <label
                   htmlFor="profile-inline-bio"
-                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase"
+                  className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400"
                 >
                   Bio
                 </label>
@@ -130,19 +130,19 @@ export function ProfileInlineEditor({
                   maxLength={280}
                   rows={4}
                   placeholder="Pixel art, cozy creatures, and the occasional shrimp."
-                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none"
+                  className="mt-1 w-full resize-none rounded-xl border border-black/10 bg-white px-3 py-2 text-sm focus:border-[#5266ea] focus:outline-none dark:border-white/10 dark:bg-stone-900"
                 />
-                <p className="mt-1 font-mono text-[10px] text-stone-400">
+                <p className="mt-1 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   {bio.length}/280
                 </p>
               </div>
 
               <div>
-                <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase">
+                <p className="font-mono text-[10px] tracking-[0.12em] text-stone-500 uppercase dark:text-stone-400">
                   Pinned pets ({pinned.length}/{MAX_PINNED_PETS})
                 </p>
                 {approvedPets.length === 0 ? (
-                  <p className="mt-2 font-mono text-[10px] text-stone-400">
+                  <p className="mt-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                     Once a pet is approved you can pin it here.
                   </p>
                 ) : (
@@ -168,7 +168,7 @@ export function ProfileInlineEditor({
                             active
                               ? "border-[#5266ea] bg-[#5266ea] text-white hover:bg-[#3847f5]"
                               : "border-black/10 bg-white text-stone-700 hover:border-black/30"
-                          }`}
+                          } dark:bg-stone-900 dark:text-stone-300`}
                         >
                           <Pin className="size-3" />
                           {p.displayName}
@@ -177,14 +177,14 @@ export function ProfileInlineEditor({
                     })}
                   </div>
                 )}
-                <p className="mt-2 font-mono text-[10px] text-stone-400">
+                <p className="mt-2 font-mono text-[10px] text-stone-400 dark:text-stone-500">
                   Tip: each pet card on your profile has a one-click Pin
                   button too.
                 </p>
               </div>
 
               {error ? (
-                <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-900">
+                <p className="rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
                   {error.replace(/_/g, " ")}
                 </p>
               ) : null}
@@ -193,14 +193,14 @@ export function ProfileInlineEditor({
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30"
+                  className="inline-flex h-9 items-center rounded-full border border-black/10 bg-white px-3 text-xs font-medium text-stone-700 transition hover:border-black/30 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={busy}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-60"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-4 text-xs font-medium text-white transition hover:bg-stone-800 disabled:opacity-60 dark:bg-stone-100"
                 >
                   {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
                   Save

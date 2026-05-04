@@ -41,7 +41,7 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
   const profileHref = `/u/${credit.handle}`;
 
   return (
-    <div className="group relative rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur transition hover:border-black/30 hover:bg-white">
+    <div className="group relative rounded-2xl border border-black/10 bg-white/76 p-4 backdrop-blur transition hover:border-black/30 hover:bg-white dark:border-white/10 dark:bg-stone-900/76 dark:hover:border-white/30 dark:hover:bg-stone-800">
       {/* The whole card is the profile link. Stretched-link pattern: an
           absolute-inset overlay catches clicks across the full surface so
           the social chips below can still receive their own clicks via
@@ -61,20 +61,20 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
             className="size-10 shrink-0 rounded-full ring-1 ring-black/10"
           />
         ) : (
-          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-sm text-stone-700 ring-1 ring-black/10">
+          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-sm text-stone-700 ring-1 ring-black/10 dark:bg-stone-700 dark:text-stone-300">
             {credit.name.slice(0, 1).toUpperCase()}
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
+          <p className="font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase dark:text-stone-400">
             Submitted by
           </p>
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <p className="truncate text-sm font-medium text-stone-950">
+            <p className="truncate text-sm font-medium text-stone-950 dark:text-stone-100">
               {credit.name}
             </p>
             {credit.username ? (
-              <p className="font-mono text-[11px] text-stone-400">
+              <p className="font-mono text-[11px] text-stone-400 dark:text-stone-500">
                 @{credit.username}
               </p>
             ) : null}
@@ -83,7 +83,7 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
       </div>
 
       {credit.externals.length > 0 ? (
-        <div className="relative mt-3 flex flex-wrap items-center gap-1.5 border-t border-black/[0.06] pt-3">
+        <div className="relative mt-3 flex flex-wrap items-center gap-1.5 border-t border-black/[0.06] pt-3 dark:border-white/[0.06]">
           {credit.externals.map((ext) => (
             <a
               key={ext.url}
@@ -93,7 +93,7 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
               // Stay above the stretched-link overlay so this beats the
               // profile click.
               style={{ position: "relative", zIndex: 1 }}
-              className="inline-flex h-7 items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 font-mono text-[11px] tracking-[0.04em] text-stone-700 transition hover:border-black/30 hover:bg-stone-50"
+              className="inline-flex h-7 items-center gap-1.5 rounded-full border border-black/10 bg-white px-2.5 font-mono text-[11px] tracking-[0.04em] text-stone-700 transition hover:border-black/30 hover:bg-stone-50 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/30 dark:hover:bg-stone-800/60"
             >
               {ext.provider === "github" ? (
                 <GithubIcon className="size-3.5" />
