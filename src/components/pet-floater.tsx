@@ -62,6 +62,7 @@ type DragSample = {
 export function PetFloater({ src, petName }: PetFloaterProps) {
   const anchorRef = useRef<HTMLSpanElement | null>(null);
 
+  const [enabled, setEnabled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [bounds, setBounds] = useState<{
     left: number;
@@ -93,7 +94,16 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
   // Mount flag for the portal — createPortal needs a DOM target which
   // doesn't exist during SSR.
   useEffect(() => {
+    function syncEnabled() {
+      setEnabled(window.innerWidth >= 768);
+    }
+
+    syncEnabled();
     setMounted(true);
+    window.addEventListener("resize", syncEnabled);
+    return () => {
+      window.removeEventListener("resize", syncEnabled);
+    };
   }, []);
 
   useEffect(() => {
@@ -154,13 +164,14 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
 
   // Show the hint glow on first visit.
   useEffect(() => {
+    if (!enabled) return;
     if (typeof window === "undefined") return;
     const seen = window.localStorage.getItem(HINT_STORAGE_KEY);
     if (seen === "1") return;
     setShowHint(true);
     const fade = window.setTimeout(() => setShowHint(false), HINT_DURATION_MS);
     return () => window.clearTimeout(fade);
-  }, []);
+  }, [enabled]);
 
   function dismissHint() {
     if (!showHint) return;
@@ -175,6 +186,7 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
   // designer wants the pet to live within. Re-measure on resize and
   // scroll so the pet stays aligned to the banner as the page shifts.
   useEffect(() => {
+    if (!enabled) return;
     if (!mounted) return;
     const anchor = anchorRef.current;
     if (!anchor) return;
@@ -206,11 +218,12 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
       window.removeEventListener("scroll", measure);
       obs.disconnect();
     };
-  }, [mounted]);
+  }, [enabled, mounted]);
 
   // Initial position: roughly half-way across the banner, centered
   // vertically. Recomputed only the first time bounds become known.
   useEffect(() => {
+    if (!enabled) return;
     if (pos !== null) return;
     if (!bounds) return;
     const initialX = Math.min(
@@ -222,10 +235,11 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
       bounds.height - SPRITE_SIZE_PX - SAFE_MARGIN_PX,
     );
     setPos({ x: initialX, y: initialY });
-  }, [bounds, pos]);
+  }, [enabled, bounds, pos]);
 
   // Idle-cycle ticker — paused while dragging.
   useEffect(() => {
+    if (!enabled) return;
     if (dragging || throwing) return;
     let cancelled = false;
     let i = 0;
@@ -246,7 +260,18 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
       cancelled = true;
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [dragging, throwing]);
+  }, [enabled, dragging, throwing]);
+
+  useEffect(() => {
+    if (!enabled) {
+      setBounds(null);
+      setPos(null);
+      setDragging(false);
+      setThrowing(false);
+      setShowHint(false);
+      setState("idle");
+    }
+  }, [enabled]);
 
   const triggerReaction = useCallback(() => {
     cancelReactionTimeout();
@@ -461,7 +486,7 @@ export function PetFloater({ src, petName }: PetFloaterProps) {
   // The actual visible pet, portaled onto document.body. Position uses
   // page coordinates (bounds.left/top + pet's banner-relative x/y).
   const portalled = (() => {
-    if (!mounted || !bounds || !pos) return null;
+    if (!enabled || !mounted || !bounds || !pos) return null;
     return createPortal(
       <button
         type="button"
