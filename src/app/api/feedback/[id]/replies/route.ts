@@ -6,6 +6,7 @@ import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
+import { createNotification } from "@/lib/notifications";
 import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
@@ -137,6 +138,21 @@ export async function POST(
       .update(schema.feedback)
       .set({ userLastReadAt: now })
       .where(eq(schema.feedback.id, id));
+  }
+
+  // In-app notification: when admin replies, push a bell entry to the
+  // original author. We don't notify admins of user follow-ups via the
+  // bell — they already have an admin-side counter on /admin/feedback.
+  if (adminCaller && row.userId) {
+    void createNotification({
+      userId: row.userId,
+      kind: "feedback_replied",
+      payload: {
+        feedbackId: id,
+        excerpt: text.slice(0, 120),
+      },
+      href: `/my-feedback/${id}`,
+    }).catch(() => {});
   }
 
   // Email the other party.

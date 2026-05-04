@@ -6,6 +6,7 @@ import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
 import { db, schema } from "@/lib/db/client";
+import { createNotification } from "@/lib/notifications";
 import { requireSameOrigin } from "@/lib/same-origin";
 import { refreshSimilarityFor } from "@/lib/similarity";
 
@@ -77,6 +78,17 @@ export async function PATCH(
     // Refresh embedding/similarity since text changed.
     void refreshSimilarityFor(id).catch(() => {});
 
+    // In-app notification.
+    void createNotification({
+      userId: updated.ownerId,
+      kind: "edit_approved",
+      payload: {
+        petSlug: updated.slug,
+        petName: updated.displayName,
+      },
+      href: `/pets/${updated.slug}`,
+    }).catch(() => {});
+
     // Notify owner.
     if (process.env.RESEND_API_KEY && updated.ownerEmail) {
       try {
@@ -116,6 +128,18 @@ export async function PATCH(
     })
     .where(eq(schema.submittedPets.id, id))
     .returning();
+
+  // In-app notification.
+  void createNotification({
+    userId: updated.ownerId,
+    kind: "edit_rejected",
+    payload: {
+      petSlug: updated.slug,
+      petName: updated.displayName,
+      ...(reason ? { reason } : {}),
+    },
+    href: `/pets/${updated.slug}`,
+  }).catch(() => {});
 
   // Notify owner with reason. Best-effort; falls back to Clerk primary email.
   let toEmail = updated.ownerEmail ?? null;

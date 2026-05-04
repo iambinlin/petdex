@@ -5,6 +5,7 @@ import { MessageSquare, Shield, Sparkles, UserSquare } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { isAdminClientSafe } from "@/lib/admin";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 export function AuthBadge() {
   return (
@@ -20,7 +21,10 @@ export function AuthBadge() {
         </SignInButton>
       </Show>
       <Show when="signed-in">
-        <UserButtonWithAdminLink />
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <UserButtonWithAdminLink />
+        </div>
       </Show>
     </>
   );

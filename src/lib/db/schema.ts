@@ -157,6 +157,50 @@ export const feedback = pgTable(
   }),
 );
 
+export const notificationKind = pgEnum("notification_kind", [
+  "pet_approved",
+  "pet_rejected",
+  "edit_approved",
+  "edit_rejected",
+  "feedback_replied",
+]);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    // Recipient — Clerk user id of whoever should see this notification
+    // in their bell. Always required; we don't surface system-wide
+    // notifications today.
+    userId: text("user_id").notNull(),
+    kind: notificationKind("kind").notNull(),
+    // Free-form payload: depends on kind. Examples:
+    //   pet_approved  -> { petSlug, petName }
+    //   pet_rejected  -> { petSlug, petName, reason? }
+    //   edit_approved -> { petSlug, petName }
+    //   edit_rejected -> { petSlug, petName, reason? }
+    //   feedback_replied -> { feedbackId, excerpt }
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    // Click destination. Pre-computed at write time so the bell doesn't
+    // need to know the kind->URL mapping.
+    href: text("href").notNull(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userCreatedIdx: index("notifications_user_created_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+    userUnreadIdx: index("notifications_user_unread_idx").on(
+      table.userId,
+      table.readAt,
+    ),
+  }),
+);
+
 export const userProfiles = pgTable("user_profiles", {
   // Clerk user id (string). PK because every user has at most one profile.
   userId: text("user_id").primaryKey(),

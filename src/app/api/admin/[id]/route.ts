@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import { isAdmin } from "@/lib/admin";
 import { classifyPet } from "@/lib/auto-tag";
 import { db, schema } from "@/lib/db/client";
+import { createNotification } from "@/lib/notifications";
 import { requireSameOrigin } from "@/lib/same-origin";
 import { refreshSimilarityFor } from "@/lib/similarity";
 
@@ -161,6 +162,25 @@ export async function PATCH(
   // Notify owner only on status change (approve/reject), not pure edits.
   const shouldNotify =
     body.action === "approve" || body.action === "reject";
+
+  // In-app notification (best-effort). Independent of email so muted
+  // inboxes still see the bell.
+  if (shouldNotify) {
+    void createNotification({
+      userId: row.ownerId,
+      kind: row.status === "approved" ? "pet_approved" : "pet_rejected",
+      payload: {
+        petSlug: row.slug,
+        petName: row.displayName,
+        ...(row.rejectionReason ? { reason: row.rejectionReason } : {}),
+      },
+      href:
+        row.status === "approved"
+          ? `/pets/${row.slug}`
+          : "/my-pets",
+    }).catch(() => {});
+  }
+
   if (shouldNotify && row.ownerEmail && process.env.RESEND_API_KEY) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
