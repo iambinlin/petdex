@@ -19,7 +19,12 @@ const cspDirectives = [
   "object-src 'none'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.petdex.crafter.run https://*.clerk.com https://*.clerk.accounts.dev https://va.vercel-scripts.com https://vercel.live",
+  // Clerk renders the sign-up CAPTCHA inside an iframe served from
+  // challenges.cloudflare.com (Turnstile). Without it on frame-src and
+  // its bootstrap script on script-src, the CAPTCHA fails to load and
+  // the user can't create an account.
+  "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.com https://*.clerk.accounts.dev",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.petdex.crafter.run https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com https://va.vercel-scripts.com https://vercel.live",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev https://yu2vz9gndp.ufs.sh https://img.clerk.com https://images.clerk.dev https://avatars.githubusercontent.com https://pbs.twimg.com https://storage.googleapis.com",
   "media-src 'self' https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev",
@@ -28,7 +33,7 @@ const cspDirectives = [
   // S3 endpoint (*.r2.cloudflarestorage.com). Both must be on the
   // connect-src allowlist or browser fetch / XHR fail with a generic
   // network error (root cause of issues #22-#80+).
-  "connect-src 'self' https://clerk.petdex.crafter.run https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev https://*.r2.cloudflarestorage.com https://yu2vz9gndp.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+  "connect-src 'self' https://clerk.petdex.crafter.run https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com https://challenges.cloudflare.com https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev https://*.r2.cloudflarestorage.com https://yu2vz9gndp.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "upgrade-insecure-requests",
