@@ -101,7 +101,7 @@ export default async function Home() {
               payload={{ scope: "all" }}
               href={getAllPetsPackPath()}
               download
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200"
             >
               <Download className="size-4" />
               Download all pets

@@ -22,7 +22,7 @@ export function PetdexLogo({
     </>
   );
 
-  const classes = `inline-flex items-center gap-3 text-black ${className}`;
+  const classes = `inline-flex items-center gap-3 text-foreground ${className}`;
 
   if (href) {
     return (

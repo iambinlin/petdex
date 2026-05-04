@@ -56,7 +56,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
 
         <div className="flex shrink-0 items-center gap-2">
           {hideSubmitCta ? null : (
-            <SubmitCTA className="hidden h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85 md:inline-flex dark:bg-stone-100 dark:hover:bg-stone-200">
+            <SubmitCTA className="hidden h-10 items-center justify-center rounded-full bg-black px-4 text-sm font-medium text-white transition hover:bg-black/85 md:inline-flex dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200">
               Submit a pet
             </SubmitCTA>
           )}
@@ -113,7 +113,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
 
           {!hideSubmitCta ? (
             <div className="mt-auto p-5">
-              <SubmitCTA className="inline-flex h-12 w-full items-center justify-center rounded-full bg-black px-6 text-base font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:hover:bg-stone-200">
+              <SubmitCTA className="inline-flex h-12 w-full items-center justify-center rounded-full bg-black px-6 text-base font-medium text-white transition hover:bg-black/85 dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200">
                 Submit a pet
               </SubmitCTA>
             </div>

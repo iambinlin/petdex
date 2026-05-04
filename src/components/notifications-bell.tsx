@@ -236,7 +236,7 @@ export function NotificationsBell() {
               You're all caught up.
             </div>
           ) : (
-            <ul className="min-h-0 flex-1 divide-y divide-black/[0.06] overflow-y-auto">
+            <ul className="min-h-0 flex-1 divide-y divide-black/[0.06] overflow-y-auto dark:divide-white/[0.06]">
               {items.map((n) => {
                 const meta = KIND_META[n.kind];
                 const { title, sub } = describe(n);
@@ -249,9 +249,11 @@ export function NotificationsBell() {
                         if (isUnread) void markOne(n.id);
                         setOpen(false);
                       }}
-                      className={`flex items-start gap-3 px-4 py-3 transition hover:bg-stone-50 ${
-                        isUnread ? "bg-brand-tint/40" : ""
-                      } dark:hover:bg-stone-800/60`}
+                      className={`flex items-start gap-3 px-4 py-3 transition hover:bg-stone-50 dark:hover:bg-stone-800/60 ${
+                        isUnread
+                          ? "bg-brand-tint/40 dark:bg-brand-tint-dark/40"
+                          : ""
+                      }`}
                     >
                       <span
                         className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full ring-1 ${meta.tone}`}
@@ -263,8 +265,8 @@ export function NotificationsBell() {
                           <p
                             className={`truncate text-sm ${
                               isUnread
-                                ? "font-medium text-stone-950"
-                                : "text-stone-700"
+                                ? "font-medium text-stone-950 dark:text-stone-100"
+                                : "text-stone-700 dark:text-stone-300"
                             }`}
                           >
                             {title}
