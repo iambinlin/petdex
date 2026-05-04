@@ -14,6 +14,7 @@
     "topCreators": "热门创作者",
     "requests": "征集",
     "about": "关于",
+    "language": "语言",
     "submitCta": "提交宠物",
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
@@ -41,11 +42,116 @@
     "jsonLdDescription": "Codex CLI 的动画像素宠物公共图库。用一条命令安装一只宠物。",
     "jsonLdFeaturedPets": "精选 Codex 宠物"
   },
+  "feedback": {
+    "trigger": "反馈",
+    "title": "发送反馈",
+    "close": "关闭",
+    "send": "发送",
+    "sending": "发送中…",
+    "emailPlaceholder": "邮箱（可选，仅当你想收到回复时填写）",
+    "githubPrompt": "发现 bug，或者想深入看看源码？",
+    "openIssue": "去 GitHub 提交 issue →",
+    "kinds": {
+      "suggestion": "建议",
+      "bug": "Bug",
+      "praise": "表扬",
+      "other": "其他"
+    },
+    "placeholders": {
+      "suggestion": "什么会让 Petdex 更好？",
+      "bug": "哪里坏了？如果可以，请附上步骤。",
+      "praise": "告诉我们你喜欢什么。",
+      "other": "你在想什么？"
+    },
+    "success": {
+      "title": "谢谢，已收到。",
+      "body": "每条留言都会进入队列。我们都会看。"
+    },
+    "errors": {
+      "moreDetail": "请再多说一点（至少 4 个字符）。",
+      "submitFailed": "提交失败（{status}）。",
+      "network": "网络错误。请重试。"
+    }
+  },
+  "submittedBy": {
+    "eyebrow": "提交者",
+    "viewProfile": "查看 {name} 的资料"
+  },
+  "claim": {
+    "cta": "登录后认领",
+    "body": "这是你的宠物吗，<strong>{author}</strong>？使用 GitHub 登录即可认领 {petName}、编辑详情并跟踪安装量。"
+  },
+  "installCommand": {
+    "installStep": "1. 安装",
+    "dropsInto": "会把宠物包放到",
+    "methodAria": "安装方式",
+    "platformAria": "安装平台",
+    "tabs": {
+      "cli": "CLI"
+    },
+    "activateStep": "2. 在 Codex 中启用",
+    "steps": {
+      "openCodex": "打开 Codex，进入",
+      "findPet": "在",
+      "andClick": "中找到 <strong>{displayName}</strong>，然后点击",
+      "use": "在 Codex 中使用",
+      "insideCodex": "来唤醒它或把它收起来。"
+    }
+  },
+  "petStateViewer": {
+    "eyebrow": "状态查看器",
+    "frames": "{count, plural, other {# 帧}}",
+    "rowFrames": "第 {row} 行 - {count, plural, other {# 帧}}",
+    "animationLabel": "{petName} 的 {state} 动画",
+    "states": {
+      "idle": {
+        "label": "待机",
+        "purpose": "中性的呼吸与眨眼循环"
+      },
+      "running-right": {
+        "label": "向右跑",
+        "purpose": "朝右的定向移动"
+      },
+      "running-left": {
+        "label": "向左跑",
+        "purpose": "朝左的定向移动"
+      },
+      "waving": {
+        "label": "挥手",
+        "purpose": "打招呼或吸引注意的动作"
+      },
+      "jumping": {
+        "label": "跳跃",
+        "purpose": "预备、起跳、最高点、下落与落地"
+      },
+      "failed": {
+        "label": "失败",
+        "purpose": "清晰可读的报错或难过反应"
+      },
+      "waiting": {
+        "label": "等待",
+        "purpose": "更有耐心的待机变体"
+      },
+      "running": {
+        "label": "奔跑",
+        "purpose": "原地奔跑的通用循环"
+      },
+      "review": {
+        "label": "审阅",
+        "purpose": "专注检查或思考的循环"
+      }
+    }
+  },
   "_fixme": {
     "zh": [
+      "feedback.githubPrompt",
+      "feedback.openIssue",
       "header.requests",
+      "installCommand.steps.andClick",
+      "installCommand.steps.findPet",
       "footer.rightsNotice",
       "footer.takedown",
+      "petStateViewer.states.failed.purpose",
       "home.eyebrow",
       "home.tagline"
     ]

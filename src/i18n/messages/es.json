@@ -14,6 +14,7 @@
     "topCreators": "Creadores destacados",
     "requests": "Pedidos",
     "about": "Acerca de",
+    "language": "Idioma",
     "submitCta": "Enviar una mascota",
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
@@ -40,5 +41,105 @@
     "petParadeAria": "Mascotas destacadas",
     "jsonLdDescription": "Galería pública de mascotas pixel art animadas para Codex CLI. Instala una con un solo comando.",
     "jsonLdFeaturedPets": "Mascotas destacadas de Codex"
+  },
+  "feedback": {
+    "trigger": "Comentarios",
+    "title": "Enviar comentarios",
+    "close": "Cerrar",
+    "send": "Enviar",
+    "sending": "Enviando…",
+    "emailPlaceholder": "correo (opcional, solo si quieres una respuesta)",
+    "githubPrompt": "¿Encontraste un bug o quieres revisar el código fuente?",
+    "openIssue": "Abrir un issue en GitHub →",
+    "kinds": {
+      "suggestion": "Sugerencia",
+      "bug": "Bug",
+      "praise": "Elogio",
+      "other": "Otro"
+    },
+    "placeholders": {
+      "suggestion": "¿Qué haría mejor a Petdex?",
+      "bug": "¿Qué se rompió? Incluye pasos si puedes.",
+      "praise": "Cuéntanos qué te gustó.",
+      "other": "¿Qué tienes en mente?"
+    },
+    "success": {
+      "title": "Gracias. Recibido.",
+      "body": "Cada mensaje entra a la cola. Leemos todo."
+    },
+    "errors": {
+      "moreDetail": "Cuéntanos un poco más (4+ caracteres).",
+      "submitFailed": "No se pudo enviar ({status}).",
+      "network": "Error de red. Inténtalo de nuevo."
+    }
+  },
+  "submittedBy": {
+    "eyebrow": "Enviada por",
+    "viewProfile": "Ver el perfil de {name}"
+  },
+  "claim": {
+    "cta": "Inicia sesión para reclamarla",
+    "body": "¿Esta es tu mascota, <strong>{author}</strong>? Inicia sesión con GitHub para reclamar {petName}, editar los detalles y seguir las instalaciones."
+  },
+  "installCommand": {
+    "installStep": "1. Instala",
+    "dropsInto": "Deja el paquete de la mascota en",
+    "methodAria": "Método de instalación",
+    "platformAria": "Plataforma de instalación",
+    "tabs": {
+      "cli": "CLI"
+    },
+    "activateStep": "2. Actívala en Codex",
+    "steps": {
+      "openCodex": "Abre Codex,",
+      "findPet": "Encuentra <strong>{displayName}</strong> en",
+      "andClick": "y haz clic en",
+      "use": "Usa",
+      "insideCodex": "dentro de Codex para despertarla o guardarla."
+    }
+  },
+  "petStateViewer": {
+    "eyebrow": "Visor de estados",
+    "frames": "{count, plural, one {# cuadro} other {# cuadros}}",
+    "rowFrames": "Fila {row} - {count, plural, one {# cuadro} other {# cuadros}}",
+    "animationLabel": "Animación de {petName} en estado {state}",
+    "states": {
+      "idle": {
+        "label": "En reposo",
+        "purpose": "Bucle neutro de respiración y parpadeo"
+      },
+      "running-right": {
+        "label": "Corre a la derecha",
+        "purpose": "Movimiento direccional hacia la derecha"
+      },
+      "running-left": {
+        "label": "Corre a la izquierda",
+        "purpose": "Movimiento direccional hacia la izquierda"
+      },
+      "waving": {
+        "label": "Saluda",
+        "purpose": "Gesto de saludo o de llamada de atención"
+      },
+      "jumping": {
+        "label": "Salta",
+        "purpose": "Anticipación, impulso, punto más alto, caída y aterrizaje"
+      },
+      "failed": {
+        "label": "Falla",
+        "purpose": "Reacción legible de error o tristeza"
+      },
+      "waiting": {
+        "label": "Espera",
+        "purpose": "Variante paciente del estado en reposo"
+      },
+      "running": {
+        "label": "Corre",
+        "purpose": "Bucle genérico de carrera en el lugar"
+      },
+      "review": {
+        "label": "Revisa",
+        "purpose": "Bucle de inspección o pensamiento concentrado"
+      }
+    }
   }
 }

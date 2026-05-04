@@ -12,17 +12,12 @@ import {
   Send,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Kind = "suggestion" | "bug" | "praise" | "other";
 
-const KINDS: { id: Kind; label: string; icon: React.ReactNode }[] = [
-  { id: "suggestion", label: "Suggest", icon: <Lightbulb className="size-3.5" /> },
-  { id: "bug", label: "Bug", icon: <Bug className="size-3.5" /> },
-  { id: "praise", label: "Praise", icon: <Heart className="size-3.5" /> },
-  { id: "other", label: "Other", icon: <MessageSquare className="size-3.5" /> },
-];
-
 export function FeedbackWidget() {
+  const t = useTranslations("feedback");
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<Kind>("suggestion");
   const [message, setMessage] = useState("");
@@ -36,6 +31,24 @@ export function FeedbackWidget() {
 
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const kinds: { id: Kind; label: string; icon: React.ReactNode }[] = [
+    {
+      id: "suggestion",
+      label: t("kinds.suggestion"),
+      icon: <Lightbulb className="size-3.5" />,
+    },
+    { id: "bug", label: t("kinds.bug"), icon: <Bug className="size-3.5" /> },
+    {
+      id: "praise",
+      label: t("kinds.praise"),
+      icon: <Heart className="size-3.5" />,
+    },
+    {
+      id: "other",
+      label: t("kinds.other"),
+      icon: <MessageSquare className="size-3.5" />,
+    },
+  ];
 
   // Close on Escape + click outside.
   useEffect(() => {
@@ -75,7 +88,7 @@ export function FeedbackWidget() {
       e.preventDefault();
       if (state.tag === "submitting") return;
       if (message.trim().length < 4) {
-        setState({ tag: "error", reason: "Tell us a bit more (4+ chars)." });
+        setState({ tag: "error", reason: t("errors.moreDetail") });
         return;
       }
       setState({ tag: "submitting" });
@@ -98,17 +111,16 @@ export function FeedbackWidget() {
           };
           setState({
             tag: "error",
-            reason:
-              data.message ?? data.error ?? `Submit failed (${res.status}).`,
+            reason: data.message ?? data.error ?? t("errors.submitFailed", { status: res.status }),
           });
           return;
         }
         setState({ tag: "ok" });
       } catch {
-        setState({ tag: "error", reason: "Network error. Try again." });
+        setState({ tag: "error", reason: t("errors.network") });
       }
     },
-    [state.tag, message, email, kind],
+    [state.tag, message, email, kind, t],
   );
 
   return (
@@ -121,12 +133,12 @@ export function FeedbackWidget() {
                 <MessageCircle className="size-3.5" />
               </span>
               <span className="text-sm font-semibold text-foreground">
-                Send feedback
+                {t("title")}
               </span>
             </div>
             <button
               type="button"
-              aria-label="Close"
+              aria-label={t("close")}
               onClick={() => setOpen(false)}
               className="grid size-7 place-items-center rounded-full text-muted-3 transition hover:bg-surface-muted hover:text-foreground"
             >
@@ -140,16 +152,16 @@ export function FeedbackWidget() {
                 <Check className="size-5" />
               </span>
               <p className="text-base font-medium text-foreground">
-                Thanks. Got it.
+                {t("success.title")}
               </p>
               <p className="text-xs text-muted-3">
-                Every note lands in the queue. We read them all.
+                {t("success.body")}
               </p>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="flex flex-col gap-3 px-4 py-4">
               <div className="flex flex-wrap gap-1.5">
-                {KINDS.map((k) => {
+                {kinds.map((k) => {
                   const active = k.id === kind;
                   return (
                     <button
@@ -179,12 +191,12 @@ export function FeedbackWidget() {
                 }}
                 placeholder={
                   kind === "bug"
-                    ? "What broke? Include steps if you can."
+                    ? t("placeholders.bug")
                     : kind === "suggestion"
-                      ? "What would make Petdex better?"
+                      ? t("placeholders.suggestion")
                       : kind === "praise"
-                        ? "Tell us what you liked."
-                        : "What's on your mind?"
+                        ? t("placeholders.praise")
+                        : t("placeholders.other")
                 }
                 rows={4}
                 maxLength={4000}
@@ -195,7 +207,7 @@ export function FeedbackWidget() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email (optional, only if you want a reply)"
+                placeholder={t("emailPlaceholder")}
                 className="h-10 w-full rounded-full border border-border-base bg-surface px-3.5 text-sm text-foreground outline-none transition placeholder:text-muted-4 focus:border-border-strong"
               />
 
@@ -213,19 +225,19 @@ export function FeedbackWidget() {
                   className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover disabled:opacity-50"
                 >
                   <Send className="size-3.5" />
-                  {state.tag === "submitting" ? "Sending…" : "Send"}
+                  {state.tag === "submitting" ? t("sending") : t("send")}
                 </button>
               </div>
 
               <p className="border-t border-border-base pt-3 text-[11px] leading-5 text-muted-3">
-                Found a bug or want to dig into the source?{" "}
+                {t("githubPrompt")}{" "}
                 <a
                   href={githubIssueUrlFor(kind, message)}
                   target="_blank"
                   rel="noreferrer"
                   className="font-medium text-brand underline-offset-2 hover:underline"
                 >
-                  Open an issue on GitHub →
+                  {t("openIssue")}
                 </a>
               </p>
             </form>
@@ -234,12 +246,12 @@ export function FeedbackWidget() {
       ) : (
         <button
           type="button"
-          aria-label="Send feedback"
+          aria-label={t("title")}
           onClick={() => setOpen(true)}
           className="group inline-flex items-center gap-2 rounded-full border border-border-base bg-surface px-4 py-2.5 text-sm font-medium text-muted-2 shadow-lg shadow-blue-950/10 transition hover:border-border-strong hover:text-foreground hover:shadow-xl"
         >
           <MessageCircle className="size-4 text-brand" />
-          <span>Feedback</span>
+          <span>{t("trigger")}</span>
         </button>
       )}
     </div>

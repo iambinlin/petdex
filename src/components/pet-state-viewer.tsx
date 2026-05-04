@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Play } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { defaultPetState, type PetStateId, petStates } from "@/lib/pet-states";
 
@@ -14,6 +15,7 @@ type PetStateViewerProps = {
 };
 
 export function PetStateViewer({ src, petName }: PetStateViewerProps) {
+  const t = useTranslations("petStateViewer");
   const [selectedState, setSelectedState] = useState<PetStateId>(
     defaultPetState.id,
   );
@@ -26,15 +28,15 @@ export function PetStateViewer({ src, petName }: PetStateViewerProps) {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold tracking-[0.18em] text-brand uppercase">
-              State viewer
+              {t("eyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-foreground">
-              {activeState.label}
+              {t(`states.${activeState.id}.label`)}
             </h2>
           </div>
           <span className="inline-flex h-9 items-center gap-2 rounded-md bg-surface-muted px-3 text-xs font-medium text-muted-2">
             <Play className="size-3.5" />
-            {activeState.frames} frames
+            {t("frames", { count: activeState.frames })}
           </span>
         </div>
 
@@ -43,12 +45,15 @@ export function PetStateViewer({ src, petName }: PetStateViewerProps) {
             src={src}
             state={activeState.id}
             scale={1.2}
-            label={`${petName} ${activeState.label} animation`}
+            label={t("animationLabel", {
+              petName,
+              state: t(`states.${activeState.id}.label`),
+            })}
           />
         </div>
 
         <p className="mt-4 text-sm leading-6 text-muted-2">
-          {activeState.purpose}
+          {t(`states.${activeState.id}.purpose`)}
         </p>
       </section>
 
@@ -67,10 +72,10 @@ export function PetStateViewer({ src, petName }: PetStateViewerProps) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  {state.label}
+                  {t(`states.${state.id}.label`)}
                 </p>
                 <p className="mt-1 text-xs text-muted-3">
-                  Row {state.row} - {state.frames} frames
+                  {t("rowFrames", { row: state.row, count: state.frames })}
                 </p>
               </div>
               <div className="rounded-md border border-border-base bg-surface-muted p-2">

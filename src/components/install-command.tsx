@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { MousePointerClick, Package, Terminal } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { CommandLine } from "@/components/command-line";
 
@@ -67,6 +68,7 @@ function WindowsIcon({ className }: { className?: string }) {
 }
 
 export function InstallCommand({ slug, displayName }: InstallCommandProps) {
+  const t = useTranslations("installCommand");
   const [platform, setPlatform] = useState<Platform>("macos");
   const [tab, setTab] = useState<Tab>("cli");
 
@@ -86,13 +88,14 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
     <div className="rounded-2xl border border-border-base bg-surface/80 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <Terminal className="size-4" />1. Install
+          <Terminal className="size-4" />
+          {t("installStep")}
         </div>
         <PlatformToggle platform={platform} onChange={setPlatform} />
       </div>
 
       <p className="mt-2 text-xs leading-5 text-muted-3">
-        Drops the pet pack into{" "}
+        {t("dropsInto")}{" "}
         <code className="break-all">
           {isWin
             ? `%USERPROFILE%\\.codex\\pets\\${slug}\\`
@@ -102,12 +105,12 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
 
       <div
         role="tablist"
-        aria-label="Install method"
+        aria-label={t("methodAria")}
         className="mt-3 flex items-center gap-0.5 rounded-full border border-border-base bg-surface/70 p-0.5 self-start w-fit"
       >
         <TabButton
           icon={<Package className="size-3.5" />}
-          label="CLI"
+          label={t("tabs.cli")}
           selected={tab === "cli"}
           onClick={() => setTab("cli")}
         />
@@ -126,23 +129,29 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
       />
 
       <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-foreground">
-        <MousePointerClick className="size-4" />2. Activate in Codex
+        <MousePointerClick className="size-4" />
+        {t("activateStep")}
       </div>
       <ol className="mt-2 space-y-1 text-xs leading-5 text-muted-2">
         <li>
-          Open Codex,{" "}
+          {t("steps.openCodex")}{" "}
           <span className="font-mono text-foreground">Settings</span>,{" "}
           <span className="font-mono text-foreground">Appearance</span>,{" "}
           <span className="font-mono text-foreground">Pets</span>.
         </li>
         <li>
-          Find <strong className="text-foreground">{displayName}</strong> under{" "}
-          <span className="font-mono text-foreground">Custom pets</span> and
-          click <span className="font-mono text-foreground">Select</span>.
+          {t.rich("steps.findPet", {
+            displayName,
+            strong: (chunks) => <strong className="text-foreground">{chunks}</strong>,
+          })}{" "}
+          <span className="font-mono text-foreground">Custom pets</span>{" "}
+          {t("steps.andClick")}{" "}
+          <span className="font-mono text-foreground">Select</span>.
         </li>
         <li>
-          Use <code className="rounded bg-surface-muted px-1.5 py-0.5">/pet</code>{" "}
-          inside Codex to wake or tuck it away.
+          {t("steps.use")}{" "}
+          <code className="rounded bg-surface-muted px-1.5 py-0.5">/pet</code>{" "}
+          {t("steps.insideCodex")}
         </li>
       </ol>
     </div>
@@ -156,10 +165,12 @@ function PlatformToggle({
   platform: Platform;
   onChange: (p: Platform) => void;
 }) {
+  const t = useTranslations("installCommand");
+
   return (
     <div
       role="tablist"
-      aria-label="Install platform"
+      aria-label={t("platformAria")}
       className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-border-base bg-surface/70 p-0.5"
     >
       <PlatformBtn

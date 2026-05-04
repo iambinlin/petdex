@@ -14,6 +14,7 @@
     "topCreators": "Top creators",
     "requests": "Requests",
     "about": "About",
+    "language": "Language",
     "submitCta": "Submit a pet",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
@@ -40,5 +41,105 @@
     "petParadeAria": "Featured pets",
     "jsonLdDescription": "Public gallery of animated pixel pets for the Codex CLI. Install one with a single command.",
     "jsonLdFeaturedPets": "Featured Codex pets"
+  },
+  "feedback": {
+    "trigger": "Feedback",
+    "title": "Send feedback",
+    "close": "Close",
+    "send": "Send",
+    "sending": "Sending…",
+    "emailPlaceholder": "email (optional, only if you want a reply)",
+    "githubPrompt": "Found a bug or want to dig into the source?",
+    "openIssue": "Open an issue on GitHub →",
+    "kinds": {
+      "suggestion": "Suggest",
+      "bug": "Bug",
+      "praise": "Praise",
+      "other": "Other"
+    },
+    "placeholders": {
+      "suggestion": "What would make Petdex better?",
+      "bug": "What broke? Include steps if you can.",
+      "praise": "Tell us what you liked.",
+      "other": "What's on your mind?"
+    },
+    "success": {
+      "title": "Thanks. Got it.",
+      "body": "Every note lands in the queue. We read them all."
+    },
+    "errors": {
+      "moreDetail": "Tell us a bit more (4+ chars).",
+      "submitFailed": "Submit failed ({status}).",
+      "network": "Network error. Try again."
+    }
+  },
+  "submittedBy": {
+    "eyebrow": "Submitted by",
+    "viewProfile": "View {name}'s profile"
+  },
+  "claim": {
+    "cta": "Sign in to claim",
+    "body": "Is this your pet, <strong>{author}</strong>? Sign in with GitHub to claim {petName}, edit details, and track installs."
+  },
+  "installCommand": {
+    "installStep": "1. Install",
+    "dropsInto": "Drops the pet pack into",
+    "methodAria": "Install method",
+    "platformAria": "Install platform",
+    "tabs": {
+      "cli": "CLI"
+    },
+    "activateStep": "2. Activate in Codex",
+    "steps": {
+      "openCodex": "Open Codex,",
+      "findPet": "Find <strong>{displayName}</strong> under",
+      "andClick": "and click",
+      "use": "Use",
+      "insideCodex": "inside Codex to wake or tuck it away."
+    }
+  },
+  "petStateViewer": {
+    "eyebrow": "State viewer",
+    "frames": "{count, plural, one {# frame} other {# frames}}",
+    "rowFrames": "Row {row} - {count, plural, one {# frame} other {# frames}}",
+    "animationLabel": "{petName} {state} animation",
+    "states": {
+      "idle": {
+        "label": "Idle",
+        "purpose": "Neutral breathing and blinking loop"
+      },
+      "running-right": {
+        "label": "Run Right",
+        "purpose": "Directional locomotion to the right"
+      },
+      "running-left": {
+        "label": "Run Left",
+        "purpose": "Directional locomotion to the left"
+      },
+      "waving": {
+        "label": "Waving",
+        "purpose": "Greeting or attention gesture"
+      },
+      "jumping": {
+        "label": "Jumping",
+        "purpose": "Anticipation, lift, peak, descent, settle"
+      },
+      "failed": {
+        "label": "Failed",
+        "purpose": "Readable error or sad reaction"
+      },
+      "waiting": {
+        "label": "Waiting",
+        "purpose": "Patient idle variant"
+      },
+      "running": {
+        "label": "Running",
+        "purpose": "Generic in-place run loop"
+      },
+      "review": {
+        "label": "Review",
+        "purpose": "Focused inspecting or thinking loop"
+      }
+    }
   }
 }
