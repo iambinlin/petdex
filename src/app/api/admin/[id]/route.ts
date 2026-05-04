@@ -15,7 +15,8 @@ export const runtime = "nodejs";
 type Params = { id: string };
 
 type PatchBody = {
-  action: "approve" | "reject" | "edit";
+  // 'pending' revives a previously rejected row back into the queue.
+  action: "approve" | "reject" | "edit" | "pending";
   reason?: string | null;
   // edit-only fields (also accepted on approve to combine in one request)
   displayName?: string;
@@ -47,7 +48,8 @@ export async function PATCH(
   if (
     body.action !== "approve" &&
     body.action !== "reject" &&
-    body.action !== "edit"
+    body.action !== "edit" &&
+    body.action !== "pending"
   ) {
     return NextResponse.json({ error: "invalid_action" }, { status: 400 });
   }
@@ -96,7 +98,16 @@ export async function PATCH(
             approvedAt: null,
             rejectionReason: body.reason?.trim() || null,
           }
-        : {};
+        : body.action === "pending"
+          ? {
+              // Revive: clear approval / rejection and let it sit in the
+              // queue again. Useful for second-look on rejected rows.
+              status: "pending" as const,
+              approvedAt: null,
+              rejectedAt: null,
+              rejectionReason: null,
+            }
+          : {};
 
   const update = { ...editPatch, ...statusPatch };
 

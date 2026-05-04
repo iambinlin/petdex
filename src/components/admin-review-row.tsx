@@ -34,7 +34,7 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
 
   const isUntitled = pet.displayName === "Untitled pet";
 
-  async function decide(action: "approve" | "reject") {
+  async function decide(action: "approve" | "reject" | "revive") {
     if (busy) return;
     setBusy(true);
     setError(null);
@@ -44,13 +44,18 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
       reason = window.prompt("Reason for rejection (optional)") ?? "";
     }
 
+    // 'revive' is admin-only — flip a previously rejected row back to
+    // pending so it shows up in the queue again. Server side this is
+    // expressed as action: 'edit' with status patched explicitly via
+    // the dedicated 'pending' action keyword.
+    const apiAction = action === "revive" ? "pending" : action;
+
     const res = await fetch(`/api/admin/${pet.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action,
+        action: apiAction,
         reason,
-        // Persist any edits made before approve/reject too
         displayName,
         description,
         slug,
@@ -67,7 +72,13 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
       return;
     }
 
-    setStatus(action === "approve" ? "approved" : "rejected");
+    setStatus(
+      action === "approve"
+        ? "approved"
+        : action === "revive"
+          ? "pending"
+          : "rejected",
+    );
     setBusy(false);
   }
 
@@ -273,6 +284,20 @@ export function AdminReviewRow({ pet, stateCount }: AdminReviewRowProps) {
               Reject
             </button>
           </>
+        ) : status === "rejected" ? (
+          <button
+            type="button"
+            onClick={() => void decide("revive")}
+            disabled={busy}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-4 text-xs font-medium text-amber-900 transition hover:border-amber-400 hover:bg-amber-100 disabled:opacity-60"
+          >
+            {busy ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Clock className="size-3.5" />
+            )}
+            Revive to pending
+          </button>
         ) : null}
       </div>
       <SimilarPanel petId={pet.id} status={status} />

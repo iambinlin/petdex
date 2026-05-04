@@ -1,7 +1,7 @@
 "use client";
 
 import { Show, SignInButton, UserButton, useUser } from "@clerk/nextjs";
-import { Inbox, MessageSquare, Shield, Sparkles } from "lucide-react";
+import { Shield, Sparkles } from "lucide-react";
 
 import { isAdminClientSafe } from "@/lib/admin";
 
@@ -19,24 +19,22 @@ export function AuthBadge() {
         </SignInButton>
       </Show>
       <Show when="signed-in">
-        <UserButtonWithAdminLinks />
+        <UserButtonWithAdminLink />
       </Show>
     </>
   );
 }
 
-function UserButtonWithAdminLinks() {
+function UserButtonWithAdminLink() {
   const { user } = useUser();
-  // Admin gate is visibility-only. Every action still re-verifies on the
-  // server via isAdmin() so a tampered client can't escalate.
+  // Visibility-only check; server still re-verifies admin actions via
+  // isAdmin(). Tampering only exposes the entry, never escalates rights.
   const showAdmin = isAdminClientSafe(user?.id);
 
   return (
     <UserButton
       appearance={{
-        elements: {
-          avatarBox: "size-9 rounded-full ring-1 ring-black/10",
-        },
+        elements: { avatarBox: "size-9 rounded-full ring-1 ring-black/10" },
       }}
     >
       <UserButton.MenuItems>
@@ -47,23 +45,9 @@ function UserButtonWithAdminLinks() {
         />
         {showAdmin ? (
           <UserButton.Link
-            label="Admin · review queue"
+            label="Admin"
             labelIcon={<Shield className="size-4" />}
             href="/admin"
-          />
-        ) : null}
-        {showAdmin ? (
-          <UserButton.Link
-            label="Admin · requests"
-            labelIcon={<Inbox className="size-4" />}
-            href="/admin/requests"
-          />
-        ) : null}
-        {showAdmin ? (
-          <UserButton.Link
-            label="Admin · feedback"
-            labelIcon={<MessageSquare className="size-4" />}
-            href="/admin/feedback"
           />
         ) : null}
       </UserButton.MenuItems>

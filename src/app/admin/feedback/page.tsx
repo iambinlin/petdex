@@ -1,5 +1,13 @@
+import { clerkClient } from "@clerk/nextjs/server";
 import { desc } from "drizzle-orm";
-import { Bug, Heart, Lightbulb, MessageSquare } from "lucide-react";
+import {
+  Bug,
+  ExternalLink,
+  Heart,
+  Lightbulb,
+  Mail,
+  MessageSquare,
+} from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
 
@@ -36,12 +44,85 @@ const KIND_META: Record<
   },
 };
 
+type ClerkInfo = {
+  imageUrl: string | null;
+  displayName: string | null;
+  username: string | null;
+  primaryEmail: string | null;
+  externalUrls: string[];
+  emails: string[];
+  createdAt: number | null;
+};
+
+async function loadClerkInfo(
+  userIds: string[],
+): Promise<Map<string, ClerkInfo>> {
+  const out = new Map<string, ClerkInfo>();
+  if (userIds.length === 0) return out;
+  let client: Awaited<ReturnType<typeof clerkClient>>;
+  try {
+    client = await clerkClient();
+  } catch {
+    return out;
+  }
+  // Clerk SDK supports getUserList({ userId: [...] }) for batched lookup.
+  // We chunk in groups of 100 (Clerk's max) just in case.
+  const chunks: string[][] = [];
+  for (let i = 0; i < userIds.length; i += 100) {
+    chunks.push(userIds.slice(i, i + 100));
+  }
+  for (const ids of chunks) {
+    try {
+      const list = await client.users.getUserList({ userId: ids, limit: 100 });
+      for (const u of list.data) {
+        const primary = u.emailAddresses.find(
+          (e) => e.id === u.primaryEmailAddressId,
+        );
+        const displayName = [u.firstName, u.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+        const externalUrls: string[] = [];
+        for (const acc of u.externalAccounts ?? []) {
+          const username = (acc as { username?: string }).username;
+          if (!username) continue;
+          if (acc.provider === "oauth_github") {
+            externalUrls.push(`https://github.com/${username}`);
+          } else if (
+            acc.provider === "oauth_x" ||
+            acc.provider === "oauth_twitter"
+          ) {
+            externalUrls.push(`https://x.com/${username}`);
+          }
+        }
+        out.set(u.id, {
+          imageUrl: u.imageUrl ?? null,
+          displayName: displayName || null,
+          username: u.username ?? null,
+          primaryEmail: primary?.emailAddress?.toLowerCase() ?? null,
+          externalUrls,
+          emails: u.emailAddresses.map((e) => e.emailAddress.toLowerCase()),
+          createdAt: u.createdAt ?? null,
+        });
+      }
+    } catch {
+      /* swallow — admin still sees raw rows */
+    }
+  }
+  return out;
+}
+
 export default async function AdminFeedbackPage() {
   const rows = await db
     .select()
     .from(schema.feedback)
     .orderBy(desc(schema.feedback.createdAt))
     .limit(200);
+
+  const userIds = [
+    ...new Set(rows.map((r) => r.userId).filter((v): v is string => !!v)),
+  ];
+  const clerkInfo = await loadClerkInfo(userIds);
 
   const counts = {
     suggestion: rows.filter((r) => r.kind === "suggestion").length,
@@ -73,46 +154,123 @@ export default async function AdminFeedbackPage() {
         <ul className="space-y-3">
           {rows.map((r) => {
             const meta = KIND_META[r.kind] ?? KIND_META.other;
+            const info = (r.userId ? clerkInfo.get(r.userId) : null) ?? null;
+            // Reply target: prefer the email the user typed in the form,
+            // fall back to their Clerk primary email so you can always
+            // reach a signed-in author even if they didn't fill the field.
+            const replyEmail = r.email ?? info?.primaryEmail ?? null;
+            const subjectExcerpt = r.message.slice(0, 50).replace(/\s+/g, " ");
+            const mailtoBody = encodeURIComponent(
+              `Hey,\n\nThanks for the ${r.kind} on Petdex —\n\n> ${r.message
+                .split("\n")
+                .map((l) => l)
+                .join("\n> ")}\n\n— Hunter`,
+            );
+            const mailtoSubject = encodeURIComponent(
+              `Re: your Petdex feedback — ${subjectExcerpt}${r.message.length > 50 ? "…" : ""}`,
+            );
+            const mailtoHref = replyEmail
+              ? `mailto:${replyEmail}?subject=${mailtoSubject}&body=${mailtoBody}`
+              : null;
+
             return (
               <li
                 key={r.id}
                 className="rounded-2xl border border-black/10 bg-white/80 p-4 backdrop-blur"
               >
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${meta.tone}`}
-                  >
-                    {meta.icon}
-                    {meta.label}
-                  </span>
-                  <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
-                    {new Date(r.createdAt).toLocaleString()}
-                  </span>
-                  {r.email ? (
+                {/* Author row */}
+                <div className="flex items-start gap-3">
+                  <Avatar info={info} email={r.email} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${meta.tone}`}
+                      >
+                        {meta.icon}
+                        {meta.label}
+                      </span>
+                      <span className="text-sm font-medium text-stone-900">
+                        {info?.displayName ??
+                          info?.username ??
+                          (r.email ? r.email.split("@")[0] : "Anonymous")}
+                      </span>
+                      {info?.username ? (
+                        <span className="font-mono text-[10px] text-stone-400">
+                          @{info.username}
+                        </span>
+                      ) : null}
+                      <span className="font-mono text-[10px] tracking-[0.12em] text-stone-400 uppercase">
+                        · {new Date(r.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-stone-500">
+                      {replyEmail ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Mail className="size-3" />
+                          {replyEmail}
+                          {!r.email && info?.primaryEmail ? (
+                            <span className="text-[10px] text-stone-400">
+                              (clerk)
+                            </span>
+                          ) : null}
+                        </span>
+                      ) : null}
+                      {r.userId ? (
+                        <span className="font-mono text-[10px] text-stone-400">
+                          {r.userId.slice(0, 14)}…
+                        </span>
+                      ) : null}
+                      {r.pageUrl ? (
+                        <a
+                          href={r.pageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                        >
+                          <ExternalLink className="size-3" />
+                          {(() => {
+                            try {
+                              return new URL(r.pageUrl).pathname;
+                            } catch {
+                              return r.pageUrl;
+                            }
+                          })()}
+                        </a>
+                      ) : null}
+                      {info?.externalUrls.map((url) => (
+                        <a
+                          key={url}
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 underline-offset-2 hover:text-stone-800 hover:underline"
+                        >
+                          <ExternalLink className="size-3" />
+                          {url.replace(/^https?:\/\//, "")}
+                        </a>
+                      )) ?? null}
+                    </div>
+                  </div>
+                  {mailtoHref ? (
                     <a
-                      href={`mailto:${r.email}?subject=Re: your Petdex feedback`}
-                      className="rounded-full border border-black/10 bg-white px-2 py-0.5 font-mono text-[10px] tracking-tight text-stone-700 transition hover:border-black/30 hover:text-black"
+                      href={mailtoHref}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#5266ea] px-3 text-xs font-medium text-white transition hover:bg-[#3847f5]"
                     >
-                      {r.email}
+                      <Mail className="size-3.5" />
+                      Reply
                     </a>
-                  ) : null}
-                  {r.userId ? (
-                    <span className="font-mono text-[10px] tracking-tight text-stone-400">
-                      {r.userId.slice(0, 14)}…
+                  ) : (
+                    <span
+                      className="inline-flex h-8 cursor-not-allowed items-center rounded-full border border-black/10 px-3 text-xs font-medium text-stone-400"
+                      title="No email on this entry"
+                    >
+                      No reply
                     </span>
-                  ) : null}
-                  {r.pageUrl ? (
-                    <a
-                      href={r.pageUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-mono text-[10px] tracking-tight text-stone-400 underline-offset-2 hover:text-stone-700 hover:underline"
-                    >
-                      {new URL(r.pageUrl).pathname}
-                    </a>
-                  ) : null}
+                  )}
                 </div>
-                <p className="mt-2 text-sm leading-6 text-stone-800 whitespace-pre-wrap">
+
+                {/* Message body */}
+                <p className="mt-3 text-sm leading-6 whitespace-pre-wrap text-stone-800">
                   {r.message}
                 </p>
               </li>
@@ -121,5 +279,31 @@ export default async function AdminFeedbackPage() {
         </ul>
       )}
     </section>
+  );
+}
+
+function Avatar({
+  info,
+  email,
+}: {
+  info: ClerkInfo | null;
+  email: string | null;
+}) {
+  if (info?.imageUrl) {
+    return (
+      // biome-ignore lint/performance/noImgElement: Clerk avatar URL allowlisted in CSP
+      <img
+        src={info.imageUrl}
+        alt=""
+        className="size-9 shrink-0 rounded-full ring-1 ring-black/10"
+      />
+    );
+  }
+  const seed =
+    info?.displayName ?? info?.username ?? email ?? "?";
+  return (
+    <div className="grid size-9 shrink-0 place-items-center rounded-full bg-stone-200 font-mono text-xs font-semibold text-stone-700 ring-1 ring-black/10">
+      {seed.slice(0, 1).toUpperCase()}
+    </div>
   );
 }
