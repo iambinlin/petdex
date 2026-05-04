@@ -426,7 +426,8 @@
       "openCodex": "Abre Codex,",
       "insideCodex": "dentro de Codex para activarlo u ocultarlo.",
       "andClick": "y haz clic en",
-      "use": "Usa"
+      "use": "Usa",
+      "findPet": "Busca <strong>{displayName}</strong> en"
     }
   },
   "commandLine": {
@@ -448,7 +449,7 @@
   "petStateViewer": {
     "eyebrow": "Visor de estados",
     "frames": "{count} frames",
-    "rowFrames": "Fila {row} - {frames} frames",
+    "rowFrames": "Fila {row} - {count} frames",
     "animationLabel": "{name} animación {state}",
     "states": {
       "idle": {

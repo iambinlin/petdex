@@ -473,7 +473,8 @@
       "openCodex": "打开 Codex，",
       "insideCodex": "在 Codex 中唤醒它或将其收起。",
       "andClick": "并点击",
-      "use": "使用"
+      "use": "使用",
+      "findPet": "在 <strong>{displayName}</strong> 下查找"
     }
   },
   "commandLine": {
@@ -497,7 +498,7 @@
   "petStateViewer": {
     "eyebrow": "状态查看器",
     "frames": "{count} 帧",
-    "rowFrames": "第 {row} 行 - {frames} 帧",
+    "rowFrames": "第 {row} 行 - {count} 帧",
     "animationLabel": "{name} {state} 动画",
     "states": {
       "idle": {
