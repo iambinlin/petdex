@@ -11,7 +11,7 @@ import { PET_KINDS, type PetKind } from "@/lib/types";
 
 const SITE_URL = "https://petdex.crafter.run";
 
-type Props = { params: Promise<{ kind: string }> };
+type Props = { params: Promise<{ kind: string; locale: string }> };
 
 export const revalidate = 600;
 

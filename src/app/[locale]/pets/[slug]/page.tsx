@@ -24,6 +24,7 @@ const SITE_URL = "https://petdex.crafter.run";
 
 type PageProps = {
   params: Promise<{
+    locale: string;
     slug: string;
   }>;
 };

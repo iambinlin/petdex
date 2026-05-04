@@ -1,0 +1,38 @@
+{
+  "common": {
+    "brand": "Petdex",
+    "codexCli": "Codex CLI",
+    "submitPet": "Submit a pet",
+    "browseGallery": "Browse gallery",
+    "github": "GitHub"
+  },
+  "header": {
+    "gallery": "Gallery",
+    "create": "Create",
+    "docs": "Docs",
+    "topCreators": "Top creators",
+    "requests": "Requests",
+    "about": "About",
+    "submitCta": "Submit a pet",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "footer": {
+    "rightsNotice": "Pets are user-submitted fan art. Petdex does not claim rights to any underlying IP.",
+    "topCreators": "Top creators",
+    "takedown": "Takedown",
+    "github": "GitHub"
+  },
+  "home": {
+    "eyebrow": "The Codex pet index",
+    "title": "Petdex",
+    "tagline": "The public gallery of animated pixel pets for the {brand}. Browse {totalPets}+ open-source companions, preview their states, and install one with a single command.",
+    "heroCommand": "npx petdex install boba",
+    "submitCta": "Submit a pet",
+    "browseGallery": "Browse gallery",
+    "openPet": "Open {name}",
+    "petAnimated": "{name} animated",
+    "jsonLdDescription": "Public gallery of animated pixel pets for the Codex CLI. Install one with a single command.",
+    "jsonLdFeaturedPets": "Featured Codex pets"
+  }
+}

@@ -11,7 +11,7 @@ import { installCounterRatelimit } from "@/lib/ratelimit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Params = { slug: string };
+type Params = { locale: string; slug: string };
 
 function detectPlatformFromRequest(req: Request): "posix" | "ps1" {
   const url = new URL(req.url);

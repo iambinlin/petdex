@@ -17,7 +17,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-type Params = { id: string };
+type Params = { id: string; locale: string };
 
 export default async function MyFeedbackThreadPage({
   params,

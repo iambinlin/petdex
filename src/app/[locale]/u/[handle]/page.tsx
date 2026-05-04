@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://petdex.crafter.run";
 
-type PageProps = { params: Promise<{ handle: string }> };
+type PageProps = { params: Promise<{ handle: string; locale: string }> };
 
 export async function generateMetadata({ params }: PageProps) {
   const { handle } = await params;

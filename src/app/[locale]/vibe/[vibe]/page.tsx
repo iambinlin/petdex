@@ -20,7 +20,7 @@ function curatedSort(pets: PetWithMetrics[]): PetWithMetrics[] {
 
 const SITE_URL = "https://petdex.crafter.run";
 
-type Props = { params: Promise<{ vibe: string }> };
+type Props = { params: Promise<{ locale: string; vibe: string }> };
 
 export const revalidate = 600;
 

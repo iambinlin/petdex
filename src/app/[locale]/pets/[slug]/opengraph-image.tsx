@@ -29,7 +29,7 @@ const DISPLAY_W = Math.round(DISPLAY_H * (FRAME_W / FRAME_H));
 export default async function Image({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }) {
   const { slug } = await params;
   const pet = await getPet(slug);

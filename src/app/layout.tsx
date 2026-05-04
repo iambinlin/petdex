@@ -1,25 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-
-import { Analytics } from "@vercel/analytics/next";
-
-import { AnnouncementModal } from "@/components/announcement-modal";
-import { AppProviders } from "@/components/theme-providers";
-import { FeedbackWidget } from "@/components/feedback-widget";
-import { OnboardingTour } from "@/components/onboarding-tour";
-import { ProfileAnnouncementModal } from "@/components/profile-announcement-modal";
 
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const SITE_NAME = "Petdex";
 const SITE_URL = "https://petdex.crafter.run";
@@ -88,22 +69,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
-        <AppProviders>
-          {children}
-          <FeedbackWidget />
-          <OnboardingTour />
-          <AnnouncementModal />
-          <ProfileAnnouncementModal />
-          <Analytics />
-        </AppProviders>
-      </body>
-    </html>
-  );
+  // The locale layout owns html/body so Next 16 can set lang from [locale];
+  // providers and widgets live there to stay inside the document and receive locale context.
+  return children;
 }
