@@ -167,10 +167,16 @@ export async function searchPets(
 // the embedded query, then page through that ranked list. Only includes
 // rows whose similarity clears MIN_VIBE_SCORE so 'no results' is a real
 // signal we can surface as a 'request this pet' CTA.
-// 0.30 calibrated against the live catalog: 'cozy night programmer'
-// returns 5+ hits, 'qwerty asdf' returns 0. Anything below feels like
-// noise in early testing.
-const MIN_VIBE_SCORE = 0.3;
+// Calibrated against the live 217-pet catalog. The mean similarity
+// against an arbitrary embedded query sits at ~0.34, so we need to
+// land above the baseline noise floor to surface real semantic
+// matches without false positives:
+//   'cozy night programmer' real hits -> 0.42-0.55
+//   'fierce dragon' real hits          -> 0.45-0.55
+//   'anti-gravity ... wizard' top hit  -> 0.366 (pure noise, false positive)
+// 0.42 keeps real matches and triggers the empty-state 'request this
+// pet' CTA on novel concepts the catalog truly doesn't cover.
+const MIN_VIBE_SCORE = 0.42;
 
 async function vibeSearch(args: {
   q: string;
