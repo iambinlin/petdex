@@ -1,9 +1,11 @@
-import { resolveOwnerCredits } from "@/lib/owner-credit";
 import {
   getLeaderboard,
   type LeaderboardMetric,
   type LeaderboardRow,
 } from "@/lib/leaderboard";
+import { getTranslations } from "next-intl/server";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
+import { resolveOwnerCredits } from "@/lib/owner-credit";
 
 import { LeaderboardView } from "@/components/leaderboard-view";
 import { SiteFooter } from "@/components/site-footer";
@@ -15,7 +17,7 @@ export const metadata = {
   title: "Petdex leaderboard",
   description:
     "Top creators on Petdex — most pets approved, most loved, most installed.",
-  alternates: { canonical: "/leaderboard" },
+  alternates: buildLocaleAlternates("/leaderboard"),
 };
 
 const METRIC_VALUES: LeaderboardMetric[] = [
@@ -32,6 +34,7 @@ export default async function LeaderboardPage({
 }: {
   searchParams: Promise<SP>;
 }) {
+  const t = await getTranslations("leaderboard");
   const { tab } = await searchParams;
   const active: LeaderboardMetric = METRIC_VALUES.includes(
     tab as LeaderboardMetric,
@@ -70,21 +73,20 @@ export default async function LeaderboardPage({
   );
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-5xl flex-col px-5 pt-5 pb-10 md:px-8">
           <SiteHeader />
 
           <div className="mt-12 flex flex-col items-center text-center md:mt-16">
             <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-              Top creators
+              {t("eyebrow")}
             </p>
             <h1 className="mt-3 text-balance text-[36px] leading-[1] font-semibold tracking-tight md:text-[56px]">
-              Petdex leaderboard
+              {t("title")}
             </h1>
             <p className="mt-4 max-w-xl text-balance text-base leading-7 text-muted-1 md:text-lg">
-              The artists shipping the most pets, getting the most love, and
-              landing the most installs. Updated live.
+              {t("subtitle")}
             </p>
           </div>
         </div>

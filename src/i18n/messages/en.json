@@ -73,73 +73,213 @@
       "network": "Network error. Try again."
     }
   },
-  "submittedBy": {
-    "eyebrow": "Submitted by",
-    "viewProfile": "View {name}'s profile"
-  },
-  "claim": {
-    "cta": "Sign in to claim",
-    "body": "Is this your pet, <strong>{author}</strong>? Sign in with GitHub to claim {petName}, edit details, and track installs."
-  },
-  "installCommand": {
-    "installStep": "1. Install",
-    "dropsInto": "Drops the pet pack into",
-    "methodAria": "Install method",
-    "platformAria": "Install platform",
+  "admin": {
     "tabs": {
-      "cli": "CLI"
+      "ariaLabel": "Admin sections",
+      "submissions": "Submissions",
+      "edits": "Edits",
+      "requests": "Requests",
+      "feedback": "Feedback",
+      "manifest": "Manifest"
     },
-    "activateStep": "2. Activate in Codex",
-    "steps": {
-      "openCodex": "Open Codex,",
-      "findPet": "Find <strong>{displayName}</strong> under",
-      "andClick": "and click",
-      "use": "Use",
-      "insideCodex": "inside Codex to wake or tuck it away."
-    }
-  },
-  "petStateViewer": {
-    "eyebrow": "State viewer",
-    "frames": "{count, plural, one {# frame} other {# frames}}",
-    "rowFrames": "Row {row} - {count, plural, one {# frame} other {# frames}}",
-    "animationLabel": "{petName} {state} animation",
-    "states": {
-      "idle": {
-        "label": "Idle",
-        "purpose": "Neutral breathing and blinking loop"
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "discovered": "Discovered",
+      "all": "All",
+      "open": "Open",
+      "fulfilled": "Fulfilled",
+      "dismissed": "Dismissed",
+      "addressed": "Addressed",
+      "archived": "Archived"
+    },
+    "kinds": {
+      "all": "All kinds",
+      "suggestion": "Suggestion",
+      "bug": "Bug",
+      "praise": "Praise",
+      "other": "Other",
+      "suggestShort": "Suggest"
+    },
+    "queue": {
+      "eyebrow": "Submission queue",
+      "title": "Review pets",
+      "empty": "No pets in this view."
+    },
+    "review": {
+      "needsName": "Needs name",
+      "edit": "Edit",
+      "placeholders": {
+        "displayName": "Pet display name",
+        "slug": "slug (url-safe)",
+        "description": "Description"
       },
-      "running-right": {
-        "label": "Run Right",
-        "purpose": "Directional locomotion to the right"
+      "rejectPrompt": "Reason for rejection (optional)",
+      "requestFailed": "Request failed ({status})",
+      "save": "Save",
+      "cancel": "Cancel",
+      "approve": "Approve",
+      "reject": "Reject",
+      "revive": "Revive to pending",
+      "links": {
+        "zip": "zip",
+        "sprite": "sprite",
+        "petJson": "pet.json"
       },
-      "running-left": {
-        "label": "Run Left",
-        "purpose": "Directional locomotion to the left"
+      "relative": {
+        "justNow": "just now"
       },
-      "waving": {
-        "label": "Waving",
-        "purpose": "Greeting or attention gesture"
-      },
-      "jumping": {
-        "label": "Jumping",
-        "purpose": "Anticipation, lift, peak, descent, settle"
-      },
-      "failed": {
-        "label": "Failed",
-        "purpose": "Readable error or sad reaction"
-      },
-      "waiting": {
-        "label": "Waiting",
-        "purpose": "Patient idle variant"
-      },
-      "running": {
-        "label": "Running",
-        "purpose": "Generic in-place run loop"
-      },
-      "review": {
-        "label": "Review",
-        "purpose": "Focused inspecting or thinking loop"
+      "petTime": "PET",
+      "petAnimation": "pet animation",
+      "similar": {
+        "possibleDuplicate": "Possible duplicate",
+        "looksSimilar": "Looks similar",
+        "sameCharacter": "Same character?",
+        "hide": "Hide",
+        "show": "Show"
       }
+    },
+    "edits": {
+      "eyebrow": "Edit queue",
+      "title": "Pending edits",
+      "description": "Owner-submitted text changes awaiting re-approval. The live page keeps showing the approved values until you act.",
+      "empty": "No pending edits.",
+      "submitted": "submitted",
+      "displayName": "Display name",
+      "descriptionLabel": "Description",
+      "tags": "Tags",
+      "emptyValue": "empty",
+      "noChanges": "No changes",
+      "noDiff": "Edit submitted but no changes detected. Reject to clear."
+    },
+    "editActions": {
+      "approve": "Approve edit",
+      "reject": "Reject",
+      "rejectPrompt": "Reason (optional, sent to owner):",
+      "failed": "Failed: {error}"
+    },
+    "feedback": {
+      "eyebrow": "Inbox",
+      "title": "Feedback",
+      "empty": "No feedback in this view.",
+      "thread": "Thread",
+      "threadWithCount": "Thread ({count})",
+      "profile": "Profile",
+      "viewProfile": "View @{handle}'s profile",
+      "sendEmail": "Send email instead",
+      "anonymous": "Anonymous",
+      "clerk": "clerk",
+      "filters": {
+        "pending": "Pending",
+        "addressed": "Addressed",
+        "archived": "Archived",
+        "all": "All"
+      },
+      "mailto": {
+        "bodyIntro": "Thanks for the {kind} on Petdex",
+        "subject": "Re: your Petdex feedback — {excerpt}"
+      }
+    },
+    "feedbackActions": {
+      "address": "Mark as addressed",
+      "archive": "Archive",
+      "reopen": "Re-open into pending",
+      "failed": "Failed: {error}"
+    },
+    "requests": {
+      "eyebrow": "Community wishlist",
+      "title": "Pet requests",
+      "summary": "{open} open · {fulfilled} fulfilled · {dismissed} dismissed",
+      "openSection": "Open",
+      "fulfilledSection": "Fulfilled",
+      "dismissedSection": "Dismissed",
+      "emptyOpen": "No open requests right now.",
+      "votes": "votes",
+      "moreVoters": "+{count} more",
+      "anonymous": "anonymous"
+    },
+    "requestActions": {
+      "fulfill": "Fulfill",
+      "dismiss": "Dismiss",
+      "reopen": "Re-open",
+      "slug": "slug",
+      "placeholder": "cool-clippy",
+      "mark": "Mark"
+    },
+    "manifest": {
+      "eyebrow": "Telemetry",
+      "title": "Manifest fetches",
+      "description": "Who's pulling /api/manifest. IPs are SHA-256 hashed daily so they group within a day but can't be reversed.",
+      "total": "Total (all time)",
+      "last24": "Last 24h",
+      "distinct24": "Distinct IPs (24h)",
+      "byDay": "By day · last 14d",
+      "loudestIps": "Loudest IPs · last 7d",
+      "topUserAgents": "Top user-agents · last 7d",
+      "byCountry": "By country · last 7d",
+      "headers": {
+        "ipHash": "IP hash",
+        "country": "Country",
+        "lastUa": "Last UA",
+        "fetches": "Fetches"
+      },
+      "noUa": "no UA"
+    },
+    "threadPage": {
+      "back": "← Inbox"
+    },
+    "leaderboard": {
+      "eyebrow": "Top creators",
+      "title": "Petdex leaderboard",
+      "subtitle": "The artists shipping the most pets, getting the most love, and landing the most installs. Updated live.",
+      "categoryAria": "Leaderboard category",
+      "secondaryStats": {
+        "pets": "pets",
+        "likes": "likes",
+        "installs": "installs"
+      },
+      "tabs": {
+        "pets": {
+          "label": "Most pets",
+          "unit": "approved",
+          "blurb": "Creators ranked by approved pets in the catalog.",
+          "empty": "No approved submissions yet."
+        },
+        "likes": {
+          "label": "Most loved",
+          "unit": "likes",
+          "blurb": "Total likes earned across every pet a creator has shipped.",
+          "empty": "Nobody's pets have collected likes yet."
+        },
+        "installs": {
+          "label": "Most installed",
+          "unit": "installs",
+          "blurb": "Total CLI installs aggregated across a creator's pets.",
+          "empty": "No installs recorded yet."
+        },
+        "rising": {
+          "label": "Rising",
+          "unit": "this week",
+          "blurb": "Pets approved in the last 7 days. Caught fire? Ship more.",
+          "empty": "No new pets approved this week."
+        }
+      }
+    },
+    "notFound": {
+      "eyebrow": "Error 404",
+      "title": "This pet wandered off",
+      "body": "The page you tried to reach isn't in the index. Could be a typo, a withdrawn submission, or a pet that hasn't been approved yet. Try one of these instead.",
+      "lostPetAnimated": "{name} cycling through states",
+      "caughtWandering": "Caught wandering: {name}",
+      "browsePets": "Browse {count}+ pets",
+      "browseGallery": "Browse the gallery",
+      "about": "About Petdex",
+      "submit": "Submit a pet",
+      "featuredEyebrow": "Try a featured one",
+      "featuredTitle": "Pets that are definitely here",
+      "featuredPetAnimated": "{name} animated",
+      "terminalEyebrow": "Or install one from the terminal"
     }
   }
 }

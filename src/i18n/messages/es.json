@@ -73,73 +73,213 @@
       "network": "Error de red. Inténtalo de nuevo."
     }
   },
-  "submittedBy": {
-    "eyebrow": "Enviada por",
-    "viewProfile": "Ver el perfil de {name}"
-  },
-  "claim": {
-    "cta": "Inicia sesión para reclamarla",
-    "body": "¿Esta es tu mascota, <strong>{author}</strong>? Inicia sesión con GitHub para reclamar {petName}, editar los detalles y seguir las instalaciones."
-  },
-  "installCommand": {
-    "installStep": "1. Instala",
-    "dropsInto": "Deja el paquete de la mascota en",
-    "methodAria": "Método de instalación",
-    "platformAria": "Plataforma de instalación",
+  "admin": {
     "tabs": {
-      "cli": "CLI"
+      "ariaLabel": "Secciones de admin",
+      "submissions": "Envíos",
+      "edits": "Ediciones",
+      "requests": "Pedidos",
+      "feedback": "Feedback",
+      "manifest": "Manifest"
     },
-    "activateStep": "2. Actívala en Codex",
-    "steps": {
-      "openCodex": "Abre Codex,",
-      "findPet": "Encuentra <strong>{displayName}</strong> en",
-      "andClick": "y haz clic en",
-      "use": "Usa",
-      "insideCodex": "dentro de Codex para despertarla o guardarla."
-    }
-  },
-  "petStateViewer": {
-    "eyebrow": "Visor de estados",
-    "frames": "{count, plural, one {# cuadro} other {# cuadros}}",
-    "rowFrames": "Fila {row} - {count, plural, one {# cuadro} other {# cuadros}}",
-    "animationLabel": "Animación de {petName} en estado {state}",
-    "states": {
-      "idle": {
-        "label": "En reposo",
-        "purpose": "Bucle neutro de respiración y parpadeo"
+    "status": {
+      "pending": "Pendiente",
+      "approved": "Aprobado",
+      "rejected": "Rechazado",
+      "discovered": "Descubierto",
+      "all": "Todos",
+      "open": "Abierto",
+      "fulfilled": "Cumplido",
+      "dismissed": "Descartado",
+      "addressed": "Atendido",
+      "archived": "Archivado"
+    },
+    "kinds": {
+      "all": "Todos los tipos",
+      "suggestion": "Sugerencia",
+      "bug": "Bug",
+      "praise": "Elogio",
+      "other": "Otro",
+      "suggestShort": "Sug."
+    },
+    "queue": {
+      "eyebrow": "Cola de envíos",
+      "title": "Revisar mascotas",
+      "empty": "No hay mascotas en esta vista."
+    },
+    "review": {
+      "needsName": "Falta nombre",
+      "edit": "Editar",
+      "placeholders": {
+        "displayName": "Nombre visible de la mascota",
+        "slug": "slug (seguro para URL)",
+        "description": "Descripción"
       },
-      "running-right": {
-        "label": "Corre a la derecha",
-        "purpose": "Movimiento direccional hacia la derecha"
+      "rejectPrompt": "Razón del rechazo (opcional)",
+      "requestFailed": "La solicitud falló ({status})",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "revive": "Volver a pendiente",
+      "links": {
+        "zip": "zip",
+        "sprite": "sprite",
+        "petJson": "pet.json"
       },
-      "running-left": {
-        "label": "Corre a la izquierda",
-        "purpose": "Movimiento direccional hacia la izquierda"
+      "relative": {
+        "justNow": "ahora mismo"
       },
-      "waving": {
-        "label": "Saluda",
-        "purpose": "Gesto de saludo o de llamada de atención"
-      },
-      "jumping": {
-        "label": "Salta",
-        "purpose": "Anticipación, impulso, punto más alto, caída y aterrizaje"
-      },
-      "failed": {
-        "label": "Falla",
-        "purpose": "Reacción legible de error o tristeza"
-      },
-      "waiting": {
-        "label": "Espera",
-        "purpose": "Variante paciente del estado en reposo"
-      },
-      "running": {
-        "label": "Corre",
-        "purpose": "Bucle genérico de carrera en el lugar"
-      },
-      "review": {
-        "label": "Revisa",
-        "purpose": "Bucle de inspección o pensamiento concentrado"
+      "petTime": "PET",
+      "petAnimation": "animación de la mascota",
+      "similar": {
+        "possibleDuplicate": "Posible duplicado",
+        "looksSimilar": "Se parece",
+        "sameCharacter": "¿Mismo personaje?",
+        "hide": "Ocultar",
+        "show": "Mostrar"
       }
+    },
+    "edits": {
+      "eyebrow": "Cola de ediciones",
+      "title": "Ediciones pendientes",
+      "description": "Cambios de texto enviados por dueños que esperan re-aprobación. La página en vivo sigue mostrando los valores aprobados hasta que actúes.",
+      "empty": "No hay ediciones pendientes.",
+      "submitted": "enviado",
+      "displayName": "Nombre visible",
+      "descriptionLabel": "Descripción",
+      "tags": "Etiquetas",
+      "emptyValue": "vacío",
+      "noChanges": "Sin cambios",
+      "noDiff": "Se envió una edición pero no se detectaron cambios. Recházala para limpiarla."
+    },
+    "editActions": {
+      "approve": "Aprobar edición",
+      "reject": "Rechazar",
+      "rejectPrompt": "Razón (opcional, se envía al dueño):",
+      "failed": "Falló: {error}"
+    },
+    "feedback": {
+      "eyebrow": "Inbox",
+      "title": "Feedback",
+      "empty": "No hay feedback en esta vista.",
+      "thread": "Hilo",
+      "threadWithCount": "Hilo ({count})",
+      "profile": "Perfil",
+      "viewProfile": "Ver el perfil de @{handle}",
+      "sendEmail": "Enviar email en su lugar",
+      "anonymous": "Anónimo",
+      "clerk": "clerk",
+      "filters": {
+        "pending": "Pendiente",
+        "addressed": "Atendido",
+        "archived": "Archivado",
+        "all": "Todos"
+      },
+      "mailto": {
+        "bodyIntro": "Gracias por el {kind} en Petdex",
+        "subject": "Re: tu feedback de Petdex — {excerpt}"
+      }
+    },
+    "feedbackActions": {
+      "address": "Marcar como atendido",
+      "archive": "Archivar",
+      "reopen": "Reabrir como pendiente",
+      "failed": "Falló: {error}"
+    },
+    "requests": {
+      "eyebrow": "Wishlist de la comunidad",
+      "title": "Pedidos de mascotas",
+      "summary": "{open} abiertos · {fulfilled} cumplidos · {dismissed} descartados",
+      "openSection": "Abiertos",
+      "fulfilledSection": "Cumplidos",
+      "dismissedSection": "Descartados",
+      "emptyOpen": "No hay pedidos abiertos ahora mismo.",
+      "votes": "votos",
+      "moreVoters": "+{count} más",
+      "anonymous": "anónimo"
+    },
+    "requestActions": {
+      "fulfill": "Cumplir",
+      "dismiss": "Descartar",
+      "reopen": "Reabrir",
+      "slug": "slug",
+      "placeholder": "cool-clippy",
+      "mark": "Marcar"
+    },
+    "manifest": {
+      "eyebrow": "Telemetría",
+      "title": "Fetches del manifest",
+      "description": "Quién está llamando a /api/manifest. Las IP se hashean con SHA-256 por día, así que se agrupan dentro del mismo día pero no se pueden revertir.",
+      "total": "Total (histórico)",
+      "last24": "Últimas 24 h",
+      "distinct24": "IPs distintas (24 h)",
+      "byDay": "Por día · últimos 14 d",
+      "loudestIps": "IPs más ruidosas · últimos 7 d",
+      "topUserAgents": "User-agents más frecuentes · últimos 7 d",
+      "byCountry": "Por país · últimos 7 d",
+      "headers": {
+        "ipHash": "Hash IP",
+        "country": "País",
+        "lastUa": "Último UA",
+        "fetches": "Fetches"
+      },
+      "noUa": "sin UA"
+    },
+    "threadPage": {
+      "back": "← Inbox"
+    },
+    "leaderboard": {
+      "eyebrow": "Creadores destacados",
+      "title": "Ranking de Petdex",
+      "subtitle": "Los artistas que publican más mascotas, reciben más cariño y logran más instalaciones. Se actualiza en vivo.",
+      "categoryAria": "Categoría del ranking",
+      "secondaryStats": {
+        "pets": "mascotas",
+        "likes": "me gusta",
+        "installs": "instalaciones"
+      },
+      "tabs": {
+        "pets": {
+          "label": "Más mascotas",
+          "unit": "aprobadas",
+          "blurb": "Creadores ordenados por mascotas aprobadas en el catálogo.",
+          "empty": "Todavía no hay envíos aprobados."
+        },
+        "likes": {
+          "label": "Más queridas",
+          "unit": "me gusta",
+          "blurb": "Total de me gusta acumulados entre todas las mascotas que publicó un creador.",
+          "empty": "Las mascotas de nadie han recibido me gusta todavía."
+        },
+        "installs": {
+          "label": "Más instaladas",
+          "unit": "instalaciones",
+          "blurb": "Total de instalaciones por CLI acumuladas entre las mascotas de un creador.",
+          "empty": "Todavía no hay instalaciones registradas."
+        },
+        "rising": {
+          "label": "En ascenso",
+          "unit": "esta semana",
+          "blurb": "Mascotas aprobadas en los últimos 7 días. ¿Se encendió? Publica más.",
+          "empty": "No se aprobaron mascotas nuevas esta semana."
+        }
+      }
+    },
+    "notFound": {
+      "eyebrow": "Error 404",
+      "title": "Esta mascota se perdió",
+      "body": "La página que intentaste abrir no está en el índice. Puede ser un error de escritura, un envío retirado o una mascota que todavía no ha sido aprobada. Prueba con una de estas opciones.",
+      "lostPetAnimated": "{name} recorriendo sus estados",
+      "caughtWandering": "Encontrada deambulando: {name}",
+      "browsePets": "Ver {count}+ mascotas",
+      "browseGallery": "Ver la galería",
+      "about": "Acerca de Petdex",
+      "submit": "Enviar una mascota",
+      "featuredEyebrow": "Prueba una destacada",
+      "featuredTitle": "Mascotas que sí están aquí",
+      "featuredPetAnimated": "{name} animada",
+      "terminalEyebrow": "O instala una desde la terminal"
     }
   }
 }
