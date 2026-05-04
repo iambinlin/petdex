@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { auth } from "@clerk/nextjs/server";
+
+import { getCaughtSlugSet } from "@/lib/catch-status";
 import { getDexNumberMap } from "@/lib/dex";
 import { searchPets } from "@/lib/pet-search";
 import {
@@ -22,6 +25,8 @@ export const dynamic = "force-dynamic";
 const SITE_URL = "https://petdex.crafter.run";
 
 export default async function Home() {
+  const { userId } = await auth();
+
   // Read the visitor's shuffle seed (minted by the middleware on the
   // very first request, so every subsequent SSR + /api/pets/search call
   // shares the same ordering). On the first visit the cookie isn't on
@@ -30,16 +35,19 @@ export default async function Home() {
   // See lib/shuffle-seed.ts + proxy.ts for context.
   const shuffleSeed = (await readShuffleSeed()) ?? undefined;
 
-  const [heroPets, totalPets, initialSearch, dexEntries] = await Promise.all([
-    getFeaturedPetsWithMetrics(6),
-    getApprovedPetCount(),
-    searchPets({ sort: "curated", shuffleSeed }),
-    getDexNumberMap(),
-  ]);
+  const [heroPets, totalPets, initialSearch, dexEntries, caughtSlugs] =
+    await Promise.all([
+      getFeaturedPetsWithMetrics(6),
+      getApprovedPetCount(),
+      searchPets({ sort: "curated", shuffleSeed }),
+      getDexNumberMap(),
+      getCaughtSlugSet(userId),
+    ]);
 
   // Plain-object so the server -> client serializer doesn't choke on a
   // Map. Same source of truth either way.
   const dexMap = Object.fromEntries(dexEntries.entries());
+  const caughtSlugList = Array.from(caughtSlugs);
 
   const jsonLd = [
     {
@@ -130,6 +138,7 @@ export default async function Home() {
             initial={initialSearch}
             totalPets={totalPets}
             dexMap={dexMap}
+            caughtSlugs={caughtSlugList}
           />
         ) : null}
       </section>

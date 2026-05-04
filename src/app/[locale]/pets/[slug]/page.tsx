@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
-import { formatDexNumber } from "@/lib/dex";
+import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
 import { resolveOwnerCreditFor } from "@/lib/owner-credit";
 import { computeStats } from "@/lib/pet-stats";
 import {
@@ -40,6 +40,12 @@ type PageProps = {
 
 export const dynamicParams = true;
 export const revalidate = 60;
+
+type DexNavPet = {
+  slug: string;
+  displayName: string;
+  dexNumber: number;
+};
 
 export async function generateStaticParams() {
   const slugs = await getStaticPetSlugs();
@@ -95,6 +101,51 @@ export default async function PetPage({ params }: PageProps) {
   if (!pet) {
     notFound();
   }
+
+  const dexMap = await getDexNumberMap();
+  const currentDexNumber = dexMap.get(slug) ?? null;
+
+  let prevSlug: string | null = null;
+  let nextSlug: string | null = null;
+  if (currentDexNumber != null) {
+    for (const [entrySlug, dexNumber] of dexMap.entries()) {
+      if (dexNumber === currentDexNumber - 1) prevSlug = entrySlug;
+      if (dexNumber === currentDexNumber + 1) nextSlug = entrySlug;
+    }
+  }
+
+  const neighborSlugs = [prevSlug, nextSlug].filter(
+    (value): value is string => Boolean(value),
+  );
+  const neighborRows =
+    neighborSlugs.length > 0
+      ? await db
+          .select({
+            slug: schema.submittedPets.slug,
+            displayName: schema.submittedPets.displayName,
+          })
+          .from(schema.submittedPets)
+          .where(inArray(schema.submittedPets.slug, neighborSlugs))
+      : [];
+  const neighborNameMap = new Map(
+    neighborRows.map((row) => [row.slug, row.displayName]),
+  );
+  const prevPet =
+    prevSlug && dexMap.has(prevSlug)
+      ? {
+          slug: prevSlug,
+          displayName: neighborNameMap.get(prevSlug) ?? prevSlug,
+          dexNumber: dexMap.get(prevSlug)!,
+        }
+      : null;
+  const nextPet =
+    nextSlug && dexMap.has(nextSlug)
+      ? {
+          slug: nextSlug,
+          displayName: neighborNameMap.get(nextSlug) ?? nextSlug,
+          dexNumber: dexMap.get(nextSlug)!,
+        }
+      : null;
 
   const [{ userId }, allPets, ownerRow, variants] = await Promise.all([
     auth(),
@@ -259,6 +310,10 @@ export default async function PetPage({ params }: PageProps) {
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-5 pb-12 md:px-8 md:pb-16">
         <header className="grid gap-6 lg:grid-cols-[1fr_460px] lg:items-start">
           <div>
+            <div className="flex items-center justify-between gap-3">
+              <DexNavPill pet={prevPet} direction="prev" />
+              <DexNavPill pet={nextPet} direction="next" />
+            </div>
             <p className="text-sm font-semibold tracking-[0.18em] text-brand uppercase">
               {pet.featured ? "Featured Petdex entry" : "Petdex entry"}
             </p>
@@ -400,6 +455,30 @@ export default async function PetPage({ params }: PageProps) {
       </section>
       <SiteFooter />
     </main>
+  );
+}
+
+function DexNavPill({
+  pet,
+  direction,
+}: {
+  pet: DexNavPet | null;
+  direction: "prev" | "next";
+}) {
+  if (!pet) return null;
+
+  return (
+    <Link
+      href={`/pets/${pet.slug}`}
+      className={`inline-flex min-h-10 items-center gap-2 rounded-full border border-border-base bg-surface px-4 py-2 text-sm text-foreground transition hover:border-border-strong ${direction === "next" ? "ml-auto" : ""}`}
+    >
+      {direction === "prev" ? <span aria-hidden="true">←</span> : null}
+      <span className="font-mono text-xs tracking-[0.16em]">
+        #{formatDexNumber(pet.dexNumber)}
+      </span>
+      <span className="font-normal">{pet.displayName}</span>
+      {direction === "next" ? <span aria-hidden="true">→</span> : null}
+    </Link>
   );
 }
 
