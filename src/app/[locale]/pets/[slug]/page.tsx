@@ -22,6 +22,7 @@ import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
+import { PetFloater } from "@/components/pet-floater";
 import { PetKeyboardNav } from "@/components/pet-keyboard-nav";
 import { PetRadar } from "@/components/pet-radar";
 import { PetSoundButton } from "@/components/pet-sound-button";
@@ -323,6 +324,14 @@ export default async function PetPage({ params }: PageProps) {
           animated sprite + install command + secondary panels live
           below in their own contained section. */}
       <section className="petdex-cloud relative overflow-hidden">
+        {/* Interactive floater pet — drag, click, watch. Renders an
+            absolute-positioned sprite over the banner's empty right
+            side. Only rendered on md+ where there's enough room; on
+            mobile the banner is too cramped for a draggable toy. */}
+        <div className="pointer-events-none absolute inset-0 hidden md:block">
+          <PetFloater src={pet.spritesheetPath} petName={pet.displayName} />
+        </div>
+
         <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pt-5 pb-10 md:px-8 md:pb-14">
           <SiteHeader />
 
