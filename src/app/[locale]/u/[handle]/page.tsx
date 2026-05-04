@@ -349,7 +349,6 @@ export default async function UserProfilePage({ params }: PageProps) {
                   </p>
                 </div>
                 {featuredPets.length === 1 ? (
-                  // Single pin gets the big hero treatment.
                   <div className="relative">
                     {isOwner ? (
                       <div className="absolute top-4 right-4">
@@ -364,24 +363,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                     <FeaturedPin pet={featuredPets[0]} />
                   </div>
                 ) : (
-                  // 2..6 pinned: keep them on a single row regardless of
-                  // viewport. We pick the column count to match the number
-                  // of pinned items so the row is always full and never
-                  // wraps. The cards just shrink on narrow screens — that's
-                  // still nicer than wrapping the pinned strip.
-                  <div
-                    className={`grid gap-3 md:gap-4 ${
-                      featuredPets.length === 2
-                        ? "grid-cols-2"
-                        : featuredPets.length === 3
-                          ? "grid-cols-3"
-                          : featuredPets.length === 4
-                            ? "grid-cols-4"
-                            : featuredPets.length === 5
-                              ? "grid-cols-5"
-                              : "grid-cols-6"
-                    }`}
-                  >
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 md:gap-4">
                     {featuredPets.map((pet, index) => (
                       <div key={pet.slug} className="relative">
                         <PetCard
