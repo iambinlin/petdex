@@ -58,7 +58,7 @@ export default async function Home() {
     searchPets({ sort: "curated", shuffleSeed }),
     getDexNumberMap(),
     getCaughtSlugSet(userId),
-    getFeaturedCollections(3),
+    getFeaturedCollections(6),
   ]);
 
   // Plain-object so the server -> client serializer doesn't choke on a
