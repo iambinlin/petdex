@@ -45,6 +45,7 @@
     "creators__fixme": true,
     "requests": "请求",
     "requests__fixme": true,
+    "discord": "Discord",
     "about": "关于",
     "about__fixme": true,
     "language": "语言",

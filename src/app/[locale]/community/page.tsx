@@ -10,6 +10,7 @@ import { ArrowRight, Hash, Mic2, Sparkles, Users } from "lucide-react";
 
 import { buildLocaleAlternates } from "@/lib/locale-routing";
 
+import { DiscordLink } from "@/components/discord-link";
 import { JsonLd } from "@/components/json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -89,15 +90,14 @@ export default function CommunityPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a
+              <DiscordLink
                 href={inviteUrl}
-                target="_blank"
-                rel="noreferrer"
+                source="community_page_hero"
                 className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5865F2] px-5 text-sm font-semibold text-white transition hover:bg-[#4752c4]"
               >
                 Join the Discord
                 <ArrowRight className="size-4" />
-              </a>
+              </DiscordLink>
               <a
                 href="https://github.com/crafter-station/petdex"
                 target="_blank"

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { useTranslations } from "next-intl";
 
+import { DiscordLink } from "@/components/discord-link";
 import { SponsorButton } from "@/components/sponsor-button";
 
 export function SiteFooter() {
@@ -33,14 +34,13 @@ export function SiteFooter() {
             {t("github")}
           </a>
           {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
-            <a
+            <DiscordLink
               href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL}
-              target="_blank"
-              rel="noreferrer"
+              source="footer"
               className="underline underline-offset-4 transition hover:text-foreground"
             >
               {t("discord")}
-            </a>
+            </DiscordLink>
           ) : null}
           <SponsorButton variant="inline" />
         </div>
