@@ -388,6 +388,22 @@ input {
   }
 }
 
+/* Static variant for list contexts (leaderboard rows, owner mini-grids).
+   Renders only the first idle frame — no infinite keyframe, no paint
+   thrash on scroll. Same dimensions as .pet-sprite so layouts can
+   swap one for the other without touching parent CSS. */
+.pet-sprite-static {
+  width: 192px;
+  height: 208px;
+  background-image: var(--sprite-url);
+  background-repeat: no-repeat;
+  background-size: 1536px 1872px;
+  background-position: 0 0;
+  image-rendering: pixelated;
+  transform: scale(var(--pet-scale, 1));
+  transform-origin: top left;
+}
+
 /* Tap-me hint ring on the interactive PetFloater. A brand-tinted glow
    pulses outward to invite the user to grab the pet on first visit.
    We render two staggered rings (the second uses --late) so the

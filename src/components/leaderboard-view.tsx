@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 
 import type { LeaderboardMetric, LeaderboardRow } from "@/lib/leaderboard";
 
-import { PetSprite } from "@/components/pet-sprite";
+import { StaticPetSprite } from "@/components/static-pet-sprite";
 
 type CreditMap = Record<
   string,
@@ -204,7 +204,15 @@ function LeaderboardRowItem({
   const at = credit?.username ?? credit?.githubUsername ?? null;
 
   return (
-    <li>
+    // content-visibility: auto lets the browser skip paint + layout for
+    // rows that are off-screen. contain-intrinsic-size keeps the
+    // scrollbar honest so the page height doesn't jump as rows resolve.
+    <li
+      style={{
+        contentVisibility: "auto",
+        containIntrinsicSize: "auto 72px",
+      }}
+    >
       <Link
         href={`/u/${handle}`}
         className="group flex items-center gap-4 rounded-2xl border border-border-base bg-surface/80 px-4 py-3 transition hover:border-border-strong"
@@ -217,6 +225,10 @@ function LeaderboardRowItem({
             <img
               src={avatar}
               alt={name}
+              loading="lazy"
+              decoding="async"
+              width={40}
+              height={40}
               className="size-10 rounded-full ring-1 ring-border-base"
             />
           ) : (
@@ -288,15 +300,15 @@ function LeaderboardRowItem({
 }
 
 function ThumbCell({ thumb }: { thumb: LeaderboardPetThumb }) {
-  // Tiny sprite tile in a 40x40 frame. Linking individual thumbs would
-  // hijack the row's hover/click target, so the tile stays decorative
-  // — clicking the row still goes to the creator profile.
+  // Static first-frame only — see static-pet-sprite.tsx for why. Live
+  // sprite cycles on a 50-row × ~3-thumb leaderboard create 150+
+  // infinite CSS animations and tank scroll FPS even on a fast laptop.
   return (
     <span
       className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-muted/80 ring-1 ring-border-base"
       title={thumb.displayName}
     >
-      <PetSprite
+      <StaticPetSprite
         src={thumb.spritesheetUrl}
         scale={0.18}
         label={thumb.displayName}

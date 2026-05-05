@@ -829,5 +829,8 @@
       "loved": "QUERIDA",
       "freshness": "FRESCURA"
     }
+  },
+  "collectionDetail": {
+    "backToCollections": "← Ver todas las colecciones"
   }
 }

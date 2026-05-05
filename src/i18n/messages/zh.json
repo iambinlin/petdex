@@ -991,5 +991,8 @@
       "freshness": "新鲜度",
       "freshness__fixme": true
     }
+  },
+  "collectionDetail": {
+    "backToCollections": "← 返回全部合集"
   }
 }
