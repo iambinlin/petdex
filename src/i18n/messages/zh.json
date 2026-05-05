@@ -76,6 +76,7 @@
     "takedown": "下架请求",
     "takedown__fixme": true,
     "github": "GitHub",
+    "discord": "Discord",
     "sponsor": "赞助",
     "sponsorAria": "在 GitHub 上赞助"
   },

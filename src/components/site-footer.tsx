@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { useTranslations } from "next-intl";
 
 import { SponsorButton } from "@/components/sponsor-button";
@@ -31,6 +32,23 @@ export function SiteFooter() {
           >
             {t("github")}
           </a>
+          {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
+            <a
+              href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4 transition hover:text-foreground"
+            >
+              {t("discord")}
+            </a>
+          ) : (
+            <Link
+              href="/community"
+              className="underline underline-offset-4 transition hover:text-foreground"
+            >
+              {t("discord")}
+            </Link>
+          )}
           <SponsorButton variant="inline" />
         </div>
       </div>
