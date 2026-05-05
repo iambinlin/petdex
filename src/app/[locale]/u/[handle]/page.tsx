@@ -591,13 +591,7 @@ function FeaturedPin({ pet }: { pet: PetWithMetrics }) {
           "0 0 0 1px rgba(100,120,246,0.18), 0 18px 45px -22px rgba(82,102,234,0.5)",
       }}
     >
-      <div
-        className="flex shrink-0 items-center justify-center px-8 py-10 md:w-[420px] md:py-14"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
-        }}
-      >
+      <div className="pet-sprite-stage flex shrink-0 items-center justify-center px-8 py-10 md:w-[420px] md:py-14">
         <PetSprite
           src={pet.spritesheetPath}
           cycleStates
