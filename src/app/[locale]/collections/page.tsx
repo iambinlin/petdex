@@ -75,7 +75,7 @@ export default async function CollectionsPage() {
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-6xl gap-5 px-5 py-12 md:grid-cols-2 md:px-8 md:py-16">
+      <section className="mx-auto grid w-full max-w-[1440px] auto-rows-fr gap-5 px-5 py-12 md:grid-cols-2 md:px-8 md:py-16">
         {collections.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2 md:col-span-2">
             No collections are featured yet.
@@ -92,11 +92,11 @@ export default async function CollectionsPage() {
             return (
               <article
                 key={collection.slug}
-                className="overflow-hidden rounded-3xl border border-border-base bg-surface/80"
+                className="flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80"
               >
                 <Link
                   href={`/collections/${collection.slug}`}
-                  className="grid aspect-[16/9] place-items-center bg-brand-tint/40 transition hover:bg-brand-tint"
+                  className="pet-sprite-stage relative grid aspect-[16/9] place-items-center overflow-hidden"
                 >
                   {cover ? (
                     <PetSprite
@@ -111,7 +111,7 @@ export default async function CollectionsPage() {
                     </span>
                   )}
                 </Link>
-                <div className="p-6">
+                <div className="flex flex-1 flex-col p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
@@ -141,7 +141,7 @@ export default async function CollectionsPage() {
                   {owner ? (
                     <Link
                       href={`/u/${owner.handle}`}
-                      className="mt-4 inline-flex text-sm font-medium text-brand hover:underline"
+                      className="mt-auto inline-flex pt-4 text-sm font-medium text-brand hover:underline"
                     >
                       by {owner.name}
                     </Link>

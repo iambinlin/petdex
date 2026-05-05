@@ -157,7 +157,7 @@ export default async function CollectionPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="grid aspect-square place-items-center rounded-3xl border border-border-base bg-surface/70">
+            <div className="pet-sprite-stage relative grid aspect-square place-items-center overflow-hidden rounded-3xl border border-border-base bg-surface/70">
               {cover ? (
                 <PetSprite
                   src={cover.spritesheetPath}

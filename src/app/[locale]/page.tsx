@@ -175,7 +175,7 @@ function FeaturedCollections({
   if (collections.length === 0) return null;
 
   return (
-    <section className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-5 pt-12 md:px-8">
+    <section className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-5 pt-12 md:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
@@ -192,7 +192,7 @@ function FeaturedCollections({
           View all
         </Link>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid auto-rows-fr gap-4 md:grid-cols-2">
         {collections.map((collection) => {
           const cover =
             collection.pets.find(
@@ -202,9 +202,9 @@ function FeaturedCollections({
             <Link
               key={collection.slug}
               href={`/collections/${collection.slug}`}
-              className="group overflow-hidden rounded-3xl border border-border-base bg-surface/80 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10"
+              className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10"
             >
-              <div className="grid aspect-[16/9] place-items-center bg-brand-tint/40">
+              <div className="pet-sprite-stage relative grid aspect-[16/9] place-items-center overflow-hidden">
                 {cover ? (
                   <PetSprite
                     src={cover.spritesheetPath}
@@ -218,7 +218,7 @@ function FeaturedCollections({
                   </span>
                 )}
               </div>
-              <div className="p-5">
+              <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">
                     {collection.title}
