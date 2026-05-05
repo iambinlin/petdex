@@ -108,7 +108,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
               className="inline-flex items-center gap-1.5 transition hover:text-foreground"
             >
               {t("discord")}
-              <span className="rounded-full bg-brand px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-on-brand uppercase">
+              <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
                 new
               </span>
             </DiscordLink>
