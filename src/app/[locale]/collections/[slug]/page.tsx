@@ -10,9 +10,9 @@ import { getDexNumberMap } from "@/lib/dex";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { resolveOwnerCredits } from "@/lib/owner-credit";
 
+import { CollectionCover } from "@/components/collection-cover";
 import { JsonLd } from "@/components/json-ld";
 import { PetCard } from "@/components/pet-gallery";
-import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -62,9 +62,6 @@ export default async function CollectionPage({ params }: PageProps) {
       : Promise.resolve(new Map()),
   ]);
   const owner = collection.ownerId ? credits.get(collection.ownerId) : null;
-  const cover =
-    collection.pets.find((pet) => pet.slug === collection.coverPetSlug) ??
-    collection.pets[0];
   const caughtCount = collection.pets.filter((pet) =>
     caughtSlugs.has(pet.slug),
   ).length;
@@ -157,19 +154,13 @@ export default async function CollectionPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="pet-sprite-stage relative grid aspect-square place-items-center overflow-hidden rounded-3xl border border-border-base bg-surface/70">
-              {cover ? (
-                <PetSprite
-                  src={cover.spritesheetPath}
-                  cycleStates
-                  scale={1}
-                  label={`${cover.displayName} animated`}
-                />
-              ) : (
-                <span className="font-mono text-xs tracking-[0.18em] text-muted-3 uppercase">
-                  Collection
-                </span>
-              )}
+            <div className="overflow-hidden rounded-3xl border border-border-base bg-surface/70">
+              <CollectionCover
+                pets={collection.pets}
+                coverSlug={collection.coverPetSlug}
+                max={6}
+                scale={0.7}
+              />
             </div>
           </div>
         </div>

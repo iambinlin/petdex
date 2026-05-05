@@ -18,6 +18,7 @@ import {
 } from "@/lib/pets";
 import { readShuffleSeed } from "@/lib/shuffle-seed";
 
+import { CollectionCover } from "@/components/collection-cover";
 import { CommandLine } from "@/components/command-line";
 import { JsonLd } from "@/components/json-ld";
 import { PetGallery } from "@/components/pet-gallery";
@@ -51,15 +52,27 @@ export default async function Home() {
     initialSearch,
     dexEntries,
     caughtSlugs,
-    collections,
+    allFeaturedCollections,
   ] = await Promise.all([
     getFeaturedPetsWithMetrics(6),
     getApprovedPetCount(),
     searchPets({ sort: "curated", shuffleSeed }),
     getDexNumberMap(),
     getCaughtSlugSet(userId),
-    getFeaturedCollections(6),
+    getFeaturedCollections(20),
   ]);
+
+  // Hand-pick the 3 collections that show on the landing strip in a
+  // specific narrative order: GRAYCRAFT (creator IP) → Meme Lords (cultural
+  // hook) → Anime Heroes (mainstream pull). Anything else lives behind
+  // the View all button.
+  const LANDING_COLLECTION_ORDER = ["graycraft", "meme-lords", "anime-heroes"];
+  const collectionsBySlug = new Map(
+    allFeaturedCollections.map((c) => [c.slug, c]),
+  );
+  const collections = LANDING_COLLECTION_ORDER.map((slug) =>
+    collectionsBySlug.get(slug),
+  ).filter((c): c is NonNullable<typeof c> => Boolean(c));
 
   // Plain-object so the server -> client serializer doesn't choke on a
   // Map. Same source of truth either way.
@@ -192,32 +205,20 @@ function FeaturedCollections({
           View all
         </Link>
       </div>
-      <div className="grid auto-rows-fr gap-4 md:grid-cols-2">
+      <div className="grid auto-rows-fr gap-4 md:grid-cols-3">
         {collections.map((collection) => {
-          const cover =
-            collection.pets.find(
-              (pet) => pet.slug === collection.coverPetSlug,
-            ) ?? collection.pets[0];
           return (
             <Link
               key={collection.slug}
               href={`/collections/${collection.slug}`}
               className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10"
             >
-              <div className="pet-sprite-stage relative grid aspect-[16/9] place-items-center overflow-hidden">
-                {cover ? (
-                  <PetSprite
-                    src={cover.spritesheetPath}
-                    cycleStates
-                    scale={0.72}
-                    label={`${cover.displayName} animated`}
-                  />
-                ) : (
-                  <span className="font-mono text-xs tracking-[0.18em] text-muted-3 uppercase">
-                    Collection
-                  </span>
-                )}
-              </div>
+              <CollectionCover
+                pets={collection.pets}
+                coverSlug={collection.coverPetSlug}
+                max={5}
+                scale={0.5}
+              />
               <div className="flex flex-1 flex-col p-5">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">

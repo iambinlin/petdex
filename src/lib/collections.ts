@@ -158,6 +158,38 @@ async function hydrateCollections(
   }));
 }
 
+// Look up which collections contain a given pet slug. Used on the pet
+// detail page to surface "part of N collections" backlinks. Returns
+// only featured collections to avoid leaking community drafts.
+export async function getCollectionsContainingPet(
+  petSlug: string,
+): Promise<Array<Pick<PetCollection, "slug" | "title" | "ownerId">>> {
+  try {
+    const rows = await db
+      .select({
+        slug: schema.petCollections.slug,
+        title: schema.petCollections.title,
+        ownerId: schema.petCollections.ownerId,
+      })
+      .from(schema.petCollectionItems)
+      .innerJoin(
+        schema.petCollections,
+        eq(schema.petCollectionItems.collectionId, schema.petCollections.id),
+      )
+      .where(
+        and(
+          eq(schema.petCollectionItems.petSlug, petSlug),
+          eq(schema.petCollections.featured, true),
+        ),
+      )
+      .orderBy(asc(schema.petCollections.title));
+    return rows;
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return [];
+    throw error;
+  }
+}
+
 function isMissingCollectionTableError(error: unknown): boolean {
   const cause =
     error && typeof error === "object" && "cause" in error

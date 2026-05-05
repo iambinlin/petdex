@@ -6,8 +6,8 @@ import { getAllCollections } from "@/lib/collections";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { resolveOwnerCredits } from "@/lib/owner-credit";
 
+import { CollectionCover } from "@/components/collection-cover";
 import { JsonLd } from "@/components/json-ld";
-import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -85,10 +85,6 @@ export default async function CollectionsPage() {
             const owner = collection.ownerId
               ? credits.get(collection.ownerId)
               : null;
-            const cover =
-              collection.pets.find(
-                (pet) => pet.slug === collection.coverPetSlug,
-              ) ?? collection.pets[0];
             return (
               <article
                 key={collection.slug}
@@ -96,20 +92,14 @@ export default async function CollectionsPage() {
               >
                 <Link
                   href={`/collections/${collection.slug}`}
-                  className="pet-sprite-stage relative grid aspect-[16/9] place-items-center overflow-hidden"
+                  className="block"
                 >
-                  {cover ? (
-                    <PetSprite
-                      src={cover.spritesheetPath}
-                      cycleStates
-                      scale={0.82}
-                      label={`${cover.displayName} animated`}
-                    />
-                  ) : (
-                    <span className="font-mono text-xs tracking-[0.18em] text-muted-3 uppercase">
-                      Collection
-                    </span>
-                  )}
+                  <CollectionCover
+                    pets={collection.pets}
+                    coverSlug={collection.coverPetSlug}
+                    max={5}
+                    scale={0.55}
+                  />
                 </Link>
                 <div className="flex flex-1 flex-col p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
