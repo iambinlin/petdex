@@ -297,7 +297,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-surface/76 backdrop-blur transition ${
+      className={`group relative flex flex-col rounded-3xl border bg-surface/76 backdrop-blur transition focus-within:z-30 ${
         submission.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-border-base shadow-sm shadow-blue-950/5"
@@ -317,7 +317,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
         ) : null}
       </div>
 
-      <div className="pet-sprite-stage relative flex items-center justify-center px-5 py-6">
+      <div className="pet-sprite-stage relative flex items-center justify-center overflow-hidden px-5 py-6">
         <PetSprite
           src={submission.spritesheetUrl}
           cycleStates
