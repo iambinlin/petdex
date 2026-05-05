@@ -1,7 +1,10 @@
-// /community — landing for the Discord server. Renders even before the
-// server is live: when NEXT_PUBLIC_DISCORD_INVITE_URL is missing, the
-// CTA shows "Coming soon" instead of a broken link, and the rest of
-// the page still works as a manifesto for what the community is.
+// /community — landing for the Discord server. Hidden until
+// NEXT_PUBLIC_DISCORD_INVITE_URL is set: until the server is live a
+// "Coming soon" stub is more confusing than no page at all, so we
+// 404. The footer + header stop linking to /community for the same
+// reason — those guards live in their own components.
+
+import { notFound } from "next/navigation";
 
 import { ArrowRight, Hash, Mic2, Sparkles, Users } from "lucide-react";
 
@@ -15,6 +18,12 @@ export const dynamic = "force-static";
 const SITE_URL = "https://petdex.crafter.run";
 
 export async function generateMetadata() {
+  if (!process.env.NEXT_PUBLIC_DISCORD_INVITE_URL) {
+    return {
+      title: "Not found",
+      robots: { index: false, follow: false },
+    };
+  }
   return {
     title: "Petdex Community on Discord",
     description:
@@ -51,10 +60,8 @@ const SECTIONS: Array<{
 ];
 
 export default function CommunityPage() {
-  // Invite URL lives only in the env so we can rotate it without
-  // commits. Until it's set, the page renders the manifesto + a
-  // "coming soon" CTA so /community still has a story.
   const inviteUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL;
+  if (!inviteUrl) notFound();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -82,21 +89,15 @@ export default function CommunityPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              {inviteUrl ? (
-                <a
-                  href={inviteUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5865F2] px-5 text-sm font-semibold text-white transition hover:bg-[#4752c4]"
-                >
-                  Join the Discord
-                  <ArrowRight className="size-4" />
-                </a>
-              ) : (
-                <span className="inline-flex h-11 items-center gap-2 rounded-full border border-border-base bg-surface px-5 text-sm font-medium text-muted-2">
-                  Coming soon — server launching this week
-                </span>
-              )}
+              <a
+                href={inviteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-11 items-center gap-2 rounded-full bg-[#5865F2] px-5 text-sm font-semibold text-white transition hover:bg-[#4752c4]"
+              >
+                Join the Discord
+                <ArrowRight className="size-4" />
+              </a>
               <a
                 href="https://github.com/crafter-station/petdex"
                 target="_blank"

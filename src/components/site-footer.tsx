@@ -41,14 +41,7 @@ export function SiteFooter() {
             >
               {t("discord")}
             </a>
-          ) : (
-            <Link
-              href="/community"
-              className="underline underline-offset-4 transition hover:text-foreground"
-            >
-              {t("discord")}
-            </Link>
-          )}
+          ) : null}
           <SponsorButton variant="inline" />
         </div>
       </div>
