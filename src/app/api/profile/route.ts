@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@clerk/nextjs/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
-import { dedupePins, MAX_PINNED_PETS } from "@/lib/profiles";
+import {
+  dedupePins,
+  MAX_PINNED_PETS,
+  normalizeProfileDisplayName,
+  normalizeProfileHandle,
+  validateProfileHandle,
+} from "@/lib/profiles";
 import { profileEditRatelimit } from "@/lib/ratelimit";
 import { requireSameOrigin } from "@/lib/same-origin";
 
@@ -13,6 +19,8 @@ import { defaultLocale, hasLocale, type Locale } from "@/i18n/config";
 export const runtime = "nodejs";
 
 type PatchBody = {
+  displayName?: string | null;
+  handle?: string | null;
   bio?: string | null;
   preferredLocale?: Locale;
   // Either pass the full ordered list of pins (preferred) or a single
@@ -47,10 +55,57 @@ export async function PATCH(req: Request): Promise<Response> {
   }
 
   const patch: {
+    displayName?: string | null;
+    handle?: string | null;
     bio?: string | null;
     preferredLocale?: Locale;
     featuredPetSlugs?: string[];
   } = {};
+
+  if (body.displayName !== undefined) {
+    if (body.displayName === null || body.displayName === "") {
+      patch.displayName = null;
+    } else {
+      const normalized = normalizeProfileDisplayName(body.displayName);
+      if (normalized === null) {
+        return NextResponse.json(
+          { error: "invalid_display_name" },
+          { status: 400 },
+        );
+      }
+      patch.displayName = normalized;
+    }
+  }
+
+  if (body.handle !== undefined) {
+    if (body.handle !== null && typeof body.handle !== "string") {
+      return NextResponse.json({ error: "invalid_handle" }, { status: 400 });
+    }
+    const normalized = normalizeProfileHandle(body.handle);
+    if (normalized === null) {
+      return NextResponse.json({ error: "handle_too_short" }, { status: 400 });
+    }
+    const validation = validateProfileHandle(normalized);
+    if (validation !== "ok") {
+      return NextResponse.json(
+        { error: `handle_${validation}` },
+        { status: 400 },
+      );
+    }
+    if (normalized) {
+      const existing = await db.query.userProfiles.findFirst({
+        columns: { userId: true },
+        where: and(
+          eq(schema.userProfiles.handle, normalized),
+          ne(schema.userProfiles.userId, userId),
+        ),
+      });
+      if (existing) {
+        return NextResponse.json({ error: "handle_taken" }, { status: 409 });
+      }
+    }
+    patch.handle = normalized;
+  }
 
   if (body.bio !== undefined) {
     if (body.bio === null || body.bio === "") {
@@ -149,6 +204,8 @@ export async function PATCH(req: Request): Promise<Response> {
     .insert(schema.userProfiles)
     .values({
       userId,
+      displayName: patch.displayName ?? null,
+      handle: patch.handle ?? null,
       bio: patch.bio ?? null,
       preferredLocale: patch.preferredLocale ?? defaultLocale,
       featuredPetSlugs: patch.featuredPetSlugs ?? [],
@@ -164,6 +221,8 @@ export async function PATCH(req: Request): Promise<Response> {
 
   return NextResponse.json({
     ok: true,
+    displayName: patch.displayName,
+    handle: patch.handle,
     preferredLocale: patch.preferredLocale,
     featuredPetSlugs: patch.featuredPetSlugs,
   });

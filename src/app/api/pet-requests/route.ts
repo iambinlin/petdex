@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { desc, eq, inArray, sql } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { embedQuery } from "@/lib/query-embed";
+import { R2_PUBLIC_BASE } from "@/lib/r2";
 import { petRequestRatelimit } from "@/lib/ratelimit";
 import { requireSameOrigin } from "@/lib/same-origin";
 
@@ -38,13 +39,17 @@ export async function GET(req: Request): Promise<Response> {
     ? await db
         .select()
         .from(schema.petRequests)
-        .orderBy(sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`)
+        .orderBy(
+          sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`,
+        )
         .limit(limit)
     : await db
         .select()
         .from(schema.petRequests)
         .where(eq(schema.petRequests.status, statusParam))
-        .orderBy(sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`)
+        .orderBy(
+          sql`${schema.petRequests.upvoteCount} DESC, ${schema.petRequests.createdAt} DESC`,
+        )
         .limit(limit);
 
   const requestIds = rows.map((r) => r.id);
@@ -117,8 +122,11 @@ export async function GET(req: Request): Promise<Response> {
 
   // Fulfilled pet thumbnail lookup.
   const fulfilledSlugs = rows
-    .filter((r) => r.status === "fulfilled" && r.fulfilledPetSlug)
-    .map((r) => r.fulfilledPetSlug!);
+    .filter(
+      (r): r is typeof r & { fulfilledPetSlug: string } =>
+        r.status === "fulfilled" && typeof r.fulfilledPetSlug === "string",
+    )
+    .map((r) => r.fulfilledPetSlug);
   const fulfilledPets = fulfilledSlugs.length
     ? await db
         .select({
@@ -134,7 +142,7 @@ export async function GET(req: Request): Promise<Response> {
   return NextResponse.json({
     requests: rows.map((r) => {
       const requester = r.requestedBy
-        ? clerkInfo.get(r.requestedBy) ?? null
+        ? (clerkInfo.get(r.requestedBy) ?? null)
         : null;
       // Exclude the requester from the voter stack — they auto-vote
       // for their own request, but rendering them twice in the UI
@@ -147,7 +155,7 @@ export async function GET(req: Request): Promise<Response> {
         .filter((v): v is ClerkInfo => Boolean(v))
         .slice(0, 6);
       const fulfilledPet = r.fulfilledPetSlug
-        ? petBySlug.get(r.fulfilledPetSlug) ?? null
+        ? (petBySlug.get(r.fulfilledPetSlug) ?? null)
         : null;
       return {
         id: r.id,
@@ -155,6 +163,9 @@ export async function GET(req: Request): Promise<Response> {
         upvoteCount: r.upvoteCount,
         status: r.status,
         fulfilledPetSlug: r.fulfilledPetSlug,
+        imageUrl: r.imageReviewStatus === "approved" ? r.imageUrl : null,
+        imageReviewStatus: r.imageReviewStatus,
+        hasPendingImage: r.imageReviewStatus === "pending",
         createdAt: r.createdAt,
         voted: myVotes.has(r.id),
         requester,
@@ -181,9 +192,9 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
   }
 
-  let body: { query?: string };
+  let body: { query?: string; imageUrl?: string | null };
   try {
-    body = (await req.json()) as { query?: string };
+    body = (await req.json()) as { query?: string; imageUrl?: string | null };
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }
@@ -197,6 +208,10 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const normalized = normalize(query);
+  const imageUrl = normalizeRequestImageUrl(body.imageUrl);
+  if (imageUrl === false) {
+    return NextResponse.json({ error: "invalid_image_url" }, { status: 400 });
+  }
 
   // Dedup: if a request with the same normalized text exists, just upvote.
   const existing = await db.query.petRequests.findFirst({
@@ -216,7 +231,17 @@ export async function POST(req: Request): Promise<Response> {
     `) as Array<{ c: number }>;
     await db
       .update(schema.petRequests)
-      .set({ upvoteCount: recount[0]?.c ?? before, updatedAt: new Date() })
+      .set({
+        upvoteCount: recount[0]?.c ?? before,
+        ...(imageUrl && existing.imageReviewStatus !== "approved"
+          ? {
+              imageUrl,
+              imageReviewStatus: "pending",
+              imageRejectionReason: null,
+            }
+          : {}),
+        updatedAt: new Date(),
+      })
       .where(eq(schema.petRequests.id, existing.id));
     return NextResponse.json({
       ok: true,
@@ -235,6 +260,8 @@ export async function POST(req: Request): Promise<Response> {
     query,
     normalized,
     requestedBy: userId,
+    imageUrl,
+    imageReviewStatus: imageUrl ? "pending" : "none",
   });
   if (vec) {
     const literal = `[${vec.join(",")}]`;
@@ -255,4 +282,21 @@ export async function POST(req: Request): Promise<Response> {
     id,
     upvoteCount: 1,
   });
+}
+
+function normalizeRequestImageUrl(
+  value: string | null | undefined,
+): string | null | false {
+  const raw = (value ?? "").trim();
+  if (!raw) return null;
+  try {
+    const base = new URL(R2_PUBLIC_BASE);
+    const url = new URL(raw);
+    if (url.protocol !== "https:") return false;
+    if (url.host !== base.host) return false;
+    if (!url.pathname.startsWith("/requests/")) return false;
+    return url.toString();
+  } catch {
+    return false;
+  }
 }

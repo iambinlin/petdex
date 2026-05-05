@@ -1,0 +1,169 @@
+import { and, asc, desc, eq, getTableColumns, inArray } from "drizzle-orm";
+
+import { db, schema } from "@/lib/db/client";
+import { getMetricsBySlugs, type Metrics } from "@/lib/db/metrics";
+import { type PetWithMetrics, rowToPet } from "@/lib/pets";
+
+const EMPTY_METRICS: Metrics = {
+  installCount: 0,
+  zipDownloadCount: 0,
+  likeCount: 0,
+};
+
+export type PetCollection = typeof schema.petCollections.$inferSelect;
+
+export type PetCollectionWithPets = PetCollection & {
+  pets: PetWithMetrics[];
+};
+
+export async function getFeaturedCollections(
+  limit = 3,
+): Promise<PetCollectionWithPets[]> {
+  let rows: PetCollection[];
+  try {
+    rows = await db
+      .select()
+      .from(schema.petCollections)
+      .where(eq(schema.petCollections.featured, true))
+      .orderBy(asc(schema.petCollections.title))
+      .limit(limit);
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return [];
+    throw error;
+  }
+
+  return hydrateCollections(rows, 6);
+}
+
+export async function getAllCollections(): Promise<PetCollectionWithPets[]> {
+  let rows: PetCollection[];
+  try {
+    rows = await db
+      .select()
+      .from(schema.petCollections)
+      .orderBy(asc(schema.petCollections.title));
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return [];
+    throw error;
+  }
+
+  return hydrateCollections(rows);
+}
+
+export async function getCollection(
+  slug: string,
+): Promise<PetCollectionWithPets | null> {
+  let row: PetCollection | undefined;
+  try {
+    row = await db.query.petCollections.findFirst({
+      where: eq(schema.petCollections.slug, slug.toLowerCase()),
+    });
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return null;
+    throw error;
+  }
+  if (!row) return null;
+  const [collection] = await hydrateCollections([row]);
+  return collection ?? null;
+}
+
+export async function getOwnerCollection(
+  ownerId: string,
+): Promise<PetCollectionWithPets | null> {
+  let rows: PetCollection[];
+  try {
+    rows = await db
+      .select()
+      .from(schema.petCollections)
+      .where(eq(schema.petCollections.ownerId, ownerId))
+      .orderBy(
+        desc(schema.petCollections.featured),
+        asc(schema.petCollections.title),
+      )
+      .limit(1);
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return null;
+    throw error;
+  }
+
+  const [collection] = await hydrateCollections(rows);
+  return collection ?? null;
+}
+
+async function hydrateCollections(
+  collections: PetCollection[],
+  petLimitPerCollection?: number,
+): Promise<PetCollectionWithPets[]> {
+  if (collections.length === 0) return [];
+
+  const ids = collections.map((collection) => collection.id);
+  const petColumns = getTableColumns(schema.submittedPets);
+  let rows: Array<
+    typeof schema.submittedPets.$inferSelect & {
+      collectionId: string;
+      position: number;
+    }
+  >;
+  try {
+    rows = await db
+      .select({
+        collectionId: schema.petCollectionItems.collectionId,
+        position: schema.petCollectionItems.position,
+        ...petColumns,
+      })
+      .from(schema.petCollectionItems)
+      .innerJoin(
+        schema.submittedPets,
+        eq(schema.petCollectionItems.petSlug, schema.submittedPets.slug),
+      )
+      .where(
+        and(
+          inArray(schema.petCollectionItems.collectionId, ids),
+          eq(schema.submittedPets.status, "approved"),
+        ),
+      )
+      .orderBy(
+        asc(schema.petCollectionItems.collectionId),
+        asc(schema.petCollectionItems.position),
+      );
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) {
+      return collections.map((collection) => ({ ...collection, pets: [] }));
+    }
+    throw error;
+  }
+
+  const slugs = rows.map((row) => row.slug);
+  const metrics = slugs.length ? await getMetricsBySlugs(slugs) : new Map();
+  const grouped = new Map<string, PetWithMetrics[]>();
+
+  for (const row of rows) {
+    const group = grouped.get(row.collectionId) ?? [];
+    if (
+      petLimitPerCollection !== undefined &&
+      group.length >= petLimitPerCollection
+    ) {
+      continue;
+    }
+    group.push({
+      ...rowToPet(row),
+      metrics: metrics.get(row.slug) ?? EMPTY_METRICS,
+    });
+    grouped.set(row.collectionId, group);
+  }
+
+  return collections.map((collection) => ({
+    ...collection,
+    pets: grouped.get(collection.id) ?? [],
+  }));
+}
+
+function isMissingCollectionTableError(error: unknown): boolean {
+  const cause =
+    error && typeof error === "object" && "cause" in error
+      ? (error as { cause?: unknown }).cause
+      : error;
+  if (!cause || typeof cause !== "object") return false;
+  const code = "code" in cause ? (cause as { code?: unknown }).code : null;
+  return code === "42P01";
+}

@@ -1,12 +1,22 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, desc, eq } from "drizzle-orm";
-import { Heart, TerminalSquare, Trophy } from "lucide-react";
+import {
+  ExternalLink,
+  Heart,
+  Layers,
+  TerminalSquare,
+  Trophy,
+} from "lucide-react";
 
 import { isAdmin } from "@/lib/admin";
 import { getCatchProgress } from "@/lib/catch-status";
+import {
+  getOwnerCollection,
+  type PetCollectionWithPets,
+} from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { userIdForHandle } from "@/lib/handles";
@@ -37,28 +47,35 @@ export async function generateMetadata({ params }: PageProps) {
   const userId = await userIdForHandle(handle);
   if (!userId) return { title: "Profile not found", robots: { index: false } };
   let displayName = `@${handle}`;
+  const profile = await db.query.userProfiles.findFirst({
+    where: eq(schema.userProfiles.userId, userId),
+  });
   try {
     const client = await clerkClient();
     const u = await client.users.getUser(userId);
     const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
-    displayName = name || (u.username ? `@${u.username}` : `@${handle}`);
+    const fallbackName = name || (u.username ? `@${u.username}` : `@${handle}`);
+    displayName = profile?.displayName ?? fallbackName;
   } catch {
+    if (profile?.displayName) displayName = profile.displayName;
     /* fall back */
   }
+  const publicHandle = profile?.handle ?? handle.toLowerCase();
   return {
     title: `${displayName} on Petdex`,
     description: `Pets created by ${displayName} for Codex.`,
-    alternates: buildLocaleAlternates(`/u/${handle}`),
+    alternates: buildLocaleAlternates(`/u/${publicHandle}`),
     openGraph: {
       title: `${displayName} on Petdex`,
       description: `Animated Codex pets created by ${displayName}.`,
-      url: `${SITE_URL}/u/${handle}`,
+      url: `${SITE_URL}/u/${publicHandle}`,
     },
   };
 }
 
 export default async function UserProfilePage({ params }: PageProps) {
   const { handle } = await params;
+  const requestedHandle = handle.toLowerCase();
   const ownerId = await userIdForHandle(handle);
   if (!ownerId) notFound();
 
@@ -102,6 +119,12 @@ export default async function UserProfilePage({ params }: PageProps) {
   const profile = await db.query.userProfiles.findFirst({
     where: eq(schema.userProfiles.userId, ownerId),
   });
+  if (profile?.handle && profile.handle !== requestedHandle) {
+    redirect(`/u/${profile.handle}`);
+  }
+  const publicHandle =
+    profile?.handle ?? username?.toLowerCase() ?? requestedHandle;
+  displayName = profile?.displayName ?? displayName;
   const bio = profile?.bio ?? null;
   const featuredSlugs =
     (profile?.featuredPetSlugs as string[] | undefined) ?? [];
@@ -134,6 +157,7 @@ export default async function UserProfilePage({ params }: PageProps) {
       likeCount: 0,
     },
   }));
+  const collection = await getOwnerCollection(ownerId);
 
   // Resolve pinned slugs to full pet objects, preserving owner-chosen
   // order. Drop any that are no longer approved (would otherwise break
@@ -163,7 +187,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   const isOwner = viewerId === ownerId;
   const catchProgress = isOwner ? await getCatchProgress(viewerId) : null;
 
-  const fallbackInitial = (displayName ?? username ?? handle)
+  const fallbackInitial = (displayName ?? publicHandle)
     .slice(0, 1)
     .toUpperCase();
 
@@ -172,8 +196,8 @@ export default async function UserProfilePage({ params }: PageProps) {
     "@type": "ProfilePage",
     mainEntity: {
       "@type": "Person",
-      name: displayName ?? username ?? `@${handle}`,
-      url: `${SITE_URL}/u/${handle}`,
+      name: displayName ?? `@${publicHandle}`,
+      url: `${SITE_URL}/u/${publicHandle}`,
       ...(avatarUrl ? { image: avatarUrl } : {}),
       ...(externalUrls.length > 0
         ? { sameAs: externalUrls.map((e) => e.url) }
@@ -185,7 +209,7 @@ export default async function UserProfilePage({ params }: PageProps) {
     <main className="min-h-dvh bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <ProfileAnalytics
-        handle={handle}
+        handle={publicHandle}
         petCount={pets.length}
         pinnedCount={featuredPets.length}
         viewerIsOwner={isOwner}
@@ -202,7 +226,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 // biome-ignore lint/performance/noImgElement: Clerk-hosted avatar
                 <img
                   src={avatarUrl}
-                  alt={displayName ?? `@${handle}`}
+                  alt={displayName ?? `@${publicHandle}`}
                   className="size-28 rounded-3xl object-cover ring-1 ring-black/10 md:size-32"
                 />
               ) : (
@@ -243,11 +267,11 @@ export default async function UserProfilePage({ params }: PageProps) {
                 ) : null}
               </div>
               <h1 className="mt-3 text-balance text-[40px] leading-[1] font-semibold tracking-tight md:text-[56px]">
-                {displayName ?? `@${handle}`}
+                {displayName ?? `@${publicHandle}`}
               </h1>
-              {username ? (
+              {displayName ? (
                 <p className="mt-2 font-mono text-sm tracking-[0.08em] text-muted-3">
-                  @{username}
+                  @{publicHandle}
                 </p>
               ) : null}
               {bio ? (
@@ -290,7 +314,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                   {externalUrls.map((e) => (
                     <ProfileExternalLink
                       key={e.url}
-                      handle={handle}
+                      handle={publicHandle}
                       url={e.url}
                       label={e.label}
                     />
@@ -303,7 +327,8 @@ export default async function UserProfilePage({ params }: PageProps) {
             <div className="flex justify-center lg:justify-end">
               {isOwner ? (
                 <ProfileInlineEditor
-                  handle={handle}
+                  handle={publicHandle}
+                  initialDisplayName={displayName}
                   initialBio={bio}
                   initialFeaturedSlugs={featuredSlugs}
                   approvedPets={pets.map((p) => ({
@@ -318,6 +343,24 @@ export default async function UserProfilePage({ params }: PageProps) {
       </section>
 
       <section className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-5 py-12 md:px-8 md:py-16">
+        {collection ? (
+          <OwnerCollectionPanel
+            collection={collection}
+            publicHandle={publicHandle}
+            isOwner={isOwner}
+          />
+        ) : isOwner && pets.length > 0 ? (
+          <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-6 text-sm text-muted-2">
+            Build a featured collection from{" "}
+            <Link
+              href="/my-pets"
+              className="font-medium text-brand underline-offset-4 hover:underline"
+            >
+              your creator dashboard
+            </Link>
+            .
+          </div>
+        ) : null}
         {pets.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-12 text-center">
             <p className="font-mono text-xs tracking-[0.22em] text-muted-3 uppercase">
@@ -366,7 +409,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 ) : (
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
                     {featuredPets.map((pet, index) => (
-                      <div key={pet.slug} className="relative">
+                      <div key={pet.slug} className="relative h-full">
                         <PetCard
                           pet={pet}
                           index={index}
@@ -398,7 +441,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 ) : null}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-5">
                   {restPets.map((pet, index) => (
-                    <div key={pet.slug} className="relative">
+                    <div key={pet.slug} className="relative h-full">
                       <PetCard
                         pet={pet}
                         index={index + featuredPets.length}
@@ -428,24 +471,123 @@ export default async function UserProfilePage({ params }: PageProps) {
   );
 }
 
+function OwnerCollectionPanel({
+  collection,
+  publicHandle,
+  isOwner,
+}: {
+  collection: PetCollectionWithPets;
+  publicHandle: string;
+  isOwner: boolean;
+}) {
+  const cover =
+    collection.pets.find((pet) => pet.slug === collection.coverPetSlug) ??
+    collection.pets[0] ??
+    null;
+  const totalLikes = collection.pets.reduce(
+    (sum, pet) => sum + pet.metrics.likeCount,
+    0,
+  );
+  const totalInstalls = collection.pets.reduce(
+    (sum, pet) => sum + pet.metrics.installCount,
+    0,
+  );
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-brand-light/35 bg-surface/86 backdrop-blur">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="p-6 md:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-tint px-2.5 py-1 font-mono text-[10px] tracking-[0.16em] text-brand-deep uppercase">
+              <Layers className="size-3" />
+              Featured collection
+            </span>
+            {isOwner ? (
+              <Link
+                href="/my-pets"
+                className="rounded-full border border-border-base px-2.5 py-1 font-mono text-[10px] tracking-[0.16em] text-muted-3 uppercase transition hover:bg-surface-muted hover:text-foreground"
+              >
+                Edit
+              </Link>
+            ) : null}
+          </div>
+          <h2 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+            {collection.title}
+          </h2>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-muted-2 md:text-lg">
+            {collection.description}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <Link
+              href={`/collections/${collection.slug}`}
+              className="inline-flex h-10 items-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
+            >
+              View collection
+            </Link>
+            {collection.externalUrl ? (
+              <a
+                href={collection.externalUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border-base px-4 text-sm font-medium text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
+              >
+                <ExternalLink className="size-4" />
+                Visit IP site
+              </a>
+            ) : null}
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+            <span>
+              {collection.pets.length}{" "}
+              {collection.pets.length === 1 ? "pet" : "pets"}
+            </span>
+            {totalLikes > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Heart className="size-3" />
+                {totalLikes}
+              </span>
+            ) : null}
+            {totalInstalls > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <TerminalSquare className="size-3" />
+                {totalInstalls} installs
+              </span>
+            ) : null}
+            <span>@{publicHandle}</span>
+          </div>
+        </div>
+        <div className="border-t border-black/[0.06] bg-background/60 p-6 lg:border-t-0 lg:border-l dark:border-white/[0.06]">
+          {cover ? (
+            <Link
+              href={`/pets/${cover.slug}`}
+              className="group flex min-h-[300px] items-center justify-center rounded-3xl bg-surface-muted/60 transition hover:bg-surface-muted"
+            >
+              <PetSprite
+                src={cover.spritesheetPath}
+                cycleStates
+                scale={1}
+                label={`${cover.displayName} collection hero`}
+              />
+            </Link>
+          ) : (
+            <div className="grid min-h-[300px] place-items-center rounded-3xl border border-dashed border-border-base text-sm text-muted-3">
+              Collection pets pending.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FeaturedPin({ pet }: { pet: PetWithMetrics }) {
   return (
     <Link
       href={`/pets/${pet.slug}`}
       aria-label={`Open ${pet.displayName}`}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-brand-light/45 bg-surface/80 backdrop-blur transition hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 md:flex-row md:items-stretch dark:hover:bg-stone-800"
-      style={{
-        boxShadow:
-          "0 0 0 1px rgba(100,120,246,0.18), 0 18px 45px -22px rgba(82,102,234,0.5)",
-      }}
+      className="featured-pin-card group relative flex flex-col overflow-hidden rounded-3xl border border-brand-light/45 bg-surface/80 backdrop-blur transition hover:bg-white md:flex-row md:items-stretch dark:hover:bg-stone-800"
     >
-      <div
-        className="flex shrink-0 items-center justify-center px-8 py-10 md:w-[420px] md:py-14"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
-        }}
-      >
+      <div className="pet-sprite-stage featured-pin-stage flex shrink-0 items-center justify-center px-8 py-10 md:w-[420px] md:py-14">
         <PetSprite
           src={pet.spritesheetPath}
           cycleStates

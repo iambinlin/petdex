@@ -51,6 +51,7 @@ export function FeedbackThread({
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    if (replies.length === 0) return;
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [replies.length]);
 
@@ -152,13 +153,13 @@ export function FeedbackThread({
                 <div
                   className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-6 ring-1 ${
                     fromAdmin
-                      ? "bg-white text-stone-900 ring-black/10"
+                      ? "bg-surface-elev text-foreground ring-border-base"
                       : "bg-brand text-white ring-brand/30"
-                  } dark:text-stone-100`}
+                  }`}
                 >
                   <div
                     className={`mb-1 flex items-center gap-2 font-mono text-[10px] tracking-[0.12em] uppercase ${
-                      fromAdmin ? "text-stone-400" : "text-white/70"
+                      fromAdmin ? "text-muted-3" : "text-white/70"
                     }`}
                   >
                     <span>{fromAdmin ? "Hunter" : "You"}</span>

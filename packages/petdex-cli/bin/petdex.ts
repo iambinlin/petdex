@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -10,19 +10,75 @@ import { ClerkCliAuth } from "../src/cli-auth/index.js";
 
 // ─── config ────────────────────────────────────────────────────────────────
 const PETDEX_URL = process.env.PETDEX_URL ?? "https://petdex.crafter.run";
-const CLERK_ISSUER =
-  process.env.CLERK_ISSUER ?? "https://clerk.petdex.crafter.run";
-const CLIENT_ID = process.env.CLERK_OAUTH_CLIENT_ID ?? "LcThwEayl6KAA1Qm";
+const FALLBACK_ISSUER = "https://clerk.petdex.crafter.run";
+const FALLBACK_CLIENT_ID = "LcThwEayl6KAA1Qm";
+const DEFAULT_SCOPES = ["profile", "email", "openid", "offline_access"];
 
-const auth = new ClerkCliAuth({
-  clientId: CLIENT_ID,
-  issuer: CLERK_ISSUER,
-  scopes: ["profile", "email", "openid", "offline_access"],
-  storage: "keychain",
-  keychainService: "petdex-cli",
-});
+// Resolve OAuth config in this order:
+// 1. Environment overrides (advanced users, CI)
+// 2. Server-side /api/cli/auth-config (so we can rotate clientId without
+//    forcing every CLI user to reinstall)
+// 3. Hardcoded fallback (works offline / first-run / server down)
+async function resolveAuthConfig(): Promise<{
+  issuer: string;
+  clientId: string;
+  scopes: string[];
+}> {
+  const envIssuer = process.env.CLERK_ISSUER;
+  const envClientId = process.env.CLERK_OAUTH_CLIENT_ID;
+  if (envIssuer && envClientId) {
+    return { issuer: envIssuer, clientId: envClientId, scopes: DEFAULT_SCOPES };
+  }
 
-const VERSION = "0.1.1";
+  try {
+    const res = await fetch(`${PETDEX_URL}/api/cli/auth-config`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as {
+        issuer?: unknown;
+        clientId?: unknown;
+        scopes?: unknown;
+      };
+      const issuer = typeof data.issuer === "string" ? data.issuer : null;
+      const clientId = typeof data.clientId === "string" ? data.clientId : null;
+      const scopes = Array.isArray(data.scopes)
+        ? data.scopes.filter((s): s is string => typeof s === "string")
+        : null;
+      if (issuer && clientId) {
+        return {
+          issuer: envIssuer ?? issuer,
+          clientId: envClientId ?? clientId,
+          scopes: scopes && scopes.length > 0 ? scopes : DEFAULT_SCOPES,
+        };
+      }
+    }
+  } catch {
+    /* fall through to baked defaults */
+  }
+
+  return {
+    issuer: envIssuer ?? FALLBACK_ISSUER,
+    clientId: envClientId ?? FALLBACK_CLIENT_ID,
+    scopes: DEFAULT_SCOPES,
+  };
+}
+
+let _auth: ClerkCliAuth | null = null;
+async function getAuth(): Promise<ClerkCliAuth> {
+  if (_auth) return _auth;
+  const cfg = await resolveAuthConfig();
+  _auth = new ClerkCliAuth({
+    clientId: cfg.clientId,
+    issuer: cfg.issuer,
+    scopes: cfg.scopes,
+    storage: "keychain",
+    keychainService: "petdex-cli",
+  });
+  return _auth;
+}
+
+const VERSION = "0.1.2";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -109,22 +165,30 @@ async function cmdLogin() {
   const s = p.spinner();
   s.start("Opening your browser to sign in with Clerk");
   try {
+    const auth = await getAuth();
     const { user } = await auth.login();
-    s.stop(pc.green("✓ ") + `Signed in as ${pc.cyan(user.email ?? user.username ?? user.sub)}`);
-    p.outro(`Try ${pc.cyan("petdex submit ~/.codex/pets")} to share your pets.`);
+    s.stop(
+      pc.green("✓ ") +
+        `Signed in as ${pc.cyan(user.email ?? user.username ?? user.sub)}`,
+    );
+    p.outro(
+      `Try ${pc.cyan("petdex submit ~/.codex/pets")} to share your pets.`,
+    );
   } catch (err) {
     s.stop(pc.red("× login failed"));
-    throw err;
+    throw new Error(translateLoginError((err as Error).message));
   }
 }
 
 async function cmdLogout() {
+  const auth = await getAuth();
   await auth.logout();
   console.log(pc.green("✓ ") + "Signed out");
 }
 
 async function cmdWhoami() {
   try {
+    const auth = await getAuth();
     const me = await auth.whoami();
     p.note(
       [
@@ -259,13 +323,15 @@ async function cmdList() {
 }
 
 async function cmdSubmit(args: string[]) {
-  const target = args[0];
+  const positionals = args.filter((a) => !a.startsWith("--"));
+  const target = positionals[0];
   if (!target) {
-    p.cancel(`Usage: ${pc.cyan("petdex submit <path>")}`);
+    p.cancel(`Usage: ${pc.cyan("petdex submit <path> [--force]")}`);
     process.exit(1);
   }
 
   // Ensure auth before doing any work.
+  const auth = await getAuth();
   let token: string;
   try {
     const t = await auth.getAccessToken();
@@ -297,15 +363,68 @@ async function cmdSubmit(args: string[]) {
   );
 
   if (candidates.length === 0) {
-    p.cancel(
-      "A pet folder must contain pet.json and spritesheet.{webp,png}.",
-    );
+    p.cancel("A pet folder must contain pet.json and spritesheet.{webp,png}.");
     process.exit(1);
   }
 
-  if (candidates.length > 1) {
+  // Look up which of these are already owned by this user so we can skip
+  // duplicates by default. Server-side check ignores `submittedBy` collisions
+  // — we only flag pets the *same* signed-in user already submitted.
+  const force = args.includes("--force");
+  const ownedSlugs = force
+    ? new Map<string, OwnedPet>()
+    : await fetchOwnedSlugs(candidates, token);
+
+  let toSubmit = candidates;
+  let skipped = 0;
+  if (ownedSlugs.size > 0) {
+    const dupes = candidates.filter((c) =>
+      ownedSlugs.has(slugify(c.petIdHint)),
+    );
+    const fresh = candidates.filter(
+      (c) => !ownedSlugs.has(slugify(c.petIdHint)),
+    );
+    p.note(
+      dupes
+        .map((c) => {
+          const owned = ownedSlugs.get(slugify(c.petIdHint));
+          const status = owned?.status ?? "unknown";
+          return `${pc.yellow("•")} ${pc.bold(c.label)} ${pc.dim(`(${status})`)}`;
+        })
+        .join("\n"),
+      `${dupes.length} already submitted by you`,
+    );
+    const choice = await p.select({
+      message: "How should we handle these duplicates?",
+      options: [
+        { value: "skip", label: "Skip duplicates (recommended)" },
+        {
+          value: "resubmit",
+          label: "Submit all anyway (will create -2 / -3 slugs)",
+        },
+        { value: "cancel", label: "Cancel" },
+      ],
+      initialValue: "skip",
+    });
+    if (p.isCancel(choice) || choice === "cancel") {
+      p.cancel("Aborted.");
+      process.exit(1);
+    }
+    if (choice === "skip") {
+      toSubmit = fresh;
+      skipped = dupes.length;
+      if (toSubmit.length === 0) {
+        p.outro(
+          `Nothing new to submit. Track approval at ${pc.underline(PETDEX_URL + "/my-pets")}.`,
+        );
+        return;
+      }
+    }
+  }
+
+  if (toSubmit.length > 1) {
     const proceed = await p.confirm({
-      message: `Submit all ${pc.bold(String(candidates.length))} pets?`,
+      message: `Submit ${pc.bold(String(toSubmit.length))} pet${toSubmit.length === 1 ? "" : "s"}?`,
     });
     if (p.isCancel(proceed) || !proceed) {
       p.cancel("Aborted.");
@@ -317,7 +436,7 @@ async function cmdSubmit(args: string[]) {
   let failed = 0;
   const failures: Array<{ label: string; error: string }> = [];
 
-  for (const cand of candidates) {
+  for (const cand of toSubmit) {
     const ps = p.spinner();
     ps.start(`Submitting ${pc.cyan(cand.label)}`);
     try {
@@ -325,11 +444,15 @@ async function cmdSubmit(args: string[]) {
       if (!t) throw new Error("session expired");
       token = t;
       const result = await submitOne(cand, token);
-      ps.stop(`${pc.green("✓")} ${pc.cyan(cand.label)} → ${pc.dim(result.slug)}`);
+      ps.stop(
+        `${pc.green("✓")} ${pc.cyan(cand.label)} → ${pc.dim(result.slug)}`,
+      );
       succeeded++;
     } catch (err) {
       const msg = (err as Error).message;
-      ps.stop(`${pc.red("×")} ${pc.cyan(cand.label)} ${pc.red(msg.slice(0, 60))}`);
+      ps.stop(
+        `${pc.red("×")} ${pc.cyan(cand.label)} ${pc.red(msg.slice(0, 60))}`,
+      );
       failures.push({ label: cand.label, error: msg });
       failed++;
     }
@@ -344,10 +467,14 @@ async function cmdSubmit(args: string[]) {
     );
   }
 
+  const skipPart = skipped > 0 ? `, ${pc.yellow(String(skipped))} skipped` : "";
   p.outro(
-    `${pc.green(String(succeeded))} submitted, ${
-      failed > 0 ? pc.red(String(failed)) : pc.dim(String(failed))
-    } failed. Review at ${pc.underline(PETDEX_URL + "/admin")} (admin only).`,
+    [
+      `${pc.green(String(succeeded))} submitted${skipPart}, ${
+        failed > 0 ? pc.red(String(failed)) : pc.dim(String(failed))
+      } failed.`,
+      `Track approval at ${pc.underline(PETDEX_URL + "/my-pets")} — you'll get an email when each pet is reviewed.`,
+    ].join("\n"),
   );
   if (failed > 0) process.exit(1);
 }
@@ -581,6 +708,76 @@ async function putR2(
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 
+type OwnedPet = {
+  slug: string;
+  displayName: string;
+  status: "pending" | "approved" | "rejected" | string;
+  createdAt: string;
+};
+
+async function fetchOwnedSlugs(
+  cands: Candidate[],
+  bearer: string,
+): Promise<Map<string, OwnedPet>> {
+  const out = new Map<string, OwnedPet>();
+  if (cands.length === 0) return out;
+  try {
+    const res = await fetch(`${PETDEX_URL}/api/cli/submit/check`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${bearer}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        candidates: cands.map((c) => ({
+          petId: c.petIdHint,
+          slugHint: slugify(c.petIdHint),
+        })),
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return out; // older server: just skip dedup, don't block submit
+    const data = (await res.json()) as { existing?: OwnedPet[] };
+    for (const row of data.existing ?? []) {
+      if (row && typeof row.slug === "string") out.set(row.slug, row);
+    }
+  } catch {
+    /* server doesn't support dedup yet — fall back to old behavior */
+  }
+  return out;
+}
+
+function translateLoginError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid_client") || m.includes("client does not exist")) {
+    return [
+      "Clerk OAuth rejected this CLI build (invalid_client).",
+      "This usually means your installed CLI is out of date. Try:",
+      "  npm cache clean --force && npx -y petdex@latest login",
+      "If it still fails: https://github.com/crafter-station/petdex/issues",
+    ].join("\n");
+  }
+  if (
+    m.includes("invalid_grant") ||
+    m.includes("does not match the redirect")
+  ) {
+    return [
+      "OAuth callback was rejected by Clerk (invalid_grant).",
+      "Common cause: you closed the browser before approving, or the local",
+      "callback server timed out. Try `petdex login` again.",
+    ].join("\n");
+  }
+  if (m.includes("redirect_uri") && m.includes("pre-registered")) {
+    return [
+      "Clerk OAuth rejected the local callback URL.",
+      "The petdex OAuth Application needs http://127.0.0.1 in its allowed",
+      "redirect URLs. Please file an issue:",
+      "  https://github.com/crafter-station/petdex/issues",
+    ].join("\n");
+  }
+  return message;
+}
+
 async function fileExists(p: string): Promise<boolean> {
   try {
     await stat(p);
@@ -634,8 +831,7 @@ function parseImageDims(buf: Buffer): { width: number; height: number } {
       const b3 = buf[24];
       return {
         width: ((buf[21] | ((b1 & 0x3f) << 8)) >>> 0) + 1,
-        height:
-          ((((b1 >> 6) | (b2 << 2)) | ((b3 & 0x0f) << 10)) >>> 0) + 1,
+        height: (((b1 >> 6) | (b2 << 2) | ((b3 & 0x0f) << 10)) >>> 0) + 1,
       };
     }
     if (fourcc === "VP8 ") {

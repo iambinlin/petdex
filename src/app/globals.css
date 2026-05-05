@@ -312,6 +312,28 @@ input {
   );
 }
 
+.featured-pin-card {
+  box-shadow:
+    0 0 0 1px rgb(100 120 246 / 0.18),
+    0 18px 45px -22px rgb(82 102 234 / 0.5);
+}
+
+.dark .featured-pin-card {
+  box-shadow:
+    0 0 0 1px rgb(129 145 255 / 0.16),
+    0 26px 84px -38px rgb(0 0 0 / 0.95),
+    0 0 42px -30px rgb(100 120 246 / 0.55);
+}
+
+.dark .featured-pin-stage {
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgb(49 49 56 / 0.62) 0%,
+    rgb(31 31 38 / 0.62) 52%,
+    transparent 78%
+  );
+}
+
 .glass-panel {
   background: rgb(255 255 255 / 0.68);
   border: 1px solid rgb(255 255 255 / 0.72);

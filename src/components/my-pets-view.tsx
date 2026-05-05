@@ -15,6 +15,10 @@ import {
   XCircle,
 } from "lucide-react";
 
+import {
+  CollectionEditor,
+  type EditableCollection,
+} from "@/components/collection-editor";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetSprite } from "@/components/pet-sprite";
@@ -55,10 +59,12 @@ type Tab = "all" | "pending" | "approved" | "rejected";
 export function MyPetsView({
   submissions,
   catchProgress,
+  collection,
   profile,
 }: {
   submissions: Submission[];
   catchProgress: { caught: number; total: number; pct: number };
+  collection: EditableCollection;
   profile: ProfileData;
 }) {
   const [tab, setTab] = useState<Tab>("all");
@@ -82,6 +88,11 @@ export function MyPetsView({
       <>
         <ProfileCard profile={profile} />
         <ClaimableBanner />
+        <CollectionEditor
+          approvedPets={profile.approvedPets}
+          initial={collection}
+          profileHandle={profile.handle}
+        />
         <AlbumProgress catchProgress={catchProgress} />
         <EmptyState />
       </>
@@ -92,6 +103,11 @@ export function MyPetsView({
     <div className="space-y-8">
       <ProfileCard profile={profile} />
       <ClaimableBanner />
+      <CollectionEditor
+        approvedPets={profile.approvedPets}
+        initial={collection}
+        profileHandle={profile.handle}
+      />
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard
@@ -246,7 +262,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
       label: "Pending review",
       icon: <Clock className="size-3.5" />,
       className:
-        "bg-amber-50 text-amber-800 ring-1 ring-amber-200 dark:bg-amber-950/40",
+        "bg-chip-warning-bg text-chip-warning-fg ring-1 ring-chip-warning-fg/20",
       timeLabel: "Submitted",
       time: submission.createdAt,
     },
@@ -254,7 +270,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
       label: "Approved · live",
       icon: <CheckCircle2 className="size-3.5" />,
       className:
-        "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200 dark:bg-emerald-950/40",
+        "bg-chip-success-bg text-chip-success-fg ring-1 ring-chip-success-fg/20",
       timeLabel: "Approved",
       time: submission.approvedAt ?? submission.createdAt,
     },
@@ -262,7 +278,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
       label: "Rejected",
       icon: <XCircle className="size-3.5" />,
       className:
-        "bg-rose-50 text-rose-800 ring-1 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300",
+        "bg-chip-danger-bg text-chip-danger-fg ring-1 ring-chip-danger-fg/20",
       timeLabel: "Rejected",
       time: submission.rejectedAt ?? submission.createdAt,
     },
@@ -278,7 +294,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
       className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-surface/76 backdrop-blur transition ${
         submission.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
-          : "border-black/10 shadow-sm shadow-blue-950/5"
+          : "border-border-base shadow-sm shadow-blue-950/5"
       }`}
     >
       <div className="flex items-center justify-between border-b border-black/[0.06] px-5 pt-4 pb-3 dark:border-white/[0.06]">
@@ -295,13 +311,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
         ) : null}
       </div>
 
-      <div
-        className="relative flex items-center justify-center px-5 py-6"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 38%, rgba(255,255,255,0.95) 0%, rgba(238,241,255,0.55) 55%, transparent 80%)",
-        }}
-      >
+      <div className="pet-sprite-stage relative flex items-center justify-center px-5 py-6">
         <PetSprite
           src={submission.spritesheetUrl}
           cycleStates
@@ -440,14 +450,14 @@ function TabButton({
   tone?: "default" | "amber" | "emerald" | "rose";
 }) {
   const toneClass = active
-    ? "border-black bg-inverse text-on-inverse"
+    ? "border-inverse bg-inverse text-on-inverse"
     : tone === "amber"
-      ? "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300"
+      ? "border-chip-warning-fg/25 bg-chip-warning-bg text-chip-warning-fg hover:border-chip-warning-fg/45"
       : tone === "emerald"
-        ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-300"
+        ? "border-chip-success-fg/25 bg-chip-success-bg text-chip-success-fg hover:border-chip-success-fg/45"
         : tone === "rose"
-          ? "border-rose-200 bg-rose-50 text-rose-800 hover:border-rose-300"
-          : "border-black/10 bg-white text-stone-700 hover:border-black/30";
+          ? "border-chip-danger-fg/25 bg-chip-danger-bg text-chip-danger-fg hover:border-chip-danger-fg/45"
+          : "border-border-base bg-surface text-foreground hover:border-border-strong";
 
   return (
     <button
@@ -458,7 +468,7 @@ function TabButton({
     >
       {label}
       <span
-        className={`text-[10px] ${active ? "text-white/60" : "opacity-60"}`}
+        className={`text-[10px] ${active ? "text-on-inverse/60" : "opacity-60"}`}
       >
         {count}
       </span>

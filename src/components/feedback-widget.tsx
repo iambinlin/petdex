@@ -16,6 +16,9 @@ import { useTranslations } from "next-intl";
 
 type Kind = "suggestion" | "bug" | "praise" | "other";
 
+const DRAG_THRESHOLD_PX = 6;
+const FEEDBACK_POSITION_KEY = "petdex_feedback_widget_bottom";
+
 export function FeedbackWidget() {
   const t = useTranslations("feedback");
   const [open, setOpen] = useState(false);
@@ -28,9 +31,11 @@ export function FeedbackWidget() {
     | { tag: "ok" }
     | { tag: "error"; reason: string }
   >({ tag: "idle" });
+  const [bottomOffset, setBottomOffset] = useState<number | null>(null);
 
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const suppressClickUntilRef = useRef(0);
   const kinds: { id: Kind; label: string; icon: React.ReactNode }[] = [
     {
       id: "suggestion",
@@ -49,6 +54,58 @@ export function FeedbackWidget() {
       icon: <MessageSquare className="size-3.5" />,
     },
   ];
+
+  const getDefaultBottom = useCallback(() => {
+    if (typeof window === "undefined") return 24;
+    return window.matchMedia("(min-width: 768px)").matches ? 24 : 16;
+  }, []);
+
+  const clampBottom = useCallback(
+    (value: number) => {
+      if (typeof window === "undefined") return value;
+      const margin = getDefaultBottom();
+      const widgetHeight = popoverRef.current?.offsetHeight ?? 44;
+      const maxBottom = Math.max(
+        margin,
+        window.innerHeight - widgetHeight - margin,
+      );
+      return Math.min(Math.max(value, margin), maxBottom);
+    },
+    [getDefaultBottom],
+  );
+
+  const setClampedBottom = useCallback(
+    (value: number) => {
+      setBottomOffset(clampBottom(value));
+    },
+    [clampBottom],
+  );
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(FEEDBACK_POSITION_KEY);
+    const parsed = stored === null ? NaN : Number(stored);
+    setClampedBottom(Number.isFinite(parsed) ? parsed : getDefaultBottom());
+  }, [getDefaultBottom, setClampedBottom]);
+
+  useEffect(() => {
+    const onResize = () => {
+      setBottomOffset((current) => clampBottom(current ?? getDefaultBottom()));
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [clampBottom, getDefaultBottom]);
+
+  useEffect(() => {
+    const clampCurrentPosition = () => {
+      setBottomOffset((current) => clampBottom(current ?? getDefaultBottom()));
+    };
+    if (!open) {
+      clampCurrentPosition();
+      return;
+    }
+    const frame = window.requestAnimationFrame(clampCurrentPosition);
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, clampBottom, getDefaultBottom]);
 
   // Close on Escape + click outside.
   useEffect(() => {
@@ -111,7 +168,10 @@ export function FeedbackWidget() {
           };
           setState({
             tag: "error",
-            reason: data.message ?? data.error ?? t("errors.submitFailed", { status: res.status }),
+            reason:
+              data.message ??
+              data.error ??
+              t("errors.submitFailed", { status: res.status }),
           });
           return;
         }
@@ -123,8 +183,64 @@ export function FeedbackWidget() {
     [state.tag, message, email, kind, t],
   );
 
+  const onTriggerPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0) return;
+
+      const pointerId = event.pointerId;
+      const startY = event.clientY;
+      const startBottom = bottomOffset ?? getDefaultBottom();
+      let moved = false;
+      suppressClickUntilRef.current = 0;
+
+      function handleMove(ev: PointerEvent) {
+        if (ev.pointerId !== pointerId) return;
+        const dy = ev.clientY - startY;
+        if (!moved && Math.abs(dy) > DRAG_THRESHOLD_PX) {
+          moved = true;
+          suppressClickUntilRef.current = Number.POSITIVE_INFINITY;
+        }
+        if (!moved) return;
+        ev.preventDefault();
+        setClampedBottom(startBottom - dy);
+      }
+
+      function handleUp(ev: PointerEvent) {
+        if (ev.pointerId !== pointerId) return;
+        window.removeEventListener("pointermove", handleMove);
+        window.removeEventListener("pointerup", handleUp);
+        window.removeEventListener("pointercancel", handleUp);
+        if (moved) {
+          const nextBottom = clampBottom(startBottom - (ev.clientY - startY));
+          setBottomOffset(nextBottom);
+          suppressClickUntilRef.current = Date.now() + 350;
+          window.localStorage.setItem(
+            FEEDBACK_POSITION_KEY,
+            String(nextBottom),
+          );
+        }
+      }
+
+      window.addEventListener("pointermove", handleMove, { passive: false });
+      window.addEventListener("pointerup", handleUp);
+      window.addEventListener("pointercancel", handleUp);
+    },
+    [bottomOffset, clampBottom, getDefaultBottom, setClampedBottom],
+  );
+
+  const onTriggerClick = useCallback(() => {
+    if (Date.now() < suppressClickUntilRef.current) {
+      return;
+    }
+    setOpen(true);
+  }, []);
+
   return (
-    <div ref={popoverRef} className="fixed right-4 bottom-4 z-40 md:right-6 md:bottom-6">
+    <div
+      ref={popoverRef}
+      className="fixed right-4 bottom-4 z-40 md:right-6 md:bottom-6"
+      style={bottomOffset === null ? undefined : { bottom: bottomOffset }}
+    >
       {open ? (
         <div className="w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-3xl border border-border-base bg-surface shadow-2xl shadow-blue-950/20">
           <div className="flex items-center justify-between border-b border-border-base px-4 py-3">
@@ -154,9 +270,7 @@ export function FeedbackWidget() {
               <p className="text-base font-medium text-foreground">
                 {t("success.title")}
               </p>
-              <p className="text-xs text-muted-3">
-                {t("success.body")}
-              </p>
+              <p className="text-xs text-muted-3">{t("success.body")}</p>
             </div>
           ) : (
             <form onSubmit={onSubmit} className="flex flex-col gap-3 px-4 py-4">
@@ -247,8 +361,9 @@ export function FeedbackWidget() {
         <button
           type="button"
           aria-label={t("title")}
-          onClick={() => setOpen(true)}
-          className="group inline-flex items-center gap-2 rounded-full border border-border-base bg-surface px-4 py-2.5 text-sm font-medium text-muted-2 shadow-lg shadow-blue-950/10 transition hover:border-border-strong hover:text-foreground hover:shadow-xl"
+          onClick={onTriggerClick}
+          onPointerDown={onTriggerPointerDown}
+          className="group inline-flex touch-none select-none items-center gap-2 rounded-full border border-border-base bg-surface px-4 py-2.5 text-sm font-medium text-muted-2 shadow-lg shadow-blue-950/10 transition hover:border-border-strong hover:text-foreground hover:shadow-xl active:cursor-grabbing"
         >
           <MessageCircle className="size-4 text-brand" />
           <span>{t("trigger")}</span>

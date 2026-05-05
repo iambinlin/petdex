@@ -3,13 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Heart, Sparkles, TerminalSquare, Trophy } from "lucide-react";
+import { Heart, Sparkles, TerminalSquare, Trophy, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import type {
-  LeaderboardMetric,
-  LeaderboardRow,
-} from "@/lib/leaderboard";
+import type { LeaderboardMetric, LeaderboardRow } from "@/lib/leaderboard";
 
 type CreditMap = Record<
   string,
@@ -63,6 +60,14 @@ const TABS: Tab[] = [
     unitKey: "tabs.rising.unit",
     blurbKey: "tabs.rising.blurb",
     emptyCopyKey: "tabs.rising.empty",
+  },
+  {
+    id: "collectors",
+    labelKey: "tabs.collectors.label",
+    icon: <Users className="size-3.5" />,
+    unitKey: "tabs.collectors.unit",
+    blurbKey: "tabs.collectors.blurb",
+    emptyCopyKey: "tabs.collectors.empty",
   },
 ];
 
@@ -146,6 +151,7 @@ export function LeaderboardView({
               row={row}
               unit={t(activeTab.unitKey)}
               credit={credits[row.ownerId]}
+              showSecondaryStats={active !== "collectors"}
             />
           ))}
         </ol>
@@ -159,11 +165,13 @@ function LeaderboardRowItem({
   row,
   unit,
   credit,
+  showSecondaryStats,
 }: {
   rank: number;
   row: LeaderboardRow;
   unit: string;
   credit: CreditMap[string] | undefined;
+  showSecondaryStats: boolean;
 }) {
   const t = useTranslations("leaderboard");
   const name = credit?.name ?? "anonymous";
@@ -208,24 +216,28 @@ function LeaderboardRowItem({
           ) : null}
         </div>
 
-        <div className="hidden items-center gap-4 text-[11px] text-muted-3 sm:flex">
-          <span>
-            <span className="font-mono text-foreground">
-              {row.approvedCount}
-            </span>{" "}
-            {t("secondaryStats.pets")}
-          </span>
-          <span>
-            <span className="font-mono text-foreground">{row.totalLikes}</span>{" "}
-            {t("secondaryStats.likes")}
-          </span>
-          <span>
-            <span className="font-mono text-foreground">
-              {row.totalInstalls}
-            </span>{" "}
-            {t("secondaryStats.installs")}
-          </span>
-        </div>
+        {showSecondaryStats ? (
+          <div className="hidden items-center gap-4 text-[11px] text-muted-3 sm:flex">
+            <span>
+              <span className="font-mono text-foreground">
+                {row.approvedCount}
+              </span>{" "}
+              {t("secondaryStats.pets")}
+            </span>
+            <span>
+              <span className="font-mono text-foreground">
+                {row.totalLikes}
+              </span>{" "}
+              {t("secondaryStats.likes")}
+            </span>
+            <span>
+              <span className="font-mono text-foreground">
+                {row.totalInstalls}
+              </span>{" "}
+              {t("secondaryStats.installs")}
+            </span>
+          </div>
+        ) : null}
 
         <div className="shrink-0 text-right">
           <span className="font-mono text-lg font-semibold text-foreground">

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { getAllCollections } from "@/lib/collections";
 import {
   buildAbsoluteLocaleAlternates,
   buildAbsoluteUrl,
@@ -45,7 +46,10 @@ function expandLocalizedEntry(entry: EntryInput): MetadataRoute.Sitemap {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pets = await getAllApprovedPets();
+  const [pets, collections] = await Promise.all([
+    getAllApprovedPets(),
+    getAllCollections(),
+  ]);
   const now = new Date();
 
   const staticEntries: EntryInput[] = [
@@ -71,6 +75,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       pathname: "/leaderboard",
       lastModified: now,
       changeFrequency: "daily",
+      priority: 0.7,
+    },
+    {
+      pathname: "/collections",
+      lastModified: now,
+      changeFrequency: "weekly",
       priority: 0.7,
     },
     {
@@ -114,10 +124,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: pet.featured ? 0.9 : 0.6,
   }));
 
+  const collectionEntries: EntryInput[] = collections.map((collection) => ({
+    pathname: `/collections/${collection.slug}`,
+    lastModified: collection.updatedAt ?? now,
+    changeFrequency: "weekly",
+    priority: collection.featured ? 0.8 : 0.5,
+  }));
+
   return [
     ...staticEntries,
     ...vibeEntries,
     ...kindEntries,
     ...petEntries,
+    ...collectionEntries,
   ].flatMap(expandLocalizedEntry);
 }

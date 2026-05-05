@@ -37,14 +37,20 @@
     "create__fixme": true,
     "docs": "文档",
     "docs__fixme": true,
-    "topCreators": "顶级创作者",
+    "collections": "合集",
+    "collections__fixme": true,
+    "topCreators": "创作者",
     "topCreators__fixme": true,
+    "creators": "创作者",
+    "creators__fixme": true,
     "requests": "请求",
     "requests__fixme": true,
     "about": "关于",
     "about__fixme": true,
     "language": "语言",
-    "submitCta": "提交宠物",
+    "settings": "设置",
+    "settings__fixme": true,
+    "submitCta": "提交",
     "submitCta__fixme": true,
     "openMenu": "打开菜单",
     "openMenu__fixme": true,
@@ -65,7 +71,7 @@
   "footer": {
     "rightsNotice": "宠物是用户提交的同人作品。Petdex 不主张拥有任何底层知识产权。",
     "rightsNotice__fixme": true,
-    "topCreators": "顶级创作者",
+    "topCreators": "创作者",
     "topCreators__fixme": true,
     "takedown": "下架请求",
     "takedown__fixme": true,
@@ -80,7 +86,7 @@
     "tagline": "<brand /> 的公共动画伙伴图库。浏览 {totalPets}+ 个开源伙伴，预览它们的状态，并用一条命令安装。",
     "tagline__fixme": true,
     "heroCommand": "npx petdex install boba",
-    "submitCta": "提交宠物",
+    "submitCta": "提交",
     "submitCta__fixme": true,
     "browseGallery": "浏览图库",
     "browseGallery__fixme": true,
@@ -273,6 +279,10 @@
       "fulfill": "完成",
       "dismiss": "忽略",
       "reopen": "重新打开",
+      "approveImage": "批准图片",
+      "approveImage__fixme": true,
+      "rejectImage": "拒绝图片",
+      "rejectImage__fixme": true,
       "slug": "slug",
       "placeholder": "cool-clippy",
       "mark": "标记"
@@ -336,8 +346,14 @@
         "title__fixme": true,
         "body": "描述你想看到的宠物：角色、主题、氛围。如果别人已经提过同样的请求，你的提交会自动变成给那条请求投票。",
         "body__fixme": true,
+        "collectionHint": "你也可以建议像 GRAYCRAFT 这样的收藏系列：品牌/IP 名称、属于同一套的宠物，以及官方网站。",
+        "collectionHint__fixme": true,
         "placeholder": "例如：吉卜力风格的龙猫、困困的程序员美西螈、Spider-Pig",
         "placeholder__fixme": true,
+        "imageLabel": "添加参考图",
+        "imageLabel__fixme": true,
+        "imageBody": "可选。图片会先隐藏，直到管理员审核。",
+        "imageBody__fixme": true,
         "submit": "请求",
         "submit__fixme": true,
         "sending": "发送中…"
@@ -359,7 +375,9 @@
       },
       "badges": {
         "fulfilled": "已实现",
-        "fulfilled__fixme": true
+        "fulfilled__fixme": true,
+        "imagePending": "图片审核中",
+        "imagePending__fixme": true
       },
       "empty": {
         "title": "还没有任何请求，你来做第一个吧。",
@@ -384,6 +402,12 @@
         "signInRequest": "登录后才能请求宠物。",
         "signInRequest__fixme": true,
         "submitFailed": "提交失败（{status}）",
+        "imageType": "请使用 PNG、JPG 或 WebP 图片。",
+        "imageType__fixme": true,
+        "imageTooLarge": "参考图必须小于等于 4 MB。",
+        "imageTooLarge__fixme": true,
+        "imageUpload": "图片上传失败，请重试。",
+        "imageUpload__fixme": true,
         "networkRetry": "网络错误，请重试。",
         "networkRetry__fixme": true,
         "signInUpvote": "登录后才能投票。",
@@ -744,6 +768,12 @@
         "unit": "本周",
         "blurb": "过去 7 天内获批的宠物。火起来了？继续发。",
         "empty": "本周还没有新宠物获批。"
+      },
+      "collectors": {
+        "label": "收藏者",
+        "unit": "已捕获",
+        "blurb": "按已捕获的获批宠物数量排序的收藏者。",
+        "empty": "还没有收藏者。"
       }
     }
   },
@@ -763,6 +793,12 @@
     "platformAria": "安装平台",
     "tabs": {
       "cli": "CLI"
+    },
+    "macHelp": {
+      "title": "在 Mac 上使用 Terminal.app",
+      "openTerminal": "按 Command + Space 打开 Spotlight，输入 Terminal，然后按 Return。",
+      "pasteCommand": "粘贴上方命令并按 Return。如果 macOS 请求权限，请允许。",
+      "returnToCodex": "完成后打开 Codex Settings、Appearance、Pets，然后选择这只宠物。"
     },
     "steps": {
       "openCodex": "打开 Codex，",

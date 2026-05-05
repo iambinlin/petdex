@@ -1,6 +1,6 @@
 {
   "name": "petdex",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI for Petdex — install, browse, and submit Codex pets from your terminal.",
   "homepage": "https://petdex.crafter.run",
   "repository": {
@@ -29,6 +29,9 @@
     "@clack/prompts": "^1.3.0",
     "jszip": "^3.10.1",
     "picocolors": "^1.1.1"
+  },
+  "optionalDependencies": {
+    "@napi-rs/keyring": "^1.1.6"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

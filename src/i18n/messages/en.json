@@ -31,11 +31,14 @@
     "gallery": "Gallery",
     "create": "Create",
     "docs": "Docs",
-    "topCreators": "Top creators",
+    "collections": "Collections",
+    "topCreators": "Creators",
+    "creators": "Creators",
     "requests": "Requests",
     "about": "About",
     "language": "Language",
-    "submitCta": "Submit a pet",
+    "settings": "Settings",
+    "submitCta": "Submit",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "githubRepoAria": "Petdex on GitHub",
@@ -51,7 +54,7 @@
   },
   "footer": {
     "rightsNotice": "Pets are user-submitted fan art. Petdex does not claim rights to any underlying IP.",
-    "topCreators": "Top creators",
+    "topCreators": "Creators",
     "takedown": "Takedown",
     "github": "GitHub",
     "sponsor": "Sponsor",
@@ -62,7 +65,7 @@
     "title": "Petdex",
     "tagline": "The public gallery of animated companions for <brand />. Browse {totalPets}+ open-source companions, preview their states, and install one with a single command.",
     "heroCommand": "npx petdex install boba",
-    "submitCta": "Submit a pet",
+    "submitCta": "Submit",
     "browseGallery": "Browse gallery",
     "openPet": "Open {name}",
     "petAnimated": "{name} animated",
@@ -244,6 +247,8 @@
       "fulfill": "Fulfill",
       "dismiss": "Dismiss",
       "reopen": "Re-open",
+      "approveImage": "Approve image",
+      "rejectImage": "Reject image",
       "slug": "slug",
       "placeholder": "cool-clippy",
       "mark": "Mark"
@@ -297,7 +302,10 @@
       "form": {
         "title": "Request a pet",
         "body": "Describe the pet you'd like to see — character, theme, vibe. If someone else already asked for the same thing, your submission turns into an upvote on theirs.",
+        "collectionHint": "You can also suggest collectible sets like GRAYCRAFT: brand/IP name, pets that belong together, and the official site.",
         "placeholder": "e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig",
+        "imageLabel": "Add reference image",
+        "imageBody": "Optional. Images stay hidden until admin review.",
         "submit": "Request",
         "sending": "Sending…"
       },
@@ -312,7 +320,8 @@
         "searchPlaceholder": "Search requests…"
       },
       "badges": {
-        "fulfilled": "Fulfilled"
+        "fulfilled": "Fulfilled",
+        "imagePending": "Image in review"
       },
       "empty": {
         "title": "No requests yet — be the first.",
@@ -328,6 +337,9 @@
         "moreDetail": "Tell us a bit more ({min}-{max} chars).",
         "signInRequest": "Sign in to request a pet.",
         "submitFailed": "Submit failed ({status})",
+        "imageType": "Use a PNG, JPG or WebP image.",
+        "imageTooLarge": "Reference image must be 4 MB or smaller.",
+        "imageUpload": "Image upload failed. Try again.",
         "networkRetry": "Network error, try again.",
         "signInUpvote": "Sign in to upvote.",
         "voteFailed": "Vote failed ({status})",
@@ -607,6 +619,12 @@
         "unit": "this week",
         "blurb": "Pets approved in the last 7 days. Caught fire? Ship more.",
         "empty": "No new pets approved this week."
+      },
+      "collectors": {
+        "label": "Collectors",
+        "unit": "caught",
+        "blurb": "Collectors ranked by how many approved pets they have caught.",
+        "empty": "No collectors yet."
       }
     }
   },
@@ -626,6 +644,12 @@
     "platformAria": "Install platform",
     "tabs": {
       "cli": "CLI"
+    },
+    "macHelp": {
+      "title": "On Mac, use Terminal.app",
+      "openTerminal": "Open Spotlight with Command + Space, type Terminal, then press Return.",
+      "pasteCommand": "Paste the command above and press Return. If macOS asks for permission, allow it.",
+      "returnToCodex": "When it finishes, open Codex Settings, Appearance, Pets, then select this pet."
     },
     "steps": {
       "openCodex": "Open Codex,",

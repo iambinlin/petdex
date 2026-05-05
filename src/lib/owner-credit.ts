@@ -12,8 +12,12 @@
 // Both prefer fresh Clerk data; missing fields fall through to whatever
 // the row already has, then to a final "anonymous" sentinel.
 
-import { clerkClient } from "@clerk/nextjs/server";
 import { cache } from "react";
+
+import { clerkClient } from "@clerk/nextjs/server";
+import { inArray } from "drizzle-orm";
+
+import { db, schema } from "@/lib/db/client";
 
 export type OwnerExternal = {
   provider: "github" | "x";
@@ -101,7 +105,7 @@ function buildName(
     return [first, last].filter(Boolean).join(" ");
   }
   if (username) return username;
-  if (email && email.includes("@")) return email.split("@")[0];
+  if (email?.includes("@")) return email.split("@")[0];
   if (fallbackName) return fallbackName;
   return "anonymous";
 }
@@ -109,12 +113,39 @@ function buildName(
 // React cache() ensures one call per render pass — repeated invocations
 // with the same input share the underlying Clerk fetch.
 export const resolveOwnerCredits = cache(
-  async (
-    fallbacks: RowCreditFallback[],
-  ): Promise<Map<string, OwnerCredit>> => {
+  async (fallbacks: RowCreditFallback[]): Promise<Map<string, OwnerCredit>> => {
     const out = new Map<string, OwnerCredit>();
     const ids = [...new Set(fallbacks.map((f) => f.ownerId))];
     if (ids.length === 0) return out;
+
+    const proxyIds = new Set(
+      fallbacks.filter((f) => f.ownerIsProxy).map((f) => f.ownerId),
+    );
+    const profileByOwner = new Map<
+      string,
+      { displayName: string | null; handle: string | null }
+    >();
+    const profileIds = ids.filter((id) => !proxyIds.has(id));
+    if (profileIds.length > 0) {
+      try {
+        const profiles = await db
+          .select({
+            userId: schema.userProfiles.userId,
+            displayName: schema.userProfiles.displayName,
+            handle: schema.userProfiles.handle,
+          })
+          .from(schema.userProfiles)
+          .where(inArray(schema.userProfiles.userId, profileIds));
+        for (const profile of profiles) {
+          profileByOwner.set(profile.userId, {
+            displayName: profile.displayName,
+            handle: profile.handle,
+          });
+        }
+      } catch {
+        profileByOwner.clear();
+      }
+    }
 
     // Pre-fill from row fallbacks so even if Clerk fails entirely we
     // still return something for every owner.
@@ -122,6 +153,7 @@ export const resolveOwnerCredits = cache(
     for (const f of fallbacks) {
       if (!fallbackByOwner.has(f.ownerId)) fallbackByOwner.set(f.ownerId, f);
       if (out.has(f.ownerId)) continue;
+      const profile = profileByOwner.get(f.ownerId);
       const externals: OwnerExternal[] = [];
       if (f.creditUrl) {
         try {
@@ -143,10 +175,11 @@ export const resolveOwnerCredits = cache(
           /* ignore malformed stored URL */
         }
       }
+      const fallbackName = f.creditName?.trim() || "anonymous";
       out.set(f.ownerId, {
         userId: f.ownerId,
-        name: f.creditName?.trim() || "anonymous",
-        handle: fallbackHandle(f.ownerId),
+        name: profile?.displayName ?? fallbackName,
+        handle: profile?.handle ?? fallbackHandle(f.ownerId),
         username: null,
         externals,
         imageUrl: f.creditImage,
@@ -192,12 +225,13 @@ export const resolveOwnerCredits = cache(
             primary?.emailAddress ?? null,
             fallback?.creditName ?? null,
           );
+          const profile = profileByOwner.get(u.id);
           out.set(u.id, {
             userId: u.id,
-            name,
-            handle: u.username
-              ? u.username.toLowerCase()
-              : fallbackHandle(u.id),
+            name: profile?.displayName ?? name,
+            handle:
+              profile?.handle ??
+              (u.username ? u.username.toLowerCase() : fallbackHandle(u.id)),
             username: u.username ?? null,
             externals,
             imageUrl: u.imageUrl ?? fallback?.creditImage ?? null,
