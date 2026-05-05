@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { track } from "@vercel/analytics";
 import {
@@ -58,6 +65,8 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<Sort>("top");
   const [search, setSearch] = useState("");
+  const itemRefs = useRef(new Map<string, HTMLLIElement>());
+  const previousRects = useRef(new Map<string, DOMRect>());
 
   // Form state
   const [draft, setDraft] = useState("");
@@ -114,14 +123,66 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
     } else {
-      // top
-      list = list.filter((r) => r.status === "open");
+      list = list
+        .filter((r) => r.status === "open")
+        .slice()
+        .sort(sortByTop);
     }
     if (trimmed) {
       list = list.filter((r) => r.query.toLowerCase().includes(trimmed));
     }
     return list;
   }, [requests, sort, search]);
+
+  const setItemRef = useCallback(
+    (id: string) => (node: HTMLLIElement | null) => {
+      if (node) {
+        itemRefs.current.set(id, node);
+      } else {
+        itemRefs.current.delete(id);
+      }
+    },
+    [],
+  );
+
+  const capturePositions = useCallback(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+    const next = new Map<string, DOMRect>();
+    itemRefs.current.forEach((node, id) => {
+      next.set(id, node.getBoundingClientRect());
+    });
+    previousRects.current = next;
+  }, []);
+
+  useLayoutEffect(() => {
+    const before = previousRects.current;
+    if (before.size === 0) return;
+
+    itemRefs.current.forEach((node, id) => {
+      const previous = before.get(id);
+      if (!previous) return;
+      const current = node.getBoundingClientRect();
+      const dx = previous.left - current.left;
+      const dy = previous.top - current.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      node.animate(
+        [
+          { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: "translate(0, 0)" },
+        ],
+        {
+          duration: 320,
+          easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        },
+      );
+    });
+    previousRects.current = new Map();
+  });
 
   async function uploadImage(file: File): Promise<string> {
     if (!["image/png", "image/webp", "image/jpeg"].includes(file.type)) {
@@ -210,6 +271,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
         const r2 = await fetch("/api/pet-requests?status=all&limit=80");
         if (r2.ok) {
           const d2 = (await r2.json()) as { requests: RequestRow[] };
+          capturePositions();
           setRequests(d2.requests);
         }
       } catch {
@@ -253,6 +315,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
         return;
       }
       const data = (await res.json()) as { upvoteCount: number };
+      capturePositions();
       setRequests((rs) =>
         rs.map((r) =>
           r.id === req.id
@@ -424,6 +487,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
               upvote={() => void upvote(r)}
               busy={pending.has(r.id)}
               t={t}
+              itemRef={setItemRef(r.id)}
             />
           ))}
         </ul>
@@ -473,11 +537,13 @@ function RequestCard({
   upvote,
   busy,
   t,
+  itemRef,
 }: {
   request: RequestRow;
   upvote: () => void;
   busy: boolean;
   t: ReturnType<typeof useTranslations>;
+  itemRef: (node: HTMLLIElement | null) => void;
 }) {
   const fulfilled = request.status === "fulfilled";
   const top3 = request.voters.slice(0, 3);
@@ -485,6 +551,7 @@ function RequestCard({
 
   return (
     <li
+      ref={itemRef}
       className={`group rounded-2xl border bg-surface px-4 py-3.5 backdrop-blur transition ${
         fulfilled
           ? "border-emerald-200 hover:border-emerald-300"
@@ -631,6 +698,11 @@ function RequestCard({
       </div>
     </li>
   );
+}
+
+function sortByTop(a: RequestRow, b: RequestRow): number {
+  if (b.upvoteCount !== a.upvoteCount) return b.upvoteCount - a.upvoteCount;
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 }
 
 function EmptyState() {
