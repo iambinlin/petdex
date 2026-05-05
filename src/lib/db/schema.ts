@@ -246,27 +246,82 @@ export const manifestFetches = pgTable(
   }),
 );
 
-export const userProfiles = pgTable("user_profiles", {
-  // Clerk user id (string). PK because every user has at most one profile.
-  userId: text("user_id").primaryKey(),
-  bio: text("bio"),
-  preferredLocale: text("preferred_locale")
-    .$type<"en" | "es" | "zh">()
-    .notNull()
-    .default("en"),
-  // Up to 6 approved pets the user has pinned to the top of their public
-  // gallery, in the order they were added. Validated server-side: every
-  // slug must belong to the same userId and currently be approved.
-  // Kept as jsonb to mirror the rest of the array columns in this schema
-  // (vibes, tags, pendingTags) and keep migrations boring.
-  featuredPetSlugs: jsonb("featured_pet_slugs")
-    .$type<string[]>()
-    .notNull()
-    .default(sql`'[]'::jsonb`),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const userProfiles = pgTable(
+  "user_profiles",
+  {
+    // Clerk user id (string). PK because every user has at most one profile.
+    userId: text("user_id").primaryKey(),
+    displayName: text("display_name"),
+    handle: text("handle"),
+    bio: text("bio"),
+    preferredLocale: text("preferred_locale")
+      .$type<"en" | "es" | "zh">()
+      .notNull()
+      .default("en"),
+    // Up to 6 approved pets the user has pinned to the top of their public
+    // gallery, in the order they were added. Validated server-side: every
+    // slug must belong to the same userId and currently be approved.
+    // Kept as jsonb to mirror the rest of the array columns in this schema
+    // (vibes, tags, pendingTags) and keep migrations boring.
+    featuredPetSlugs: jsonb("featured_pet_slugs")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    handleUnique: uniqueIndex("user_profiles_handle_unique").on(table.handle),
+  }),
+);
+
+export const petCollections = pgTable(
+  "pet_collections",
+  {
+    id: text("id").primaryKey(),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    ownerId: text("owner_id"),
+    externalUrl: text("external_url"),
+    coverPetSlug: text("cover_pet_slug"),
+    featured: boolean("featured").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    slugUnique: uniqueIndex("pet_collections_slug_unique").on(table.slug),
+    featuredIdx: index("pet_collections_featured_idx").on(table.featured),
+    ownerIdx: index("pet_collections_owner_idx").on(table.ownerId),
+  }),
+);
+
+export const petCollectionItems = pgTable(
+  "pet_collection_items",
+  {
+    collectionId: text("collection_id")
+      .notNull()
+      .references(() => petCollections.id, { onDelete: "cascade" }),
+    petSlug: text("pet_slug").notNull(),
+    position: integer("position").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.collectionId, table.petSlug] }),
+    slugIdx: index("pet_collection_items_slug_idx").on(table.petSlug),
+    positionIdx: index("pet_collection_items_position_idx").on(
+      table.collectionId,
+      table.position,
+    ),
+  }),
+);
 
 export const feedbackAuthorKind = pgEnum("feedback_author_kind", [
   "admin",

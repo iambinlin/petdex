@@ -4,9 +4,9 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 
+import { getCatchProgress } from "@/lib/catch-status";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
-import { getCatchProgress } from "@/lib/catch-status";
 import { handleFromClerk } from "@/lib/handles";
 
 import { MyPetsView } from "@/components/my-pets-view";
@@ -103,6 +103,9 @@ export default async function MyPetsPage() {
   const profile = await db.query.userProfiles.findFirst({
     where: eq(schema.userProfiles.userId, userId),
   });
+  handle = profile?.handle ?? handle;
+  displayName = profile?.displayName ?? displayName;
+
   const catchProgress = await getCatchProgress(userId);
 
   const approvedSummaries = submissions

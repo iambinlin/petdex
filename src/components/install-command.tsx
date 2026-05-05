@@ -128,6 +128,19 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
         className="mt-2 w-full"
       />
 
+      {platform === "macos" ? (
+        <div className="mt-3 rounded-2xl border border-border-base bg-surface-muted/70 px-4 py-3">
+          <p className="text-xs font-semibold text-foreground">
+            {t("macHelp.title")}
+          </p>
+          <ol className="mt-2 space-y-1 text-xs leading-5 text-muted-2">
+            <li>{t("macHelp.openTerminal")}</li>
+            <li>{t("macHelp.pasteCommand")}</li>
+            <li>{t("macHelp.returnToCodex")}</li>
+          </ol>
+        </div>
+      ) : null}
+
       <div className="mt-5 flex items-center gap-2 text-sm font-semibold text-foreground">
         <MousePointerClick className="size-4" />
         {t("activateStep")}
@@ -142,7 +155,9 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
         <li>
           {t.rich("steps.findPet", {
             displayName,
-            strong: (chunks) => <strong className="text-foreground">{chunks}</strong>,
+            strong: (chunks) => (
+              <strong className="text-foreground">{chunks}</strong>
+            ),
           })}{" "}
           <span className="font-mono text-foreground">Custom pets</span>{" "}
           {t("steps.andClick")}{" "}
@@ -215,7 +230,9 @@ function PlatformBtn({
       onClick={onClick}
       title={label}
       className={`inline-flex size-7 items-center justify-center rounded-full transition ${
-        active ? "bg-inverse text-on-inverse" : "text-muted-2 hover:text-foreground"
+        active
+          ? "bg-inverse text-on-inverse"
+          : "text-muted-2 hover:text-foreground"
       }`}
     >
       {icon}

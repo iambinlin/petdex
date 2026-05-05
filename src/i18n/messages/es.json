@@ -31,6 +31,7 @@
     "gallery": "Galería",
     "create": "Crear",
     "docs": "Docs",
+    "collections": "Colecciones",
     "topCreators": "Creadores destacados",
     "requests": "Pedidos",
     "about": "Acerca de",
@@ -607,6 +608,12 @@
         "unit": "esta semana",
         "blurb": "Mascotas aprobadas en los últimos 7 días. ¿Se encendió? Publica más.",
         "empty": "No se aprobaron mascotas nuevas esta semana."
+      },
+      "collectors": {
+        "label": "Coleccionistas",
+        "unit": "capturadas",
+        "blurb": "Coleccionistas ordenados por cuántas mascotas aprobadas han capturado.",
+        "empty": "Todavía no hay coleccionistas."
       }
     }
   },
@@ -626,6 +633,12 @@
     "platformAria": "Plataforma de instalación",
     "tabs": {
       "cli": "CLI"
+    },
+    "macHelp": {
+      "title": "En Mac, usa Terminal.app",
+      "openTerminal": "Abre Spotlight con Command + Space, escribe Terminal y presiona Return.",
+      "pasteCommand": "Pega el comando de arriba y presiona Return. Si macOS pide permiso, acéptalo.",
+      "returnToCodex": "Cuando termine, abre Codex Settings, Appearance, Pets y selecciona esta mascota."
     },
     "steps": {
       "openCodex": "Abre Codex,",

@@ -37,6 +37,8 @@
     "create__fixme": true,
     "docs": "文档",
     "docs__fixme": true,
+    "collections": "合集",
+    "collections__fixme": true,
     "topCreators": "顶级创作者",
     "topCreators__fixme": true,
     "requests": "请求",
@@ -744,6 +746,12 @@
         "unit": "本周",
         "blurb": "过去 7 天内获批的宠物。火起来了？继续发。",
         "empty": "本周还没有新宠物获批。"
+      },
+      "collectors": {
+        "label": "收藏者",
+        "unit": "已捕获",
+        "blurb": "按已捕获的获批宠物数量排序的收藏者。",
+        "empty": "还没有收藏者。"
       }
     }
   },
@@ -763,6 +771,12 @@
     "platformAria": "安装平台",
     "tabs": {
       "cli": "CLI"
+    },
+    "macHelp": {
+      "title": "在 Mac 上使用 Terminal.app",
+      "openTerminal": "按 Command + Space 打开 Spotlight，输入 Terminal，然后按 Return。",
+      "pasteCommand": "粘贴上方命令并按 Return。如果 macOS 请求权限，请允许。",
+      "returnToCodex": "完成后打开 Codex Settings、Appearance、Pets，然后选择这只宠物。"
     },
     "steps": {
       "openCodex": "打开 Codex，",

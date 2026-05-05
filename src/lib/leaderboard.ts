@@ -11,7 +11,12 @@ import { sql } from "drizzle-orm";
 import { getAdminUserIds } from "@/lib/admin";
 import { db } from "@/lib/db/client";
 
-export type LeaderboardMetric = "pets" | "likes" | "installs" | "rising";
+export type LeaderboardMetric =
+  | "pets"
+  | "likes"
+  | "installs"
+  | "rising"
+  | "collectors";
 
 export type LeaderboardRow = {
   ownerId: string;
@@ -37,7 +42,11 @@ export async function getLeaderboard(
   metric: LeaderboardMetric,
 ): Promise<LeaderboardRow[]> {
   const result = (await db.execute(
-    metric === "rising" ? risingQuery() : aggregateQuery(metric),
+    metric === "rising"
+      ? risingQuery()
+      : metric === "collectors"
+        ? collectorsQuery()
+        : aggregateQuery(metric),
   )) as unknown as {
     rows: Array<{
       owner_id: string;
@@ -62,7 +71,9 @@ export async function getLeaderboard(
     .filter((r) => r.value >= MIN_VALUE && !adminIds.has(r.ownerId));
 }
 
-function aggregateQuery(metric: Exclude<LeaderboardMetric, "rising">) {
+function aggregateQuery(
+  metric: Exclude<LeaderboardMetric, "rising" | "collectors">,
+) {
   // value is the column we ORDER BY. tie-breakers always cascade through
   // approved_count -> total_likes so two creators with the same headline
   // metric still get a deterministic order.
@@ -91,6 +102,25 @@ function aggregateQuery(metric: Exclude<LeaderboardMetric, "rising">) {
     GROUP BY sp.owner_id
     HAVING ${valueExpr} > 0
     ORDER BY value DESC, approved_count DESC, total_likes DESC
+    LIMIT ${TOP_LIMIT}
+  `;
+}
+
+function collectorsQuery() {
+  return sql`
+    SELECT
+      pl.user_id                                      AS owner_id,
+      COUNT(DISTINCT pl.pet_slug)::bigint            AS value,
+      COUNT(DISTINCT pl.pet_slug)::bigint            AS approved_count,
+      0::bigint                                      AS total_likes,
+      0::bigint                                      AS total_installs,
+      0::bigint                                      AS total_downloads
+    FROM pet_likes pl
+    INNER JOIN submitted_pets sp ON sp.slug = pl.pet_slug
+    WHERE sp.status = 'approved'
+    GROUP BY pl.user_id
+    HAVING COUNT(DISTINCT pl.pet_slug) > 0
+    ORDER BY value DESC, owner_id ASC
     LIMIT ${TOP_LIMIT}
   `;
 }

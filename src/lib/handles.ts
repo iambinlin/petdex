@@ -1,21 +1,31 @@
 // Handle <-> userId resolution for /u/[handle] gallery pages.
 //
-// Source of truth: Clerk's `username`. If a user doesn't have one set, we
-// fall back to a deterministic short suffix of their userId so the page
-// is always reachable. The suffix is taken from the *end* of the id so
-// it's stable across name changes — userIds never get rewritten.
+// Source of truth: Petdex profile handle, then Clerk username, then a
+// deterministic short suffix of the Clerk userId.
 
 import { clerkClient } from "@clerk/nextjs/server";
 
-const FALLBACK_LENGTH = 8;
+export const FALLBACK_HANDLE_LENGTH = 8;
 
-function fallbackHandle(userId: string): string {
-  return userId.slice(-FALLBACK_LENGTH).toLowerCase();
+export function fallbackHandle(userId: string): string {
+  return userId.slice(-FALLBACK_HANDLE_LENGTH).toLowerCase();
 }
 
 // Forward: userId -> handle. Used to build /u/<handle> URLs from a
 // pet's ownerId (e.g. credit chip, /my-pets header).
 export async function handleForUser(userId: string): Promise<string> {
+  try {
+    const { db, schema } = await import("@/lib/db/client");
+    const { eq } = await import("drizzle-orm");
+    const profile = await db.query.userProfiles.findFirst({
+      columns: { handle: true },
+      where: eq(schema.userProfiles.userId, userId),
+    });
+    if (profile?.handle) return profile.handle;
+  } catch {
+    /* ignore */
+  }
+
   try {
     const client = await clerkClient();
     const u = await client.users.getUser(userId);
@@ -34,7 +44,19 @@ export async function handleForUser(userId: string): Promise<string> {
 // path uses our DB to narrow: any user who has submitted a pet whose
 // ownerId ends with the requested suffix.
 export async function userIdForHandle(handle: string): Promise<string | null> {
-  const normalized = handle.toLowerCase();
+  const normalized = handle.trim().toLowerCase();
+
+  try {
+    const { db, schema } = await import("@/lib/db/client");
+    const { eq } = await import("drizzle-orm");
+    const profile = await db.query.userProfiles.findFirst({
+      columns: { userId: true },
+      where: eq(schema.userProfiles.handle, normalized),
+    });
+    if (profile?.userId) return profile.userId;
+  } catch {
+    /* fall through */
+  }
 
   // Fast path: username lookup via Clerk Backend API.
   try {
@@ -53,7 +75,7 @@ export async function userIdForHandle(handle: string): Promise<string | null> {
   // tables that store userIds (pets, requests, feedback, profiles) for
   // any id whose tail matches. Refuses ambiguous matches (>1 user).
   if (
-    normalized.length === FALLBACK_LENGTH &&
+    normalized.length === FALLBACK_HANDLE_LENGTH &&
     /^[a-z0-9]+$/.test(normalized)
   ) {
     const { db, schema } = await import("@/lib/db/client");
@@ -66,7 +88,7 @@ export async function userIdForHandle(handle: string): Promise<string | null> {
       .selectDistinct({ id: schema.submittedPets.ownerId })
       .from(schema.submittedPets)
       .where(
-        sql`lower(right(${schema.submittedPets.ownerId}, ${FALLBACK_LENGTH})) = ${normalized}`,
+        sql`lower(right(${schema.submittedPets.ownerId}, ${FALLBACK_HANDLE_LENGTH})) = ${normalized}`,
       )
       .limit(2);
     for (const r of fromPets) candidates.add(r.id);
@@ -76,7 +98,7 @@ export async function userIdForHandle(handle: string): Promise<string | null> {
         .selectDistinct({ id: schema.petRequests.requestedBy })
         .from(schema.petRequests)
         .where(
-          sql`${schema.petRequests.requestedBy} IS NOT NULL AND lower(right(${schema.petRequests.requestedBy}, ${FALLBACK_LENGTH})) = ${normalized}`,
+          sql`${schema.petRequests.requestedBy} IS NOT NULL AND lower(right(${schema.petRequests.requestedBy}, ${FALLBACK_HANDLE_LENGTH})) = ${normalized}`,
         )
         .limit(2);
       for (const r of fromRequests) if (r.id) candidates.add(r.id);
@@ -87,7 +109,7 @@ export async function userIdForHandle(handle: string): Promise<string | null> {
         .selectDistinct({ id: schema.feedback.userId })
         .from(schema.feedback)
         .where(
-          sql`${schema.feedback.userId} IS NOT NULL AND lower(right(${schema.feedback.userId}, ${FALLBACK_LENGTH})) = ${normalized}`,
+          sql`${schema.feedback.userId} IS NOT NULL AND lower(right(${schema.feedback.userId}, ${FALLBACK_HANDLE_LENGTH})) = ${normalized}`,
         )
         .limit(2);
       for (const r of fromFeedback) if (r.id) candidates.add(r.id);
@@ -98,7 +120,7 @@ export async function userIdForHandle(handle: string): Promise<string | null> {
         .selectDistinct({ id: schema.userProfiles.userId })
         .from(schema.userProfiles)
         .where(
-          sql`lower(right(${schema.userProfiles.userId}, ${FALLBACK_LENGTH})) = ${normalized}`,
+          sql`lower(right(${schema.userProfiles.userId}, ${FALLBACK_HANDLE_LENGTH})) = ${normalized}`,
         )
         .limit(2);
       for (const r of fromProfiles) candidates.add(r.id);
@@ -112,8 +134,9 @@ export async function userIdForHandle(handle: string): Promise<string | null> {
 
 // Helper for the few places (e.g. SubmittedBy) that already have a Clerk
 // user object cached and just want a handle without a fresh fetch.
-export function handleFromClerk(
-  user: { username: string | null; id: string },
-): string {
+export function handleFromClerk(user: {
+  username: string | null;
+  id: string;
+}): string {
   return user.username ? user.username.toLowerCase() : fallbackHandle(user.id);
 }

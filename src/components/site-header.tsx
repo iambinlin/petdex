@@ -66,6 +66,12 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             {t("docs")}
           </Link>
           <Link
+            href={href("/collections")}
+            className="transition hover:text-foreground"
+          >
+            {t("collections")}
+          </Link>
+          <Link
             href={href("/leaderboard")}
             className="transition hover:text-foreground"
           >
@@ -135,6 +141,12 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             </MobileLink>
             <MobileLink href={href("/docs")} onClick={() => setOpen(false)}>
               {t("docs")}
+            </MobileLink>
+            <MobileLink
+              href={href("/collections")}
+              onClick={() => setOpen(false)}
+            >
+              {t("collections")}
             </MobileLink>
             <MobileLink
               href={href("/leaderboard")}

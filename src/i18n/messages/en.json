@@ -31,6 +31,7 @@
     "gallery": "Gallery",
     "create": "Create",
     "docs": "Docs",
+    "collections": "Collections",
     "topCreators": "Top creators",
     "requests": "Requests",
     "about": "About",
@@ -607,6 +608,12 @@
         "unit": "this week",
         "blurb": "Pets approved in the last 7 days. Caught fire? Ship more.",
         "empty": "No new pets approved this week."
+      },
+      "collectors": {
+        "label": "Collectors",
+        "unit": "caught",
+        "blurb": "Collectors ranked by how many approved pets they have caught.",
+        "empty": "No collectors yet."
       }
     }
   },
@@ -626,6 +633,12 @@
     "platformAria": "Install platform",
     "tabs": {
       "cli": "CLI"
+    },
+    "macHelp": {
+      "title": "On Mac, use Terminal.app",
+      "openTerminal": "Open Spotlight with Command + Space, type Terminal, then press Return.",
+      "pasteCommand": "Paste the command above and press Return. If macOS asks for permission, allow it.",
+      "returnToCodex": "When it finishes, open Codex Settings, Appearance, Pets, then select this pet."
     },
     "steps": {
       "openCodex": "Open Codex,",

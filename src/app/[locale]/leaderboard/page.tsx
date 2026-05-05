@@ -1,9 +1,10 @@
+import { getTranslations } from "next-intl/server";
+
 import {
   getLeaderboard,
   type LeaderboardMetric,
   type LeaderboardRow,
 } from "@/lib/leaderboard";
-import { getTranslations } from "next-intl/server";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { resolveOwnerCredits } from "@/lib/owner-credit";
 
@@ -36,6 +37,7 @@ const METRIC_VALUES: LeaderboardMetric[] = [
   "likes",
   "installs",
   "rising",
+  "collectors",
 ];
 
 type SP = { tab?: string };
@@ -56,13 +58,15 @@ export default async function LeaderboardPage({
   // Fetch every variant in parallel so the tabs feel instant when the
   // user clicks between them — Next will serve cached HTML for the tab
   // they pick first, but the visible table still renders SSR on the
-  // initial pick. The volume is tiny (4 GROUP BY queries, top 50 each).
-  const [petsRows, likesRows, installsRows, risingRows] = await Promise.all([
-    getLeaderboard("pets"),
-    getLeaderboard("likes"),
-    getLeaderboard("installs"),
-    getLeaderboard("rising"),
-  ]);
+  // initial pick. The volume is tiny (5 GROUP BY queries, top 50 each).
+  const [petsRows, likesRows, installsRows, risingRows, collectorsRows] =
+    await Promise.all([
+      getLeaderboard("pets"),
+      getLeaderboard("likes"),
+      getLeaderboard("installs"),
+      getLeaderboard("rising"),
+      getLeaderboard("collectors"),
+    ]);
 
   // Resolve Clerk credits ONCE for the union of owners that appear in
   // any tab — we want the same name/avatar regardless of which tab is
@@ -72,6 +76,7 @@ export default async function LeaderboardPage({
     ...likesRows.map((r) => r.ownerId),
     ...installsRows.map((r) => r.ownerId),
     ...risingRows.map((r) => r.ownerId),
+    ...collectorsRows.map((r) => r.ownerId),
   ]);
 
   const credits = await resolveOwnerCredits(
@@ -112,6 +117,7 @@ export default async function LeaderboardPage({
             likes: likesRows,
             installs: installsRows,
             rising: risingRows,
+            collectors: collectorsRows,
           }}
         />
       </section>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, desc, eq } from "drizzle-orm";
@@ -37,28 +37,35 @@ export async function generateMetadata({ params }: PageProps) {
   const userId = await userIdForHandle(handle);
   if (!userId) return { title: "Profile not found", robots: { index: false } };
   let displayName = `@${handle}`;
+  const profile = await db.query.userProfiles.findFirst({
+    where: eq(schema.userProfiles.userId, userId),
+  });
   try {
     const client = await clerkClient();
     const u = await client.users.getUser(userId);
     const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
-    displayName = name || (u.username ? `@${u.username}` : `@${handle}`);
+    const fallbackName = name || (u.username ? `@${u.username}` : `@${handle}`);
+    displayName = profile?.displayName ?? fallbackName;
   } catch {
+    if (profile?.displayName) displayName = profile.displayName;
     /* fall back */
   }
+  const publicHandle = profile?.handle ?? handle.toLowerCase();
   return {
     title: `${displayName} on Petdex`,
     description: `Pets created by ${displayName} for Codex.`,
-    alternates: buildLocaleAlternates(`/u/${handle}`),
+    alternates: buildLocaleAlternates(`/u/${publicHandle}`),
     openGraph: {
       title: `${displayName} on Petdex`,
       description: `Animated Codex pets created by ${displayName}.`,
-      url: `${SITE_URL}/u/${handle}`,
+      url: `${SITE_URL}/u/${publicHandle}`,
     },
   };
 }
 
 export default async function UserProfilePage({ params }: PageProps) {
   const { handle } = await params;
+  const requestedHandle = handle.toLowerCase();
   const ownerId = await userIdForHandle(handle);
   if (!ownerId) notFound();
 
@@ -102,6 +109,12 @@ export default async function UserProfilePage({ params }: PageProps) {
   const profile = await db.query.userProfiles.findFirst({
     where: eq(schema.userProfiles.userId, ownerId),
   });
+  if (profile?.handle && profile.handle !== requestedHandle) {
+    redirect(`/u/${profile.handle}`);
+  }
+  const publicHandle =
+    profile?.handle ?? username?.toLowerCase() ?? requestedHandle;
+  displayName = profile?.displayName ?? displayName;
   const bio = profile?.bio ?? null;
   const featuredSlugs =
     (profile?.featuredPetSlugs as string[] | undefined) ?? [];
@@ -163,7 +176,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   const isOwner = viewerId === ownerId;
   const catchProgress = isOwner ? await getCatchProgress(viewerId) : null;
 
-  const fallbackInitial = (displayName ?? username ?? handle)
+  const fallbackInitial = (displayName ?? publicHandle)
     .slice(0, 1)
     .toUpperCase();
 
@@ -172,8 +185,8 @@ export default async function UserProfilePage({ params }: PageProps) {
     "@type": "ProfilePage",
     mainEntity: {
       "@type": "Person",
-      name: displayName ?? username ?? `@${handle}`,
-      url: `${SITE_URL}/u/${handle}`,
+      name: displayName ?? `@${publicHandle}`,
+      url: `${SITE_URL}/u/${publicHandle}`,
       ...(avatarUrl ? { image: avatarUrl } : {}),
       ...(externalUrls.length > 0
         ? { sameAs: externalUrls.map((e) => e.url) }
@@ -185,7 +198,7 @@ export default async function UserProfilePage({ params }: PageProps) {
     <main className="min-h-dvh bg-background text-foreground">
       <JsonLd data={jsonLd} />
       <ProfileAnalytics
-        handle={handle}
+        handle={publicHandle}
         petCount={pets.length}
         pinnedCount={featuredPets.length}
         viewerIsOwner={isOwner}
@@ -202,7 +215,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 // biome-ignore lint/performance/noImgElement: Clerk-hosted avatar
                 <img
                   src={avatarUrl}
-                  alt={displayName ?? `@${handle}`}
+                  alt={displayName ?? `@${publicHandle}`}
                   className="size-28 rounded-3xl object-cover ring-1 ring-black/10 md:size-32"
                 />
               ) : (
@@ -243,11 +256,11 @@ export default async function UserProfilePage({ params }: PageProps) {
                 ) : null}
               </div>
               <h1 className="mt-3 text-balance text-[40px] leading-[1] font-semibold tracking-tight md:text-[56px]">
-                {displayName ?? `@${handle}`}
+                {displayName ?? `@${publicHandle}`}
               </h1>
-              {username ? (
+              {displayName ? (
                 <p className="mt-2 font-mono text-sm tracking-[0.08em] text-muted-3">
-                  @{username}
+                  @{publicHandle}
                 </p>
               ) : null}
               {bio ? (
@@ -290,7 +303,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                   {externalUrls.map((e) => (
                     <ProfileExternalLink
                       key={e.url}
-                      handle={handle}
+                      handle={publicHandle}
                       url={e.url}
                       label={e.label}
                     />
@@ -303,7 +316,8 @@ export default async function UserProfilePage({ params }: PageProps) {
             <div className="flex justify-center lg:justify-end">
               {isOwner ? (
                 <ProfileInlineEditor
-                  handle={handle}
+                  handle={publicHandle}
+                  initialDisplayName={displayName}
                   initialBio={bio}
                   initialFeaturedSlugs={featuredSlugs}
                   approvedPets={pets.map((p) => ({
