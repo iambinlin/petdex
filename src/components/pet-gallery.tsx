@@ -686,7 +686,7 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
   return (
     <article
       style={accentStyle}
-      className={`group relative rounded-3xl border bg-surface/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
+      className={`group relative flex h-full flex-col rounded-3xl border bg-surface/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : pet.dominantColor
@@ -697,7 +697,7 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
       <Link
         href={href}
         aria-label={`Open ${pet.displayName}`}
-        className="flex flex-col rounded-3xl"
+        className="flex flex-1 flex-col rounded-3xl"
       >
         <div className="flex items-center justify-between rounded-t-3xl border-b border-black/[0.06] px-5 pt-4 pr-5 pb-3 dark:border-white/[0.06]">
           <div className="flex items-center gap-2">
@@ -727,7 +727,7 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-2 border-t border-black/[0.06] px-5 pt-4 pb-3 dark:border-white/[0.06]">
+        <div className="flex flex-1 flex-col gap-2 border-t border-black/[0.06] px-5 pt-4 pb-3 dark:border-white/[0.06]">
           <div className="flex items-center justify-between gap-2">
             <h3 className="flex min-w-0 items-center gap-1.5 text-lg font-semibold tracking-tight text-foreground">
               <span className="truncate">{pet.displayName}</span>
@@ -793,7 +793,7 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
 
       {/* Footer bar — outside the card-wide Link so each button can
           fire its own action without bubbling up to navigation. */}
-      <div className="rounded-b-3xl">
+      <div className="mt-auto rounded-b-3xl">
         <PetCardFooter
           slug={pet.slug}
           displayName={pet.displayName}

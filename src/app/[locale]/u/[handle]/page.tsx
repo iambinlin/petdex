@@ -409,7 +409,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 ) : (
                   <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
                     {featuredPets.map((pet, index) => (
-                      <div key={pet.slug} className="relative">
+                      <div key={pet.slug} className="relative h-full">
                         <PetCard
                           pet={pet}
                           index={index}
@@ -441,7 +441,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 ) : null}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-5">
                   {restPets.map((pet, index) => (
-                    <div key={pet.slug} className="relative">
+                    <div key={pet.slug} className="relative h-full">
                       <PetCard
                         pet={pet}
                         index={index + featuredPets.length}
