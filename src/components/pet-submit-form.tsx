@@ -15,6 +15,7 @@ import {
   Send,
   Upload,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { petStates } from "@/lib/pet-states";
 
@@ -44,6 +45,7 @@ const REQUIRED = { width: 1536, height: 1872 } as const;
 const PETS_DIR = "~/.codex/pets";
 
 export function PetSubmitForm() {
+  const t = useTranslations("submit.form");
   const { isSignedIn, isLoaded } = useUser();
   const [parsed, setParsed] = useState<ParsedPet | null>(null);
   const [isReading, setIsReading] = useState(false);
@@ -72,9 +74,7 @@ export function PetSubmitForm() {
       // True folder upload has a "/" inside webkitRelativePath
       // (e.g. "boba/pet.json"). A single dropped file via webkitGetAsEntry
       // gets stamped with just its filename, so we treat that as zip mode.
-      const fromFolder = items.some(
-        (f) => f.webkitRelativePath && f.webkitRelativePath.includes("/"),
-      );
+      const fromFolder = items.some((f) => f.webkitRelativePath?.includes("/"));
       const source: "folder" | "zip" = fromFolder ? "folder" : "zip";
 
       let petJsonString = "";
@@ -106,15 +106,13 @@ export function PetSubmitForm() {
         const spriteFile = spriteWebp ?? spritePng;
         spritesheetExt = spriteWebp ? "webp" : "png";
 
-        if (!petFile) issues.push("Folder is missing pet.json.");
+        if (!petFile) issues.push(t("issues.folderMissingPetJson"));
         if (!spriteFile) {
           const present = items
             .slice(0, 6)
             .map((f) => f.webkitRelativePath || f.name)
             .join(", ");
-          issues.push(
-            `Folder is missing spritesheet.webp (or .png). Found: ${present}`,
-          );
+          issues.push(t("issues.folderMissingSpritesheet", { present }));
         }
 
         if (petFile) {
@@ -147,8 +145,8 @@ export function PetSubmitForm() {
         if (!zipFile) {
           setParsed({
             petId: "missing",
-            displayName: "Missing files",
-            description: "Drop a folder or a ZIP with pet.json + spritesheet.",
+            displayName: t("defaults.missingFiles"),
+            description: t("drop.short"),
             zipBlob: new Blob(),
             zipFileName: "",
             spritesheetBlob: new Blob(),
@@ -157,7 +155,7 @@ export function PetSubmitForm() {
             spritesheetUrl: "",
             spritesheetWidth: 0,
             spritesheetHeight: 0,
-            issues: ["Drop a pet folder or a .zip file."],
+            issues: [t("issues.dropPetFolderOrZip")],
             source: "zip",
           });
           return;
@@ -179,14 +177,14 @@ export function PetSubmitForm() {
           allFiles.length > 4;
 
         if (looksLikeBundle) {
-          issues.push(
-            "This looks like the all-pets bundle (petdex-approved.zip). Submit a single pet folder or its individual zip instead.",
-          );
+          issues.push(t("issues.allPetsBundle"));
         } else {
-          if (!petJsonEntry) issues.push("Missing pet.json at zip root.");
+          if (!petJsonEntry) issues.push(t("issues.zipMissingPetJson"));
           if (!spriteEntry) {
             issues.push(
-              `Missing spritesheet.webp (or .png) at zip root. Found: ${allFiles.slice(0, 5).join(", ")}`,
+              t("issues.zipMissingSpritesheet", {
+                present: allFiles.slice(0, 5).join(", "),
+              }),
             );
           }
         }
@@ -206,7 +204,7 @@ export function PetSubmitForm() {
         try {
           petJson = JSON.parse(petJsonString);
         } catch {
-          issues.push("pet.json is not valid JSON.");
+          issues.push(t("issues.invalidJson"));
         }
       }
 
@@ -219,10 +217,15 @@ export function PetSubmitForm() {
       if (spritesheetUrl) {
         ({ width, height } = await measureImage(spritesheetUrl));
         if (width === 0 || height === 0) {
-          issues.push("Spritesheet image is unreadable.");
+          issues.push(t("issues.unreadableSpritesheet"));
         } else if (width < 256 || height < 256) {
           issues.push(
-            `Spritesheet seems too small (${width}×${height}). Use an 8×9 frame grid (recommended 1536×1872).`,
+            t("issues.tooSmall", {
+              width,
+              height,
+              recommendedWidth: REQUIRED.width,
+              recommendedHeight: REQUIRED.height,
+            }),
           );
         }
       }
@@ -230,11 +233,11 @@ export function PetSubmitForm() {
       const displayName =
         typeof petJson.displayName === "string" && petJson.displayName.trim()
           ? petJson.displayName.trim()
-          : "Untitled pet";
+          : t("defaults.untitledPet");
       const description =
         typeof petJson.description === "string" && petJson.description.trim()
           ? petJson.description.trim()
-          : "A Codex-compatible digital pet.";
+          : t("defaults.description");
       const petId =
         typeof petJson.id === "string" && petJson.id.trim()
           ? petJson.id.trim()
@@ -407,7 +410,7 @@ export function PetSubmitForm() {
       });
       setSubmission({
         kind: "error",
-        message: `Upload failed: ${reason}`,
+        message: t("errors.uploadFailed", { reason }),
       });
       return;
     }
@@ -434,19 +437,16 @@ export function PetSubmitForm() {
         message?: string;
         error?: string;
       };
+      const errorCode = data.error ?? "unknown";
       track("pet_submission_failed", {
         pet_id: parsed.petId,
         stage: "register",
-        error_code: data.error ?? "unknown",
+        error_code: errorCode,
         status: res.status,
       });
       setSubmission({
         kind: "error",
-        message:
-          data.message ??
-          (data.error
-            ? `Submission failed: ${data.error}`
-            : "Submission failed"),
+        message: submissionErrorMessage(errorCode, t),
       });
       return;
     }
@@ -465,7 +465,7 @@ export function PetSubmitForm() {
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-      <div
+      <fieldset
         className={`glass-panel flex min-h-80 flex-col items-center justify-center rounded-3xl p-8 text-center transition ${
           isDragging ? "bg-white/95 ring-2 ring-black/40 ring-offset-2" : ""
         }`}
@@ -487,27 +487,34 @@ export function PetSubmitForm() {
           });
         }}
       >
+        <legend className="sr-only">{t("drop.ariaLabel")}</legend>
         <span className="grid size-16 place-items-center rounded-2xl bg-inverse text-on-inverse">
           <Upload className="size-7" />
         </span>
         <span className="mt-6 text-2xl font-medium text-foreground">
-          Upload a pet package
+          {t("drop.title")}
         </span>
         <span className="mt-3 max-w-md text-sm leading-6 text-muted-2">
-          Drop a folder or a ZIP with{" "}
-          <code className="rounded bg-surface-muted px-1 py-0.5">pet.json</code>{" "}
-          and{" "}
-          <code className="rounded bg-surface-muted px-1 py-0.5">
-            spritesheet.webp
-          </code>{" "}
-          (or .png). Recommended {REQUIRED.width}×{REQUIRED.height}, 8×9 frame
-          grid.
+          {t.rich("drop.instructions", {
+            petJson: (chunks) => (
+              <code className="rounded bg-surface-muted px-1 py-0.5">
+                {chunks}
+              </code>
+            ),
+            spritesheet: (chunks) => (
+              <code className="rounded bg-surface-muted px-1 py-0.5">
+                {chunks}
+              </code>
+            ),
+            width: REQUIRED.width,
+            height: REQUIRED.height,
+          })}
         </span>
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover">
             <Upload className="size-3.5" />
-            Pick folder
+            {t("drop.pickFolder")}
             <input
               type="file"
               {...({ webkitdirectory: "" } as Record<string, string>)}
@@ -524,7 +531,7 @@ export function PetSubmitForm() {
           </label>
           <label className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-base bg-surface/70 px-4 text-xs font-medium text-foreground transition hover:bg-surface">
             <FileArchive className="size-3.5" />
-            Pick .zip
+            {t("drop.pickZip")}
             <input
               type="file"
               accept=".zip"
@@ -540,21 +547,21 @@ export function PetSubmitForm() {
 
         {!isLoaded ? null : !isSignedIn ? (
           <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-chip-warning-bg px-3 py-1 font-mono text-[10px] tracking-[0.18em] text-chip-warning-fg uppercase">
-            Sign in to submit
+            {t("auth.signIn")}
           </span>
         ) : null}
-      </div>
+      </fieldset>
 
       <aside className="rounded-3xl border border-border-base bg-surface/80 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <FileArchive className="size-4" />
-          Submission check
+          {t("check.title")}
         </div>
 
         {isReading ? (
           <p className="mt-6 inline-flex items-center gap-2 text-sm text-muted-2">
             <Loader2 className="size-3.5 animate-spin" />
-            Reading package...
+            {t("check.reading")}
           </p>
         ) : parsed ? (
           <div className="mt-6 space-y-5">
@@ -584,7 +591,7 @@ export function PetSubmitForm() {
             ) : (
               <div className="flex items-center gap-2 rounded-2xl bg-chip-success-bg p-4 text-sm text-chip-success-fg">
                 <CheckCircle2 className="size-4" />
-                Looks ready to submit.
+                {t("check.ready")}
               </div>
             )}
 
@@ -603,48 +610,73 @@ export function PetSubmitForm() {
               <div className="space-y-2 rounded-2xl bg-chip-danger-bg p-3 text-sm text-chip-danger-fg">
                 <p>{submission.message}</p>
                 <p className="text-xs leading-5 text-rose-800/80">
-                  Stuck?{" "}
+                  {t("fallback.beforeLink")}{" "}
                   <a
                     href={buildIssueUrl(parsed, submission.message)}
                     target="_blank"
                     rel="noreferrer"
                     className="font-medium underline underline-offset-4 hover:text-rose-950"
                   >
-                    Open a GitHub issue with your assets
+                    {t("fallback.link")}
                   </a>{" "}
-                  and Hunter will upload it manually.
+                  {t("fallback.afterLink")}
                 </p>
               </div>
             ) : null}
 
             {submission.kind === "success" ? (
               <p className="rounded-2xl bg-chip-success-bg p-3 text-sm text-chip-success-fg">
-                {submission.displayName} is in review. You'll be notified when
-                it's approved.
+                {t("success.review", { name: submission.displayName })}
               </p>
             ) : null}
           </div>
         ) : (
           <p className="mt-6 text-sm leading-6 text-muted-2">
-            Packages stay local until you confirm. Petdex checks the manifest
-            and sprite dimensions before upload.
+            {t("check.empty")}
           </p>
         )}
       </aside>
 
       <p className="col-span-full inline-flex flex-wrap items-center gap-2 text-xs text-muted-2">
-        Pet assets live in
+        {t("path.prefix")}
         <code className="rounded bg-surface/70 px-1.5 py-0.5 font-mono">
           {PETS_DIR}
         </code>
         <CopyPathButton path={PETS_DIR} />
-        <span className="text-[#9a9aa1]">(macOS / Linux)</span>
+        <span className="text-[#9a9aa1]">{t("path.platforms")}</span>
       </p>
     </div>
   );
 }
 
+function submissionErrorMessage(
+  code: string,
+  t: ReturnType<typeof useTranslations>,
+): string {
+  switch (code) {
+    case "rate_limited":
+      return t("errors.rateLimited");
+    case "missing_field":
+      return t("errors.missingField");
+    case "invalid_spritesheet":
+      return t("errors.invalidSpritesheet");
+    case "invalid_asset_url":
+      return t("errors.invalidAssetUrl");
+    case "invalid_slug":
+      return t("errors.invalidSlug");
+    case "unauthorized":
+      return t("errors.unauthorized");
+    case "invalid_json":
+      return t("errors.invalidJson");
+    case "unknown":
+      return t("errors.submissionFailed");
+    default:
+      return t("errors.submissionFailedWithCode", { code });
+  }
+}
+
 function CopyPathButton({ path }: { path: string }) {
+  const t = useTranslations("submit.form.copy");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -679,12 +711,12 @@ function CopyPathButton({ path }: { path: string }) {
   return (
     <button
       type="button"
-      aria-label={copied ? "Path copied" : "Copy path to clipboard"}
+      aria-label={copied ? t("ariaCopied") : t("ariaCopy")}
       onClick={(e) => void handleClick(e)}
       className="inline-flex items-center gap-1 rounded-full border border-border-base bg-surface/70 px-2 py-0.5 text-[11px] font-medium text-[#3a3a44] transition hover:bg-white dark:hover:bg-stone-800"
     >
       {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
-      {copied ? "Copied" : "Copy"}
+      {copied ? t("copied") : t("copy")}
     </button>
   );
 }
@@ -698,16 +730,17 @@ function SubmitButton({
   submission: SubmissionResult;
   onSubmit: () => void;
 }) {
+  const t = useTranslations("submit.form.submitButton");
   const label =
     submission.kind === "uploading"
       ? submission.step === "validating"
-        ? "Validating..."
+        ? t("validating")
         : submission.step === "uploading"
-          ? "Uploading..."
-          : "Finalizing..."
+          ? t("uploading")
+          : t("finalizing")
       : submission.kind === "success"
-        ? "Submitted"
-        : "Submit pet";
+        ? t("submitted")
+        : t("idle");
 
   return (
     <button
@@ -729,6 +762,7 @@ function SubmitButton({
 }
 
 function SpritePreview({ src }: { src: string }) {
+  const t = useTranslations("submit.form.preview");
   const [index, setIndex] = useState(0);
   const animation = petStates[index];
 
@@ -744,7 +778,7 @@ function SpritePreview({ src }: { src: string }) {
       <div
         className="pet-sprite-frame"
         role="img"
-        aria-label="Uploaded pet animation preview"
+        aria-label={t("ariaLabel")}
         style={{ "--pet-scale": 0.5 } as React.CSSProperties}
       >
         <div
@@ -841,14 +875,14 @@ function buildIssueUrl(
   const body = [
     "Submission failed via the web upload. Attaching pet folder/zip below.",
     "",
-    "**Pet name:** " + (parsed?.displayName ?? "—"),
-    "**Pet id:** " + (parsed?.petId ?? "—"),
+    `**Pet name:** ${parsed?.displayName ?? "n/a"}`,
+    `**Pet id:** ${parsed?.petId ?? "n/a"}`,
     "**Sprite size:** " +
       (parsed?.spritesheetWidth
         ? `${parsed.spritesheetWidth}×${parsed.spritesheetHeight}`
-        : "—"),
-    "**Source:** " + (parsed?.source ?? "—"),
-    "**Error:** " + (message ?? "Unknown"),
+        : "n/a"),
+    `**Source:** ${parsed?.source ?? "n/a"}`,
+    `**Error:** ${message ?? "Unknown"}`,
     "",
     "<!-- drag and drop your pet folder zipped here -->",
   ].join("\n");

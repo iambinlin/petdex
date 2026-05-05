@@ -287,7 +287,82 @@
     "createCta": "¿Todavía no tienes una mascota? Créala en Codex",
     "legalPrefix": "Al enviar, confirmas que tienes derechos sobre la ilustración o que estás creando fan content. Los titulares pueden pedir la eliminación mediante nuestro",
     "legalLink": "aviso de retiro",
-    "legalSuffix": "."
+    "legalSuffix": ".",
+    "form": {
+      "drop": {
+        "title": "Sube un paquete de mascota",
+        "instructions": "Arrastra una carpeta o un ZIP con <petJson>pet.json</petJson> y <spritesheet>spritesheet.webp</spritesheet> (o .png). Recomendado {width}×{height}, grilla de 8×9 frames.",
+        "short": "Arrastra una carpeta o un ZIP con pet.json + spritesheet.",
+        "ariaLabel": "Zona para soltar el paquete de mascota",
+        "pickFolder": "Elegir carpeta",
+        "pickZip": "Elegir .zip"
+      },
+      "auth": {
+        "signIn": "Inicia sesión para enviar"
+      },
+      "check": {
+        "title": "Revisión del envío",
+        "reading": "Leyendo paquete...",
+        "ready": "Todo listo para enviar.",
+        "empty": "Los paquetes se quedan locales hasta que confirmes. Petdex revisa el manifest y las dimensiones del sprite antes de subirlo."
+      },
+      "path": {
+        "prefix": "Los assets viven en",
+        "platforms": "(macOS / Linux)"
+      },
+      "copy": {
+        "ariaCopied": "Ruta copiada",
+        "ariaCopy": "Copiar ruta al portapapeles",
+        "copied": "Copiado",
+        "copy": "Copiar"
+      },
+      "submitButton": {
+        "validating": "Validando...",
+        "uploading": "Subiendo...",
+        "finalizing": "Finalizando...",
+        "submitted": "Enviado",
+        "idle": "Enviar mascota"
+      },
+      "preview": {
+        "ariaLabel": "Vista previa de la animación subida"
+      },
+      "success": {
+        "review": "{name} está en revisión. Te avisaremos cuando se apruebe."
+      },
+      "fallback": {
+        "beforeLink": "¿Atascado?",
+        "link": "Abre un issue de GitHub con tus assets",
+        "afterLink": "y Hunter lo subirá manualmente."
+      },
+      "defaults": {
+        "missingFiles": "Faltan archivos",
+        "untitledPet": "Mascota sin nombre",
+        "description": "Una mascota digital compatible con Codex."
+      },
+      "errors": {
+        "uploadFailed": "Falló la subida: {reason}",
+        "submissionFailed": "No se pudo enviar",
+        "submissionFailedWithCode": "No se pudo enviar: {code}",
+        "rateLimited": "Llegaste al límite: 10 envíos cada 24 horas. Inténtalo mañana.",
+        "missingField": "Al paquete le faltan datos requeridos para el envío.",
+        "invalidSpritesheet": "El spritesheet es muy pequeño o tiene dimensiones inválidas.",
+        "invalidAssetUrl": "Los assets subidos no pasaron la revisión de hosting.",
+        "invalidSlug": "El id de la mascota no pudo convertirse en una URL válida.",
+        "unauthorized": "Inicia sesión antes de enviar.",
+        "invalidJson": "No se pudo leer el JSON enviado."
+      },
+      "issues": {
+        "folderMissingPetJson": "A la carpeta le falta pet.json.",
+        "folderMissingSpritesheet": "A la carpeta le falta spritesheet.webp (o .png). Encontrado: {present}",
+        "dropPetFolderOrZip": "Arrastra una carpeta de mascota o un archivo .zip.",
+        "allPetsBundle": "Esto parece el paquete de todas las mascotas (petdex-approved.zip). Envía una sola carpeta de mascota o su zip individual.",
+        "zipMissingPetJson": "Falta pet.json en la raíz del zip.",
+        "zipMissingSpritesheet": "Falta spritesheet.webp (o .png) en la raíz del zip. Encontrado: {present}",
+        "invalidJson": "pet.json no es JSON válido.",
+        "unreadableSpritesheet": "No se puede leer la imagen del spritesheet.",
+        "tooSmall": "El spritesheet parece muy pequeño ({width}×{height}). Usa una grilla de 8×9 frames (recomendado {recommendedWidth}×{recommendedHeight})."
+      }
+    }
   },
   "requests": {
     "metadata": {

@@ -325,7 +325,82 @@
     "legalPrefix": "提交即表示你确认自己拥有该作品的权利，或这是你创作的同人内容。权利人可以通过我们的",
     "legalPrefix__fixme": true,
     "legalLink": "下架通知",
-    "legalSuffix": "。"
+    "legalSuffix": "。",
+    "form": {
+      "drop": {
+        "title": "上传宠物包",
+        "instructions": "拖入包含 <petJson>pet.json</petJson> 和 <spritesheet>spritesheet.webp</spritesheet>（或 .png）的文件夹或 ZIP。推荐 {width}×{height}，8×9 帧网格。",
+        "short": "拖入包含 pet.json 和 spritesheet 的文件夹或 ZIP。",
+        "ariaLabel": "宠物包拖放区域",
+        "pickFolder": "选择文件夹",
+        "pickZip": "选择 .zip"
+      },
+      "auth": {
+        "signIn": "登录后提交"
+      },
+      "check": {
+        "title": "提交检查",
+        "reading": "正在读取包...",
+        "ready": "可以提交了。",
+        "empty": "在你确认前，包会一直保留在本地。Petdex 会在上传前检查 manifest 和 sprite 尺寸。"
+      },
+      "path": {
+        "prefix": "宠物资源位于",
+        "platforms": "（macOS / Linux）"
+      },
+      "copy": {
+        "ariaCopied": "路径已复制",
+        "ariaCopy": "复制路径到剪贴板",
+        "copied": "已复制",
+        "copy": "复制"
+      },
+      "submitButton": {
+        "validating": "正在验证...",
+        "uploading": "正在上传...",
+        "finalizing": "正在完成...",
+        "submitted": "已提交",
+        "idle": "提交宠物"
+      },
+      "preview": {
+        "ariaLabel": "已上传宠物动画预览"
+      },
+      "success": {
+        "review": "{name} 正在审核中。通过后我们会通知你。"
+      },
+      "fallback": {
+        "beforeLink": "卡住了？",
+        "link": "带上你的资源打开一个 GitHub issue",
+        "afterLink": "Hunter 会手动帮你上传。"
+      },
+      "defaults": {
+        "missingFiles": "缺少文件",
+        "untitledPet": "未命名宠物",
+        "description": "一个兼容 Codex 的数字宠物。"
+      },
+      "errors": {
+        "uploadFailed": "上传失败：{reason}",
+        "submissionFailed": "提交失败",
+        "submissionFailedWithCode": "提交失败：{code}",
+        "rateLimited": "已达到限制：每 24 小时最多提交 10 次。请明天再试。",
+        "missingField": "这个包缺少提交所需的数据。",
+        "invalidSpritesheet": "spritesheet 太小，或尺寸无效。",
+        "invalidAssetUrl": "上传的资源没有通过托管检查。",
+        "invalidSlug": "宠物 id 无法转换成有效的 URL slug。",
+        "unauthorized": "请先登录再提交。",
+        "invalidJson": "无法读取提交的 JSON。"
+      },
+      "issues": {
+        "folderMissingPetJson": "文件夹缺少 pet.json。",
+        "folderMissingSpritesheet": "文件夹缺少 spritesheet.webp（或 .png）。找到的文件：{present}",
+        "dropPetFolderOrZip": "请拖入宠物文件夹或 .zip 文件。",
+        "allPetsBundle": "这看起来像全部宠物包（petdex-approved.zip）。请提交单个宠物文件夹或它自己的 zip。",
+        "zipMissingPetJson": "zip 根目录缺少 pet.json。",
+        "zipMissingSpritesheet": "zip 根目录缺少 spritesheet.webp（或 .png）。找到的文件：{present}",
+        "invalidJson": "pet.json 不是有效的 JSON。",
+        "unreadableSpritesheet": "无法读取 spritesheet 图片。",
+        "tooSmall": "spritesheet 看起来太小（{width}×{height}）。请使用 8×9 帧网格（推荐 {recommendedWidth}×{recommendedHeight}）。"
+      }
+    }
   },
   "requests": {
     "metadata": {

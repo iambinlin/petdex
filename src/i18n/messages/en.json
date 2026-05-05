@@ -287,7 +287,82 @@
     "createCta": "Don't have a pet yet? Hatch one in Codex",
     "legalPrefix": "By submitting, you confirm you have rights to the artwork or are creating fan content. Rights holders can request removal via our",
     "legalLink": "takedown notice",
-    "legalSuffix": "."
+    "legalSuffix": ".",
+    "form": {
+      "drop": {
+        "title": "Upload a pet package",
+        "instructions": "Drop a folder or a ZIP with <petJson>pet.json</petJson> and <spritesheet>spritesheet.webp</spritesheet> (or .png). Recommended {width}×{height}, 8×9 frame grid.",
+        "short": "Drop a folder or a ZIP with pet.json + spritesheet.",
+        "ariaLabel": "Pet package drop zone",
+        "pickFolder": "Pick folder",
+        "pickZip": "Pick .zip"
+      },
+      "auth": {
+        "signIn": "Sign in to submit"
+      },
+      "check": {
+        "title": "Submission check",
+        "reading": "Reading package...",
+        "ready": "Looks ready to submit.",
+        "empty": "Packages stay local until you confirm. Petdex checks the manifest and sprite dimensions before upload."
+      },
+      "path": {
+        "prefix": "Pet assets live in",
+        "platforms": "(macOS / Linux)"
+      },
+      "copy": {
+        "ariaCopied": "Path copied",
+        "ariaCopy": "Copy path to clipboard",
+        "copied": "Copied",
+        "copy": "Copy"
+      },
+      "submitButton": {
+        "validating": "Validating...",
+        "uploading": "Uploading...",
+        "finalizing": "Finalizing...",
+        "submitted": "Submitted",
+        "idle": "Submit pet"
+      },
+      "preview": {
+        "ariaLabel": "Uploaded pet animation preview"
+      },
+      "success": {
+        "review": "{name} is in review. You'll be notified when it's approved."
+      },
+      "fallback": {
+        "beforeLink": "Stuck?",
+        "link": "Open a GitHub issue with your assets",
+        "afterLink": "and Hunter will upload it manually."
+      },
+      "defaults": {
+        "missingFiles": "Missing files",
+        "untitledPet": "Untitled pet",
+        "description": "A Codex-compatible digital pet."
+      },
+      "errors": {
+        "uploadFailed": "Upload failed: {reason}",
+        "submissionFailed": "Submission failed",
+        "submissionFailedWithCode": "Submission failed: {code}",
+        "rateLimited": "Limit reached: 10 submissions per 24 hours. Try again tomorrow.",
+        "missingField": "The package is missing required submission data.",
+        "invalidSpritesheet": "The spritesheet is too small or has invalid dimensions.",
+        "invalidAssetUrl": "The uploaded assets did not pass the hosting check.",
+        "invalidSlug": "Pet id could not become a valid URL slug.",
+        "unauthorized": "Sign in before submitting.",
+        "invalidJson": "The submitted JSON could not be read."
+      },
+      "issues": {
+        "folderMissingPetJson": "Folder is missing pet.json.",
+        "folderMissingSpritesheet": "Folder is missing spritesheet.webp (or .png). Found: {present}",
+        "dropPetFolderOrZip": "Drop a pet folder or a .zip file.",
+        "allPetsBundle": "This looks like the all-pets bundle (petdex-approved.zip). Submit a single pet folder or its individual zip instead.",
+        "zipMissingPetJson": "Missing pet.json at zip root.",
+        "zipMissingSpritesheet": "Missing spritesheet.webp (or .png) at zip root. Found: {present}",
+        "invalidJson": "pet.json is not valid JSON.",
+        "unreadableSpritesheet": "Spritesheet image is unreadable.",
+        "tooSmall": "Spritesheet seems too small ({width}×{height}). Use an 8×9 frame grid (recommended {recommendedWidth}×{recommendedHeight})."
+      }
+    }
   },
   "requests": {
     "metadata": {
