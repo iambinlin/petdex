@@ -64,7 +64,7 @@ export function SurprisePetCard() {
   const installHref = withLocale(pet.installHref, currentLocale);
 
   return (
-    <aside className="fixed right-4 bottom-4 z-40 w-[min(calc(100vw-2rem),360px)] rounded-3xl border border-border-base bg-surface/95 p-4 text-foreground shadow-[0_24px_70px_-32px_rgba(16,24,40,0.55)] backdrop-blur md:right-6 md:bottom-6">
+    <aside className="fixed bottom-4 left-4 z-40 w-[min(calc(100vw-2rem),360px)] rounded-3xl border border-border-base bg-surface/95 p-4 text-foreground shadow-[0_24px_70px_-32px_rgba(16,24,40,0.55)] backdrop-blur md:bottom-6 md:left-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
