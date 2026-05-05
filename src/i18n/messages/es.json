@@ -376,12 +376,27 @@
     "view": {
       "form": {
         "title": "Pide una mascota",
+        "titlePet": "Pide una mascota",
+        "titleCollection": "Pide una colección",
         "body": "Describe la mascota que te gustaría ver: personaje, tema, vibra. Si alguien ya pidió lo mismo, tu envío se convierte en un voto para esa petición.",
-        "collectionHint": "También puedes sugerir colecciones tipo GRAYCRAFT: marca/IP, mascotas que van juntas y el sitio oficial.",
+        "bodyPet": "Describe la mascota que te gustaría ver: personaje, tema, vibra. Si alguien ya pidió lo mismo, tu envío se convierte en un voto para esa petición.",
+        "bodyCollection": "Describe el set que quieres: IP, marca, personajes, tema y qué mascotas deberían ir juntas.",
+        "type": {
+          "pet": "Mascota",
+          "petBody": "Un compañero, personaje, objeto o criatura.",
+          "collection": "Colección",
+          "collectionBody": "Un set coleccionable como Pixar, Star Wars o GRAYCRAFT."
+        },
+        "petHint": "Usa Mascota para un compañero específico: personaje, criatura, objeto o buddy de escritorio.",
+        "collectionHint": "Usa Colección para sets como Pixar, Star Wars, iniciales de Pokémon o GRAYCRAFT: marca/IP, mascotas que van juntas y el sitio oficial.",
         "placeholder": "p. ej. una chinchilla estilo Ghibli, un ajolote programador con sueño, Spider-Pig",
+        "placeholderPet": "p. ej. una chinchilla estilo Ghibli, un ajolote programador con sueño, Spider-Pig",
+        "placeholderCollection": "p. ej. buddies de Pixar, droides de Star Wars, iniciales de Pokémon",
         "imageLabel": "Agregar imagen",
         "imageBody": "Opcional. Las imágenes quedan ocultas hasta revisión admin.",
         "submit": "Pedir",
+        "submitPet": "Pedir mascota",
+        "submitCollection": "Pedir colección",
         "sending": "Enviando…"
       },
       "success": {
@@ -395,6 +410,8 @@
         "searchPlaceholder": "Buscar pedidos…"
       },
       "badges": {
+        "pet": "Mascota",
+        "collection": "Colección",
         "fulfilled": "Cumplida",
         "imagePending": "Imagen en revisión"
       },

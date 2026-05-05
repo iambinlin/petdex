@@ -419,18 +419,33 @@
       "form": {
         "title": "请求一只宠物",
         "title__fixme": true,
+        "titlePet": "请求一只宠物",
+        "titleCollection": "请求一个系列",
         "body": "描述你想看到的宠物：角色、主题、氛围。如果别人已经提过同样的请求，你的提交会自动变成给那条请求投票。",
         "body__fixme": true,
-        "collectionHint": "你也可以建议像 GRAYCRAFT 这样的收藏系列：品牌/IP 名称、属于同一套的宠物，以及官方网站。",
+        "bodyPet": "描述你想看到的宠物：角色、主题、氛围。如果别人已经提过同样的请求，你的提交会自动变成给那条请求投票。",
+        "bodyCollection": "描述你想看到的系列：IP、品牌、角色阵容、主题，以及哪些宠物应该放在一起。",
+        "type": {
+          "pet": "宠物",
+          "petBody": "一个伙伴、角色、物件或生物。",
+          "collection": "系列",
+          "collectionBody": "像 Pixar、Star Wars 或 GRAYCRAFT 这样的收藏系列。"
+        },
+        "petHint": "选择“宠物”来请求一个具体伙伴：角色、生物、物件或桌面小助手。",
+        "collectionHint": "选择“系列”来请求 Pixar、Star Wars、宝可梦初始伙伴或 GRAYCRAFT 这样的套装：品牌/IP 名称、属于同一套的宠物，以及官方网站。",
         "collectionHint__fixme": true,
         "placeholder": "例如：吉卜力风格的龙猫、困困的程序员美西螈、Spider-Pig",
         "placeholder__fixme": true,
+        "placeholderPet": "例如：吉卜力风格的龙猫、困困的程序员美西螈、Spider-Pig",
+        "placeholderCollection": "例如：Pixar 桌面伙伴、Star Wars 机器人、宝可梦初始伙伴",
         "imageLabel": "添加参考图",
         "imageLabel__fixme": true,
         "imageBody": "可选。图片会先隐藏，直到管理员审核。",
         "imageBody__fixme": true,
         "submit": "请求",
         "submit__fixme": true,
+        "submitPet": "请求宠物",
+        "submitCollection": "请求系列",
         "sending": "发送中…"
       },
       "success": {
@@ -449,6 +464,8 @@
         "searchPlaceholder__fixme": true
       },
       "badges": {
+        "pet": "宠物",
+        "collection": "系列",
         "fulfilled": "已实现",
         "fulfilled__fixme": true,
         "imagePending": "图片审核中",

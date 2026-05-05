@@ -55,8 +55,10 @@ export type RequestRow = {
 
 const MIN_LEN = 4;
 const MAX_LEN = 200;
+const COLLECTION_PREFIX = "Collection:";
 
 type Sort = "top" | "new" | "fulfilled";
+type RequestKind = "pet" | "collection";
 
 export function RequestsView({ initial }: { initial: RequestRow[] }) {
   const t = useTranslations("requests.view");
@@ -69,6 +71,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
   const previousRects = useRef(new Map<string, DOMRect>());
 
   // Form state
+  const [requestKind, setRequestKind] = useState<RequestKind>("pet");
   const [draft, setDraft] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
@@ -222,6 +225,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       setFormError(t("errors.moreDetail", { min: MIN_LEN, max: MAX_LEN }));
       return;
     }
+    const requestQuery = toStoredRequestQuery(requestKind, trimmed);
     track("pet_request_clicked", { from: "requests_form" });
     setFormError(null);
     setSubmitting(true);
@@ -230,7 +234,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       const res = await fetch("/api/pet-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: trimmed, imageUrl }),
+        body: JSON.stringify({ query: requestQuery, imageUrl }),
       });
       if (!res.ok) {
         if (res.status === 401) {
@@ -261,7 +265,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       });
       setLastResult({
         mode: data.mode,
-        query: trimmed,
+        query: requestQuery,
         count: data.upvoteCount,
       });
       setDraft("");
@@ -339,19 +343,41 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       {/* Always-visible request form */}
       <form
         onSubmit={submitForm}
-        className="space-y-3 rounded-3xl border border-black/[0.06] bg-white px-4 py-4 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)] dark:border-white/[0.06] dark:bg-stone-900"
+        className="space-y-4 rounded-3xl border border-border-base bg-surface/90 px-4 py-4 shadow-[0_8px_24px_-12px_rgba(56,71,245,0.18)] backdrop-blur dark:shadow-black/30"
       >
         <div className="flex items-center gap-2">
           <span className="grid size-7 place-items-center rounded-full bg-brand text-white">
             <Sparkles className="size-3.5" />
           </span>
           <p className="text-sm font-semibold text-foreground">
-            {t("form.title")}
+            {requestKind === "collection"
+              ? t("form.titleCollection")
+              : t("form.titlePet")}
           </p>
         </div>
-        <p className="text-xs text-muted-3">{t("form.body")}</p>
-        <p className="rounded-2xl border border-dashed border-brand/25 bg-brand-tint/45 px-3 py-2 text-xs leading-5 text-brand-deep">
-          {t("form.collectionHint")}
+        <div className="grid gap-2 sm:grid-cols-2">
+          <RequestKindButton
+            active={requestKind === "pet"}
+            onClick={() => setRequestKind("pet")}
+            title={t("form.type.pet")}
+            body={t("form.type.petBody")}
+          />
+          <RequestKindButton
+            active={requestKind === "collection"}
+            onClick={() => setRequestKind("collection")}
+            title={t("form.type.collection")}
+            body={t("form.type.collectionBody")}
+          />
+        </div>
+        <p className="text-xs text-muted-3">
+          {requestKind === "collection"
+            ? t("form.bodyCollection")
+            : t("form.bodyPet")}
+        </p>
+        <p className="rounded-2xl border border-brand/20 bg-brand/10 px-3 py-2 text-xs leading-5 text-muted-1 dark:border-brand-light/30 dark:bg-brand/15 dark:text-brand-light">
+          {requestKind === "collection"
+            ? t("form.collectionHint")
+            : t("form.petHint")}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
           <label className="relative block w-full flex-1">
@@ -362,9 +388,13 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
                 if (formError) setFormError(null);
                 if (lastResult) setLastResult(null);
               }}
-              placeholder={t("form.placeholder")}
+              placeholder={
+                requestKind === "collection"
+                  ? t("form.placeholderCollection")
+                  : t("form.placeholderPet")
+              }
               maxLength={MAX_LEN}
-              className="h-11 w-full rounded-full border border-border-base bg-surface px-4 text-sm text-stone-900 outline-none transition placeholder:text-muted-4 focus:border-brand/60 focus:ring-2 focus:ring-brand/15 dark:text-stone-100"
+              className="h-11 w-full rounded-full border border-border-base bg-background px-4 text-sm text-foreground outline-none transition placeholder:text-muted-4 focus:border-brand/60 focus:ring-2 focus:ring-brand/15"
             />
             <span className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-3 font-mono text-[10px] text-stone-300 dark:text-stone-600">
               {draft.length}/{MAX_LEN}
@@ -376,7 +406,11 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
             className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-brand px-5 text-sm font-medium text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" />
-            {submitting ? t("form.sending") : t("form.submit")}
+            {submitting
+              ? t("form.sending")
+              : requestKind === "collection"
+                ? t("form.submitCollection")
+                : t("form.submitPet")}
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -532,6 +566,39 @@ function SortTab({
   );
 }
 
+function RequestKindButton({
+  active,
+  onClick,
+  title,
+  body,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  body: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border px-3 py-2 text-left transition ${
+        active
+          ? "border-brand bg-brand text-white shadow-sm shadow-brand/20"
+          : "border-border-base bg-background text-muted-2 hover:bg-surface-muted hover:text-foreground"
+      }`}
+    >
+      <span className="block text-xs font-semibold">{title}</span>
+      <span
+        className={`mt-1 block text-[11px] leading-4 ${
+          active ? "text-white/75" : "text-muted-3"
+        }`}
+      >
+        {body}
+      </span>
+    </button>
+  );
+}
+
 function RequestCard({
   request,
   upvote,
@@ -548,14 +615,15 @@ function RequestCard({
   const fulfilled = request.status === "fulfilled";
   const top3 = request.voters.slice(0, 3);
   const moreVoters = Math.max(0, request.upvoteCount - top3.length);
+  const parsedRequest = parseRequestQuery(request.query);
 
   return (
     <li
       ref={itemRef}
       className={`group rounded-2xl border bg-surface px-4 py-3.5 backdrop-blur transition ${
         fulfilled
-          ? "border-emerald-200 hover:border-emerald-300"
-          : "border-black/10 hover:border-brand/40 hover:shadow-[0_18px_45px_-26px_rgba(82,102,234,0.4)]"
+          ? "border-emerald-200 hover:border-emerald-300 dark:border-emerald-900/50 dark:hover:border-emerald-800"
+          : "border-border-base hover:border-brand/40 hover:shadow-[0_18px_45px_-26px_rgba(82,102,234,0.4)] dark:hover:shadow-[0_18px_45px_-28px_rgba(132,156,255,0.45)]"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -567,11 +635,11 @@ function RequestCard({
             upvote();
           }}
           disabled={busy || request.voted || fulfilled}
-          aria-label={t("upvoteAria", { query: request.query })}
+          aria-label={t("upvoteAria", { query: parsedRequest.label })}
           className={`flex shrink-0 flex-col items-center gap-0.5 rounded-xl border px-3 py-2 transition ${
             request.voted
               ? "border-brand bg-brand text-white"
-              : "border-black/10 bg-surface text-muted-2 hover:border-brand/40 hover:bg-brand-tint"
+              : "border-border-base bg-background text-muted-2 hover:border-brand/40 hover:bg-brand-tint dark:hover:bg-brand/15"
           } disabled:cursor-not-allowed disabled:opacity-60`}
         >
           {request.voted ? (
@@ -588,8 +656,19 @@ function RequestCard({
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-baseline gap-2">
             <p className="text-sm leading-6 font-medium text-stone-900 dark:text-stone-100">
-              {request.query}
+              {parsedRequest.label}
             </p>
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ${
+                parsedRequest.kind === "collection"
+                  ? "bg-brand-tint text-brand-deep ring-brand/20 dark:bg-brand/15 dark:text-brand-light dark:ring-brand-light/25"
+                  : "bg-surface-muted text-muted-2 ring-border-base"
+              }`}
+            >
+              {parsedRequest.kind === "collection"
+                ? t("badges.collection")
+                : t("badges.pet")}
+            </span>
             {fulfilled ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-chip-success-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-success-fg uppercase ring-1 ring-chip-success-fg/20">
                 <Check className="size-3" />
@@ -703,6 +782,34 @@ function RequestCard({
 function sortByTop(a: RequestRow, b: RequestRow): number {
   if (b.upvoteCount !== a.upvoteCount) return b.upvoteCount - a.upvoteCount;
   return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+}
+
+function toStoredRequestQuery(kind: RequestKind, value: string): string {
+  const stripped = stripCollectionPrefix(value);
+  return kind === "collection" ? `${COLLECTION_PREFIX} ${stripped}` : stripped;
+}
+
+function parseRequestQuery(query: string): {
+  kind: RequestKind;
+  label: string;
+} {
+  if (query.trim().toLowerCase().startsWith(COLLECTION_PREFIX.toLowerCase())) {
+    return {
+      kind: "collection",
+      label: stripCollectionPrefix(query),
+    };
+  }
+
+  return { kind: "pet", label: query };
+}
+
+function stripCollectionPrefix(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.toLowerCase().startsWith(COLLECTION_PREFIX.toLowerCase())) {
+    return trimmed.slice(COLLECTION_PREFIX.length).trim();
+  }
+
+  return trimmed;
 }
 
 function EmptyState() {

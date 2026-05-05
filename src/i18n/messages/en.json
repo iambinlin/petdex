@@ -371,22 +371,37 @@
     },
     "eyebrow": "Community wishlist",
     "title": "Pets people are asking for",
-    "body": "When someone searches for a pet that doesn't exist yet, they can request it. Upvote the ones you'd want too — most-upvoted go to the top of the curation list.",
+    "body": "When someone searches for a pet that doesn't exist yet, they can request it. Upvote the ones you'd want too. Most-upvoted go to the top of the curation list.",
     "backToGallery": "← Back to gallery",
     "view": {
       "form": {
         "title": "Request a pet",
-        "body": "Describe the pet you'd like to see — character, theme, vibe. If someone else already asked for the same thing, your submission turns into an upvote on theirs.",
-        "collectionHint": "You can also suggest collectible sets like GRAYCRAFT: brand/IP name, pets that belong together, and the official site.",
+        "titlePet": "Request a pet",
+        "titleCollection": "Request a collection",
+        "body": "Describe the pet you'd like to see: character, theme, vibe. If someone else already asked for the same thing, your submission turns into an upvote on theirs.",
+        "bodyPet": "Describe the pet you'd like to see: character, theme, vibe. If someone else already asked for the same thing, your submission turns into an upvote on theirs.",
+        "bodyCollection": "Describe the set you want: IP, brand, cast, theme, and what pets should belong together.",
+        "type": {
+          "pet": "Pet",
+          "petBody": "One companion, character, object or creature.",
+          "collection": "Collection",
+          "collectionBody": "A collectible set like Pixar, Star Wars or GRAYCRAFT."
+        },
+        "petHint": "Use Pet for one specific companion: a character, creature, object or desk buddy.",
+        "collectionHint": "Use Collection for sets like Pixar, Star Wars, Pokémon starters or GRAYCRAFT: brand/IP name, pets that belong together and the official site.",
         "placeholder": "e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig",
+        "placeholderPet": "e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig",
+        "placeholderCollection": "e.g. Pixar desk buddies, Star Wars droids, Pokémon starters",
         "imageLabel": "Add reference image",
         "imageBody": "Optional. Images stay hidden until admin review.",
         "submit": "Request",
+        "submitPet": "Request pet",
+        "submitCollection": "Request collection",
         "sending": "Sending…"
       },
       "success": {
         "created": "Requested \"{query}\". Others can upvote it now.",
-        "upvoted": "Upvoted existing request for \"{query}\" — now at {count} votes."
+        "upvoted": "Upvoted existing request for \"{query}\". Now at {count} votes."
       },
       "sort": {
         "top": "Top voted",
@@ -395,11 +410,13 @@
         "searchPlaceholder": "Search requests…"
       },
       "badges": {
+        "pet": "Pet",
+        "collection": "Collection",
         "fulfilled": "Fulfilled",
         "imagePending": "Image in review"
       },
       "empty": {
-        "title": "No requests yet — be the first.",
+        "title": "No requests yet. Be the first.",
         "beforeLink": "Or search",
         "link": "the gallery",
         "afterLink": "and request a pet directly from the no-results screen.",
