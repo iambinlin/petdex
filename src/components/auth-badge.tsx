@@ -2,33 +2,38 @@
 
 import { useEffect, useState } from "react";
 
-import { Show, SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth, useUser } from "@clerk/nextjs";
 import { MessageSquare, Shield, Sparkles, UserSquare } from "lucide-react";
 
 import { isAdminClientSafe } from "@/lib/admin";
 
 import { NotificationsBell } from "@/components/notifications-bell";
 
-export function AuthBadge() {
-  return (
-    <>
-      <Show when="signed-out">
+export function AuthBadge({ beforeUser }: { beforeUser?: React.ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (!isLoaded || !isSignedIn) {
+    return (
+      <div className="flex items-center gap-2">
+        {beforeUser}
         <SignInButton mode="modal">
           <button
             type="button"
-            className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface/70 px-4 text-sm font-medium text-foreground backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-border-base bg-surface/70 px-4 text-sm font-medium text-foreground backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
           >
             Sign in
           </button>
         </SignInButton>
-      </Show>
-      <Show when="signed-in">
-        <div className="flex items-center gap-2">
-          <NotificationsBell />
-          <UserButtonWithAdminLink />
-        </div>
-      </Show>
-    </>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <NotificationsBell />
+      {beforeUser}
+      <UserButtonWithAdminLink />
+    </div>
   );
 }
 
@@ -51,7 +56,7 @@ function UserButtonWithAdminLink() {
     <div className="relative">
       <UserButton
         appearance={{
-          elements: { avatarBox: "size-10 rounded-full ring-1 ring-black/10" },
+          elements: { avatarBox: "size-11 rounded-full ring-1 ring-black/10" },
         }}
       >
         <UserButton.MenuItems>

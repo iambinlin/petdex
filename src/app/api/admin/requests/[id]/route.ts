@@ -13,8 +13,9 @@ export const runtime = "nodejs";
 type Params = { id: string };
 
 type PatchBody = {
-  action: "fulfill" | "dismiss" | "reopen";
+  action: "fulfill" | "dismiss" | "reopen" | "approve_image" | "reject_image";
   petSlug?: string;
+  reason?: string;
 };
 
 export async function PATCH(
@@ -41,7 +42,9 @@ export async function PATCH(
   if (
     body.action !== "fulfill" &&
     body.action !== "dismiss" &&
-    body.action !== "reopen"
+    body.action !== "reopen" &&
+    body.action !== "approve_image" &&
+    body.action !== "reject_image"
   ) {
     return NextResponse.json({ error: "invalid_action" }, { status: 400 });
   }
@@ -51,6 +54,36 @@ export async function PATCH(
   });
   if (!row) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  if (body.action === "approve_image") {
+    if (!row.imageUrl) {
+      return NextResponse.json({ error: "missing_image" }, { status: 400 });
+    }
+    await db
+      .update(schema.petRequests)
+      .set({
+        imageReviewStatus: "approved",
+        imageRejectionReason: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.petRequests.id, id));
+    return NextResponse.json({ ok: true, imageReviewStatus: "approved" });
+  }
+
+  if (body.action === "reject_image") {
+    if (!row.imageUrl) {
+      return NextResponse.json({ error: "missing_image" }, { status: 400 });
+    }
+    await db
+      .update(schema.petRequests)
+      .set({
+        imageReviewStatus: "rejected",
+        imageRejectionReason: (body.reason ?? "").trim() || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.petRequests.id, id));
+    return NextResponse.json({ ok: true, imageReviewStatus: "rejected" });
   }
 
   if (body.action === "fulfill") {

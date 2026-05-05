@@ -362,6 +362,10 @@ export const petRequests = pgTable(
     // open / fulfilled / dismissed
     status: text("status").notNull().default("open"),
     fulfilledPetSlug: text("fulfilled_pet_slug"),
+    imageUrl: text("image_url"),
+    // none / pending / approved / rejected
+    imageReviewStatus: text("image_review_status").notNull().default("none"),
+    imageRejectionReason: text("image_rejection_reason"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -373,6 +377,9 @@ export const petRequests = pgTable(
     normalizedIdx: index("pet_requests_normalized_idx").on(table.normalized),
     upvoteIdx: index("pet_requests_upvote_idx").on(table.upvoteCount),
     statusIdx: index("pet_requests_status_idx").on(table.status),
+    imageReviewIdx: index("pet_requests_image_review_idx").on(
+      table.imageReviewStatus,
+    ),
   }),
 );
 

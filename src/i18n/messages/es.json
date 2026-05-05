@@ -38,7 +38,7 @@
     "about": "Acerca de",
     "language": "Idioma",
     "settings": "Ajustes",
-    "submitCta": "Enviar una mascota",
+    "submitCta": "Enviar",
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "githubRepoAria": "Petdex en GitHub",
@@ -54,7 +54,7 @@
   },
   "footer": {
     "rightsNotice": "Las mascotas son fan art enviado por usuarios. Petdex no reclama derechos sobre ninguna propiedad intelectual subyacente.",
-    "topCreators": "Creadores destacados",
+    "topCreators": "Creadores",
     "takedown": "Retiro de contenido",
     "github": "GitHub",
     "sponsor": "Patrocinar",
@@ -65,7 +65,7 @@
     "title": "Petdex",
     "tagline": "La galería pública de compañeros animados para <brand />. Explora más de {totalPets} compañeros open source, previsualiza sus estados e instala uno con un solo comando.",
     "heroCommand": "npx petdex install boba",
-    "submitCta": "Enviar una mascota",
+    "submitCta": "Enviar",
     "browseGallery": "Ver galería",
     "openPet": "Abrir {name}",
     "petAnimated": "{name} animado",
@@ -247,6 +247,8 @@
       "fulfill": "Cumplir",
       "dismiss": "Descartar",
       "reopen": "Reabrir",
+      "approveImage": "Aprobar imagen",
+      "rejectImage": "Rechazar imagen",
       "slug": "slug",
       "placeholder": "cool-clippy",
       "mark": "Marcar"
@@ -300,7 +302,10 @@
       "form": {
         "title": "Pide una mascota",
         "body": "Describe la mascota que te gustaría ver: personaje, tema, vibra. Si alguien ya pidió lo mismo, tu envío se convierte en un voto para esa petición.",
+        "collectionHint": "También puedes sugerir colecciones tipo GRAYCRAFT: marca/IP, mascotas que van juntas y el sitio oficial.",
         "placeholder": "p. ej. una chinchilla estilo Ghibli, un ajolote programador con sueño, Spider-Pig",
+        "imageLabel": "Agregar imagen",
+        "imageBody": "Opcional. Las imágenes quedan ocultas hasta revisión admin.",
         "submit": "Pedir",
         "sending": "Enviando…"
       },
@@ -315,7 +320,8 @@
         "searchPlaceholder": "Buscar pedidos…"
       },
       "badges": {
-        "fulfilled": "Cumplida"
+        "fulfilled": "Cumplida",
+        "imagePending": "Imagen en revisión"
       },
       "empty": {
         "title": "Todavía no hay pedidos. Sé la primera persona.",
@@ -331,6 +337,9 @@
         "moreDetail": "Cuéntanos un poco más ({min}-{max} caracteres).",
         "signInRequest": "Inicia sesión para pedir una mascota.",
         "submitFailed": "No se pudo enviar ({status})",
+        "imageType": "Usa una imagen PNG, JPG o WebP.",
+        "imageTooLarge": "La imagen de referencia debe pesar 4 MB o menos.",
+        "imageUpload": "No se pudo subir la imagen. Inténtalo de nuevo.",
         "networkRetry": "Error de red, inténtalo de nuevo.",
         "signInUpvote": "Inicia sesión para votar.",
         "voteFailed": "No se pudo votar ({status})",

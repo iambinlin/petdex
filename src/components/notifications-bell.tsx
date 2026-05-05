@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   Bell,
@@ -117,7 +117,7 @@ export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
       if (!res.ok) return;
@@ -130,13 +130,13 @@ export function NotificationsBell() {
     } catch {
       /* silent */
     }
-  }
+  }, []);
 
   useEffect(() => {
     void load();
     const i = setInterval(() => void load(), 60000);
     return () => clearInterval(i);
-  }, []);
+  }, [load]);
 
   // Click outside / Escape closes the panel.
   useEffect(() => {
@@ -202,7 +202,7 @@ export function NotificationsBell() {
           unread > 0 ? `${unread} unread notifications` : "Notifications"
         }
         onClick={() => setOpen((v) => !v)}
-        className="relative grid size-10 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
+        className="relative grid size-11 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 backdrop-blur transition hover:bg-white dark:hover:bg-stone-800"
       >
         <Bell className="size-4" />
         {unread > 0 ? (

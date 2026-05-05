@@ -106,38 +106,42 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           {hideSubmitCta ? null : (
             <SubmitCTA
               href={href("/submit")}
-              className="hidden h-10 items-center justify-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover md:inline-flex"
+              className="hidden h-11 items-center justify-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover md:inline-flex"
             >
               {t("submitCta")}
             </SubmitCTA>
           )}
-          <AuthBadge />
-          <div ref={settingsRef} className="relative hidden md:block">
-            <button
-              type="button"
-              aria-label={t("settings")}
-              aria-expanded={settingsOpen}
-              onClick={() => setSettingsOpen((value) => !value)}
-              className="grid size-10 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 backdrop-blur transition hover:bg-surface hover:text-foreground"
-            >
-              <MoreHorizontal className="size-4" />
-            </button>
-            {settingsOpen ? (
-              <HeaderSettingsMenu
-                href={href}
-                onNavigate={() => setSettingsOpen(false)}
-              />
-            ) : null}
-          </div>
+          <GithubStarsLink className="hidden h-11 items-center rounded-full border border-border-base bg-surface/70 px-3 text-muted-2 backdrop-blur hover:bg-surface md:inline-flex" />
           <button
             type="button"
             aria-label={open ? t("closeMenu") : t("openMenu")}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 transition hover:bg-surface lg:hidden"
+            className="grid size-11 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 transition hover:bg-surface lg:hidden"
           >
             {open ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
+          <AuthBadge
+            beforeUser={
+              <div ref={settingsRef} className="relative hidden md:block">
+                <button
+                  type="button"
+                  aria-label={t("settings")}
+                  aria-expanded={settingsOpen}
+                  onClick={() => setSettingsOpen((value) => !value)}
+                  className="grid size-11 place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 backdrop-blur transition hover:bg-surface hover:text-foreground"
+                >
+                  <MoreHorizontal className="size-4" />
+                </button>
+                {settingsOpen ? (
+                  <HeaderSettingsMenu
+                    href={href}
+                    onNavigate={() => setSettingsOpen(false)}
+                  />
+                ) : null}
+              </div>
+            }
+          />
         </div>
       </nav>
 
@@ -155,7 +159,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
               type="button"
               aria-label={t("closeMenu")}
               onClick={() => setOpen(false)}
-              className="grid size-10 place-items-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:bg-surface-muted"
+              className="grid size-11 place-items-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:bg-surface-muted"
             >
               <X className="size-4" />
             </button>
@@ -234,10 +238,6 @@ function HeaderSettingsMenu({
         <SettingsLink href={href("/about")} onClick={onNavigate}>
           {t("about")}
         </SettingsLink>
-        <GithubStarsLink
-          size="mobile"
-          className="rounded-xl px-3 py-2 text-sm hover:bg-surface-muted"
-        />
       </div>
       <div className="mt-2 border-t border-border-base pt-2">
         <p className="px-2 pb-2 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">

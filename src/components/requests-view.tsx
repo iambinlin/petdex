@@ -9,9 +9,11 @@ import {
   Check,
   ExternalLink,
   Flame,
+  Image as ImageIcon,
   Plus,
   Search,
   Sparkles,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -34,6 +36,9 @@ export type RequestRow = {
   upvoteCount: number;
   status: string;
   fulfilledPetSlug: string | null;
+  imageUrl: string | null;
+  imageReviewStatus: string;
+  hasPendingImage: boolean;
   createdAt: string | Date;
   voted?: boolean;
   requester: ClerkInfo | null;
@@ -56,6 +61,8 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
 
   // Form state
   const [draft, setDraft] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{
@@ -116,6 +123,36 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
     return list;
   }, [requests, sort, search]);
 
+  async function uploadImage(file: File): Promise<string> {
+    if (!["image/png", "image/webp", "image/jpeg"].includes(file.type)) {
+      throw new Error(t("errors.imageType"));
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      throw new Error(t("errors.imageTooLarge"));
+    }
+    const presign = await fetch("/api/pet-requests/image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contentType: file.type, size: file.size }),
+    });
+    if (!presign.ok) {
+      throw new Error(t("errors.imageUpload"));
+    }
+    const data = (await presign.json()) as {
+      uploadUrl: string;
+      publicUrl: string;
+    };
+    const upload = await fetch(data.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!upload.ok) {
+      throw new Error(t("errors.imageUpload"));
+    }
+    return data.publicUrl;
+  }
+
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
@@ -128,10 +165,11 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
     setFormError(null);
     setSubmitting(true);
     try {
+      const imageUrl = imageFile ? await uploadImage(imageFile) : null;
       const res = await fetch("/api/pet-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: trimmed }),
+        body: JSON.stringify({ query: trimmed, imageUrl }),
       });
       if (!res.ok) {
         if (res.status === 401) {
@@ -166,6 +204,8 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
         count: data.upvoteCount,
       });
       setDraft("");
+      setImageFile(null);
+      setFileInputKey((key) => key + 1);
       try {
         const r2 = await fetch("/api/pet-requests?status=all&limit=80");
         if (r2.ok) {
@@ -175,9 +215,11 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       } catch {
         /* ignore */
       }
-    } catch {
+    } catch (err) {
       track("pet_request_failed", { reason: "network" });
-      setFormError(t("errors.networkRetry"));
+      setFormError(
+        err instanceof Error ? err.message : t("errors.networkRetry"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -204,7 +246,9 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
           error?: string;
         };
         setError(
-          data.message ?? data.error ?? t("errors.voteFailed", { status: res.status }),
+          data.message ??
+            data.error ??
+            t("errors.voteFailed", { status: res.status }),
         );
         return;
       }
@@ -238,10 +282,13 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
           <span className="grid size-7 place-items-center rounded-full bg-brand text-white">
             <Sparkles className="size-3.5" />
           </span>
-          <p className="text-sm font-semibold text-foreground">{t("form.title")}</p>
+          <p className="text-sm font-semibold text-foreground">
+            {t("form.title")}
+          </p>
         </div>
-        <p className="text-xs text-muted-3">
-          {t("form.body")}
+        <p className="text-xs text-muted-3">{t("form.body")}</p>
+        <p className="rounded-2xl border border-dashed border-brand/25 bg-brand-tint/45 px-3 py-2 text-xs leading-5 text-brand-deep">
+          {t("form.collectionHint")}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
           <label className="relative block w-full flex-1">
@@ -268,6 +315,38 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
             <Plus className="size-4" />
             {submitting ? t("form.sending") : t("form.submit")}
           </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:bg-surface-muted hover:text-foreground">
+            <ImageIcon className="size-3.5" />
+            {t("form.imageLabel")}
+            <input
+              key={fileInputKey}
+              type="file"
+              accept="image/png,image/webp,image/jpeg"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                setImageFile(file);
+                setFormError(null);
+                setLastResult(null);
+              }}
+            />
+          </label>
+          <span className="text-xs text-muted-3">{t("form.imageBody")}</span>
+          {imageFile ? (
+            <button
+              type="button"
+              onClick={() => {
+                setImageFile(null);
+                setFileInputKey((key) => key + 1);
+              }}
+              className="inline-flex h-8 items-center gap-1 rounded-full bg-surface-muted px-2.5 text-xs text-muted-2 transition hover:text-foreground"
+            >
+              <X className="size-3.5" />
+              {imageFile.name}
+            </button>
+          ) : null}
         </div>
         {formError ? (
           <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300">
@@ -334,9 +413,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
         <EmptyState />
       ) : visible.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border-base bg-surface/70 p-8 text-center text-sm text-muted-2">
-          {search
-            ? t("empty.noMatches", { search })
-            : t("empty.nothingInView")}
+          {search ? t("empty.noMatches", { search }) : t("empty.nothingInView")}
         </div>
       ) : (
         <ul className="space-y-2.5">
@@ -452,6 +529,12 @@ function RequestCard({
                 {t("badges.fulfilled")}
               </span>
             ) : null}
+            {request.hasPendingImage ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-chip-warning-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-warning-fg uppercase ring-1 ring-chip-warning-fg/20">
+                <ImageIcon className="size-3" />
+                {t("badges.imagePending")}
+              </span>
+            ) : null}
             <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
               {new Date(request.createdAt).toLocaleDateString(undefined, {
                 month: "short",
@@ -459,6 +542,17 @@ function RequestCard({
               })}
             </span>
           </div>
+
+          {request.imageUrl ? (
+            <div className="overflow-hidden rounded-2xl border border-border-base bg-surface-muted">
+              {/* biome-ignore lint/performance/noImgElement: R2 request reference */}
+              <img
+                src={request.imageUrl}
+                alt=""
+                className="max-h-48 w-full object-cover"
+              />
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs">
             {/* Requester */}
@@ -547,9 +641,7 @@ function EmptyState() {
       <span className="mx-auto grid size-10 place-items-center rounded-full bg-brand-tint text-brand dark:bg-brand-tint-dark">
         <Sparkles className="size-4" />
       </span>
-      <p className="text-sm font-medium text-foreground">
-        {t("empty.title")}
-      </p>
+      <p className="text-sm font-medium text-foreground">{t("empty.title")}</p>
       <p className="text-xs text-muted-3">
         {t("empty.beforeLink")}{" "}
         <a

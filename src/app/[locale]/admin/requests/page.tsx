@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { desc, sql as dsql, eq, inArray } from "drizzle-orm";
+import { desc, sql as dsql, inArray } from "drizzle-orm";
 import { ExternalLink, Sparkles } from "lucide-react";
 
 import { db, schema } from "@/lib/db/client";
@@ -112,8 +112,11 @@ export default async function AdminRequestsPage() {
 
   // Pull fulfilled pet thumbnails so the row can show what shipped.
   const fulfilledSlugs = rows
-    .filter((r) => r.status === "fulfilled" && r.fulfilledPetSlug)
-    .map((r) => r.fulfilledPetSlug!);
+    .filter(
+      (r): r is typeof r & { fulfilledPetSlug: string } =>
+        r.status === "fulfilled" && typeof r.fulfilledPetSlug === "string",
+    )
+    .map((r) => r.fulfilledPetSlug);
   type Pet = {
     slug: string;
     displayName: string;
@@ -352,6 +355,36 @@ function RequestRow({
               </Link>
             ) : null}
           </div>
+
+          {request.imageUrl ? (
+            <div className="mt-3 flex flex-wrap items-start gap-3 rounded-2xl border border-border-base bg-background/60 p-2">
+              {/* biome-ignore lint/performance/noImgElement: admin request reference */}
+              <img
+                src={request.imageUrl}
+                alt=""
+                className="h-24 w-32 rounded-xl object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-[10px] tracking-[0.14em] text-muted-4 uppercase">
+                  Reference image: {request.imageReviewStatus}
+                </p>
+                {request.imageRejectionReason ? (
+                  <p className="mt-1 text-xs text-rose-600">
+                    {request.imageRejectionReason}
+                  </p>
+                ) : null}
+                <a
+                  href={request.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-brand underline-offset-4 hover:underline"
+                >
+                  Open image
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* Actions */}
@@ -359,6 +392,8 @@ function RequestRow({
           id={request.id}
           status={request.status as "open" | "fulfilled" | "dismissed"}
           defaultSlug={request.fulfilledPetSlug ?? null}
+          imageUrl={request.imageUrl}
+          imageReviewStatus={request.imageReviewStatus}
         />
       </div>
     </div>

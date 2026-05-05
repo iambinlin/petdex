@@ -15,6 +15,10 @@ import {
   XCircle,
 } from "lucide-react";
 
+import {
+  CollectionEditor,
+  type EditableCollection,
+} from "@/components/collection-editor";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetSprite } from "@/components/pet-sprite";
@@ -55,10 +59,12 @@ type Tab = "all" | "pending" | "approved" | "rejected";
 export function MyPetsView({
   submissions,
   catchProgress,
+  collection,
   profile,
 }: {
   submissions: Submission[];
   catchProgress: { caught: number; total: number; pct: number };
+  collection: EditableCollection;
   profile: ProfileData;
 }) {
   const [tab, setTab] = useState<Tab>("all");
@@ -82,6 +88,11 @@ export function MyPetsView({
       <>
         <ProfileCard profile={profile} />
         <ClaimableBanner />
+        <CollectionEditor
+          approvedPets={profile.approvedPets}
+          initial={collection}
+          profileHandle={profile.handle}
+        />
         <AlbumProgress catchProgress={catchProgress} />
         <EmptyState />
       </>
@@ -92,6 +103,11 @@ export function MyPetsView({
     <div className="space-y-8">
       <ProfileCard profile={profile} />
       <ClaimableBanner />
+      <CollectionEditor
+        approvedPets={profile.approvedPets}
+        initial={collection}
+        profileHandle={profile.handle}
+      />
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard

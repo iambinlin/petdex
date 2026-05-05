@@ -3,10 +3,20 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, desc, eq } from "drizzle-orm";
-import { Heart, TerminalSquare, Trophy } from "lucide-react";
+import {
+  ExternalLink,
+  Heart,
+  Layers,
+  TerminalSquare,
+  Trophy,
+} from "lucide-react";
 
 import { isAdmin } from "@/lib/admin";
 import { getCatchProgress } from "@/lib/catch-status";
+import {
+  getOwnerCollection,
+  type PetCollectionWithPets,
+} from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { userIdForHandle } from "@/lib/handles";
@@ -147,6 +157,7 @@ export default async function UserProfilePage({ params }: PageProps) {
       likeCount: 0,
     },
   }));
+  const collection = await getOwnerCollection(ownerId);
 
   // Resolve pinned slugs to full pet objects, preserving owner-chosen
   // order. Drop any that are no longer approved (would otherwise break
@@ -332,6 +343,24 @@ export default async function UserProfilePage({ params }: PageProps) {
       </section>
 
       <section className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-5 py-12 md:px-8 md:py-16">
+        {collection ? (
+          <OwnerCollectionPanel
+            collection={collection}
+            publicHandle={publicHandle}
+            isOwner={isOwner}
+          />
+        ) : isOwner && pets.length > 0 ? (
+          <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-6 text-sm text-muted-2">
+            Build a featured collection from{" "}
+            <Link
+              href="/my-pets"
+              className="font-medium text-brand underline-offset-4 hover:underline"
+            >
+              your creator dashboard
+            </Link>
+            .
+          </div>
+        ) : null}
         {pets.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-12 text-center">
             <p className="font-mono text-xs tracking-[0.22em] text-muted-3 uppercase">
@@ -439,6 +468,115 @@ export default async function UserProfilePage({ params }: PageProps) {
 
       <SiteFooter />
     </main>
+  );
+}
+
+function OwnerCollectionPanel({
+  collection,
+  publicHandle,
+  isOwner,
+}: {
+  collection: PetCollectionWithPets;
+  publicHandle: string;
+  isOwner: boolean;
+}) {
+  const cover =
+    collection.pets.find((pet) => pet.slug === collection.coverPetSlug) ??
+    collection.pets[0] ??
+    null;
+  const totalLikes = collection.pets.reduce(
+    (sum, pet) => sum + pet.metrics.likeCount,
+    0,
+  );
+  const totalInstalls = collection.pets.reduce(
+    (sum, pet) => sum + pet.metrics.installCount,
+    0,
+  );
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-brand-light/35 bg-surface/86 backdrop-blur">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="p-6 md:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-tint px-2.5 py-1 font-mono text-[10px] tracking-[0.16em] text-brand-deep uppercase">
+              <Layers className="size-3" />
+              Featured collection
+            </span>
+            {isOwner ? (
+              <Link
+                href="/my-pets"
+                className="rounded-full border border-border-base px-2.5 py-1 font-mono text-[10px] tracking-[0.16em] text-muted-3 uppercase transition hover:bg-surface-muted hover:text-foreground"
+              >
+                Edit
+              </Link>
+            ) : null}
+          </div>
+          <h2 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+            {collection.title}
+          </h2>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-muted-2 md:text-lg">
+            {collection.description}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <Link
+              href={`/collections/${collection.slug}`}
+              className="inline-flex h-10 items-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
+            >
+              View collection
+            </Link>
+            {collection.externalUrl ? (
+              <a
+                href={collection.externalUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border-base px-4 text-sm font-medium text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
+              >
+                <ExternalLink className="size-4" />
+                Visit IP site
+              </a>
+            ) : null}
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+            <span>
+              {collection.pets.length}{" "}
+              {collection.pets.length === 1 ? "pet" : "pets"}
+            </span>
+            {totalLikes > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Heart className="size-3" />
+                {totalLikes}
+              </span>
+            ) : null}
+            {totalInstalls > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <TerminalSquare className="size-3" />
+                {totalInstalls} installs
+              </span>
+            ) : null}
+            <span>@{publicHandle}</span>
+          </div>
+        </div>
+        <div className="border-t border-black/[0.06] bg-background/60 p-6 lg:border-t-0 lg:border-l dark:border-white/[0.06]">
+          {cover ? (
+            <Link
+              href={`/pets/${cover.slug}`}
+              className="group flex min-h-[300px] items-center justify-center rounded-3xl bg-surface-muted/60 transition hover:bg-surface-muted"
+            >
+              <PetSprite
+                src={cover.spritesheetPath}
+                cycleStates
+                scale={1}
+                label={`${cover.displayName} collection hero`}
+              />
+            </Link>
+          ) : (
+            <div className="grid min-h-[300px] place-items-center rounded-3xl border border-dashed border-border-base text-sm text-muted-3">
+              Collection pets pending.
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 

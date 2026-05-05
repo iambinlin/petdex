@@ -1,4 +1,4 @@
-import { and, asc, eq, getTableColumns, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs, type Metrics } from "@/lib/db/metrics";
@@ -64,6 +64,29 @@ export async function getCollection(
   }
   if (!row) return null;
   const [collection] = await hydrateCollections([row]);
+  return collection ?? null;
+}
+
+export async function getOwnerCollection(
+  ownerId: string,
+): Promise<PetCollectionWithPets | null> {
+  let rows: PetCollection[];
+  try {
+    rows = await db
+      .select()
+      .from(schema.petCollections)
+      .where(eq(schema.petCollections.ownerId, ownerId))
+      .orderBy(
+        desc(schema.petCollections.featured),
+        asc(schema.petCollections.title),
+      )
+      .limit(1);
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return null;
+    throw error;
+  }
+
+  const [collection] = await hydrateCollections(rows);
   return collection ?? null;
 }
 

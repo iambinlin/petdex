@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 
 import { getCatchProgress } from "@/lib/catch-status";
+import { getOwnerCollection } from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { handleFromClerk } from "@/lib/handles";
@@ -107,6 +108,7 @@ export default async function MyPetsPage() {
   displayName = profile?.displayName ?? displayName;
 
   const catchProgress = await getCatchProgress(userId);
+  const collection = await getOwnerCollection(userId);
 
   const approvedSummaries = submissions
     .filter((s) => s.status === "approved")
@@ -125,6 +127,18 @@ export default async function MyPetsPage() {
         <MyPetsView
           submissions={submissions}
           catchProgress={catchProgress}
+          collection={
+            collection
+              ? {
+                  slug: collection.slug,
+                  title: collection.title,
+                  description: collection.description,
+                  externalUrl: collection.externalUrl,
+                  coverPetSlug: collection.coverPetSlug,
+                  petSlugs: collection.pets.map((pet) => pet.slug),
+                }
+              : null
+          }
           profile={{
             handle,
             displayName,
