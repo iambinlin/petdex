@@ -123,6 +123,12 @@ class KeychainCredentialStore implements CredentialStore {
 
 	private warnFallback(operation: string, error: unknown): void {
 		const detail = error instanceof Error ? error.message : String(error);
+		// `Cannot find package` means the optional native dep wasn't installed
+		// (e.g. npx download). That's expected — file store handles it. Only
+		// surface real errors so users don't see a scary warning on every run.
+		if (operation === "initialization" && detail.includes("Cannot find package")) {
+			return;
+		}
 		console.warn(`Keychain ${operation} failed; falling back to file store. ${detail}`);
 	}
 
