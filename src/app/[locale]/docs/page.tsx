@@ -400,7 +400,7 @@ export default function DocsPage() {
 
           <Section id="agents" title="Agent-first usage (Skill)">
             <p>
-              Petdex ships a Claude Code / Codex CLI / Cursor compatible{" "}
+              Petdex ships a Claude Code / Codex / Cursor compatible{" "}
               <strong>skill</strong> at{" "}
               <code>.claude/skills/petdex/SKILL.md</code>. Compatible agents
               load it automatically and learn <em>when</em> and <em>how</em> to

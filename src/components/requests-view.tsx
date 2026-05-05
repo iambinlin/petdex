@@ -13,6 +13,7 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type ClerkInfo = {
   handle: string;
@@ -46,6 +47,7 @@ const MAX_LEN = 200;
 type Sort = "top" | "new" | "fulfilled";
 
 export function RequestsView({ initial }: { initial: RequestRow[] }) {
+  const t = useTranslations("requests.view");
   const [requests, setRequests] = useState<RequestRow[]>(initial);
   const [pending, setPending] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +121,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
     if (submitting) return;
     const trimmed = draft.trim();
     if (trimmed.length < MIN_LEN || trimmed.length > MAX_LEN) {
-      setFormError(`Tell us a bit more (${MIN_LEN}-${MAX_LEN} chars).`);
+      setFormError(t("errors.moreDetail", { min: MIN_LEN, max: MAX_LEN }));
       return;
     }
     track("pet_request_clicked", { from: "requests_form" });
@@ -134,7 +136,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       if (!res.ok) {
         if (res.status === 401) {
           track("pet_request_blocked", { reason: "unauthorized" });
-          setFormError("Sign in to request a pet.");
+          setFormError(t("errors.signInRequest"));
           return;
         }
         const data = (await res.json().catch(() => ({}))) as {
@@ -143,7 +145,9 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
         };
         track("pet_request_failed", { status: res.status });
         setFormError(
-          data.message ?? data.error ?? `Submit failed (${res.status})`,
+          data.message ??
+            data.error ??
+            t("errors.submitFailed", { status: res.status }),
         );
         return;
       }
@@ -173,7 +177,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       }
     } catch {
       track("pet_request_failed", { reason: "network" });
-      setFormError("Network error, try again.");
+      setFormError(t("errors.networkRetry"));
     } finally {
       setSubmitting(false);
     }
@@ -192,14 +196,16 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       });
       if (!res.ok) {
         if (res.status === 401) {
-          setError("Sign in to upvote.");
+          setError(t("errors.signInUpvote"));
           return;
         }
         const data = (await res.json().catch(() => ({}))) as {
           message?: string;
           error?: string;
         };
-        setError(data.message ?? data.error ?? `Vote failed (${res.status})`);
+        setError(
+          data.message ?? data.error ?? t("errors.voteFailed", { status: res.status }),
+        );
         return;
       }
       const data = (await res.json()) as { upvoteCount: number };
@@ -211,7 +217,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
         ),
       );
     } catch {
-      setError("Network error");
+      setError(t("errors.network"));
     } finally {
       setPending((s) => {
         const next = new Set(s);
@@ -232,12 +238,10 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
           <span className="grid size-7 place-items-center rounded-full bg-brand text-white">
             <Sparkles className="size-3.5" />
           </span>
-          <p className="text-sm font-semibold text-foreground">Request a pet</p>
+          <p className="text-sm font-semibold text-foreground">{t("form.title")}</p>
         </div>
         <p className="text-xs text-muted-3">
-          Describe the pet you'd like to see — character, theme, vibe. If
-          someone else already asked for the same thing, your submission turns
-          into an upvote on theirs.
+          {t("form.body")}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
           <label className="relative block w-full flex-1">
@@ -248,7 +252,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
                 if (formError) setFormError(null);
                 if (lastResult) setLastResult(null);
               }}
-              placeholder="e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig"
+              placeholder={t("form.placeholder")}
               maxLength={MAX_LEN}
               className="h-11 w-full rounded-full border border-border-base bg-surface px-4 text-sm text-stone-900 outline-none transition placeholder:text-muted-4 focus:border-brand/60 focus:ring-2 focus:ring-brand/15 dark:text-stone-100"
             />
@@ -262,7 +266,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
             className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-brand px-5 text-sm font-medium text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="size-4" />
-            {submitting ? "Sending…" : "Request"}
+            {submitting ? t("form.sending") : t("form.submit")}
           </button>
         </div>
         {formError ? (
@@ -274,8 +278,11 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
           <p className="rounded-xl border border-emerald-200 bg-chip-success-bg px-3 py-2 text-xs font-medium text-chip-success-fg dark:border-emerald-800/60">
             <Check className="-mt-0.5 mr-1 inline-block size-3.5" />
             {lastResult.mode === "created"
-              ? `Requested "${lastResult.query}". Others can upvote it now.`
-              : `Upvoted existing request for "${lastResult.query}" — now at ${lastResult.count} votes.`}
+              ? t("success.created", { query: lastResult.query })
+              : t("success.upvoted", {
+                  query: lastResult.query,
+                  count: lastResult.count,
+                })}
           </p>
         ) : null}
       </form>
@@ -287,21 +294,21 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
             active={sort === "top"}
             onClick={() => setSort("top")}
             icon={<Flame className="size-3.5" />}
-            label="Top voted"
+            label={t("sort.top")}
             count={counts.open}
           />
           <SortTab
             active={sort === "new"}
             onClick={() => setSort("new")}
             icon={<Sparkles className="size-3.5" />}
-            label="Newest"
+            label={t("sort.new")}
             count={counts.open}
           />
           <SortTab
             active={sort === "fulfilled"}
             onClick={() => setSort("fulfilled")}
             icon={<Check className="size-3.5" />}
-            label="Fulfilled"
+            label={t("sort.fulfilled")}
             count={counts.fulfilled}
           />
           <label className="relative ml-auto block w-48">
@@ -309,7 +316,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search requests…"
+              placeholder={t("sort.searchPlaceholder")}
               className="h-9 w-full rounded-full border border-border-base bg-surface pr-3 pl-8 text-xs text-stone-900 outline-none placeholder:text-muted-4 focus:border-brand/60 dark:text-stone-100"
             />
           </label>
@@ -328,8 +335,8 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
       ) : visible.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border-base bg-surface/70 p-8 text-center text-sm text-muted-2">
           {search
-            ? `No requests match "${search}".`
-            : "Nothing in this view yet."}
+            ? t("empty.noMatches", { search })
+            : t("empty.nothingInView")}
         </div>
       ) : (
         <ul className="space-y-2.5">
@@ -339,6 +346,7 @@ export function RequestsView({ initial }: { initial: RequestRow[] }) {
               request={r}
               upvote={() => void upvote(r)}
               busy={pending.has(r.id)}
+              t={t}
             />
           ))}
         </ul>
@@ -387,10 +395,12 @@ function RequestCard({
   request,
   upvote,
   busy,
+  t,
 }: {
   request: RequestRow;
   upvote: () => void;
   busy: boolean;
+  t: ReturnType<typeof useTranslations>;
 }) {
   const fulfilled = request.status === "fulfilled";
   const top3 = request.voters.slice(0, 3);
@@ -413,7 +423,7 @@ function RequestCard({
             upvote();
           }}
           disabled={busy || request.voted || fulfilled}
-          aria-label={`Upvote "${request.query}"`}
+          aria-label={t("upvoteAria", { query: request.query })}
           className={`flex shrink-0 flex-col items-center gap-0.5 rounded-xl border px-3 py-2 transition ${
             request.voted
               ? "border-brand bg-brand text-white"
@@ -439,7 +449,7 @@ function RequestCard({
             {fulfilled ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-chip-success-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-success-fg uppercase ring-1 ring-chip-success-fg/20">
                 <Check className="size-3" />
-                Fulfilled
+                {t("badges.fulfilled")}
               </span>
             ) : null}
             <span className="ml-auto font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
@@ -505,7 +515,7 @@ function RequestCard({
                 </span>
                 {moreVoters > 0 ? (
                   <span className="font-mono text-[10px]">
-                    +{moreVoters} more
+                    {t("moreVoters", { count: moreVoters })}
                   </span>
                 ) : null}
               </span>
@@ -530,23 +540,25 @@ function RequestCard({
 }
 
 function EmptyState() {
+  const t = useTranslations("requests.view");
+
   return (
     <div className="space-y-3 rounded-3xl border border-dashed border-border-base bg-surface/70 p-8 text-center">
       <span className="mx-auto grid size-10 place-items-center rounded-full bg-brand-tint text-brand dark:bg-brand-tint-dark">
         <Sparkles className="size-4" />
       </span>
       <p className="text-sm font-medium text-foreground">
-        No requests yet — be the first.
+        {t("empty.title")}
       </p>
       <p className="text-xs text-muted-3">
-        Or search{" "}
+        {t("empty.beforeLink")}{" "}
         <a
           href="/#gallery"
           className="text-brand underline-offset-4 hover:underline"
         >
-          the gallery
+          {t("empty.link")}
         </a>{" "}
-        and request a pet directly from the no-results screen.
+        {t("empty.afterLink")}
       </p>
     </div>
   );

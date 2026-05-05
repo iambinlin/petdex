@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { Shuffle, Sparkles } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { db, schema } from "@/lib/db/client";
 import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
@@ -68,7 +69,7 @@ export async function generateMetadata({ params }: PageProps) {
   }
 
   const title = `${pet.displayName} — Animated Codex pet`;
-  const description = `Install ${pet.displayName} for the Codex CLI: ${pet.description} One command, animated pixel art, ${pet.tags.slice(0, 3).join(" + ") || "open source"}.`;
+  const description = `Install ${pet.displayName} for Codex: ${pet.description} One command, animated pixel art, ${pet.tags.slice(0, 3).join(" + ") || "open source"}.`;
   const url = `${SITE_URL}/pets/${pet.slug}`;
 
   return {
@@ -79,7 +80,7 @@ export async function generateMetadata({ params }: PageProps) {
       pet.displayName,
       `${pet.displayName} Codex pet`,
       `${pet.displayName} pixel pet`,
-      "Codex CLI pet",
+      "Codex pet",
       ...pet.tags.slice(0, 4),
       ...pet.vibes.slice(0, 2),
     ],
@@ -101,6 +102,7 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function PetPage({ params }: PageProps) {
   const { slug } = await params;
   const pet = await getPet(slug);
+  const tPet = await getTranslations("pet");
 
   if (!pet) {
     notFound();
@@ -341,14 +343,14 @@ export default async function PetPage({ params }: PageProps) {
           {/* Dex nav pills + shuffle. Sit at the top edge of the banner
               so they read like a Pokédex chrome strip, not page content. */}
           <nav
-            aria-label="Dex navigation"
+            aria-label={tPet("navigation.ariaLabel")}
             className="flex flex-wrap items-center justify-between gap-3"
           >
             <DexNavPill pet={prevPet} direction="prev" />
             <Link
               href={shuffleHref}
               className="inline-flex h-10 items-center gap-2 rounded-full border border-border-base bg-surface/80 px-4 text-sm font-medium text-foreground backdrop-blur transition hover:border-border-strong"
-              title="Shuffle to a random pet (Space)"
+              title={tPet("navigation.shuffleTitle")}
             >
               <Shuffle className="size-4" />
               Shuffle
@@ -439,7 +441,7 @@ export default async function PetPage({ params }: PageProps) {
                 pointer-fine media so we don't spam mobile users with
                 Esc/arrow chrome. */}
             <p className="hidden flex-wrap items-center gap-3 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase md:flex">
-              <span>Tip:</span>
+              <span>{tPet("keyboardHint.tip")}</span>
               <span className="inline-flex items-center gap-1">
                 <kbd className="rounded border border-border-base bg-surface px-1.5 py-0.5 text-[10px] text-muted-2">
                   ←
@@ -447,13 +449,13 @@ export default async function PetPage({ params }: PageProps) {
                 <kbd className="rounded border border-border-base bg-surface px-1.5 py-0.5 text-[10px] text-muted-2">
                   →
                 </kbd>
-                browse
+                {tPet("keyboardHint.browse")}
               </span>
               <span className="inline-flex items-center gap-1">
                 <kbd className="rounded border border-border-base bg-surface px-1.5 py-0.5 text-[10px] text-muted-2">
                   Space
                 </kbd>
-                shuffle
+                {tPet("keyboardHint.shuffle")}
               </span>
             </p>
           </header>
@@ -489,9 +491,18 @@ export default async function PetPage({ params }: PageProps) {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <InfoCard title="Dex stats" icon={<Sparkles className="size-4" />}>
+          <InfoCard title={tPet("stats.title")} icon={<Sparkles className="size-4" />}>
             <div className="flex items-center justify-center py-2">
-              <PetRadar {...stats} />
+              <PetRadar
+                {...stats}
+                ariaLabel={tPet("stats.ariaLabel")}
+                labels={{
+                  vibrance: tPet("stats.vibrance"),
+                  popularity: tPet("stats.popularity"),
+                  loved: tPet("stats.loved"),
+                  freshness: tPet("stats.freshness"),
+                }}
+              />
             </div>
           </InfoCard>
 

@@ -24,7 +24,12 @@ export async function GET(req: Request): Promise<Response> {
   );
 
   const rows = await db
-    .select({ slug: schema.submittedPets.slug })
+    .select({
+      slug: schema.submittedPets.slug,
+      displayName: schema.submittedPets.displayName,
+      description: schema.submittedPets.description,
+      spritesheetPath: schema.submittedPets.spritesheetUrl,
+    })
     .from(schema.submittedPets)
     .where(
       exclude
@@ -37,17 +42,21 @@ export async function GET(req: Request): Promise<Response> {
     .orderBy(sql`random()`)
     .limit(1);
 
-  const next = rows[0]?.slug;
+  const next = rows[0];
 
   if (wantsJson) {
     if (!next) {
-      return NextResponse.json(
-        { error: "no pets available" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "no pets available" }, { status: 404 });
     }
     return NextResponse.json(
-      { slug: next, href: `/pets/${next}` },
+      {
+        slug: next.slug,
+        displayName: next.displayName,
+        description: next.description,
+        spritesheetPath: next.spritesheetPath,
+        href: `/pets/${next.slug}`,
+        installHref: `/install/${next.slug}`,
+      },
       { headers: { "Cache-Control": "private, no-store" } },
     );
   }
@@ -55,5 +64,5 @@ export async function GET(req: Request): Promise<Response> {
   if (!next) {
     return NextResponse.redirect(new URL("/", req.url), 302);
   }
-  return NextResponse.redirect(new URL(`/pets/${next}`, req.url), 302);
+  return NextResponse.redirect(new URL(`/pets/${next.slug}`, req.url), 302);
 }
