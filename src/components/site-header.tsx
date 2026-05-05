@@ -9,7 +9,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { withLocale } from "@/lib/locale-routing";
 
 import { AuthBadge } from "@/components/auth-badge";
-import { DiscordLink } from "@/components/discord-link";
 import { GithubStarsLink } from "@/components/github-stars-link";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { PetdexLogo } from "@/components/petdex-logo";
@@ -102,16 +101,15 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             {t("requests")}
           </Link>
           {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
-            <DiscordLink
-              href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL}
-              source="header"
+            <Link
+              href={href("/community")}
               className="inline-flex items-center gap-1.5 transition hover:text-foreground"
             >
               {t("community")}
               <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
                 new
               </span>
-            </DiscordLink>
+            </Link>
           ) : null}
         </div>
 
@@ -200,16 +198,17 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
               {t("requests")}
             </MobileLink>
             {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
-              <DiscordLink
-                href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL}
-                source="header_mobile"
-                className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm text-foreground hover:bg-surface-muted"
+              <MobileLink
+                href={href("/community")}
+                onClick={() => setOpen(false)}
               >
-                {t("community")}
-                <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
-                  new
+                <span className="inline-flex items-center gap-2">
+                  {t("community")}
+                  <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
+                    new
+                  </span>
                 </span>
-              </DiscordLink>
+              </MobileLink>
             ) : null}
             <MobileLink href={href("/about")} onClick={() => setOpen(false)}>
               {t("about")}
