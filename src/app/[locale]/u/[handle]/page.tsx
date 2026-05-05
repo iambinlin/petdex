@@ -13,6 +13,7 @@ import {
 
 import { isAdmin } from "@/lib/admin";
 import { getCatchProgress } from "@/lib/catch-status";
+import { canManageCreatorCollections } from "@/lib/collection-access";
 import {
   getOwnerCollection,
   type PetCollectionWithPets,
@@ -186,6 +187,9 @@ export default async function UserProfilePage({ params }: PageProps) {
   const { userId: viewerId } = await auth();
   const isOwner = viewerId === ownerId;
   const catchProgress = isOwner ? await getCatchProgress(viewerId) : null;
+  const canManageOwnCollection = isOwner
+    ? await canManageCreatorCollections(viewerId)
+    : false;
 
   const fallbackInitial = (displayName ?? publicHandle)
     .slice(0, 1)
@@ -347,9 +351,9 @@ export default async function UserProfilePage({ params }: PageProps) {
           <OwnerCollectionPanel
             collection={collection}
             publicHandle={publicHandle}
-            isOwner={isOwner}
+            canEdit={canManageOwnCollection}
           />
-        ) : isOwner && pets.length > 0 ? (
+        ) : canManageOwnCollection && pets.length > 0 ? (
           <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-6 text-sm text-muted-2">
             Build a featured collection from{" "}
             <Link
@@ -474,11 +478,11 @@ export default async function UserProfilePage({ params }: PageProps) {
 function OwnerCollectionPanel({
   collection,
   publicHandle,
-  isOwner,
+  canEdit,
 }: {
   collection: PetCollectionWithPets;
   publicHandle: string;
-  isOwner: boolean;
+  canEdit: boolean;
 }) {
   const cover =
     collection.pets.find((pet) => pet.slug === collection.coverPetSlug) ??
@@ -502,7 +506,7 @@ function OwnerCollectionPanel({
               <Layers className="size-3" />
               Featured collection
             </span>
-            {isOwner ? (
+            {canEdit ? (
               <Link
                 href="/my-pets"
                 className="rounded-full border border-border-base px-2.5 py-1 font-mono text-[10px] tracking-[0.16em] text-muted-3 uppercase transition hover:bg-surface-muted hover:text-foreground"

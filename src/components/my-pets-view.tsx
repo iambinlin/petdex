@@ -59,11 +59,13 @@ type Tab = "all" | "pending" | "approved" | "rejected";
 export function MyPetsView({
   submissions,
   catchProgress,
+  canManageCollections,
   collection,
   profile,
 }: {
   submissions: Submission[];
   catchProgress: { caught: number; total: number; pct: number };
+  canManageCollections: boolean;
   collection: EditableCollection;
   profile: ProfileData;
 }) {
@@ -88,11 +90,13 @@ export function MyPetsView({
       <>
         <ProfileCard profile={profile} />
         <ClaimableBanner />
-        <CollectionEditor
-          approvedPets={profile.approvedPets}
-          initial={collection}
-          profileHandle={profile.handle}
-        />
+        {canManageCollections ? (
+          <CollectionEditor
+            approvedPets={profile.approvedPets}
+            initial={collection}
+            profileHandle={profile.handle}
+          />
+        ) : null}
         <AlbumProgress catchProgress={catchProgress} />
         <EmptyState />
       </>
@@ -103,11 +107,13 @@ export function MyPetsView({
     <div className="space-y-8">
       <ProfileCard profile={profile} />
       <ClaimableBanner />
-      <CollectionEditor
-        approvedPets={profile.approvedPets}
-        initial={collection}
-        profileHandle={profile.handle}
-      />
+      {canManageCollections ? (
+        <CollectionEditor
+          approvedPets={profile.approvedPets}
+          initial={collection}
+          profileHandle={profile.handle}
+        />
+      ) : null}
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard

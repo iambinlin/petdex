@@ -244,7 +244,7 @@ export function CollectionEditor({
                     aria-pressed={selected}
                     className={`flex h-11 items-center justify-between rounded-2xl border px-3 text-left text-sm transition ${
                       selected
-                        ? "border-brand/50 bg-brand-tint text-brand-deep"
+                        ? "border-brand bg-brand text-white shadow-sm shadow-brand/20"
                         : "border-border-base bg-background text-muted-2 hover:bg-surface-muted hover:text-foreground"
                     }`}
                   >

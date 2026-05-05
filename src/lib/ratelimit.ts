@@ -1,7 +1,28 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const redis = Redis.fromEnv();
+import { IS_MOCK } from "./mock";
+
+// In mock mode the contributor doesn't have Upstash credentials. Build a
+// stub that satisfies the Ratelimit constructor signature and always
+// returns success so rate-limited routes work end-to-end.
+const redis = IS_MOCK
+  ? ({
+      // biome-ignore lint/suspicious/noExplicitAny: shim must impersonate Redis client shape
+    } as any)
+  : Redis.fromEnv();
+
+// When mocked, override Ratelimit#limit to short-circuit before the
+// constructor tries to talk to Redis.
+if (IS_MOCK) {
+  (Ratelimit.prototype as unknown as { limit: unknown }).limit = async () => ({
+    success: true,
+    limit: Number.POSITIVE_INFINITY,
+    remaining: Number.POSITIVE_INFINITY,
+    reset: 0,
+    pending: Promise.resolve(),
+  });
+}
 
 export const submitRatelimit = new Ratelimit({
   redis,

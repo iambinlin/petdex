@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 
+import { canManageCreatorCollections } from "@/lib/collection-access";
 import { db, schema } from "@/lib/db/client";
 import { validateProfileHandle } from "@/lib/profiles";
 import { requireSameOrigin } from "@/lib/same-origin";
@@ -29,6 +30,9 @@ export async function PATCH(req: Request): Promise<Response> {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (!(await canManageCreatorCollections(userId))) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   let body: PatchBody;
