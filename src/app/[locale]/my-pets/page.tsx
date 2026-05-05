@@ -4,7 +4,9 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 
+import { isAdmin } from "@/lib/admin";
 import { getCatchProgress } from "@/lib/catch-status";
+import { hasCreatorCollectionMetadata } from "@/lib/collection-access";
 import { getOwnerCollection } from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
@@ -90,6 +92,7 @@ export default async function MyPetsPage() {
   let handle = userId.slice(-8).toLowerCase();
   let displayName: string | null = null;
   let avatarUrl: string | null = null;
+  let canManageCollections = isAdmin(userId);
   try {
     const client = await clerkClient();
     const u = await client.users.getUser(userId);
@@ -97,6 +100,8 @@ export default async function MyPetsPage() {
     const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
     displayName = name || u.username || null;
     avatarUrl = u.imageUrl ?? null;
+    canManageCollections =
+      canManageCollections || hasCreatorCollectionMetadata(u.privateMetadata);
   } catch {
     /* fall back to id suffix */
   }
@@ -127,6 +132,7 @@ export default async function MyPetsPage() {
         <MyPetsView
           submissions={submissions}
           catchProgress={catchProgress}
+          canManageCollections={canManageCollections}
           collection={
             collection
               ? {
