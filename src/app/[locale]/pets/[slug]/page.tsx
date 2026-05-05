@@ -6,7 +6,10 @@ import { and, eq, inArray } from "drizzle-orm";
 import { Layers, Shuffle, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-import { getCollectionsContainingPet } from "@/lib/collections";
+import {
+  getCollectionCandidatesForPet,
+  getCollectionsContainingPet,
+} from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
 import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
@@ -34,6 +37,7 @@ import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SubmittedBy } from "@/components/submitted-by";
+import { SuggestCollectionButton } from "@/components/suggest-collection-button";
 
 const SITE_URL = "https://petdex.crafter.run";
 
@@ -250,6 +254,13 @@ export default async function PetPage({ params }: PageProps) {
     };
   }
 
+  // Owner-only: candidate featured collections + already-submitted
+  // pending requests for the suggest button.
+  const collectionSuggest =
+    userId && ownerRow && ownerRow.ownerId === userId
+      ? await getCollectionCandidatesForPet(slug, userId)
+      : null;
+
   const url = `${SITE_URL}/pets/${pet.slug}`;
   const jsonLd = [
     {
@@ -456,6 +467,15 @@ export default async function PetPage({ params }: PageProps) {
                   </Link>
                 ))}
               </div>
+            ) : null}
+
+            {collectionSuggest && collectionSuggest.candidates.length > 0 ? (
+              <SuggestCollectionButton
+                petSlug={slug}
+                petDisplayName={pet.displayName}
+                candidateCollections={collectionSuggest.candidates}
+                alreadyRequested={collectionSuggest.alreadyRequested}
+              />
             ) : null}
 
             {/* Keyboard hint strip — minimal, mono-spaced, only on
