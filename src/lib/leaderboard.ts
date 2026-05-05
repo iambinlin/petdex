@@ -152,6 +152,129 @@ function risingQuery() {
   `;
 }
 
+// Pet thumbnails by owner for the leaderboard rows. Returns at most
+// `defaultLimit` slugs per owner (`topLimit` for the first 3 ranks)
+// preferring pinned pets when the owner has set them, then falling
+// back to recently approved pets. Discover pets are excluded so a
+// proxy ownerId never hijacks somebody else's row.
+export async function getLeaderboardPetThumbs(
+  ownerIds: string[],
+  defaultLimit = 3,
+  topLimit = 5,
+): Promise<
+  Record<
+    string,
+    Array<{ slug: string; displayName: string; spritesheetUrl: string }>
+  >
+> {
+  const out: Record<
+    string,
+    Array<{ slug: string; displayName: string; spritesheetUrl: string }>
+  > = {};
+  if (ownerIds.length === 0) return out;
+
+  // We need the full set of approved pets per owner *and* whatever is
+  // pinned in user_profiles.featured_pet_slugs. One query for both keeps
+  // the round-trip count low even for top-50 lists.
+  const result = (await db.execute(sql`
+    WITH owner_set AS (
+      SELECT * FROM unnest(
+        ${sql.raw(`ARRAY[${ownerIds.map((id) => `'${id.replace(/'/g, "''")}'`).join(",")}]::text[]`)}
+      ) AS owner_id
+    ),
+    approved AS (
+      SELECT
+        sp.owner_id,
+        sp.slug,
+        sp.display_name,
+        sp.spritesheet_url,
+        sp.approved_at,
+        ROW_NUMBER() OVER (
+          PARTITION BY sp.owner_id
+          ORDER BY sp.approved_at DESC NULLS LAST
+        ) AS rn
+      FROM submitted_pets sp
+      INNER JOIN owner_set os ON os.owner_id = sp.owner_id
+      WHERE sp.status = 'approved' AND sp.source <> 'discover'
+    )
+    SELECT
+      a.owner_id,
+      a.slug,
+      a.display_name,
+      a.spritesheet_url,
+      up.featured_pet_slugs
+    FROM approved a
+    LEFT JOIN user_profiles up ON up.user_id = a.owner_id
+    WHERE a.rn <= ${topLimit + 5}
+    ORDER BY a.owner_id, a.rn
+  `)) as unknown as {
+    rows: Array<{
+      owner_id: string;
+      slug: string;
+      display_name: string;
+      spritesheet_url: string;
+      featured_pet_slugs: string[] | null;
+    }>;
+  };
+
+  // Group rows + pinned slugs per owner so we can rank them: pinned
+  // first (in the order the owner chose), then recent approvals.
+  const byOwner = new Map<
+    string,
+    {
+      pinnedOrder: string[];
+      pets: Map<
+        string,
+        { slug: string; displayName: string; spritesheetUrl: string }
+      >;
+    }
+  >();
+  for (const row of result.rows) {
+    const existing = byOwner.get(row.owner_id) ?? {
+      pinnedOrder: row.featured_pet_slugs ?? [],
+      pets: new Map<
+        string,
+        { slug: string; displayName: string; spritesheetUrl: string }
+      >(),
+    };
+    existing.pets.set(row.slug, {
+      slug: row.slug,
+      displayName: row.display_name,
+      spritesheetUrl: row.spritesheet_url,
+    });
+    byOwner.set(row.owner_id, existing);
+  }
+
+  for (const [ownerId, { pinnedOrder, pets }] of byOwner.entries()) {
+    const ranked: Array<{
+      slug: string;
+      displayName: string;
+      spritesheetUrl: string;
+    }> = [];
+    const seen = new Set<string>();
+    for (const slug of pinnedOrder) {
+      const pet = pets.get(slug);
+      if (pet && !seen.has(slug)) {
+        ranked.push(pet);
+        seen.add(slug);
+      }
+    }
+    for (const pet of pets.values()) {
+      if (!seen.has(pet.slug)) {
+        ranked.push(pet);
+        seen.add(pet.slug);
+      }
+    }
+    out[ownerId] = ranked.slice(0, topLimit);
+  }
+
+  // Note: caller decides per-row how many to show (3 default, topLimit
+  // for #1-3). We always return up to topLimit so the cap is enforced
+  // there, not here.
+  void defaultLimit;
+  return out;
+}
+
 // Single-owner rank lookup for the inline badge on /u/[handle].
 // Returns null when the owner is outside the top, so callers can skip
 // rendering rather than displaying "#999".
