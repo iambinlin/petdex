@@ -8,8 +8,6 @@ import { useTranslations } from "next-intl";
 
 import type { LeaderboardMetric, LeaderboardRow } from "@/lib/leaderboard";
 
-import { StaticPetSprite } from "@/components/static-pet-sprite";
-
 type CreditMap = Record<
   string,
   {
@@ -300,18 +298,25 @@ function LeaderboardRowItem({
 }
 
 function ThumbCell({ thumb }: { thumb: LeaderboardPetThumb }) {
-  // Static first-frame only — see static-pet-sprite.tsx for why. Live
-  // sprite cycles on a 50-row × ~3-thumb leaderboard create 150+
-  // infinite CSS animations and tank scroll FPS even on a fast laptop.
+  // Pre-cropped 80x80 webp from /api/pets/<slug>/thumb (~2KB each).
+  // Earlier we were rendering the full 2MB spritesheet for a 40px
+  // tile — 50 rows × 3 thumbs = ~300MB of useless bytes per page
+  // load and the browser stalled scroll while decoding them.
   return (
     <span
       className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-muted/80 ring-1 ring-border-base"
       title={thumb.displayName}
     >
-      <StaticPetSprite
-        src={thumb.spritesheetUrl}
-        scale={0.18}
-        label={thumb.displayName}
+      {/* biome-ignore lint/performance/noImgElement: pixelated sprite, server-cropped */}
+      <img
+        src={`/api/pets/${thumb.slug}/thumb`}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        width={40}
+        height={40}
+        className="size-10"
+        style={{ imageRendering: "pixelated" }}
       />
     </span>
   );
