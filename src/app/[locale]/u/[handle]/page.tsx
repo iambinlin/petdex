@@ -585,13 +585,9 @@ function FeaturedPin({ pet }: { pet: PetWithMetrics }) {
     <Link
       href={`/pets/${pet.slug}`}
       aria-label={`Open ${pet.displayName}`}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-brand-light/45 bg-surface/80 backdrop-blur transition hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 md:flex-row md:items-stretch dark:hover:bg-stone-800"
-      style={{
-        boxShadow:
-          "0 0 0 1px rgba(100,120,246,0.18), 0 18px 45px -22px rgba(82,102,234,0.5)",
-      }}
+      className="featured-pin-card group relative flex flex-col overflow-hidden rounded-3xl border border-brand-light/45 bg-surface/80 backdrop-blur transition hover:bg-white md:flex-row md:items-stretch dark:hover:bg-stone-800"
     >
-      <div className="pet-sprite-stage flex shrink-0 items-center justify-center px-8 py-10 md:w-[420px] md:py-14">
+      <div className="pet-sprite-stage featured-pin-stage flex shrink-0 items-center justify-center px-8 py-10 md:w-[420px] md:py-14">
         <PetSprite
           src={pet.spritesheetPath}
           cycleStates
