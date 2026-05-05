@@ -114,7 +114,19 @@ export function CollectionCover({
     return arranged;
   })();
 
+  // Distribute pets across the inner X band so the leftmost and
+  // rightmost don't kiss the rounded card edge. We map slot indices
+  // [0..n-1] into [innerLeft, innerRight] of the card width.
+  const innerLeft = 8; // %
+  const innerRight = 92; // %
+  const innerSpan = innerRight - innerLeft;
+
   return (
+    // overflow-visible so a sprite that's slightly bigger than its
+    // computed slot can still fully render — neighbors lap each other
+    // a little instead of being clipped at the slot edge. The card's
+    // own rounded-3xl border in the parent still keeps the bleed
+    // from leaving the card visually (it's a tight fit, not a flood).
     <div
       className={`pet-sprite-stage relative aspect-[16/9] overflow-hidden ${className}`}
     >
@@ -123,39 +135,40 @@ export function CollectionCover({
           pet.slug === lineup[0].slug && i === Math.floor((n - 1) / 2);
         const h = hashSlug(pet.slug);
 
-        // Each pet owns a slot's worth of horizontal real estate so they
-        // never overlap. The slot itself is centered on the X axis.
-        const slotPct = 100 / n;
-        const xCenter = slotPct * (i + 0.5);
+        // Compute slot center inside the inner band. The first/last pets
+        // sit at innerLeft / innerRight respectively; the middle ones
+        // are evenly distributed between.
+        const t = n === 1 ? 0.5 : i / (n - 1);
+        const xCenter = innerLeft + innerSpan * t;
 
-        // Vertical jitter: ±15% from the visual baseline (50% of the
-        // box puts the pet's center near the middle). Lead sits closest
-        // to baseline so the eye locks on it first.
-        const yJitter = (frac(h, 1) - 0.5) * 0.3; // -0.15 .. +0.15
+        // Vertical jitter: ±10% from the visual middle. Lead sits a
+        // touch lower (0.55) so it anchors the eye.
+        const yJitter = (frac(h, 1) - 0.5) * 0.2; // -0.1 .. +0.1
         const yCenter = isLead ? 0.55 : 0.5 + yJitter;
 
-        // Size jitter: lead is biggest, others vary 0.85x..1.15x of base.
-        const sizeJitter = isLead ? 1.5 : 0.85 + frac(h, 2) * 0.3;
+        // Size jitter: lead is largest but capped so it can't outgrow
+        // the card's vertical room; others are gently varied.
+        const sizeJitter = isLead ? 1.3 : 0.9 + frac(h, 2) * 0.25;
         const petScale = scale * sizeJitter;
 
-        // Subtle z order: lead in front, others stacked back-to-front
-        // by hash so adjacent pets don't always overlap the same way.
+        // Z order: lead always in front. Others alternate front/back
+        // by hash, so neighbors never both end up at the exact same
+        // depth and the overlap reads as intentional.
         const zIndex = isLead ? n + 10 : 5 + Math.floor(frac(h, 3) * n);
 
         return (
           <div
             key={pet.slug}
-            className="absolute flex items-center justify-center"
+            className="pointer-events-none absolute flex items-center justify-center"
             style={{
               left: `${xCenter}%`,
               top: `${yCenter * 100}%`,
               transform: "translate(-50%, -50%)",
               zIndex,
-              // Each slot is wide enough to hold the sprite without
-              // bleeding into its neighbor. Aspect-ratio of the card
-              // means the slot height ~= (cardHeight) so the sprite
-              // can grow vertically too.
-              width: `${slotPct}%`,
+              // Wider than the strict slot so big sprites never hit a
+              // hard clip — adjacent slots can lap each other and the
+              // composition reads as a layered group, not a row.
+              width: `${(innerSpan / Math.max(n - 1, 1)) * 1.4}%`,
               height: "100%",
             }}
           >
