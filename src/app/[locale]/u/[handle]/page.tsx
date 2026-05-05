@@ -30,6 +30,7 @@ import { MAX_PINNED_PETS } from "@/lib/profiles";
 import { JsonLd } from "@/components/json-ld";
 import { PetCard } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
+import { PinnedReorderGrid } from "@/components/pinned-reorder-grid";
 import { ProfileAnalytics } from "@/components/profile-analytics";
 import { ProfileExternalLink } from "@/components/profile-external-link";
 import { ProfileInlineEditor } from "@/components/profile-inline-editor";
@@ -387,53 +388,50 @@ export default async function UserProfilePage({ params }: PageProps) {
         ) : (
           <>
             {featuredPets.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
-                    ★ Pinned
-                  </p>
-                  <p className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
-                    {featuredPets.length} of {MAX_PINNED_PETS}
-                  </p>
+              isOwner && featuredPets.length >= 2 ? (
+                <PinnedReorderGrid
+                  pets={featuredPets}
+                  petStateCount={petStates.length}
+                />
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
+                      ★ Pinned
+                    </p>
+                    <p className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
+                      {featuredPets.length} of {MAX_PINNED_PETS}
+                    </p>
+                  </div>
+                  {featuredPets.length === 1 ? (
+                    <div className="relative">
+                      {isOwner ? (
+                        <div className="absolute top-4 right-4">
+                          <ProfilePinButton
+                            slug={featuredPets[0].slug}
+                            isPinned
+                            pinnedCount={featuredPets.length}
+                            maxPins={MAX_PINNED_PETS}
+                          />
+                        </div>
+                      ) : null}
+                      <FeaturedPin pet={featuredPets[0]} />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-6">
+                      {featuredPets.map((pet, index) => (
+                        <div key={pet.slug} className="relative h-full">
+                          <PetCard
+                            pet={pet}
+                            index={index}
+                            stateCount={petStates.length}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {featuredPets.length === 1 ? (
-                  <div className="relative">
-                    {isOwner ? (
-                      <div className="absolute top-4 right-4">
-                        <ProfilePinButton
-                          slug={featuredPets[0].slug}
-                          isPinned
-                          pinnedCount={featuredPets.length}
-                          maxPins={MAX_PINNED_PETS}
-                        />
-                      </div>
-                    ) : null}
-                    <FeaturedPin pet={featuredPets[0]} />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
-                    {featuredPets.map((pet, index) => (
-                      <div key={pet.slug} className="relative h-full">
-                        <PetCard
-                          pet={pet}
-                          index={index}
-                          stateCount={petStates.length}
-                        />
-                        {isOwner ? (
-                          <div className="absolute top-3 right-14">
-                            <ProfilePinButton
-                              slug={pet.slug}
-                              isPinned
-                              pinnedCount={featuredPets.length}
-                              maxPins={MAX_PINNED_PETS}
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              )
             ) : null}
 
             {restPets.length > 0 ? (
