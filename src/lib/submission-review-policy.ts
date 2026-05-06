@@ -82,6 +82,13 @@ export const REVIEW_POLICY_CATEGORIES = [
       "Obvious branded, celebrity, or franchise character references that need human review.",
     holdAboveConfidence: 0.6,
   },
+  {
+    id: "political_public_figure",
+    label: "Political or contemporary public figure",
+    description:
+      "Parodies, caricatures, or recognizable depictions of current heads of state, sitting politicians, candidates for office, royalty, or contemporary news personalities. Historical figures (centuries-old religious, philosophical, or historical leaders) do not qualify.",
+    holdAboveConfidence: 0.4,
+  },
 ] as const satisfies ReviewPolicyCategory[];
 
 export const REVIEW_POLICY_CATEGORY_IDS = new Set(
