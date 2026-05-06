@@ -1,14 +1,16 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 
 import { runtimeDb as db, schema } from "../src/lib/db/runtime";
 
 process.env.PETDEX_REVIEW_DB = "runtime";
 
 const LIMIT = readNumberFlag("--limit");
+const FORCE = process.argv.includes("--force");
 const CONCURRENCY = Math.min(
   Math.max(readNumberFlag("--concurrency") ?? 2, 1),
   4,
 );
+const STALE_RUNNING_MINUTES = 60;
 
 type ReviewError = { slug: string; reason: string };
 
@@ -16,6 +18,8 @@ const errors: ReviewError[] = [];
 
 async function main() {
   const { reviewSubmission } = await import("../src/lib/submission-review");
+  await buryStaleRunningReviews();
+
   const rows = await db
     .select({ id: schema.submittedPets.id, slug: schema.submittedPets.slug })
     .from(schema.submittedPets)
@@ -24,7 +28,7 @@ async function main() {
     .limit(LIMIT ?? 500);
 
   console.log(
-    `reviewing ${rows.length} pending submissions with concurrency=${CONCURRENCY}`,
+    `reviewing ${rows.length} pending submissions with concurrency=${CONCURRENCY} force=${FORCE}`,
   );
 
   let nextIndex = 0;
@@ -37,11 +41,11 @@ async function main() {
       const row = rows[index];
       try {
         const result = await reviewSubmission(row.id, {
-          force: true,
+          force: FORCE,
         });
         processed += 1;
         console.log(
-          `[${index + 1}/${rows.length}] worker=${workerId} ${row.slug} -> ${result.review.decision} (${result.review.reasonCode ?? "no_reason"}) applied=${result.applied}`,
+          `[${index + 1}/${rows.length}] worker=${workerId} ${row.slug} -> ${result.review.decision} (${result.review.reasonCode ?? "no_reason"}) applied=${result.applied} reused=${Boolean(result.reused)}`,
         );
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error);
@@ -66,6 +70,33 @@ async function main() {
     for (const error of errors) {
       console.log(`- ${error.slug}: ${error.reason}`);
     }
+  }
+}
+
+async function buryStaleRunningReviews() {
+  const cutoff = new Date(Date.now() - STALE_RUNNING_MINUTES * 60 * 1000);
+  const now = new Date();
+  const rows = await db
+    .update(schema.submissionReviews)
+    .set({
+      status: "failed",
+      decision: "hold",
+      reasonCode: "review_interrupted",
+      summary: "Automated review was interrupted and needs manual review.",
+      confidence: 0,
+      error: "Review worker stopped before completion.",
+      reviewedAt: now,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        lt(schema.submissionReviews.createdAt, cutoff),
+        eq(schema.submissionReviews.status, "running"),
+      ),
+    )
+    .returning({ id: schema.submissionReviews.id });
+  if (rows.length > 0) {
+    console.log(`buried ${rows.length} stale running review(s)`);
   }
 }
 

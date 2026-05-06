@@ -27,6 +27,7 @@ import type {
 import {
   SUBMISSION_DUPLICATE_REVIEW_SEMANTIC_HOLD_THRESHOLD,
   SUBMISSION_NEAR_EXACT_VISUAL_THRESHOLD,
+  SUBMISSION_SIMILARITY_MAX_RESULTS,
   SUBMISSION_SIMILARITY_SEMANTIC_THRESHOLD,
   SUBMISSION_SIMILARITY_VISUAL_THRESHOLD,
   SUBMISSION_STRONG_SEMANTIC_CORROBORATION_THRESHOLD,
@@ -39,6 +40,8 @@ const MIN_SPRITE_DIM = 256;
 const FRAME_W = 192;
 const FRAME_H = 208;
 const REVIEW_MODEL = "openai/gpt-5-mini";
+const VISUAL_MATCH_CHUNK_SIZE = 250;
+const VISUAL_MATCH_SCAN_LIMIT = 2000;
 
 type DbModule = typeof import("@/lib/db/client");
 
@@ -49,6 +52,7 @@ export type ReviewSubmissionOptions = {
 export type ReviewSubmissionResult = {
   review: SubmissionReview;
   applied: boolean;
+  reused?: boolean;
 };
 
 type AssetAnalysis = {
@@ -56,6 +60,12 @@ type AssetAnalysis = {
   spriteBuffer: Buffer | null;
   petJson: unknown;
   dhash: string | null;
+};
+
+type VisualMatchScan = {
+  matches: ReviewEvidenceMatch[];
+  complete: boolean;
+  scanned: number;
 };
 
 async function getDbModule(): Promise<DbModule> {
@@ -77,9 +87,23 @@ export function triggerSubmissionReview(submissionId: string): void {
 
 export async function reviewSubmission(
   submissionId: string,
-  _options: ReviewSubmissionOptions = {},
+  options: ReviewSubmissionOptions = {},
 ): Promise<ReviewSubmissionResult> {
   const { db, schema } = await getDbModule();
+  if (!options.force) {
+    const latestReview = await db.query.submissionReviews.findFirst({
+      where: eq(schema.submissionReviews.submittedPetId, submissionId),
+      orderBy: desc(schema.submissionReviews.createdAt),
+    });
+    if (latestReview) {
+      return {
+        review: latestReview,
+        applied: reviewWasApplied(latestReview),
+        reused: true,
+      };
+    }
+  }
+
   const reviewId = `review_${crypto.randomUUID().replace(/-/g, "").slice(0, 22)}`;
   let checks = emptyChecks(false);
 
@@ -238,6 +262,10 @@ export async function getLatestSubmissionReview(
     orderBy: desc(schema.submissionReviews.createdAt),
   });
   return row ?? null;
+}
+
+function reviewWasApplied(review: SubmissionReview): boolean {
+  return Boolean(review.checks?.autopilot?.applied);
 }
 
 async function finishReview(
@@ -427,10 +455,18 @@ async function analyzeDuplicates(
     reasons.push("Exact hash duplicate check did not complete.");
   }
 
-  const [visualMatches, metadataMatches] = await Promise.all([
-    assets.dhash ? findVisualMatches(row, assets.dhash) : Promise.resolve([]),
+  const [visualScan, metadataMatches] = await Promise.all([
+    assets.dhash
+      ? findVisualMatches(row, assets.dhash)
+      : Promise.resolve({ matches: [], complete: true, scanned: 0 }),
     findMetadataMatches(row),
   ]);
+  const visualMatches = visualScan.matches;
+  if (!visualScan.complete) {
+    reasons.push(
+      `Visual duplicate check scanned ${visualScan.scanned} candidates and needs manual review.`,
+    );
+  }
 
   const embedding = await embedTextValue(
     buildPetEmbeddingText({
@@ -579,42 +615,68 @@ async function findExactHashMatches(
 async function findVisualMatches(
   row: SubmittedPet,
   dhash: string,
-): Promise<ReviewEvidenceMatch[]> {
+): Promise<VisualMatchScan> {
   const { db, schema } = await getDbModule();
-  const rows = await db
-    .select({
-      id: schema.submittedPets.id,
-      slug: schema.submittedPets.slug,
-      displayName: schema.submittedPets.displayName,
-      status: schema.submittedPets.status,
-      featured: schema.submittedPets.featured,
-      spritesheetUrl: schema.submittedPets.spritesheetUrl,
-      dhash: schema.submittedPets.dhash,
-    })
-    .from(schema.submittedPets)
-    .where(
-      and(
-        ne(schema.submittedPets.id, row.id),
-        inArray(schema.submittedPets.status, ["approved", "pending"]),
-        isNotNull(schema.submittedPets.dhash),
-      ),
-    );
+  const matches: ReviewEvidenceMatch[] = [];
+  let scanned = 0;
+  let complete = false;
 
-  return rows
-    .map((match) => ({
-      id: match.id,
-      slug: match.slug,
-      displayName: match.displayName,
-      status: match.status,
-      featured: match.featured,
-      spritesheetUrl: match.spritesheetUrl,
-      visualDistance: hammingDistanceHex(dhash, match.dhash ?? "0"),
-    }))
-    .filter(
-      (match) =>
-        (match.visualDistance ?? 65) <= SUBMISSION_SIMILARITY_VISUAL_THRESHOLD,
-    )
-    .sort((a, b) => (a.visualDistance ?? 65) - (b.visualDistance ?? 65));
+  for (
+    let offset = 0;
+    offset < VISUAL_MATCH_SCAN_LIMIT;
+    offset += VISUAL_MATCH_CHUNK_SIZE
+  ) {
+    const rows = await db
+      .select({
+        id: schema.submittedPets.id,
+        slug: schema.submittedPets.slug,
+        displayName: schema.submittedPets.displayName,
+        status: schema.submittedPets.status,
+        featured: schema.submittedPets.featured,
+        spritesheetUrl: schema.submittedPets.spritesheetUrl,
+        dhash: schema.submittedPets.dhash,
+      })
+      .from(schema.submittedPets)
+      .where(
+        and(
+          ne(schema.submittedPets.id, row.id),
+          inArray(schema.submittedPets.status, ["approved", "pending"]),
+          isNotNull(schema.submittedPets.dhash),
+        ),
+      )
+      .orderBy(desc(schema.submittedPets.createdAt))
+      .limit(VISUAL_MATCH_CHUNK_SIZE)
+      .offset(offset);
+
+    scanned += rows.length;
+    for (const match of rows) {
+      const visualDistance = hammingDistanceHex(dhash, match.dhash ?? "0");
+      if (visualDistance <= SUBMISSION_SIMILARITY_VISUAL_THRESHOLD) {
+        matches.push({
+          id: match.id,
+          slug: match.slug,
+          displayName: match.displayName,
+          status: match.status,
+          featured: match.featured,
+          spritesheetUrl: match.spritesheetUrl,
+          visualDistance,
+        });
+      }
+    }
+
+    if (rows.length < VISUAL_MATCH_CHUNK_SIZE) {
+      complete = true;
+      break;
+    }
+    if (matches.length >= SUBMISSION_SIMILARITY_MAX_RESULTS) break;
+  }
+
+  matches.sort((a, b) => (a.visualDistance ?? 65) - (b.visualDistance ?? 65));
+  return {
+    matches: matches.slice(0, SUBMISSION_SIMILARITY_MAX_RESULTS),
+    complete,
+    scanned,
+  };
 }
 
 async function findMetadataMatches(

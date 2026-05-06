@@ -26,6 +26,14 @@ describe("decideAutomatedReview", () => {
     expect(result.canApply).toBe(true);
   });
 
+  it("holds clean submissions below the first-week approval confidence", () => {
+    const checks = cleanChecks();
+    checks.policy.confidence = 0.94;
+    const result = decideAutomatedReview(checks);
+    expect(result.decision).toBe("hold");
+    expect(result.reasonCode).toBe("low_confidence");
+  });
+
   it("auto-rejects exact asset duplicates", () => {
     const checks = cleanChecks();
     checks.duplicates.decision = "fail";

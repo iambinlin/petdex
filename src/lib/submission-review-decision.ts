@@ -20,7 +20,7 @@ export type ReviewDecisionResult = {
   applyReason: string | null;
 };
 
-const AUTO_APPROVE_CONFIDENCE = 0.9;
+const AUTO_APPROVE_CONFIDENCE = 0.95;
 
 export function decideAutomatedReview(
   checks: ReviewChecks,

@@ -89,6 +89,15 @@ export const submittedPets = pgTable(
     statusIdx: index("submitted_pets_status_idx").on(table.status),
     ownerIdx: index("submitted_pets_owner_idx").on(table.ownerId),
     slugUnique: uniqueIndex("submitted_pets_slug_unique").on(table.slug),
+    reviewDhashIdx: index("submitted_pets_review_dhash_idx")
+      .on(table.status, table.createdAt.desc())
+      .where(
+        sql`${table.dhash} IS NOT NULL AND ${table.status} IN ('approved', 'pending')`,
+      ),
+    statusCreatedAtIdx: index("submitted_pets_status_created_at_idx").on(
+      table.status,
+      table.createdAt.desc(),
+    ),
     statusFeaturedNameIdx: index("submitted_pets_status_featured_name_idx").on(
       table.status,
       table.featured,
@@ -141,6 +150,10 @@ export const submissionReviews = pgTable(
     decisionIdx: index("submission_reviews_decision_idx").on(table.decision),
     createdAtIdx: index("submission_reviews_created_at_idx").on(
       table.createdAt,
+    ),
+    petCreatedAtIdx: index("submission_reviews_pet_created_at_idx").on(
+      table.submittedPetId,
+      table.createdAt.desc(),
     ),
   }),
 );

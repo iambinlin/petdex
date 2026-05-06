@@ -5,6 +5,11 @@
 // Usage:
 //   bun scripts/compute-similarity.ts          # only un-hashed rows
 //   bun scripts/compute-similarity.ts --force  # rehash everything
+//
+// Migration note: 0005 intentionally nulls old 1536-dim text embeddings when
+// moving to the required 3072-dim Gemini image-aware embedding model. Re-run
+// this script with --force after applying 0005 anywhere 0004 had populated
+// embeddings.
 
 import { neon } from "@neondatabase/serverless";
 import sharp from "sharp";

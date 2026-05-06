@@ -12,6 +12,7 @@ import { Resend } from "resend";
 import { db, schema } from "@/lib/db/client";
 import type { SubmissionReview, SubmittedPet } from "@/lib/db/schema";
 import { renderNewSubmissionEmail } from "@/lib/email-templates/new-submission";
+import { fallbackHandle, handleForUser } from "@/lib/handles";
 import {
   type SubmissionInput,
   slugify as slugifySubmission,
@@ -53,6 +54,8 @@ export type SubmissionResult =
       id: string;
       slug: string;
       status: SubmittedPet["status"];
+      profileHandle: string;
+      profileUrl: string;
       review: SubmissionReviewOutcome;
     }
   | {
@@ -78,6 +81,9 @@ export async function persistSubmission(
   }
 
   const slug = await resolveUniqueSlug(requestedSlug);
+  const profileHandlePromise = handleForUser(principal.userId).catch(() =>
+    fallbackHandle(principal.userId),
+  );
 
   const id = `pet_${crypto.randomUUID().replace(/-/g, "").slice(0, 22)}`;
   const credit = creditFromPrincipal(principal);
@@ -139,12 +145,15 @@ export async function persistSubmission(
     where: eq(schema.submittedPets.id, id),
   });
   const status = current?.status ?? "pending";
+  const profileHandle = await profileHandlePromise;
 
   return {
     ok: true,
     id,
     slug,
     status,
+    profileHandle,
+    profileUrl: `/u/${encodeURIComponent(profileHandle)}`,
     review: alignReviewWithStatus(review, status),
   };
 }

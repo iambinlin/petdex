@@ -306,6 +306,9 @@ export function PetSubmitForm() {
     if (!parsed || parsed.issues.length > 0) return;
     if (!isSignedIn) return;
 
+    const startedAt = performance.now();
+    let uploadStartedAt = startedAt;
+    let uploadFinishedAt = startedAt;
     track("pet_submission_started", { pet_id: parsed.petId });
     setSubmission({ kind: "uploading", step: "validating" });
 
@@ -335,6 +338,7 @@ export function PetSubmitForm() {
     let petJsonUrl: string;
 
     try {
+      uploadStartedAt = performance.now();
       const presignRes = await fetch("/api/r2/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -420,12 +424,16 @@ export function PetSubmitForm() {
       zipUrl = zipSlot.publicUrl;
       spritesheetUrl = spriteSlot.publicUrl;
       petJsonUrl = petJsonSlot.publicUrl;
+      uploadFinishedAt = performance.now();
     } catch (err) {
       const reason = (err as Error).message ?? "unknown";
       track("pet_submission_failed", {
         pet_id: parsed.petId,
         stage: "upload",
         reason: reason.slice(0, 120),
+        duration_ms: elapsedMs(startedAt),
+        duration_bucket: durationBucket(elapsedMs(startedAt)),
+        upload_duration_ms: elapsedMs(uploadStartedAt),
       });
       setSubmission({
         kind: "error",
@@ -435,6 +443,7 @@ export function PetSubmitForm() {
     }
 
     setSubmission({ kind: "uploading", step: "registering" });
+    const registerStartedAt = performance.now();
 
     const res = await fetch("/api/submit", {
       method: "POST",
@@ -462,6 +471,11 @@ export function PetSubmitForm() {
         stage: "register",
         error_code: errorCode,
         status: res.status,
+        duration_ms: elapsedMs(startedAt),
+        duration_bucket: durationBucket(elapsedMs(startedAt)),
+        upload_duration_ms: Math.round(uploadFinishedAt - uploadStartedAt),
+        register_duration_ms: elapsedMs(registerStartedAt),
+        register_duration_bucket: durationBucket(elapsedMs(registerStartedAt)),
       });
       setSubmission({
         kind: "error",
@@ -476,6 +490,11 @@ export function PetSubmitForm() {
       slug: data.slug,
       review_decision: data.review.decision,
       review_applied: data.review.applied,
+      duration_ms: elapsedMs(startedAt),
+      duration_bucket: durationBucket(elapsedMs(startedAt)),
+      upload_duration_ms: Math.round(uploadFinishedAt - uploadStartedAt),
+      register_duration_ms: elapsedMs(registerStartedAt),
+      register_duration_bucket: durationBucket(elapsedMs(registerStartedAt)),
     });
     setSubmission({
       kind: "success",
@@ -747,6 +766,17 @@ function submissionErrorMessage(
     default:
       return t("errors.submissionFailedWithCode", { code });
   }
+}
+
+function elapsedMs(startedAt: number): number {
+  return Math.max(0, Math.round(performance.now() - startedAt));
+}
+
+function durationBucket(ms: number): string {
+  if (ms < 5000) return "under_5s";
+  if (ms < 15_000) return "5_15s";
+  if (ms < 30_000) return "15_30s";
+  return "over_30s";
 }
 
 function CopyPathButton({ path }: { path: string }) {
