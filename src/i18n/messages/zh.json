@@ -45,8 +45,13 @@
     "creators__fixme": true,
     "requests": "请求",
     "requests__fixme": true,
+    "community": "社区",
+    "community__fixme": true,
+    "discord": "Discord",
     "about": "关于",
     "about__fixme": true,
+    "followOnX": "在 X 上关注更新",
+    "followOnX__fixme": true,
     "language": "语言",
     "settings": "设置",
     "settings__fixme": true,
@@ -76,6 +81,7 @@
     "takedown": "下架请求",
     "takedown__fixme": true,
     "github": "GitHub",
+    "discord": "Discord",
     "sponsor": "赞助",
     "sponsorAria": "在 GitHub 上赞助"
   },
@@ -90,6 +96,8 @@
     "submitCta__fixme": true,
     "browseGallery": "浏览图库",
     "browseGallery__fixme": true,
+    "joinDiscord": "加入 Discord",
+    "joinDiscord__fixme": true,
     "openPet": "打开 {name}",
     "openPet__fixme": true,
     "petAnimated": "{name} 动画",
@@ -155,8 +163,10 @@
       "submissions": "提交",
       "edits": "编辑",
       "requests": "请求",
+      "collections": "合集",
       "feedback": "反馈",
-      "manifest": "Manifest"
+      "manifest": "Manifest",
+      "insights": "数据"
     },
     "status": {
       "pending": "待处理",
@@ -325,7 +335,82 @@
     "legalPrefix": "提交即表示你确认自己拥有该作品的权利，或这是你创作的同人内容。权利人可以通过我们的",
     "legalPrefix__fixme": true,
     "legalLink": "下架通知",
-    "legalSuffix": "。"
+    "legalSuffix": "。",
+    "form": {
+      "drop": {
+        "title": "上传宠物包",
+        "instructions": "拖入包含 <petJson>pet.json</petJson> 和 <spritesheet>spritesheet.webp</spritesheet>（或 .png）的文件夹或 ZIP。推荐 {width}×{height}，8×9 帧网格。",
+        "short": "拖入包含 pet.json 和 spritesheet 的文件夹或 ZIP。",
+        "ariaLabel": "宠物包拖放区域",
+        "pickFolder": "选择文件夹",
+        "pickZip": "选择 .zip"
+      },
+      "auth": {
+        "signIn": "登录后提交"
+      },
+      "check": {
+        "title": "提交检查",
+        "reading": "正在读取包...",
+        "ready": "可以提交了。",
+        "empty": "在你确认前，包会一直保留在本地。Petdex 会在上传前检查 manifest 和 sprite 尺寸。"
+      },
+      "path": {
+        "prefix": "宠物资源位于",
+        "platforms": "（macOS / Linux）"
+      },
+      "copy": {
+        "ariaCopied": "路径已复制",
+        "ariaCopy": "复制路径到剪贴板",
+        "copied": "已复制",
+        "copy": "复制"
+      },
+      "submitButton": {
+        "validating": "正在验证...",
+        "uploading": "正在上传...",
+        "finalizing": "正在完成...",
+        "submitted": "已提交",
+        "idle": "提交宠物"
+      },
+      "preview": {
+        "ariaLabel": "已上传宠物动画预览"
+      },
+      "success": {
+        "review": "{name} 正在审核中。通过后我们会通知你。"
+      },
+      "fallback": {
+        "beforeLink": "卡住了？",
+        "link": "带上你的资源打开一个 GitHub issue",
+        "afterLink": "Hunter 会手动帮你上传。"
+      },
+      "defaults": {
+        "missingFiles": "缺少文件",
+        "untitledPet": "未命名宠物",
+        "description": "一个兼容 Codex 的数字宠物。"
+      },
+      "errors": {
+        "uploadFailed": "上传失败：{reason}",
+        "submissionFailed": "提交失败",
+        "submissionFailedWithCode": "提交失败：{code}",
+        "rateLimited": "已达到限制：每 24 小时最多提交 10 次。请明天再试。",
+        "missingField": "这个包缺少提交所需的数据。",
+        "invalidSpritesheet": "spritesheet 太小，或尺寸无效。",
+        "invalidAssetUrl": "上传的资源没有通过托管检查。",
+        "invalidSlug": "宠物 id 无法转换成有效的 URL slug。",
+        "unauthorized": "请先登录再提交。",
+        "invalidJson": "无法读取提交的 JSON。"
+      },
+      "issues": {
+        "folderMissingPetJson": "文件夹缺少 pet.json。",
+        "folderMissingSpritesheet": "文件夹缺少 spritesheet.webp（或 .png）。找到的文件：{present}",
+        "dropPetFolderOrZip": "请拖入宠物文件夹或 .zip 文件。",
+        "allPetsBundle": "这看起来像全部宠物包（petdex-approved.zip）。请提交单个宠物文件夹或它自己的 zip。",
+        "zipMissingPetJson": "zip 根目录缺少 pet.json。",
+        "zipMissingSpritesheet": "zip 根目录缺少 spritesheet.webp（或 .png）。找到的文件：{present}",
+        "invalidJson": "pet.json 不是有效的 JSON。",
+        "unreadableSpritesheet": "无法读取 spritesheet 图片。",
+        "tooSmall": "spritesheet 看起来太小（{width}×{height}）。请使用 8×9 帧网格（推荐 {recommendedWidth}×{recommendedHeight}）。"
+      }
+    }
   },
   "requests": {
     "metadata": {
@@ -344,18 +429,33 @@
       "form": {
         "title": "请求一只宠物",
         "title__fixme": true,
+        "titlePet": "请求一只宠物",
+        "titleCollection": "请求一个系列",
         "body": "描述你想看到的宠物：角色、主题、氛围。如果别人已经提过同样的请求，你的提交会自动变成给那条请求投票。",
         "body__fixme": true,
-        "collectionHint": "你也可以建议像 GRAYCRAFT 这样的收藏系列：品牌/IP 名称、属于同一套的宠物，以及官方网站。",
+        "bodyPet": "描述你想看到的宠物：角色、主题、氛围。如果别人已经提过同样的请求，你的提交会自动变成给那条请求投票。",
+        "bodyCollection": "描述你想看到的系列：IP、品牌、角色阵容、主题，以及哪些宠物应该放在一起。",
+        "type": {
+          "pet": "宠物",
+          "petBody": "一个伙伴、角色、物件或生物。",
+          "collection": "系列",
+          "collectionBody": "像 Pixar、Star Wars 或 GRAYCRAFT 这样的收藏系列。"
+        },
+        "petHint": "选择“宠物”来请求一个具体伙伴：角色、生物、物件或桌面小助手。",
+        "collectionHint": "选择“系列”来请求 Pixar、Star Wars、宝可梦初始伙伴或 GRAYCRAFT 这样的套装：品牌/IP 名称、属于同一套的宠物，以及官方网站。",
         "collectionHint__fixme": true,
         "placeholder": "例如：吉卜力风格的龙猫、困困的程序员美西螈、Spider-Pig",
         "placeholder__fixme": true,
+        "placeholderPet": "例如：吉卜力风格的龙猫、困困的程序员美西螈、Spider-Pig",
+        "placeholderCollection": "例如：Pixar 桌面伙伴、Star Wars 机器人、宝可梦初始伙伴",
         "imageLabel": "添加参考图",
         "imageLabel__fixme": true,
         "imageBody": "可选。图片会先隐藏，直到管理员审核。",
         "imageBody__fixme": true,
         "submit": "请求",
         "submit__fixme": true,
+        "submitPet": "请求宠物",
+        "submitCollection": "请求系列",
         "sending": "发送中…"
       },
       "success": {
@@ -374,6 +474,8 @@
         "searchPlaceholder__fixme": true
       },
       "badges": {
+        "pet": "宠物",
+        "collection": "系列",
         "fulfilled": "已实现",
         "fulfilled__fixme": true,
         "imagePending": "图片审核中",
@@ -811,6 +913,17 @@
   "commandLine": {
     "copyAria": "复制命令"
   },
+  "profileShare": {
+    "share": "分享",
+    "eyebrow": "分享此资料",
+    "close": "关闭",
+    "copyLink": "复制链接",
+    "copied": "已复制",
+    "shareToX": "分享到 X",
+    "shareToLinkedIn": "分享到 LinkedIn",
+    "more": "更多…",
+    "shareText": "看看 {name} 在 Petdex 上的 Codex 宠物合集"
+  },
   "petActions": {
     "moreActions": "{name} 的更多操作",
     "moreActions__fixme": true,
@@ -824,7 +937,13 @@
     "shareToX": "分享到 X",
     "shareToLinkedIn": "分享到 LinkedIn",
     "more": "更多…",
-    "downloadZip": "下载 ZIP"
+    "downloadZip": "下载 ZIP",
+    "removeFromPetdex": "从 Petdex 删除",
+    "removing": "删除中…",
+    "withdrawSubmission": "撤回提交",
+    "withdrawing": "撤回中…",
+    "submitNewVersion": "提交新版本",
+    "editDetails": "编辑名称和描述"
   },
   "petStateViewer": {
     "eyebrow": "状态查看器",
@@ -899,5 +1018,8 @@
       "freshness": "新鲜度",
       "freshness__fixme": true
     }
+  },
+  "collectionDetail": {
+    "backToCollections": "← 返回全部合集"
   }
 }

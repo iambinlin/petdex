@@ -35,7 +35,10 @@
     "topCreators": "Creadores",
     "creators": "Creadores",
     "requests": "Pedidos",
+    "community": "Comunidad",
+    "discord": "Discord",
     "about": "Acerca de",
+    "followOnX": "Seguir actualizaciones en X",
     "language": "Idioma",
     "settings": "Ajustes",
     "submitCta": "Enviar",
@@ -57,6 +60,7 @@
     "topCreators": "Creadores",
     "takedown": "Retiro de contenido",
     "github": "GitHub",
+    "discord": "Discord",
     "sponsor": "Patrocinar",
     "sponsorAria": "Patrocinar en GitHub"
   },
@@ -67,6 +71,7 @@
     "heroCommand": "npx petdex install boba",
     "submitCta": "Enviar",
     "browseGallery": "Ver galería",
+    "joinDiscord": "Unirse al Discord",
     "openPet": "Abrir {name}",
     "petAnimated": "{name} animado",
     "petParadeAria": "Mascotas destacadas",
@@ -123,8 +128,10 @@
       "submissions": "Envíos",
       "edits": "Ediciones",
       "requests": "Pedidos",
+      "collections": "Colecciones",
       "feedback": "Feedback",
-      "manifest": "Manifest"
+      "manifest": "Manifest",
+      "insights": "Métricas"
     },
     "status": {
       "pending": "Pendiente",
@@ -287,7 +294,82 @@
     "createCta": "¿Todavía no tienes una mascota? Créala en Codex",
     "legalPrefix": "Al enviar, confirmas que tienes derechos sobre la ilustración o que estás creando fan content. Los titulares pueden pedir la eliminación mediante nuestro",
     "legalLink": "aviso de retiro",
-    "legalSuffix": "."
+    "legalSuffix": ".",
+    "form": {
+      "drop": {
+        "title": "Sube un paquete de mascota",
+        "instructions": "Arrastra una carpeta o un ZIP con <petJson>pet.json</petJson> y <spritesheet>spritesheet.webp</spritesheet> (o .png). Recomendado {width}×{height}, grilla de 8×9 frames.",
+        "short": "Arrastra una carpeta o un ZIP con pet.json + spritesheet.",
+        "ariaLabel": "Zona para soltar el paquete de mascota",
+        "pickFolder": "Elegir carpeta",
+        "pickZip": "Elegir .zip"
+      },
+      "auth": {
+        "signIn": "Inicia sesión para enviar"
+      },
+      "check": {
+        "title": "Revisión del envío",
+        "reading": "Leyendo paquete...",
+        "ready": "Todo listo para enviar.",
+        "empty": "Los paquetes se quedan locales hasta que confirmes. Petdex revisa el manifest y las dimensiones del sprite antes de subirlo."
+      },
+      "path": {
+        "prefix": "Los assets viven en",
+        "platforms": "(macOS / Linux)"
+      },
+      "copy": {
+        "ariaCopied": "Ruta copiada",
+        "ariaCopy": "Copiar ruta al portapapeles",
+        "copied": "Copiado",
+        "copy": "Copiar"
+      },
+      "submitButton": {
+        "validating": "Validando...",
+        "uploading": "Subiendo...",
+        "finalizing": "Finalizando...",
+        "submitted": "Enviado",
+        "idle": "Enviar mascota"
+      },
+      "preview": {
+        "ariaLabel": "Vista previa de la animación subida"
+      },
+      "success": {
+        "review": "{name} está en revisión. Te avisaremos cuando se apruebe."
+      },
+      "fallback": {
+        "beforeLink": "¿Atascado?",
+        "link": "Abre un issue de GitHub con tus assets",
+        "afterLink": "y Hunter lo subirá manualmente."
+      },
+      "defaults": {
+        "missingFiles": "Faltan archivos",
+        "untitledPet": "Mascota sin nombre",
+        "description": "Una mascota digital compatible con Codex."
+      },
+      "errors": {
+        "uploadFailed": "Falló la subida: {reason}",
+        "submissionFailed": "No se pudo enviar",
+        "submissionFailedWithCode": "No se pudo enviar: {code}",
+        "rateLimited": "Llegaste al límite: 10 envíos cada 24 horas. Inténtalo mañana.",
+        "missingField": "Al paquete le faltan datos requeridos para el envío.",
+        "invalidSpritesheet": "El spritesheet es muy pequeño o tiene dimensiones inválidas.",
+        "invalidAssetUrl": "Los assets subidos no pasaron la revisión de hosting.",
+        "invalidSlug": "El id de la mascota no pudo convertirse en una URL válida.",
+        "unauthorized": "Inicia sesión antes de enviar.",
+        "invalidJson": "No se pudo leer el JSON enviado."
+      },
+      "issues": {
+        "folderMissingPetJson": "A la carpeta le falta pet.json.",
+        "folderMissingSpritesheet": "A la carpeta le falta spritesheet.webp (o .png). Encontrado: {present}",
+        "dropPetFolderOrZip": "Arrastra una carpeta de mascota o un archivo .zip.",
+        "allPetsBundle": "Esto parece el paquete de todas las mascotas (petdex-approved.zip). Envía una sola carpeta de mascota o su zip individual.",
+        "zipMissingPetJson": "Falta pet.json en la raíz del zip.",
+        "zipMissingSpritesheet": "Falta spritesheet.webp (o .png) en la raíz del zip. Encontrado: {present}",
+        "invalidJson": "pet.json no es JSON válido.",
+        "unreadableSpritesheet": "No se puede leer la imagen del spritesheet.",
+        "tooSmall": "El spritesheet parece muy pequeño ({width}×{height}). Usa una grilla de 8×9 frames (recomendado {recommendedWidth}×{recommendedHeight})."
+      }
+    }
   },
   "requests": {
     "metadata": {
@@ -301,12 +383,27 @@
     "view": {
       "form": {
         "title": "Pide una mascota",
+        "titlePet": "Pide una mascota",
+        "titleCollection": "Pide una colección",
         "body": "Describe la mascota que te gustaría ver: personaje, tema, vibra. Si alguien ya pidió lo mismo, tu envío se convierte en un voto para esa petición.",
-        "collectionHint": "También puedes sugerir colecciones tipo GRAYCRAFT: marca/IP, mascotas que van juntas y el sitio oficial.",
+        "bodyPet": "Describe la mascota que te gustaría ver: personaje, tema, vibra. Si alguien ya pidió lo mismo, tu envío se convierte en un voto para esa petición.",
+        "bodyCollection": "Describe el set que quieres: IP, marca, personajes, tema y qué mascotas deberían ir juntas.",
+        "type": {
+          "pet": "Mascota",
+          "petBody": "Un compañero, personaje, objeto o criatura.",
+          "collection": "Colección",
+          "collectionBody": "Un set coleccionable como Pixar, Star Wars o GRAYCRAFT."
+        },
+        "petHint": "Usa Mascota para un compañero específico: personaje, criatura, objeto o buddy de escritorio.",
+        "collectionHint": "Usa Colección para sets como Pixar, Star Wars, iniciales de Pokémon o GRAYCRAFT: marca/IP, mascotas que van juntas y el sitio oficial.",
         "placeholder": "p. ej. una chinchilla estilo Ghibli, un ajolote programador con sueño, Spider-Pig",
+        "placeholderPet": "p. ej. una chinchilla estilo Ghibli, un ajolote programador con sueño, Spider-Pig",
+        "placeholderCollection": "p. ej. buddies de Pixar, droides de Star Wars, iniciales de Pokémon",
         "imageLabel": "Agregar imagen",
         "imageBody": "Opcional. Las imágenes quedan ocultas hasta revisión admin.",
         "submit": "Pedir",
+        "submitPet": "Pedir mascota",
+        "submitCollection": "Pedir colección",
         "sending": "Enviando…"
       },
       "success": {
@@ -320,6 +417,8 @@
         "searchPlaceholder": "Buscar pedidos…"
       },
       "badges": {
+        "pet": "Mascota",
+        "collection": "Colección",
         "fulfilled": "Cumplida",
         "imagePending": "Imagen en revisión"
       },
@@ -662,6 +761,17 @@
   "commandLine": {
     "copyAria": "Copiar comando"
   },
+  "profileShare": {
+    "share": "Compartir",
+    "eyebrow": "Compartir este perfil",
+    "close": "Cerrar",
+    "copyLink": "Copiar enlace",
+    "copied": "Copiado",
+    "shareToX": "Compartir en X",
+    "shareToLinkedIn": "Compartir en LinkedIn",
+    "more": "Más…",
+    "shareText": "Mira la colección de mascotas de Codex de {name} en Petdex"
+  },
   "petActions": {
     "moreActions": "Más acciones para {name}",
     "share": "Compartir",
@@ -673,7 +783,13 @@
     "shareToX": "Compartir en X",
     "shareToLinkedIn": "Compartir en LinkedIn",
     "more": "Más…",
-    "downloadZip": "Descargar ZIP"
+    "downloadZip": "Descargar ZIP",
+    "removeFromPetdex": "Eliminar de Petdex",
+    "removing": "Eliminando…",
+    "withdrawSubmission": "Retirar envío",
+    "withdrawing": "Retirando…",
+    "submitNewVersion": "Enviar una nueva versión",
+    "editDetails": "Editar nombre y descripción"
   },
   "petStateViewer": {
     "eyebrow": "Visor de estados",
@@ -737,5 +853,8 @@
       "loved": "QUERIDA",
       "freshness": "FRESCURA"
     }
+  },
+  "collectionDetail": {
+    "backToCollections": "← Ver todas las colecciones"
   }
 }

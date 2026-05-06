@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { track } from "@vercel/analytics";
@@ -10,8 +12,13 @@ import {
   Download,
   ExternalLink,
   Link2,
+  Loader2,
   MoreHorizontal,
+  Pencil,
+  Plus,
   Terminal,
+  Trash2,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -24,21 +31,66 @@ export type PetActionMenuPet = {
   description?: string;
 };
 
+export type PetActionMenuOwnerActions = {
+  /** Submission id for the owner-action API endpoints. */
+  submissionId: string;
+  status: "pending" | "approved" | "rejected";
+};
+
 type Variant = "card" | "detail";
 
 type Props = {
   pet: PetActionMenuPet;
   variant?: Variant;
+  /** When the viewer is the owner, surfaces status-aware actions
+   *  (Withdraw, Edit link, Submit new version) inside the dropdown. */
+  ownerActions?: PetActionMenuOwnerActions;
 };
 
-export function PetActionMenu({ pet, variant = "card" }: Props) {
+export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
   const t = useTranslations("petActions");
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<"install" | "link" | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  // canDelete is fetched lazily the first time the menu opens. The
+  // public PetdexPet shape deliberately doesn't carry ownerId, so the
+  // viewer/owner check has to round-trip. /api/pets/[slug]/can-delete
+  // is auth-cookie gated and private, no-store — anonymous viewers
+  // get false instantly.
+  const [canDelete, setCanDelete] = useState<boolean | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
 
   const installCmd = `npx petdex install ${pet.slug}`;
   const pageUrl = `${SITE_URL}/pets/${pet.slug}`;
+
+  // Lazy ownership check. Only fires the first time the menu opens —
+  // result is cached in component state. If the user signs in / out
+  // mid-session the menu won't notice until next mount, but that's
+  // fine: the actual delete still re-checks ownership server-side.
+  useEffect(() => {
+    if (!open || canDelete !== null) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/pets/${pet.slug}/can-delete`);
+        if (!res.ok) {
+          if (!cancelled) setCanDelete(false);
+          return;
+        }
+        const data = (await res.json()) as { canDelete: boolean };
+        if (!cancelled) setCanDelete(Boolean(data.canDelete));
+      } catch {
+        if (!cancelled) setCanDelete(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, canDelete, pet.slug]);
 
   // Click outside / Esc closes the menu.
   useEffect(() => {
@@ -114,6 +166,83 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
     setOpen(false);
   }, [pet.slug]);
 
+  const onDelete = useCallback(async () => {
+    if (deleting) return;
+    // Two-step confirmation: typing the slug avoids muscle-memory
+    // clicks wiping a pet you actually still want. Same pattern the
+    // admin takedown uses.
+    const typed = window.prompt(
+      `Type "${pet.slug}" to confirm. This permanently removes ${pet.displayName} from Petdex and frees the slug. The pet's files and like history are deleted.`,
+    );
+    if (typed === null) return;
+    if (typed.trim() !== pet.slug) {
+      window.alert("Slug did not match. Pet was NOT removed.");
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/pets/${pet.slug}/owner`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "owner_self_delete" }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        setDeleteError(
+          data.message ?? data.error ?? `Request failed (${res.status})`,
+        );
+        setDeleting(false);
+        return;
+      }
+      track("pet_owner_deleted", { slug: pet.slug });
+      setOpen(false);
+      router.refresh();
+    } catch {
+      setDeleteError("network_error");
+      setDeleting(false);
+    }
+  }, [deleting, pet.slug, pet.displayName, router]);
+
+  const onWithdraw = useCallback(async () => {
+    if (withdrawing || !ownerActions) return;
+    if (
+      !window.confirm(
+        `Withdraw "${pet.displayName}"? Pending submissions can't be brought back — you'd have to resubmit.`,
+      )
+    ) {
+      return;
+    }
+    setWithdrawing(true);
+    setWithdrawError(null);
+    try {
+      const res = await fetch(
+        `/api/my-pets/${ownerActions.submissionId}/withdraw`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        setWithdrawError(
+          data.message ?? data.error ?? `Request failed (${res.status})`,
+        );
+        setWithdrawing(false);
+        return;
+      }
+      track("pet_owner_withdrew", { slug: pet.slug });
+      setOpen(false);
+      router.refresh();
+    } catch {
+      setWithdrawError("network_error");
+      setWithdrawing(false);
+    }
+  }, [withdrawing, ownerActions, pet.slug, pet.displayName, router]);
+
   // Detail variant: bigger trigger that reads as an action button next to
   // the like button. Card variant: compact circular icon in a corner.
   const triggerClassName =
@@ -132,6 +261,7 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
       : "absolute right-0 top-full mt-2";
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation wrapper for card-anchor + escape, not an interactive role
     <div
       ref={ref}
       // While open, lift the wrapper above sibling cards. Sibling cards
@@ -199,7 +329,9 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                   <Terminal className="size-4" />
                 )
               }
-              label={copied === "install" ? t("copiedInstall") : t("copyInstall")}
+              label={
+                copied === "install" ? t("copiedInstall") : t("copyInstall")
+              }
               hint={installCmd}
               onClick={() => copyText(installCmd, "install")}
             />
@@ -240,14 +372,94 @@ export function PetActionMenu({ pet, variant = "card" }: Props) {
                   target="_blank"
                   rel="noreferrer"
                   onClick={onZipClick}
-                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-muted-2 transition hover:bg-[#f4f6ff] hover:text-foreground dark:border-white/[0.06]"
+                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground dark:border-white/[0.06]"
                 >
                   <Download className="size-4" />
                   <span className="flex-1">{t("downloadZip")}</span>
                 </a>
               </li>
             ) : null}
+            {ownerActions?.status === "pending" ? (
+              <li>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void onWithdraw();
+                  }}
+                  disabled={withdrawing}
+                  className="flex w-full items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-left text-sm text-chip-danger-fg transition hover:bg-chip-danger-bg disabled:opacity-60 dark:border-white/[0.06]"
+                >
+                  {withdrawing ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <XCircle className="size-4" />
+                  )}
+                  <span className="flex-1">
+                    {withdrawing ? t("withdrawing") : t("withdrawSubmission")}
+                  </span>
+                </button>
+              </li>
+            ) : null}
+            {ownerActions?.status === "rejected" ? (
+              <li>
+                <Link
+                  href="/submit"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-foreground transition hover:bg-surface-muted dark:border-white/[0.06]"
+                >
+                  <Plus className="size-4" />
+                  <span className="flex-1">{t("submitNewVersion")}</span>
+                </Link>
+              </li>
+            ) : null}
+            {ownerActions?.status === "approved" ? (
+              <li>
+                <Link
+                  href={`/pets/${pet.slug}#edit`}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-foreground transition hover:bg-surface-muted dark:border-white/[0.06]"
+                >
+                  <Pencil className="size-4" />
+                  <span className="flex-1">{t("editDetails")}</span>
+                </Link>
+              </li>
+            ) : null}
+            {canDelete ? (
+              <li>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void onDelete();
+                  }}
+                  disabled={deleting}
+                  className="flex w-full items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-left text-sm text-chip-danger-fg transition hover:bg-chip-danger-bg disabled:opacity-60 dark:border-white/[0.06]"
+                >
+                  {deleting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                  <span className="flex-1">
+                    {deleting ? t("removing") : t("removeFromPetdex")}
+                  </span>
+                </button>
+              </li>
+            ) : null}
           </ul>
+          {deleteError ? (
+            <p className="border-t border-black/[0.06] bg-chip-danger-bg px-3 py-2 text-xs text-chip-danger-fg dark:border-white/[0.06]">
+              {deleteError}
+            </p>
+          ) : null}
+          {withdrawError ? (
+            <p className="border-t border-black/[0.06] bg-chip-danger-bg px-3 py-2 text-xs text-chip-danger-fg dark:border-white/[0.06]">
+              {withdrawError}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -271,7 +483,7 @@ function MenuItem({ icon, label, hint, onClick }: MenuItemProps) {
           e.preventDefault();
           onClick();
         }}
-        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-muted-2 transition hover:bg-[#f4f6ff] hover:text-foreground"
+        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
       >
         {icon}
         <span className="flex flex-col">

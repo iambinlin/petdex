@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { ExternalLink, Heart, TerminalSquare } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { getCaughtSlugSet } from "@/lib/catch-status";
 import { getCollection } from "@/lib/collections";
@@ -45,6 +46,7 @@ export default async function CollectionPage({ params }: PageProps) {
   const { slug } = await params;
   const collection = await getCollection(slug);
   if (!collection) notFound();
+  const t = await getTranslations("collectionDetail");
 
   const { userId } = await auth();
   const [caughtSlugs, dexEntries, credits] = await Promise.all([
@@ -62,9 +64,10 @@ export default async function CollectionPage({ params }: PageProps) {
       : Promise.resolve(new Map()),
   ]);
   const owner = collection.ownerId ? credits.get(collection.ownerId) : null;
-  const cover =
+  const leadPet =
     collection.pets.find((pet) => pet.slug === collection.coverPetSlug) ??
-    collection.pets[0];
+    collection.pets[0] ??
+    null;
   const caughtCount = collection.pets.filter((pet) =>
     caughtSlugs.has(pet.slug),
   ).length;
@@ -101,7 +104,15 @@ export default async function CollectionPage({ params }: PageProps) {
       <section className="petdex-cloud relative overflow-hidden">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 pt-5 pb-12 md:px-8">
           <SiteHeader />
-          <div className="mt-12 grid gap-8 md:mt-16 lg:grid-cols-[1fr_420px] lg:items-center">
+          <div className="mt-6">
+            <Link
+              href="/collections"
+              className="inline-flex h-8 items-center rounded-full border border-border-base bg-surface/70 px-3 text-xs font-medium text-muted-2 transition hover:border-border-strong hover:text-foreground"
+            >
+              {t("backToCollections")}
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-8 md:mt-10 lg:grid-cols-[1fr_420px] lg:items-center">
             <div>
               <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
                 Featured collection
@@ -157,19 +168,15 @@ export default async function CollectionPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="grid aspect-square place-items-center rounded-3xl border border-border-base bg-surface/70">
-              {cover ? (
+            <div className="pet-sprite-stage relative grid aspect-square place-items-center overflow-hidden rounded-3xl border border-border-base bg-surface/70">
+              {leadPet ? (
                 <PetSprite
-                  src={cover.spritesheetPath}
+                  src={leadPet.spritesheetPath}
                   cycleStates
                   scale={1}
-                  label={`${cover.displayName} animated`}
+                  label={`${leadPet.displayName} animated`}
                 />
-              ) : (
-                <span className="font-mono text-xs tracking-[0.18em] text-muted-3 uppercase">
-                  Collection
-                </span>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

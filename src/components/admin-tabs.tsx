@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
+
+import { useLocale, useTranslations } from "next-intl";
 
 import { localizePath } from "@/i18n/config";
 
 const TABS: Array<{
   href: string;
-  key: "submissions" | "edits" | "requests" | "feedback" | "manifest";
+  key:
+    | "submissions"
+    | "edits"
+    | "requests"
+    | "collections"
+    | "feedback"
+    | "manifest"
+    | "insights";
   match: (pathname: string) => boolean;
 }> = [
   {
@@ -27,6 +35,11 @@ const TABS: Array<{
     match: (p) => p.startsWith("/admin/requests"),
   },
   {
+    href: "/admin/collection-requests",
+    key: "collections",
+    match: (p) => p.startsWith("/admin/collection-requests"),
+  },
+  {
     href: "/admin/feedback",
     key: "feedback",
     match: (p) => p.startsWith("/admin/feedback"),
@@ -35,6 +48,11 @@ const TABS: Array<{
     href: "/admin/manifest",
     key: "manifest",
     match: (p) => p.startsWith("/admin/manifest"),
+  },
+  {
+    href: "/admin/insights",
+    key: "insights",
+    match: (p) => p.startsWith("/admin/insights"),
   },
 ];
 

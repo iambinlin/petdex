@@ -323,6 +323,47 @@ export const petCollectionItems = pgTable(
   }),
 );
 
+// Owner-submitted "please add my pet to this collection" requests.
+// Stays separate from petCollectionItems so we can keep an audit trail
+// (who asked, when, who decided) and so an approval cycle can't race
+// with the manual seed script.
+export const petCollectionRequests = pgTable(
+  "pet_collection_requests",
+  {
+    id: text("id").primaryKey(),
+    collectionId: text("collection_id")
+      .notNull()
+      .references(() => petCollections.id, { onDelete: "cascade" }),
+    petSlug: text("pet_slug").notNull(),
+    // The owner who submitted the request — verified at write time and
+    // re-checked at admin approval time so an ownership change between
+    // submit and approve doesn't smuggle somebody else's pet in.
+    requestedBy: text("requested_by").notNull(),
+    note: text("note"),
+    status: approvalStatus("status").notNull().default("pending"),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decidedBy: text("decided_by"),
+    rejectionReason: text("rejection_reason"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    statusIdx: index("pet_collection_requests_status_idx").on(table.status),
+    requesterIdx: index("pet_collection_requests_requester_idx").on(
+      table.requestedBy,
+    ),
+    // Prevents the same owner from spamming the same pet/collection pair
+    // before admins decide. They can resubmit once a decision is made
+    // (the status flips, freeing the unique).
+    pendingPair: uniqueIndex("pet_collection_requests_pending_pair").on(
+      table.collectionId,
+      table.petSlug,
+      table.status,
+    ),
+  }),
+);
+
 export const feedbackAuthorKind = pgEnum("feedback_author_kind", [
   "admin",
   "user",

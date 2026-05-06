@@ -11,9 +11,13 @@ import { db, schema } from "@/lib/db/client";
 import { renderSubmissionApprovedEmail } from "@/lib/email-templates/submission-approved";
 import { renderSubmissionRejectedEmail } from "@/lib/email-templates/submission-rejected";
 import { createNotification } from "@/lib/notifications";
-import { getApprovedPetMissingSoundBySlug, processPetSound } from "@/lib/pet-sound";
+import {
+  getApprovedPetMissingSoundBySlug,
+  processPetSound,
+} from "@/lib/pet-sound";
 import { requireSameOrigin } from "@/lib/same-origin";
 import { refreshSimilarityFor } from "@/lib/similarity";
+import { takedownPet } from "@/lib/takedown";
 import { getPreferredLocaleForUser } from "@/lib/user-locale";
 
 export const runtime = "nodejs";
@@ -204,7 +208,7 @@ export async function PATCH(
         petName: row.displayName,
         ...(row.rejectionReason ? { reason: row.rejectionReason } : {}),
       },
-      href: row.status === "approved" ? `/pets/${row.slug}` : "/my-pets",
+      href: row.status === "approved" ? `/pets/${row.slug}` : "/",
     }).catch(() => {});
   }
 
@@ -246,4 +250,55 @@ export async function PATCH(
   }
 
   return NextResponse.json({ ok: true, status: row.status });
+}
+
+// Hard takedown. Removes the pet row, every cross-table reference that
+// stores its slug, and every R2 asset uploaded for the submission. The
+// slug is freed so the original author (or anyone else) can re-submit.
+//
+// Use case: rights-holder asks to take down their own pet, DMCA, or
+// any other reason where rejecting + leaving the row around isn't
+// enough. For routine "this submission isn't a fit" cases prefer
+// PATCH action: 'reject' so the audit trail stays.
+type DeleteBody = {
+  reason?: string | null;
+};
+
+export async function DELETE(
+  req: Request,
+  ctx: { params: Promise<Params> },
+): Promise<Response> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
+  const { userId } = await auth();
+  if (!isAdmin(userId)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  const { id } = await ctx.params;
+
+  let body: DeleteBody = {};
+  try {
+    body = (await req.json().catch(() => ({}))) as DeleteBody;
+  } catch {
+    body = {};
+  }
+  const reason = body.reason?.trim() || null;
+
+  const pet = await db.query.submittedPets.findFirst({
+    where: eq(schema.submittedPets.id, id),
+  });
+  if (!pet) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  await takedownPet({
+    pet,
+    reason,
+    source: "admin",
+    actorId: userId ?? "unknown",
+  });
+
+  return NextResponse.json({ ok: true });
 }

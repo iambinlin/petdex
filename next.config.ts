@@ -1,6 +1,10 @@
+import path from "node:path";
+
 import type { NextConfig } from "next";
 
 import createNextIntlPlugin from "next-intl/plugin";
+
+const IS_MOCK = process.env.PETDEX_MOCK === "1";
 
 // Content-Security-Policy. Blocks inline <script> sources we didn't ship,
 // caps img / connect / frame ancestors. The `unsafe-inline` allowance for
@@ -68,9 +72,14 @@ const securityHeaders = [
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 
+const mockRoot = path.resolve(__dirname, "src/lib/mock");
+
 const nextConfig: NextConfig = {
   // Hide the framework banner on every response.
   poweredByHeader: false,
+  // PGlite ships native wasm + workers that webpack/turbopack mangle when
+  // bundled. Mark it external so the server runtime requires() it directly.
+  ...(IS_MOCK ? { serverExternalPackages: ["@electric-sql/pglite"] } : {}),
   async headers() {
     return [
       {
@@ -79,6 +88,32 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // In PETDEX_MOCK=1 mode, redirect every Clerk import to in-process
+  // mocks so contributors can boot without a publishable key. We set
+  // both webpack and turbopack aliases since `next dev` defaults to
+  // turbopack on recent versions.
+  ...(IS_MOCK
+    ? {
+        turbopack: {
+          // Turbopack expects relative paths (with leading "./") rooted at
+          // the project. Absolute paths get re-resolved as file paths
+          // under cwd and 404. See nextjs/issues/turbopack-aliases.
+          resolveAlias: {
+            "@clerk/nextjs/server": "./src/lib/mock/clerk-server.ts",
+            "@clerk/nextjs": "./src/lib/mock/clerk-client.tsx",
+          },
+        },
+        webpack: (config: { resolve?: { alias?: Record<string, string> } }) => {
+          config.resolve = config.resolve ?? {};
+          config.resolve.alias = {
+            ...(config.resolve.alias ?? {}),
+            "@clerk/nextjs/server$": path.join(mockRoot, "clerk-server.ts"),
+            "@clerk/nextjs$": path.join(mockRoot, "clerk-client.tsx"),
+          };
+          return config;
+        },
+      }
+    : {}),
 };
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");

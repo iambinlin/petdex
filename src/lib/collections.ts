@@ -158,6 +158,93 @@ async function hydrateCollections(
   }));
 }
 
+// Featured collections that DON'T already include the given pet, plus
+// the slugs of pending suggestions the owner already submitted. Powers
+// the "Suggest for a collection" panel on /pets/[slug] for owners.
+export async function getCollectionCandidatesForPet(
+  petSlug: string,
+  ownerId: string,
+): Promise<{
+  candidates: Array<{ slug: string; title: string }>;
+  alreadyRequested: string[];
+}> {
+  try {
+    const allFeatured = await db
+      .select({
+        id: schema.petCollections.id,
+        slug: schema.petCollections.slug,
+        title: schema.petCollections.title,
+      })
+      .from(schema.petCollections)
+      .where(eq(schema.petCollections.featured, true))
+      .orderBy(asc(schema.petCollections.title));
+
+    const memberRows = await db
+      .select({ collectionId: schema.petCollectionItems.collectionId })
+      .from(schema.petCollectionItems)
+      .where(eq(schema.petCollectionItems.petSlug, petSlug));
+    const memberSet = new Set(memberRows.map((r) => r.collectionId));
+
+    const candidates = allFeatured
+      .filter((c) => !memberSet.has(c.id))
+      .map((c) => ({ slug: c.slug, title: c.title }));
+
+    const pendingRows = await db
+      .select({ collectionId: schema.petCollectionRequests.collectionId })
+      .from(schema.petCollectionRequests)
+      .where(
+        and(
+          eq(schema.petCollectionRequests.petSlug, petSlug),
+          eq(schema.petCollectionRequests.requestedBy, ownerId),
+          eq(schema.petCollectionRequests.status, "pending"),
+        ),
+      );
+    const pendingIds = new Set(pendingRows.map((r) => r.collectionId));
+    const alreadyRequested = allFeatured
+      .filter((c) => pendingIds.has(c.id))
+      .map((c) => c.slug);
+
+    return { candidates, alreadyRequested };
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) {
+      return { candidates: [], alreadyRequested: [] };
+    }
+    throw error;
+  }
+}
+
+// Look up which collections contain a given pet slug. Used on the pet
+// detail page to surface "part of N collections" backlinks. Returns
+// only featured collections to avoid leaking community drafts.
+export async function getCollectionsContainingPet(
+  petSlug: string,
+): Promise<Array<Pick<PetCollection, "slug" | "title" | "ownerId">>> {
+  try {
+    const rows = await db
+      .select({
+        slug: schema.petCollections.slug,
+        title: schema.petCollections.title,
+        ownerId: schema.petCollections.ownerId,
+      })
+      .from(schema.petCollectionItems)
+      .innerJoin(
+        schema.petCollections,
+        eq(schema.petCollectionItems.collectionId, schema.petCollections.id),
+      )
+      .where(
+        and(
+          eq(schema.petCollectionItems.petSlug, petSlug),
+          eq(schema.petCollections.featured, true),
+        ),
+      )
+      .orderBy(asc(schema.petCollections.title));
+    return rows;
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return [];
+    throw error;
+  }
+}
+
 function isMissingCollectionTableError(error: unknown): boolean {
   const cause =
     error && typeof error === "object" && "cause" in error

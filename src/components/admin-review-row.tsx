@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import {
@@ -11,13 +12,15 @@ import {
   Mail,
   Pencil,
   Slash,
+  Trash2,
   User,
   X,
 } from "lucide-react";
-import Link from "next/link";
 
 import type { SubmittedPet } from "@/lib/db/schema";
 import { petStates } from "@/lib/pet-states";
+
+import { AdminFeatureToggle } from "@/components/admin-feature-toggle";
 
 type AdminReviewRowProps = {
   pet: SubmittedPet;
@@ -136,6 +139,47 @@ export function AdminReviewRow({
     setBusy(false);
   }
 
+  async function takedown() {
+    if (busy) return;
+
+    // Double confirmation: typing the slug avoids muscle-memory clicks
+    // wiping a popular pet. The reason ends up in the audit log + email.
+    const typed = window.prompt(
+      `Type the slug "${pet.slug}" to confirm takedown.\nThis deletes the row and every R2 asset. Slug becomes free again.`,
+    );
+    if (typed?.trim() !== pet.slug) {
+      if (typed !== null) {
+        window.alert("Slug did not match. Takedown cancelled.");
+      }
+      return;
+    }
+    const reason =
+      window.prompt("Reason (sent to owner email, optional)") ?? "";
+
+    setBusy(true);
+    setError(null);
+
+    const res = await fetch(`/api/admin/${pet.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    });
+
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      setError(data.message ?? data.error ?? `Request failed (${res.status})`);
+      setBusy(false);
+      return;
+    }
+
+    // Refresh so the row disappears from the queue.
+    setBusy(false);
+    window.location.reload();
+  }
+
   async function saveEdit() {
     if (busy) return;
     setBusy(true);
@@ -252,7 +296,8 @@ export function AdminReviewRow({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline-offset-4 transition hover:text-foreground hover:underline"
             >
-              <User className="size-3" />/u/{ownerHandle}
+              <User className="size-3" />
+              /u/{ownerHandle}
             </Link>
           ) : null}
           <span
@@ -354,19 +399,52 @@ export function AdminReviewRow({
             </button>
           </>
         ) : status === "rejected" ? (
-          <button
-            type="button"
-            onClick={() => void decide("revive")}
-            disabled={busy}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-warning-fg/30 bg-chip-warning-bg px-4 text-xs font-medium text-chip-warning-fg transition hover:border-chip-warning-fg/50 disabled:opacity-60"
-          >
-            {busy ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Clock className="size-3.5" />
-            )}
-            Revive to pending
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => void decide("revive")}
+              disabled={busy}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-warning-fg/30 bg-chip-warning-bg px-4 text-xs font-medium text-chip-warning-fg transition hover:border-chip-warning-fg/50 disabled:opacity-60"
+            >
+              {busy ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Clock className="size-3.5" />
+              )}
+              Revive to pending
+            </button>
+            <button
+              type="button"
+              onClick={() => void takedown()}
+              disabled={busy}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-danger-fg/30 bg-chip-danger-bg px-4 text-xs font-medium text-chip-danger-fg transition hover:border-chip-danger-fg/50 disabled:opacity-60"
+            >
+              <Trash2 className="size-3.5" />
+              Take down
+            </button>
+          </>
+        ) : status === "approved" ? (
+          <>
+            <AdminFeatureToggle
+              petId={pet.id}
+              initialFeatured={pet.featured}
+              petName={pet.displayName}
+              variant="solid"
+            />
+            <button
+              type="button"
+              onClick={() => void takedown()}
+              disabled={busy}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-danger-fg/30 bg-chip-danger-bg px-4 text-xs font-medium text-chip-danger-fg transition hover:border-chip-danger-fg/50 disabled:opacity-60"
+            >
+              {busy ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="size-3.5" />
+              )}
+              Take down
+            </button>
+          </>
         ) : null}
       </div>
       <SimilarPanel petId={pet.id} status={status} />
@@ -483,10 +561,7 @@ function SimilarPanel({ petId, status }: { petId: string; status: string }) {
 
   const strongest = matches[0];
   const tone = (() => {
-    if (
-      strongest.visualDistance != null &&
-      strongest.visualDistance <= 6
-    ) {
+    if (strongest.visualDistance != null && strongest.visualDistance <= 6) {
       return {
         bg: "bg-chip-danger-bg",
         border: "border-chip-danger-fg/20",
@@ -494,10 +569,7 @@ function SimilarPanel({ petId, status }: { petId: string; status: string }) {
         label: "Possible duplicate",
       };
     }
-    if (
-      strongest.visualDistance != null &&
-      strongest.visualDistance <= 14
-    ) {
+    if (strongest.visualDistance != null && strongest.visualDistance <= 14) {
       return {
         bg: "bg-chip-warning-bg",
         border: "border-chip-warning-fg/20",
@@ -526,9 +598,7 @@ function SimilarPanel({ petId, status }: { petId: string; status: string }) {
           <AlertTriangle className="size-3.5" />
           {tone.label} ({matches.length})
         </span>
-        <span className="text-[10px] opacity-70">
-          {open ? "Hide" : "Show"}
-        </span>
+        <span className="text-[10px] opacity-70">{open ? "Hide" : "Show"}</span>
       </button>
       {open ? (
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">

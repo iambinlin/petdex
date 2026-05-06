@@ -71,15 +71,23 @@ const TABS: Tab[] = [
   },
 ];
 
+export type LeaderboardPetThumb = {
+  slug: string;
+  displayName: string;
+  spritesheetUrl: string;
+};
+
 type LeaderboardViewProps = {
   active: LeaderboardMetric;
   credits: CreditMap;
+  petThumbs: Record<string, LeaderboardPetThumb[]>;
   rows: Record<LeaderboardMetric, LeaderboardRow[]>;
 };
 
 export function LeaderboardView({
   active,
   credits,
+  petThumbs,
   rows,
 }: LeaderboardViewProps) {
   const t = useTranslations("leaderboard");
@@ -144,16 +152,25 @@ export function LeaderboardView({
         </div>
       ) : (
         <ol className="flex flex-col gap-2">
-          {data.map((row, i) => (
-            <LeaderboardRowItem
-              key={row.ownerId}
-              rank={i + 1}
-              row={row}
-              unit={t(activeTab.unitKey)}
-              credit={credits[row.ownerId]}
-              showSecondaryStats={active !== "collectors"}
-            />
-          ))}
+          {data.map((row, i) => {
+            const rank = i + 1;
+            // Top 3 get up to 5 sprite previews, the rest cap at 3.
+            const thumbs = (petThumbs[row.ownerId] ?? []).slice(
+              0,
+              rank <= 3 ? 5 : 3,
+            );
+            return (
+              <LeaderboardRowItem
+                key={row.ownerId}
+                rank={rank}
+                row={row}
+                unit={t(activeTab.unitKey)}
+                credit={credits[row.ownerId]}
+                showSecondaryStats={active !== "collectors"}
+                thumbs={thumbs}
+              />
+            );
+          })}
         </ol>
       )}
     </div>
@@ -166,12 +183,14 @@ function LeaderboardRowItem({
   unit,
   credit,
   showSecondaryStats,
+  thumbs,
 }: {
   rank: number;
   row: LeaderboardRow;
   unit: string;
   credit: CreditMap[string] | undefined;
   showSecondaryStats: boolean;
+  thumbs: LeaderboardPetThumb[];
 }) {
   const t = useTranslations("leaderboard");
   const name = credit?.name ?? "anonymous";
@@ -183,7 +202,15 @@ function LeaderboardRowItem({
   const at = credit?.username ?? credit?.githubUsername ?? null;
 
   return (
-    <li>
+    // content-visibility: auto lets the browser skip paint + layout for
+    // rows that are off-screen. contain-intrinsic-size keeps the
+    // scrollbar honest so the page height doesn't jump as rows resolve.
+    <li
+      style={{
+        contentVisibility: "auto",
+        containIntrinsicSize: "auto 72px",
+      }}
+    >
       <Link
         href={`/u/${handle}`}
         className="group flex items-center gap-4 rounded-2xl border border-border-base bg-surface/80 px-4 py-3 transition hover:border-border-strong"
@@ -196,6 +223,10 @@ function LeaderboardRowItem({
             <img
               src={avatar}
               alt={name}
+              loading="lazy"
+              decoding="async"
+              width={40}
+              height={40}
               className="size-10 rounded-full ring-1 ring-border-base"
             />
           ) : (
@@ -215,6 +246,20 @@ function LeaderboardRowItem({
             </span>
           ) : null}
         </div>
+
+        {thumbs.length > 0 ? (
+          <div
+            className="hidden shrink-0 items-center gap-1.5 md:flex"
+            // Reserve a fixed height regardless of thumb count so a
+            // creator with 0 thumbs and one with 5 produce rows of
+            // identical height — no CLS as data lazy-arrives.
+            style={{ height: 40 }}
+          >
+            {thumbs.map((thumb) => (
+              <ThumbCell key={thumb.slug} thumb={thumb} />
+            ))}
+          </div>
+        ) : null}
 
         {showSecondaryStats ? (
           <div className="hidden items-center gap-4 text-[11px] text-muted-3 sm:flex">
@@ -249,6 +294,31 @@ function LeaderboardRowItem({
         </div>
       </Link>
     </li>
+  );
+}
+
+function ThumbCell({ thumb }: { thumb: LeaderboardPetThumb }) {
+  // Pre-cropped 80x80 webp from /api/pets/<slug>/thumb (~2KB each).
+  // Earlier we were rendering the full 2MB spritesheet for a 40px
+  // tile — 50 rows × 3 thumbs = ~300MB of useless bytes per page
+  // load and the browser stalled scroll while decoding them.
+  return (
+    <span
+      className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-surface-muted/80 ring-1 ring-border-base"
+      title={thumb.displayName}
+    >
+      {/* biome-ignore lint/performance/noImgElement: pixelated sprite, server-cropped */}
+      <img
+        src={`/api/pets/${thumb.slug}/thumb`}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        width={40}
+        height={40}
+        className="size-10"
+        style={{ imageRendering: "pixelated" }}
+      />
+    </span>
   );
 }
 

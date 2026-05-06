@@ -15,12 +15,16 @@ import {
   XCircle,
 } from "lucide-react";
 
+import { petStates } from "@/lib/pet-states";
+import type { PetWithMetrics } from "@/lib/pets";
+
 import {
   CollectionEditor,
   type EditableCollection,
 } from "@/components/collection-editor";
 import { OwnerEditPanel } from "@/components/owner-edit-panel";
 import { PetActionMenu } from "@/components/pet-action-menu";
+import { PetCard } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
 import { ProfileCard, type ProfileData } from "@/components/profile-card";
 
@@ -59,11 +63,15 @@ type Tab = "all" | "pending" | "approved" | "rejected";
 export function MyPetsView({
   submissions,
   catchProgress,
+  likedPets,
+  canManageCollections,
   collection,
   profile,
 }: {
   submissions: Submission[];
   catchProgress: { caught: number; total: number; pct: number };
+  likedPets: PetWithMetrics[];
+  canManageCollections: boolean;
   collection: EditableCollection;
   profile: ProfileData;
 }) {
@@ -88,12 +96,15 @@ export function MyPetsView({
       <>
         <ProfileCard profile={profile} />
         <ClaimableBanner />
-        <CollectionEditor
-          approvedPets={profile.approvedPets}
-          initial={collection}
-          profileHandle={profile.handle}
-        />
+        {canManageCollections ? (
+          <CollectionEditor
+            approvedPets={profile.approvedPets}
+            initial={collection}
+            profileHandle={profile.handle}
+          />
+        ) : null}
         <AlbumProgress catchProgress={catchProgress} />
+        <LikedPets pets={likedPets} />
         <EmptyState />
       </>
     );
@@ -103,11 +114,13 @@ export function MyPetsView({
     <div className="space-y-8">
       <ProfileCard profile={profile} />
       <ClaimableBanner />
-      <CollectionEditor
-        approvedPets={profile.approvedPets}
-        initial={collection}
-        profileHandle={profile.handle}
-      />
+      {canManageCollections ? (
+        <CollectionEditor
+          approvedPets={profile.approvedPets}
+          initial={collection}
+          profileHandle={profile.handle}
+        />
+      ) : null}
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Dashboard
@@ -132,6 +145,8 @@ export function MyPetsView({
       </header>
 
       <AlbumProgress catchProgress={catchProgress} />
+
+      <LikedPets pets={likedPets} />
 
       <div className="flex flex-wrap items-center gap-2 border-b border-black/[0.08] pb-3 dark:border-white/[0.08]">
         <TabButton
@@ -206,14 +221,58 @@ function AlbumProgress({
       </p>
       <p className="mt-2 text-sm leading-6 text-muted-2">
         {catchProgress.caught === 0
-          ? "You have not liked any pets yet — catch them with the heart button"
+          ? "You have not liked any pets yet, catch them with the heart button"
           : "Liked pets count toward your personal Petdex album progress."}
       </p>
     </section>
   );
 }
 
-function SubmissionCard({ submission }: { submission: Submission }) {
+// Renders the actual sprites the user has liked, most recent first.
+// The album counter above only shows the number; this block answers the
+// "where do I see them?" question (issue #103). Hidden when the user
+// has no likes yet so the empty state on the album section above is
+// the single CTA.
+function LikedPets({ pets }: { pets: PetWithMetrics[] }) {
+  if (pets.length === 0) return null;
+
+  const stateCount = petStates.length;
+  const heading =
+    pets.length === 1 ? "1 liked pet" : `${pets.length} liked pets`;
+
+  return (
+    <section className="space-y-4">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
+            Liked pets
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+            {heading}
+          </h2>
+          <p className="mt-1 text-sm text-muted-2">
+            Pets you have caught with the heart, most recent first. Tap a card
+            to revisit, install, or unlike.
+          </p>
+        </div>
+      </header>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {pets.map((pet, index) => (
+          <PetCard
+            key={pet.slug}
+            pet={pet}
+            index={index}
+            stateCount={stateCount}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export type { Submission };
+
+export function SubmissionCard({ submission }: { submission: Submission }) {
   const [isPending, startTransition] = useTransition();
   const [withdrawn, setWithdrawn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -291,7 +350,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-surface/76 backdrop-blur transition ${
+      className={`group relative flex flex-col rounded-3xl border bg-surface/76 backdrop-blur transition focus-within:z-30 ${
         submission.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : "border-border-base shadow-sm shadow-blue-950/5"
@@ -311,7 +370,7 @@ function SubmissionCard({ submission }: { submission: Submission }) {
         ) : null}
       </div>
 
-      <div className="pet-sprite-stage relative flex items-center justify-center px-5 py-6">
+      <div className="pet-sprite-stage relative flex items-center justify-center overflow-hidden px-5 py-6">
         <PetSprite
           src={submission.spritesheetUrl}
           cycleStates
@@ -483,7 +542,7 @@ type Claimable = {
   status: "pending" | "approved" | "rejected";
 };
 
-function ClaimableBanner() {
+export function ClaimableBanner() {
   const [pets, setPets] = useState<Claimable[] | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [githubUrl, setGithubUrl] = useState<string | null>(null);

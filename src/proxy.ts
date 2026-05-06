@@ -7,6 +7,8 @@ import createMiddleware from "next-intl/middleware";
 
 import { defaultLocale, locales } from "@/i18n/config";
 
+const IS_MOCK = process.env.PETDEX_MOCK === "1";
+
 // Per-visitor stable shuffle seed used by the curated gallery sort
 // (see lib/shuffle-seed.ts). Minted here rather than from the page
 // because Next 16 forbids cookies().set() from Server Components.
@@ -48,10 +50,6 @@ const isProtected = createRouteMatcher([
   "/:locale/admin/(.*)",
   "/api/admin",
   "/api/admin/(.*)",
-  "/my-pets",
-  "/my-pets/(.*)",
-  "/:locale/my-pets",
-  "/:locale/my-pets/(.*)",
   "/api/my-pets",
   "/api/my-pets/(.*)",
 ]);
@@ -62,21 +60,38 @@ const handleI18nRouting = createMiddleware({
   localePrefix: "as-needed",
 });
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtected(req)) {
-    await auth.protect();
-  }
-
-  if (req.nextUrl.pathname.startsWith("/api")) {
+// In mock mode the user is always signed in, so we skip clerkMiddleware
+// entirely (it would otherwise try to validate a real publishable key
+// before our shims have a chance to short-circuit). Everything else —
+// next-intl routing, the shuffle cookie — keeps working.
+const baseMiddleware = (req: Request) => {
+  if (new URL(req.url).pathname.startsWith("/api")) {
     const res = NextResponse.next();
     ensureShuffleSeed(req, res);
     return res;
   }
-
-  const res = handleI18nRouting(req);
+  const res = handleI18nRouting(req as Parameters<typeof handleI18nRouting>[0]);
   ensureShuffleSeed(req, res);
   return res;
-});
+};
+
+export default IS_MOCK
+  ? baseMiddleware
+  : clerkMiddleware(async (auth, req) => {
+      if (isProtected(req)) {
+        await auth.protect();
+      }
+
+      if (req.nextUrl.pathname.startsWith("/api")) {
+        const res = NextResponse.next();
+        ensureShuffleSeed(req, res);
+        return res;
+      }
+
+      const res = handleI18nRouting(req);
+      ensureShuffleSeed(req, res);
+      return res;
+    });
 
 export const config = {
   matcher: [

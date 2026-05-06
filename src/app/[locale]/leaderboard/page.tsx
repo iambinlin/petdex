@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import {
   getLeaderboard,
+  getLeaderboardPetThumbs,
   type LeaderboardMetric,
   type LeaderboardRow,
 } from "@/lib/leaderboard";
@@ -79,14 +80,17 @@ export default async function LeaderboardPage({
     ...collectorsRows.map((r) => r.ownerId),
   ]);
 
-  const credits = await resolveOwnerCredits(
-    [...allOwnerIds].map((ownerId) => ({
-      ownerId,
-      creditName: null,
-      creditUrl: null,
-      creditImage: null,
-    })),
-  );
+  const [credits, petThumbs] = await Promise.all([
+    resolveOwnerCredits(
+      [...allOwnerIds].map((ownerId) => ({
+        ownerId,
+        creditName: null,
+        creditUrl: null,
+        creditImage: null,
+      })),
+    ),
+    getLeaderboardPetThumbs([...allOwnerIds]),
+  ]);
 
   return (
     <main className="min-h-dvh bg-background text-foreground">
@@ -112,6 +116,7 @@ export default async function LeaderboardPage({
         <LeaderboardView
           active={active}
           credits={serializeCredits(credits)}
+          petThumbs={petThumbs}
           rows={{
             pets: petsRows,
             likes: likesRows,

@@ -1,8 +1,10 @@
 import { cache } from "react";
 
-import { eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
+import { getMetricsBySlugs } from "@/lib/db/metrics";
+import { type PetWithMetrics, rowToPet } from "@/lib/pets";
 
 export const getCaughtSlugSet = cache(
   async (userId: string | null): Promise<Set<string>> => {
@@ -41,5 +43,47 @@ export const getCatchProgress = cache(
     const pct = total > 0 ? Math.round((caught / total) * 100) : 0;
 
     return { caught, total, pct };
+  },
+);
+
+// Pets the user has liked, joined to submitted_pets so we only return
+// rows that are still approved (so a takedown of a liked pet does not
+// surface a broken card). Most-recent like first. Used by /my-pets to
+// show the actual sprites behind the album counter.
+export const getLikedPetsForUser = cache(
+  async (userId: string | null): Promise<PetWithMetrics[]> => {
+    if (!userId) return [];
+
+    const rows = await db
+      .select({
+        pet: schema.submittedPets,
+        likedAt: schema.petLikes.createdAt,
+      })
+      .from(schema.petLikes)
+      .innerJoin(
+        schema.submittedPets,
+        eq(schema.submittedPets.slug, schema.petLikes.petSlug),
+      )
+      .where(
+        and(
+          eq(schema.petLikes.userId, userId),
+          eq(schema.submittedPets.status, "approved"),
+        ),
+      )
+      .orderBy(desc(schema.petLikes.createdAt));
+
+    if (rows.length === 0) return [];
+
+    const slugs = rows.map((r) => r.pet.slug);
+    const metrics = await getMetricsBySlugs(slugs);
+
+    return rows.map((row) => ({
+      ...rowToPet(row.pet),
+      metrics: metrics.get(row.pet.slug) ?? {
+        installCount: 0,
+        likeCount: 0,
+        zipDownloadCount: 0,
+      },
+    }));
   },
 );

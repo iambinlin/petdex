@@ -6,13 +6,23 @@ import { readShuffleSeed } from "@/lib/shuffle-seed";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// Search responses for non-curated sorts are deterministic per-query
+// and can sit in the edge cache. Curated falls back to per-visitor
+// (shuffle seed cookie) so it's tagged below as private. Letting Next
+// decide dynamism (instead of force-dynamic) means the deterministic
+// path can hit the edge cache via the s-maxage hint we set.
 
 const KIND_SET = new Set<string>(PET_KINDS);
 const VIBE_SET = new Set<string>(PET_VIBES);
 const COLOR_SET = new Set<string>(COLOR_FAMILIES);
 const BATCH_KEY_RE = /^\d{4}-\d{2}$/;
-const SORT_SET = new Set<SortKey>(["curated", "popular", "installed", "alpha"]);
+const SORT_SET = new Set<SortKey>([
+  "curated",
+  "popular",
+  "installed",
+  "alpha",
+  "recent",
+]);
 
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
@@ -56,13 +66,14 @@ export async function GET(req: Request): Promise<Response> {
     shuffleSeed: shuffleSeed ?? undefined,
   });
 
-  // Curated results are now per-visitor; caching on the edge would
-  // cross-pollute orderings across visitors. Other sorts are still
-  // deterministic so they can keep the short-lived shared cache.
+  // Curated results are per-visitor (shuffle seed cookie) so the edge
+  // can't share them across users. Other sorts (popular, installed,
+  // alpha, recent) are deterministic per (filters, cursor, limit), so
+  // the edge serves them shared with a generous SWR window.
   const cacheHeader =
     sort === "curated"
       ? "private, no-store"
-      : "public, max-age=20, s-maxage=30";
+      : "public, max-age=60, s-maxage=120, stale-while-revalidate=600";
 
   return NextResponse.json(result, {
     headers: { "Cache-Control": cacheHeader },

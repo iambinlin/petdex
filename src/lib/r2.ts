@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectsCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -55,4 +59,37 @@ export async function presignPut(
     publicUrl: `${PUBLIC_BASE}/${key}`,
     key,
   };
+}
+
+// Map a stored asset URL back to its R2 object key. Submission URLs always
+// live under R2_PUBLIC_BASE; anything else (off-host credit images, legacy
+// URLs) returns null so callers can skip cleanly.
+export function keyFromR2Url(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const base = new URL(PUBLIC_BASE);
+    if (parsed.host !== base.host) return null;
+    const key = parsed.pathname.replace(/^\/+/, "");
+    return key.length > 0 ? key : null;
+  } catch {
+    return null;
+  }
+}
+
+// Bulk-delete R2 objects. Silently ignores missing keys; throws only on
+// transport-level errors so callers can decide whether the takedown
+// should still succeed if the bucket is briefly unreachable.
+export async function deleteR2Objects(keys: string[]): Promise<void> {
+  const unique = Array.from(new Set(keys.filter((k) => k && k.length > 0)));
+  if (unique.length === 0) return;
+  await r2.send(
+    new DeleteObjectsCommand({
+      Bucket: BUCKET,
+      Delete: {
+        Objects: unique.map((Key) => ({ Key })),
+        Quiet: true,
+      },
+    }),
+  );
 }

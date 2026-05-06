@@ -3,9 +3,13 @@ import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { Shuffle, Sparkles } from "lucide-react";
+import { Layers, Shuffle, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import {
+  getCollectionCandidatesForPet,
+  getCollectionsContainingPet,
+} from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
 import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
@@ -33,6 +37,7 @@ import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SubmittedBy } from "@/components/submitted-by";
+import { SuggestCollectionButton } from "@/components/suggest-collection-button";
 
 const SITE_URL = "https://petdex.crafter.run";
 
@@ -155,14 +160,16 @@ export default async function PetPage({ params }: PageProps) {
         }
       : null;
 
-  const [{ userId }, allPets, ownerRow, variants] = await Promise.all([
-    auth(),
-    getApprovedPetsWithMetrics(),
-    db.query.submittedPets.findFirst({
-      where: eq(schema.submittedPets.slug, slug),
-    }),
-    getVariantsFor(slug),
-  ]);
+  const [{ userId }, allPets, ownerRow, variants, memberOfCollections] =
+    await Promise.all([
+      auth(),
+      getApprovedPetsWithMetrics(),
+      db.query.submittedPets.findFirst({
+        where: eq(schema.submittedPets.slug, slug),
+      }),
+      getVariantsFor(slug),
+      getCollectionsContainingPet(slug),
+    ]);
   const petWithMetrics = allPets.find((candidate) => candidate.slug === slug);
   const metrics = petWithMetrics?.metrics ?? {
     installCount: 0,
@@ -246,6 +253,13 @@ export default async function PetPage({ params }: PageProps) {
       lastRejection: ownerRow.pendingRejectionReason,
     };
   }
+
+  // Owner-only: candidate featured collections + already-submitted
+  // pending requests for the suggest button.
+  const collectionSuggest =
+    userId && ownerRow && ownerRow.ownerId === userId
+      ? await getCollectionCandidatesForPet(slug, userId)
+      : null;
 
   const url = `${SITE_URL}/pets/${pet.slug}`;
   const jsonLd = [
@@ -437,6 +451,33 @@ export default async function PetPage({ params }: PageProps) {
               </div>
             ) : null}
 
+            {memberOfCollections.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
+                  <Layers className="size-3.5" />
+                  Part of
+                </span>
+                {memberOfCollections.map((col) => (
+                  <Link
+                    key={col.slug}
+                    href={`/collections/${col.slug}`}
+                    className="rounded-full border border-border-base bg-surface px-2.5 py-1 text-xs font-medium text-muted-2 transition hover:border-border-strong hover:text-foreground"
+                  >
+                    {col.title}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+
+            {collectionSuggest && collectionSuggest.candidates.length > 0 ? (
+              <SuggestCollectionButton
+                petSlug={slug}
+                petDisplayName={pet.displayName}
+                candidateCollections={collectionSuggest.candidates}
+                alreadyRequested={collectionSuggest.alreadyRequested}
+              />
+            ) : null}
+
             {/* Keyboard hint strip — minimal, mono-spaced, only on
                 pointer-fine media so we don't spam mobile users with
                 Esc/arrow chrome. */}
@@ -491,7 +532,10 @@ export default async function PetPage({ params }: PageProps) {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <InfoCard title={tPet("stats.title")} icon={<Sparkles className="size-4" />}>
+          <InfoCard
+            title={tPet("stats.title")}
+            icon={<Sparkles className="size-4" />}
+          >
             <div className="flex items-center justify-center py-2">
               <PetRadar
                 {...stats}

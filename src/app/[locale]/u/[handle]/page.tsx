@@ -2,21 +2,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { and, desc, eq } from "drizzle-orm";
-import {
-  ExternalLink,
-  Heart,
-  Layers,
-  TerminalSquare,
-  Trophy,
-} from "lucide-react";
+import { desc, eq } from "drizzle-orm";
+import { Heart, TerminalSquare, Trophy } from "lucide-react";
 
 import { isAdmin } from "@/lib/admin";
-import { getCatchProgress } from "@/lib/catch-status";
-import {
-  getOwnerCollection,
-  type PetCollectionWithPets,
-} from "@/lib/collections";
+import { getCatchProgress, getLikedPetsForUser } from "@/lib/catch-status";
+import { canManageCreatorCollections } from "@/lib/collection-access";
+import { getOwnerCollection } from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { userIdForHandle } from "@/lib/handles";
@@ -27,12 +19,16 @@ import { type PetWithMetrics, rowToPet } from "@/lib/pets";
 import { MAX_PINNED_PETS } from "@/lib/profiles";
 
 import { JsonLd } from "@/components/json-ld";
+import type { Submission } from "@/components/my-pets-view";
 import { PetCard } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
+import { PinnedReorderGrid } from "@/components/pinned-reorder-grid";
 import { ProfileAnalytics } from "@/components/profile-analytics";
 import { ProfileExternalLink } from "@/components/profile-external-link";
 import { ProfileInlineEditor } from "@/components/profile-inline-editor";
 import { ProfilePinButton } from "@/components/profile-pin-button";
+import { ProfileShareButton } from "@/components/profile-share-button";
+import { ProfileTabs } from "@/components/profile-tabs";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -129,19 +125,22 @@ export default async function UserProfilePage({ params }: PageProps) {
   const featuredSlugs =
     (profile?.featuredPetSlugs as string[] | undefined) ?? [];
 
-  // Approved pets by this user.
-  const rows = await db
+  // Viewer detection runs ahead of the pets query so the owner sees
+  // their pending + rejected rows alongside the approved gallery.
+  const { userId: viewerId } = await auth();
+  const isOwner = viewerId === ownerId;
+
+  // Pets owned by this user. Visitors only see approved rows; the owner
+  // sees everything so the profile doubles as their dashboard.
+  const allOwnerRows = await db
     .select()
     .from(schema.submittedPets)
-    .where(
-      and(
-        eq(schema.submittedPets.ownerId, ownerId),
-        eq(schema.submittedPets.status, "approved"),
-      ),
-    )
+    .where(eq(schema.submittedPets.ownerId, ownerId))
     .orderBy(desc(schema.submittedPets.approvedAt));
 
-  const slugs = rows.map((r) => r.slug);
+  const approvedRows = allOwnerRows.filter((r) => r.status === "approved");
+
+  const slugs = approvedRows.map((r) => r.slug);
   const metrics = slugs.length
     ? await getMetricsBySlugs(slugs)
     : new Map<
@@ -149,7 +148,7 @@ export default async function UserProfilePage({ params }: PageProps) {
         { likeCount: number; installCount: number; zipDownloadCount: number }
       >();
 
-  const pets: PetWithMetrics[] = rows.map((row) => ({
+  const pets: PetWithMetrics[] = approvedRows.map((row) => ({
     ...rowToPet(row),
     metrics: metrics.get(row.slug) ?? {
       installCount: 0,
@@ -157,7 +156,44 @@ export default async function UserProfilePage({ params }: PageProps) {
       likeCount: 0,
     },
   }));
+
+  // Owner-only: shape pending + rejected rows as Submission for the
+  // tabs panel. Sorted by createdAt desc so the most recent submit
+  // shows first.
+  const ownerSubmissions: Submission[] = isOwner
+    ? allOwnerRows
+        .filter((r) => r.status === "pending" || r.status === "rejected")
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map((row) => ({
+          id: row.id,
+          slug: row.slug,
+          displayName: row.displayName,
+          description: row.description,
+          spritesheetUrl: row.spritesheetUrl,
+          zipUrl: row.zipUrl,
+          kind: row.kind,
+          vibes: (row.vibes as string[]) ?? [],
+          tags: (row.tags as string[]) ?? [],
+          featured: row.featured,
+          status: row.status,
+          createdAt: row.createdAt.toISOString(),
+          approvedAt: row.approvedAt?.toISOString() ?? null,
+          rejectedAt: row.rejectedAt?.toISOString() ?? null,
+          rejectionReason: row.rejectionReason,
+          pending: row.pendingSubmittedAt
+            ? {
+                displayName: row.pendingDisplayName,
+                description: row.pendingDescription,
+                tags: (row.pendingTags as string[] | null) ?? null,
+                submittedAt: row.pendingSubmittedAt.toISOString(),
+              }
+            : null,
+          pendingRejectionReason: row.pendingRejectionReason,
+          metrics: { installCount: 0, zipDownloadCount: 0, likeCount: 0 },
+        }))
+    : [];
   const collection = await getOwnerCollection(ownerId);
+  const likedPets = await getLikedPetsForUser(ownerId);
 
   // Resolve pinned slugs to full pet objects, preserving owner-chosen
   // order. Drop any that are no longer approved (would otherwise break
@@ -182,10 +218,10 @@ export default async function UserProfilePage({ params }: PageProps) {
   const isOwnerAdmin = isAdmin(ownerId);
   const rank = isOwnerAdmin ? null : await getOwnerRank(ownerId, "pets");
 
-  // Viewer detection.
-  const { userId: viewerId } = await auth();
-  const isOwner = viewerId === ownerId;
   const catchProgress = isOwner ? await getCatchProgress(viewerId) : null;
+  const canManageOwnCollection = isOwner
+    ? await canManageCreatorCollections(viewerId)
+    : false;
 
   const fallbackInitial = (displayName ?? publicHandle)
     .slice(0, 1)
@@ -323,8 +359,14 @@ export default async function UserProfilePage({ params }: PageProps) {
               ) : null}
             </div>
 
-            {/* Owner action */}
-            <div className="flex justify-center lg:justify-end">
+            {/* Owner + visitor actions. Share is on for everyone so a
+                fan can spread a profile they liked, the same growth
+                motion as the creator promoting their own page. */}
+            <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-end">
+              <ProfileShareButton
+                handle={publicHandle}
+                displayName={displayName}
+              />
               {isOwner ? (
                 <ProfileInlineEditor
                   handle={publicHandle}
@@ -343,240 +385,82 @@ export default async function UserProfilePage({ params }: PageProps) {
       </section>
 
       <section className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-5 py-12 md:px-8 md:py-16">
-        {collection ? (
-          <OwnerCollectionPanel
-            collection={collection}
-            publicHandle={publicHandle}
-            isOwner={isOwner}
-          />
-        ) : isOwner && pets.length > 0 ? (
-          <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-6 text-sm text-muted-2">
-            Build a featured collection from{" "}
-            <Link
-              href="/my-pets"
-              className="font-medium text-brand underline-offset-4 hover:underline"
-            >
-              your creator dashboard
-            </Link>
-            .
-          </div>
-        ) : null}
-        {pets.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-12 text-center">
-            <p className="font-mono text-xs tracking-[0.22em] text-muted-3 uppercase">
-              No approved pets yet
-            </p>
-            <p className="mt-3 text-base text-muted-2">
-              {isOwner
-                ? "Once you submit a pet and it gets approved, it'll show up here."
-                : "This creator hasn't shipped a public pet yet."}
-            </p>
-            {isOwner ? (
-              <Link
-                href="/submit"
-                className="mt-5 inline-flex h-10 items-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
-              >
-                Submit your first pet
-              </Link>
-            ) : null}
-          </div>
-        ) : (
-          <>
-            {featuredPets.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
-                    ★ Pinned
-                  </p>
-                  <p className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
-                    {featuredPets.length} of {MAX_PINNED_PETS}
-                  </p>
-                </div>
-                {featuredPets.length === 1 ? (
-                  <div className="relative">
-                    {isOwner ? (
-                      <div className="absolute top-4 right-4">
-                        <ProfilePinButton
-                          slug={featuredPets[0].slug}
-                          isPinned
-                          pinnedCount={featuredPets.length}
-                          maxPins={MAX_PINNED_PETS}
-                        />
-                      </div>
-                    ) : null}
-                    <FeaturedPin pet={featuredPets[0]} />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6 md:gap-4">
-                    {featuredPets.map((pet, index) => (
-                      <div key={pet.slug} className="relative h-full">
-                        <PetCard
-                          pet={pet}
-                          index={index}
-                          stateCount={petStates.length}
-                        />
-                        {isOwner ? (
-                          <div className="absolute top-3 right-14">
-                            <ProfilePinButton
-                              slug={pet.slug}
-                              isPinned
-                              pinnedCount={featuredPets.length}
-                              maxPins={MAX_PINNED_PETS}
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
+        {featuredPets.length > 0 ? (
+          isOwner && featuredPets.length >= 2 ? (
+            <PinnedReorderGrid
+              pets={featuredPets}
+              petStateCount={petStates.length}
+            />
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
+                  ★ Pinned
+                </p>
+                <p className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
+                  {featuredPets.length} of {MAX_PINNED_PETS}
+                </p>
               </div>
-            ) : null}
-
-            {restPets.length > 0 ? (
-              <div className="space-y-4">
-                {featuredPets.length > 0 ? (
-                  <p className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
-                    All pets
-                  </p>
-                ) : null}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 md:gap-5">
-                  {restPets.map((pet, index) => (
+              {featuredPets.length === 1 ? (
+                <div className="relative">
+                  {isOwner ? (
+                    <div className="absolute top-4 right-4">
+                      <ProfilePinButton
+                        slug={featuredPets[0].slug}
+                        isPinned
+                        pinnedCount={featuredPets.length}
+                        maxPins={MAX_PINNED_PETS}
+                      />
+                    </div>
+                  ) : null}
+                  <FeaturedPin pet={featuredPets[0]} />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-6">
+                  {featuredPets.map((pet, index) => (
                     <div key={pet.slug} className="relative h-full">
                       <PetCard
                         pet={pet}
-                        index={index + featuredPets.length}
+                        index={index}
                         stateCount={petStates.length}
                       />
-                      {isOwner ? (
-                        <div className="absolute top-3 right-14">
-                          <ProfilePinButton
-                            slug={pet.slug}
-                            isPinned={false}
-                            pinnedCount={featuredPets.length}
-                            maxPins={MAX_PINNED_PETS}
-                          />
-                        </div>
-                      ) : null}
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : null}
-          </>
-        )}
+              )}
+            </div>
+          )
+        ) : null}
+
+        <ProfileTabs
+          isOwner={isOwner}
+          publicHandle={publicHandle}
+          approvedPets={restPets}
+          ownerSubmissions={ownerSubmissions}
+          likedPets={likedPets}
+          collection={
+            collection
+              ? {
+                  slug: collection.slug,
+                  title: collection.title,
+                  description: collection.description,
+                  externalUrl: collection.externalUrl,
+                  coverPetSlug: collection.coverPetSlug,
+                  petSlugs: collection.pets.map((pet) => pet.slug),
+                }
+              : null
+          }
+          canManageCollections={canManageOwnCollection}
+          collectionApprovedPets={pets.map((p) => ({
+            slug: p.slug,
+            displayName: p.displayName,
+            spritesheetUrl: p.spritesheetPath,
+          }))}
+        />
       </section>
 
       <SiteFooter />
     </main>
-  );
-}
-
-function OwnerCollectionPanel({
-  collection,
-  publicHandle,
-  isOwner,
-}: {
-  collection: PetCollectionWithPets;
-  publicHandle: string;
-  isOwner: boolean;
-}) {
-  const cover =
-    collection.pets.find((pet) => pet.slug === collection.coverPetSlug) ??
-    collection.pets[0] ??
-    null;
-  const totalLikes = collection.pets.reduce(
-    (sum, pet) => sum + pet.metrics.likeCount,
-    0,
-  );
-  const totalInstalls = collection.pets.reduce(
-    (sum, pet) => sum + pet.metrics.installCount,
-    0,
-  );
-
-  return (
-    <section className="overflow-hidden rounded-3xl border border-brand-light/35 bg-surface/86 backdrop-blur">
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="p-6 md:p-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-tint px-2.5 py-1 font-mono text-[10px] tracking-[0.16em] text-brand-deep uppercase">
-              <Layers className="size-3" />
-              Featured collection
-            </span>
-            {isOwner ? (
-              <Link
-                href="/my-pets"
-                className="rounded-full border border-border-base px-2.5 py-1 font-mono text-[10px] tracking-[0.16em] text-muted-3 uppercase transition hover:bg-surface-muted hover:text-foreground"
-              >
-                Edit
-              </Link>
-            ) : null}
-          </div>
-          <h2 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-            {collection.title}
-          </h2>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-muted-2 md:text-lg">
-            {collection.description}
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <Link
-              href={`/collections/${collection.slug}`}
-              className="inline-flex h-10 items-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
-            >
-              View collection
-            </Link>
-            {collection.externalUrl ? (
-              <a
-                href={collection.externalUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-border-base px-4 text-sm font-medium text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
-              >
-                <ExternalLink className="size-4" />
-                Visit IP site
-              </a>
-            ) : null}
-          </div>
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
-            <span>
-              {collection.pets.length}{" "}
-              {collection.pets.length === 1 ? "pet" : "pets"}
-            </span>
-            {totalLikes > 0 ? (
-              <span className="inline-flex items-center gap-1.5">
-                <Heart className="size-3" />
-                {totalLikes}
-              </span>
-            ) : null}
-            {totalInstalls > 0 ? (
-              <span className="inline-flex items-center gap-1.5">
-                <TerminalSquare className="size-3" />
-                {totalInstalls} installs
-              </span>
-            ) : null}
-            <span>@{publicHandle}</span>
-          </div>
-        </div>
-        <div className="border-t border-black/[0.06] bg-background/60 p-6 lg:border-t-0 lg:border-l dark:border-white/[0.06]">
-          {cover ? (
-            <Link
-              href={`/pets/${cover.slug}`}
-              className="group flex min-h-[300px] items-center justify-center rounded-3xl bg-surface-muted/60 transition hover:bg-surface-muted"
-            >
-              <PetSprite
-                src={cover.spritesheetPath}
-                cycleStates
-                scale={1}
-                label={`${cover.displayName} collection hero`}
-              />
-            </Link>
-          ) : (
-            <div className="grid min-h-[300px] place-items-center rounded-3xl border border-dashed border-border-base text-sm text-muted-3">
-              Collection pets pending.
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
   );
 }
 

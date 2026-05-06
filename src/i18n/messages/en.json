@@ -35,7 +35,10 @@
     "topCreators": "Creators",
     "creators": "Creators",
     "requests": "Requests",
+    "community": "Community",
+    "discord": "Discord",
     "about": "About",
+    "followOnX": "Follow updates on X",
     "language": "Language",
     "settings": "Settings",
     "submitCta": "Submit",
@@ -57,6 +60,7 @@
     "topCreators": "Creators",
     "takedown": "Takedown",
     "github": "GitHub",
+    "discord": "Discord",
     "sponsor": "Sponsor",
     "sponsorAria": "Sponsor on GitHub"
   },
@@ -67,6 +71,7 @@
     "heroCommand": "npx petdex install boba",
     "submitCta": "Submit",
     "browseGallery": "Browse gallery",
+    "joinDiscord": "Join the Discord",
     "openPet": "Open {name}",
     "petAnimated": "{name} animated",
     "petParadeAria": "Featured pets",
@@ -123,8 +128,10 @@
       "submissions": "Submissions",
       "edits": "Edits",
       "requests": "Requests",
+      "collections": "Collections",
       "feedback": "Feedback",
-      "manifest": "Manifest"
+      "manifest": "Manifest",
+      "insights": "Insights"
     },
     "status": {
       "pending": "Pending",
@@ -287,7 +294,82 @@
     "createCta": "Don't have a pet yet? Hatch one in Codex",
     "legalPrefix": "By submitting, you confirm you have rights to the artwork or are creating fan content. Rights holders can request removal via our",
     "legalLink": "takedown notice",
-    "legalSuffix": "."
+    "legalSuffix": ".",
+    "form": {
+      "drop": {
+        "title": "Upload a pet package",
+        "instructions": "Drop a folder or a ZIP with <petJson>pet.json</petJson> and <spritesheet>spritesheet.webp</spritesheet> (or .png). Recommended {width}×{height}, 8×9 frame grid.",
+        "short": "Drop a folder or a ZIP with pet.json + spritesheet.",
+        "ariaLabel": "Pet package drop zone",
+        "pickFolder": "Pick folder",
+        "pickZip": "Pick .zip"
+      },
+      "auth": {
+        "signIn": "Sign in to submit"
+      },
+      "check": {
+        "title": "Submission check",
+        "reading": "Reading package...",
+        "ready": "Looks ready to submit.",
+        "empty": "Packages stay local until you confirm. Petdex checks the manifest and sprite dimensions before upload."
+      },
+      "path": {
+        "prefix": "Pet assets live in",
+        "platforms": "(macOS / Linux)"
+      },
+      "copy": {
+        "ariaCopied": "Path copied",
+        "ariaCopy": "Copy path to clipboard",
+        "copied": "Copied",
+        "copy": "Copy"
+      },
+      "submitButton": {
+        "validating": "Validating...",
+        "uploading": "Uploading...",
+        "finalizing": "Finalizing...",
+        "submitted": "Submitted",
+        "idle": "Submit pet"
+      },
+      "preview": {
+        "ariaLabel": "Uploaded pet animation preview"
+      },
+      "success": {
+        "review": "{name} is in review. You'll be notified when it's approved."
+      },
+      "fallback": {
+        "beforeLink": "Stuck?",
+        "link": "Open a GitHub issue with your assets",
+        "afterLink": "and Hunter will upload it manually."
+      },
+      "defaults": {
+        "missingFiles": "Missing files",
+        "untitledPet": "Untitled pet",
+        "description": "A Codex-compatible digital pet."
+      },
+      "errors": {
+        "uploadFailed": "Upload failed: {reason}",
+        "submissionFailed": "Submission failed",
+        "submissionFailedWithCode": "Submission failed: {code}",
+        "rateLimited": "Limit reached: 10 submissions per 24 hours. Try again tomorrow.",
+        "missingField": "The package is missing required submission data.",
+        "invalidSpritesheet": "The spritesheet is too small or has invalid dimensions.",
+        "invalidAssetUrl": "The uploaded assets did not pass the hosting check.",
+        "invalidSlug": "Pet id could not become a valid URL slug.",
+        "unauthorized": "Sign in before submitting.",
+        "invalidJson": "The submitted JSON could not be read."
+      },
+      "issues": {
+        "folderMissingPetJson": "Folder is missing pet.json.",
+        "folderMissingSpritesheet": "Folder is missing spritesheet.webp (or .png). Found: {present}",
+        "dropPetFolderOrZip": "Drop a pet folder or a .zip file.",
+        "allPetsBundle": "This looks like the all-pets bundle (petdex-approved.zip). Submit a single pet folder or its individual zip instead.",
+        "zipMissingPetJson": "Missing pet.json at zip root.",
+        "zipMissingSpritesheet": "Missing spritesheet.webp (or .png) at zip root. Found: {present}",
+        "invalidJson": "pet.json is not valid JSON.",
+        "unreadableSpritesheet": "Spritesheet image is unreadable.",
+        "tooSmall": "Spritesheet seems too small ({width}×{height}). Use an 8×9 frame grid (recommended {recommendedWidth}×{recommendedHeight})."
+      }
+    }
   },
   "requests": {
     "metadata": {
@@ -296,22 +378,37 @@
     },
     "eyebrow": "Community wishlist",
     "title": "Pets people are asking for",
-    "body": "When someone searches for a pet that doesn't exist yet, they can request it. Upvote the ones you'd want too — most-upvoted go to the top of the curation list.",
+    "body": "When someone searches for a pet that doesn't exist yet, they can request it. Upvote the ones you'd want too. Most-upvoted go to the top of the curation list.",
     "backToGallery": "← Back to gallery",
     "view": {
       "form": {
         "title": "Request a pet",
-        "body": "Describe the pet you'd like to see — character, theme, vibe. If someone else already asked for the same thing, your submission turns into an upvote on theirs.",
-        "collectionHint": "You can also suggest collectible sets like GRAYCRAFT: brand/IP name, pets that belong together, and the official site.",
+        "titlePet": "Request a pet",
+        "titleCollection": "Request a collection",
+        "body": "Describe the pet you'd like to see: character, theme, vibe. If someone else already asked for the same thing, your submission turns into an upvote on theirs.",
+        "bodyPet": "Describe the pet you'd like to see: character, theme, vibe. If someone else already asked for the same thing, your submission turns into an upvote on theirs.",
+        "bodyCollection": "Describe the set you want: IP, brand, cast, theme, and what pets should belong together.",
+        "type": {
+          "pet": "Pet",
+          "petBody": "One companion, character, object or creature.",
+          "collection": "Collection",
+          "collectionBody": "A collectible set like Pixar, Star Wars or GRAYCRAFT."
+        },
+        "petHint": "Use Pet for one specific companion: a character, creature, object or desk buddy.",
+        "collectionHint": "Use Collection for sets like Pixar, Star Wars, Pokémon starters or GRAYCRAFT: brand/IP name, pets that belong together and the official site.",
         "placeholder": "e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig",
+        "placeholderPet": "e.g. a Studio Ghibli chinchilla, a sleepy axolotl coder, Spider-Pig",
+        "placeholderCollection": "e.g. Pixar desk buddies, Star Wars droids, Pokémon starters",
         "imageLabel": "Add reference image",
         "imageBody": "Optional. Images stay hidden until admin review.",
         "submit": "Request",
+        "submitPet": "Request pet",
+        "submitCollection": "Request collection",
         "sending": "Sending…"
       },
       "success": {
         "created": "Requested \"{query}\". Others can upvote it now.",
-        "upvoted": "Upvoted existing request for \"{query}\" — now at {count} votes."
+        "upvoted": "Upvoted existing request for \"{query}\". Now at {count} votes."
       },
       "sort": {
         "top": "Top voted",
@@ -320,11 +417,13 @@
         "searchPlaceholder": "Search requests…"
       },
       "badges": {
+        "pet": "Pet",
+        "collection": "Collection",
         "fulfilled": "Fulfilled",
         "imagePending": "Image in review"
       },
       "empty": {
-        "title": "No requests yet — be the first.",
+        "title": "No requests yet. Be the first.",
         "beforeLink": "Or search",
         "link": "the gallery",
         "afterLink": "and request a pet directly from the no-results screen.",
@@ -662,6 +761,17 @@
   "commandLine": {
     "copyAria": "Copy command"
   },
+  "profileShare": {
+    "share": "Share",
+    "eyebrow": "Share this profile",
+    "close": "Close",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "shareToX": "Share to X",
+    "shareToLinkedIn": "Share to LinkedIn",
+    "more": "More…",
+    "shareText": "Check out {name}'s Codex pet collection on Petdex"
+  },
   "petActions": {
     "moreActions": "More actions for {name}",
     "share": "Share",
@@ -673,7 +783,13 @@
     "shareToX": "Share to X",
     "shareToLinkedIn": "Share to LinkedIn",
     "more": "More…",
-    "downloadZip": "Download ZIP"
+    "downloadZip": "Download ZIP",
+    "removeFromPetdex": "Remove from Petdex",
+    "removing": "Removing…",
+    "withdrawSubmission": "Withdraw submission",
+    "withdrawing": "Withdrawing…",
+    "submitNewVersion": "Submit a new version",
+    "editDetails": "Edit name & description"
   },
   "petStateViewer": {
     "eyebrow": "State viewer",
@@ -737,5 +853,8 @@
       "loved": "LOVED",
       "freshness": "FRESHNESS"
     }
+  },
+  "collectionDetail": {
+    "backToCollections": "← All collections"
   }
 }

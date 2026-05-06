@@ -58,10 +58,11 @@ type PetGalleryProps = {
   dexMap?: Record<string, number>;
 };
 
-type SortKey = "curated" | "popular" | "installed" | "alpha";
+type SortKey = "curated" | "popular" | "installed" | "alpha" | "recent";
 
 const SORT_LABELS: Record<SortKey, string> = {
   curated: "Curated",
+  recent: "Newest",
   popular: "Most liked",
   installed: "Most installed",
   alpha: "Alphabetical",
@@ -98,7 +99,30 @@ export function PetGallery({
   const [activeColors, setActiveColors] = useState<Set<ColorFamily>>(new Set());
   const [activeBatches, setActiveBatches] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortKey>("curated");
-  const caughtSet = new Set(caughtSlugs ?? []);
+  // The home page no longer ships caughtSlugs server-side — that would
+  // make every SSR render per-visitor and kill ISR. When the prop is
+  // missing we fetch /api/me/caught-slugs after hydration so the
+  // "caught" highlight on PetCard still works for signed-in users
+  // without holding up the static shell.
+  const [hydratedCaught, setHydratedCaught] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (caughtSlugs !== undefined) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/me/caught-slugs");
+        if (!res.ok) return;
+        const data = (await res.json()) as { caught: string[] };
+        if (!cancelled) setHydratedCaught(data.caught);
+      } catch {
+        /* anonymous viewers + offline fall through */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [caughtSlugs]);
+  const caughtSet = new Set(caughtSlugs ?? hydratedCaught ?? []);
 
   const [pets, setPets] = useState<PetWithMetrics[]>(initial.pets);
   const [total, setTotal] = useState<number>(initial.total);
@@ -644,6 +668,22 @@ function FilterChips({
   );
 }
 
+export type PetCardOwnerActions = {
+  /**
+   * Submission id (pet_xxx). Required to call the owner-action APIs
+   * for edit / withdraw. When omitted the action menu only shows
+   * the public actions (copy, share, download, owner self-delete).
+   */
+  submissionId: string;
+  status: "pending" | "approved" | "rejected";
+  rejectionReason?: string | null;
+};
+
+export type PetCardStatusOverlay = {
+  label: string;
+  tone: "warning" | "danger";
+};
+
 type PetCardProps = {
   pet: PetWithMetrics;
   index: number;
@@ -663,9 +703,29 @@ type PetCardProps = {
    * card never renders a blank slot.
    */
   dexNumber?: number | null;
+  /**
+   * Owner-only actions surfaced in the action menu. Pass on the
+   * profile page when the viewer is the pet's owner so the menu
+   * gets Withdraw (pending), Edit (approved), Submit new version
+   * (rejected) entries.
+   */
+  ownerActions?: PetCardOwnerActions;
+  /**
+   * Visual badge overlaying the card. Used on the owner profile to
+   * tag pending and rejected pets with the same shape as the rest
+   * of the gallery cards. Approved pets render no overlay.
+   */
+  statusOverlay?: PetCardStatusOverlay;
 };
 
-export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
+export function PetCard({
+  pet,
+  index,
+  dexNumber,
+  caught,
+  ownerActions,
+  statusOverlay,
+}: PetCardProps) {
   const dexLabel =
     dexNumber != null
       ? dexNumber < 1000
@@ -684,9 +744,16 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
       : undefined;
 
   return (
+    // The has-[] selector lifts this card above its row siblings while
+    // the action menu is open. Without it the dropdown gets clipped by
+    // the next card down: each card has its own stacking context (from
+    // backdrop-blur + the hover translate), so a z-index inside the
+    // dropdown can never climb above a later sibling's context. The
+    // PetActionMenu trigger button toggles aria-expanded, which is the
+    // signal we hook here.
     <article
       style={accentStyle}
-      className={`group relative flex h-full flex-col rounded-3xl border bg-surface/76 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
+      className={`group relative flex h-full flex-col rounded-3xl border bg-surface/76 backdrop-blur transition has-[[aria-expanded=true]]:z-30 hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
         pet.featured
           ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
           : pet.dominantColor
@@ -804,6 +871,21 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
         />
       </div>
 
+      {/* Status overlay (owner profile only). Positioned over the dex
+          row so it reads alongside the No. label without competing
+          with the action menu in the top-right. */}
+      {statusOverlay ? (
+        <span
+          className={`pointer-events-none absolute top-3 left-3 z-20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] uppercase ring-1 ${
+            statusOverlay.tone === "danger"
+              ? "bg-chip-danger-bg text-chip-danger-fg ring-chip-danger-fg/20"
+              : "bg-chip-warning-bg text-chip-warning-fg ring-chip-warning-fg/20"
+          }`}
+        >
+          {statusOverlay.label}
+        </span>
+      ) : null}
+
       {/* Action menu lives outside the Link so its clicks don't navigate.
  Absolute-positioned to overlap the featured badge corner. */}
       <div className="absolute top-3 right-4 z-20">
@@ -814,6 +896,7 @@ export function PetCard({ pet, index, dexNumber, caught }: PetCardProps) {
             zipUrl: pet.zipUrl,
             description: pet.description,
           }}
+          ownerActions={ownerActions}
         />
       </div>
     </article>
