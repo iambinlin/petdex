@@ -1,15 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+
+import { useLocale, useTranslations } from "next-intl";
 
 import { localizePath } from "@/i18n/config";
 
 const FILTERS: Array<{
-  value: "all" | "pending" | "approved" | "rejected" | "discovered";
+  value:
+    | "all"
+    | "pending"
+    | "held"
+    | "review_failed"
+    | "auto_approved"
+    | "auto_rejected"
+    | "approved"
+    | "rejected"
+    | "discovered";
 }> = [
   { value: "pending" },
+  { value: "held" },
+  { value: "review_failed" },
+  { value: "auto_approved" },
+  { value: "auto_rejected" },
   { value: "discovered" },
   { value: "approved" },
   { value: "rejected" },
@@ -22,6 +36,10 @@ export function AdminStatusFilter({
   counts: {
     all: number;
     pending: number;
+    held: number;
+    review_failed: number;
+    auto_approved: number;
+    auto_rejected: number;
     approved: number;
     rejected: number;
     discovered: number;
@@ -33,6 +51,10 @@ export function AdminStatusFilter({
   const current = (params?.get("status") ?? "pending") as
     | "all"
     | "pending"
+    | "held"
+    | "review_failed"
+    | "auto_approved"
+    | "auto_rejected"
     | "approved"
     | "rejected"
     | "discovered";

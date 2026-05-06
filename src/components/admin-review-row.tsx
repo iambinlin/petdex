@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import {
@@ -14,13 +15,29 @@ import {
   User,
   X,
 } from "lucide-react";
-import Link from "next/link";
 
-import type { SubmittedPet } from "@/lib/db/schema";
+import type { SubmissionReview, SubmittedPet } from "@/lib/db/schema";
 import { petStates } from "@/lib/pet-states";
+import type {
+  ReviewChecks,
+  ReviewEvidenceMatch,
+} from "@/lib/submission-review-types";
+import {
+  formatSimilarityPercent,
+  passesSemanticSimilarityThreshold,
+  passesVisualSimilarityThreshold,
+  SUBMISSION_NEAR_VISUAL_DUPLICATE_THRESHOLD,
+  SUBMISSION_SIMILARITY_MAX_RESULTS,
+  SUBMISSION_SIMILARITY_VISUAL_THRESHOLD,
+  visualDistanceSimilarityScore,
+} from "@/lib/submission-similarity";
+
+type AdminReviewPet = SubmittedPet & {
+  latestReview?: SubmissionReview | null;
+};
 
 type AdminReviewRowProps = {
-  pet: SubmittedPet;
+  pet: AdminReviewPet;
   stateCount: number;
   /** Pre-resolved profile handle for the submitter (Clerk username, fallback to userId tail). */
   ownerHandle?: string;
@@ -72,6 +89,7 @@ export function AdminReviewRow({
   const [slug, setSlug] = useState(pet.slug);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Tick once a minute so "5m ago" doesn't go stale while the admin
   // sits on the queue page. Resets on row mount; cheap.
@@ -166,6 +184,30 @@ export function AdminReviewRow({
     setBusy(false);
   }
 
+  async function rerunReview() {
+    if (busy || reviewBusy) return;
+    setReviewBusy(true);
+    setError(null);
+
+    const res = await fetch(`/api/internal/submissions/${pet.id}/review`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      setError(data.message ?? data.error ?? `Request failed (${res.status})`);
+      setReviewBusy(false);
+      return;
+    }
+
+    window.location.reload();
+  }
+
   function cancelEdit() {
     setDisplayName(pet.displayName);
     setDescription(pet.description);
@@ -225,6 +267,7 @@ export function AdminReviewRow({
                 /{slug}
               </span>
               <StatusBadge status={status} />
+              <AutomationBadge review={pet.latestReview ?? null} />
               <button
                 type="button"
                 onClick={() => setEditing(true)}
@@ -252,12 +295,13 @@ export function AdminReviewRow({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline-offset-4 transition hover:text-foreground hover:underline"
             >
-              <User className="size-3" />/u/{ownerHandle}
+              <User className="size-3" />
+              /u/{ownerHandle}
             </Link>
           ) : null}
           <span
             className="inline-flex items-center gap-1"
-            title={formatPetTime(createdAtDate) + " (PET)"}
+            title={`${formatPetTime(createdAtDate)} (PET)`}
           >
             <Clock className="size-3" />
             {relativeTime(createdAtDate, now)}
@@ -295,6 +339,7 @@ export function AdminReviewRow({
             pet.json
           </a>
         </div>
+        <AutomationEvidence review={pet.latestReview ?? null} />
         {error ? (
           <p className="rounded-md bg-chip-danger-bg px-2 py-1 text-xs text-chip-danger-fg">
             {error}
@@ -368,8 +413,22 @@ export function AdminReviewRow({
             Revive to pending
           </button>
         ) : null}
+        {!editing ? (
+          <button
+            type="button"
+            onClick={() => void rerunReview()}
+            disabled={busy || reviewBusy}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-border-base bg-surface px-4 text-xs font-medium text-muted-2 transition hover:border-border-strong hover:text-foreground disabled:opacity-60"
+          >
+            {reviewBusy ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Clock className="size-3.5" />
+            )}
+            Rerun review
+          </button>
+        ) : null}
       </div>
-      <SimilarPanel petId={pet.id} status={status} />
     </article>
   );
 }
@@ -397,6 +456,307 @@ function StatusBadge({ status }: { status: SubmittedPet["status"] }) {
       Rejected
     </span>
   );
+}
+
+function AutomationBadge({ review }: { review: SubmissionReview | null }) {
+  if (!review) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-muted-3 uppercase">
+        <Clock className="size-3" />
+        Not reviewed
+      </span>
+    );
+  }
+
+  const label = automationLabel(review);
+  const tone = automationTone(review);
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] uppercase ${tone}`}
+      title={review.summary ?? undefined}
+    >
+      {review.decision === "auto_approve" ? (
+        <Check className="size-3" />
+      ) : review.status === "failed" || review.decision === "auto_reject" ? (
+        <AlertTriangle className="size-3" />
+      ) : (
+        <Clock className="size-3" />
+      )}
+      {label}
+    </span>
+  );
+}
+
+function AutomationEvidence({ review }: { review: SubmissionReview | null }) {
+  if (!review) return null;
+
+  const checks = review.checks as ReviewChecks;
+  const duplicateMatches = currentDuplicateEvidence(checks);
+  const reviewedAt = review.reviewedAt ?? review.createdAt;
+
+  return (
+    <details className="rounded-xl border border-border-base bg-surface-muted/50 px-3 py-2 text-xs text-muted-2">
+      <summary className="cursor-pointer font-mono text-[10px] tracking-[0.16em] text-muted-3 uppercase">
+        Automation evidence
+      </summary>
+      <div className="mt-2 space-y-2">
+        <p>
+          {review.summary ?? "No summary."} Confidence: {review.confidence ?? 0}
+          %.
+        </p>
+        <p className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase">
+          {review.reasonCode ?? "no_reason"} ·{" "}
+          {formatPetTime(new Date(reviewedAt))}
+        </p>
+        {review.error ? (
+          <p className="rounded-md bg-chip-danger-bg px-2 py-1 text-chip-danger-fg">
+            {review.error}
+          </p>
+        ) : null}
+        {checks.assets?.reasons?.length ? (
+          <EvidenceGroup title="Assets" items={checks.assets.reasons} />
+        ) : null}
+        {checks.policy?.flags?.length ? (
+          <EvidenceGroup
+            title="Policy"
+            items={checks.policy.flags.map(
+              (flag) =>
+                `${flag.category} (${Math.round(flag.confidence * 100)}%): ${flag.evidence}`,
+            )}
+          />
+        ) : checks.policy?.reasons?.length ? (
+          <EvidenceGroup title="Policy" items={checks.policy.reasons} />
+        ) : null}
+        {duplicateMatches.length > 0 ? (
+          <DuplicateEvidenceGroup matches={duplicateMatches} />
+        ) : null}
+      </div>
+    </details>
+  );
+}
+
+function currentDuplicateEvidence(checks: ReviewChecks): ReviewEvidenceMatch[] {
+  const merged = new Map<string, ReviewEvidenceMatch>();
+  const add = (match: ReviewEvidenceMatch) => {
+    const existing = merged.get(match.id);
+    if (!existing) {
+      merged.set(match.id, { ...match });
+      return;
+    }
+    merged.set(match.id, {
+      ...existing,
+      reason: existing.reason ?? match.reason,
+      featured: existing.featured ?? match.featured,
+      spritesheetUrl: existing.spritesheetUrl ?? match.spritesheetUrl,
+      visualDistance: existing.visualDistance ?? match.visualDistance,
+      semanticScore: existing.semanticScore ?? match.semanticScore,
+      matchedFields: [
+        ...new Set([
+          ...(existing.matchedFields ?? []),
+          ...(match.matchedFields ?? []),
+        ]),
+      ],
+    });
+  };
+
+  for (const match of checks.duplicates?.exactMatches ?? []) add(match);
+  for (const match of checks.duplicates?.visualMatches ?? []) {
+    if (passesVisualSimilarityThreshold(match)) add(match);
+  }
+  for (const match of checks.duplicates?.semanticMatches ?? []) {
+    if (passesSemanticSimilarityThreshold(match)) add(match);
+  }
+  for (const match of checks.duplicates?.metadataMatches ?? []) add(match);
+
+  return [...merged.values()].slice(0, SUBMISSION_SIMILARITY_MAX_RESULTS);
+}
+
+function DuplicateEvidenceGroup({
+  matches,
+}: {
+  matches: ReviewEvidenceMatch[];
+}) {
+  const tone = duplicateTone(matches);
+
+  return (
+    <div className={`rounded-lg border ${tone.border} ${tone.bg} p-2`}>
+      <div className="flex items-center justify-between gap-2">
+        <p
+          className={`inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.14em] uppercase ${tone.text}`}
+        >
+          <AlertTriangle className="size-3" />
+          {tone.label} ({matches.length})
+        </p>
+      </div>
+      <div className="mt-2 space-y-2">
+        {matches.map((match) => {
+          const signals = duplicateSignals(match);
+          return (
+            <Link
+              key={match.id}
+              href={`/pets/${match.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex gap-2 rounded-lg border border-border-base bg-surface p-2 transition hover:border-border-strong"
+            >
+              {match.spritesheetUrl ? (
+                <div className="size-12 shrink-0 overflow-hidden rounded-md bg-surface-muted">
+                  {/* biome-ignore lint/performance/noImgElement: admin-only duplicate evidence preview */}
+                  <img
+                    src={match.spritesheetUrl}
+                    alt={match.displayName}
+                    className="size-full object-cover"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </div>
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="truncate text-[11px] font-medium text-foreground">
+                    {match.featured ? "★ " : ""}
+                    {match.displayName}
+                  </span>
+                  <span
+                    className={`font-mono text-[9px] tracking-[0.12em] uppercase ${
+                      match.status === "approved"
+                        ? "text-chip-success-fg"
+                        : "text-chip-warning-fg"
+                    }`}
+                  >
+                    {match.status}
+                  </span>
+                </div>
+                {match.reason ? (
+                  <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-3">
+                    {match.reason}
+                  </p>
+                ) : null}
+                {signals.length > 0 ? (
+                  <p className="mt-1 font-mono text-[9px] tracking-tight text-muted-3 uppercase">
+                    {signals.join(" · ")}
+                  </p>
+                ) : null}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function duplicateTone(matches: ReviewEvidenceMatch[]): {
+  bg: string;
+  border: string;
+  text: string;
+  label: string;
+} {
+  if (matches.some((match) => match.reason === "Exact asset hash match.")) {
+    return {
+      bg: "bg-chip-danger-bg",
+      border: "border-chip-danger-fg/20",
+      text: "text-chip-danger-fg",
+      label: "Exact duplicate evidence",
+    };
+  }
+  if (
+    matches.some(
+      (match) =>
+        match.visualDistance != null &&
+        match.visualDistance <= SUBMISSION_NEAR_VISUAL_DUPLICATE_THRESHOLD,
+    )
+  ) {
+    return {
+      bg: "bg-chip-danger-bg",
+      border: "border-chip-danger-fg/20",
+      text: "text-chip-danger-fg",
+      label: "Possible duplicate",
+    };
+  }
+  if (
+    matches.some(
+      (match) =>
+        match.visualDistance != null &&
+        match.visualDistance <= SUBMISSION_SIMILARITY_VISUAL_THRESHOLD,
+    )
+  ) {
+    return {
+      bg: "bg-chip-warning-bg",
+      border: "border-chip-warning-fg/20",
+      text: "text-chip-warning-fg",
+      label: "Looks similar",
+    };
+  }
+  if (matches.some((match) => match.semanticScore != null)) {
+    return {
+      bg: "bg-chip-info-bg",
+      border: "border-chip-info-fg/20",
+      text: "text-chip-info-fg",
+      label: "Same character?",
+    };
+  }
+  return {
+    bg: "bg-chip-warning-bg",
+    border: "border-chip-warning-fg/20",
+    text: "text-chip-warning-fg",
+    label: "Metadata overlap",
+  };
+}
+
+function duplicateSignals(match: ReviewEvidenceMatch): string[] {
+  return [
+    match.visualDistance != null
+      ? `visual:${formatSimilarityPercent(visualDistanceSimilarityScore(match.visualDistance))}`
+      : null,
+    match.visualDistance != null ? `v:${match.visualDistance}` : null,
+    match.semanticScore != null
+      ? `semantic:${formatSimilarityPercent(match.semanticScore)}`
+      : null,
+    match.semanticScore != null ? `s:${match.semanticScore.toFixed(2)}` : null,
+    match.matchedFields?.length
+      ? `fields:${match.matchedFields.join(",")}`
+      : null,
+  ].filter((signal): signal is string => Boolean(signal));
+}
+
+function EvidenceGroup({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div>
+      <p className="font-mono text-[10px] tracking-[0.14em] text-muted-3 uppercase">
+        {title}
+      </p>
+      <div className="mt-1 space-y-1">
+        {items.map((item) => (
+          <p key={item} className="rounded-md bg-surface px-2 py-1">
+            {item}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function automationLabel(review: SubmissionReview): string {
+  if (review.status === "running") return "Reviewing";
+  if (review.status === "failed") return "Review failed";
+  if (review.decision === "auto_approve") return "Auto approve";
+  if (review.decision === "auto_reject") return "Auto reject";
+  if (review.decision === "hold") return "Held";
+  return "Reviewed";
+}
+
+function automationTone(review: SubmissionReview): string {
+  if (review.status === "failed")
+    return "bg-chip-danger-bg text-chip-danger-fg";
+  if (review.decision === "auto_approve") {
+    return "bg-chip-success-bg text-chip-success-fg";
+  }
+  if (review.decision === "auto_reject") {
+    return "bg-chip-danger-bg text-chip-danger-fg";
+  }
+  if (review.decision === "hold")
+    return "bg-chip-warning-bg text-chip-warning-fg";
+  return "bg-surface-muted text-muted-3";
 }
 
 function SpritePreview({ src }: { src: string }) {
@@ -430,154 +790,6 @@ function SpritePreview({ src }: { src: string }) {
           }
         />
       </div>
-    </div>
-  );
-}
-
-// SimilarPanel — calls /api/admin/similar/<id> on mount and renders a
-// strip of similar pets so the admin can spot dupes (visual or
-// semantic) before approving. Collapsed by default; auto-expands when
-// at least one match is "very similar" (visual distance <= 6).
-type SimilarMatch = {
-  id: string;
-  slug: string;
-  displayName: string;
-  status: string;
-  featured: boolean;
-  spritesheetUrl: string;
-  visualDistance: number | null;
-  semanticScore: number | null;
-};
-
-function SimilarPanel({ petId, status }: { petId: string; status: string }) {
-  const [matches, setMatches] = useState<SimilarMatch[] | null>(null);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch(`/api/admin/similar/${petId}`);
-        if (!res.ok) return;
-        const data = (await res.json()) as { matches: SimilarMatch[] };
-        if (cancelled) return;
-        setMatches(data.matches);
-        // Auto-expand when there's a near-identical visual hit.
-        const strong = data.matches.find(
-          (m) => m.visualDistance != null && m.visualDistance <= 6,
-        );
-        if (strong) setOpen(true);
-      } catch {
-        /* ignore — admin still sees the rest of the row */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [petId]);
-
-  if (!matches || matches.length === 0) return null;
-
-  // Status filter: rejected pets aren't worth highlighting at admin time.
-  if (status === "rejected") return null;
-
-  const strongest = matches[0];
-  const tone = (() => {
-    if (
-      strongest.visualDistance != null &&
-      strongest.visualDistance <= 6
-    ) {
-      return {
-        bg: "bg-chip-danger-bg",
-        border: "border-chip-danger-fg/20",
-        text: "text-chip-danger-fg",
-        label: "Possible duplicate",
-      };
-    }
-    if (
-      strongest.visualDistance != null &&
-      strongest.visualDistance <= 14
-    ) {
-      return {
-        bg: "bg-chip-warning-bg",
-        border: "border-chip-warning-fg/20",
-        text: "text-chip-warning-fg",
-        label: "Looks similar",
-      };
-    }
-    return {
-      bg: "bg-chip-info-bg",
-      border: "border-chip-info-fg/20",
-      text: "text-chip-info-fg",
-      label: "Same character?",
-    };
-  })();
-
-  return (
-    <div
-      className={`md:col-span-3 mt-2 rounded-xl border ${tone.bg} ${tone.border} px-3 py-2`}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`flex w-full items-center justify-between gap-2 text-left ${tone.text}`}
-      >
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.18em] uppercase">
-          <AlertTriangle className="size-3.5" />
-          {tone.label} ({matches.length})
-        </span>
-        <span className="text-[10px] opacity-70">
-          {open ? "Hide" : "Show"}
-        </span>
-      </button>
-      {open ? (
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {matches.map((m) => (
-            <Link
-              key={m.id}
-              href={`/pets/${m.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex flex-col gap-1 rounded-lg border border-border-base bg-surface p-2 transition hover:border-border-strong"
-            >
-              <div className="aspect-square overflow-hidden rounded-md bg-surface-muted">
-                {/* biome-ignore lint/performance/noImgElement: admin-only sprite preview */}
-                <img
-                  src={m.spritesheetUrl}
-                  alt={m.displayName}
-                  className="size-full object-cover"
-                  style={{ imageRendering: "pixelated" }}
-                />
-              </div>
-              <div className="flex items-center gap-1 truncate text-[11px] font-medium text-foreground">
-                {m.featured ? "★ " : ""}
-                {m.displayName}
-              </div>
-              <div className="flex items-center gap-1 font-mono text-[9px] uppercase tracking-tight text-muted-3">
-                <span
-                  className={
-                    m.status === "approved"
-                      ? "text-chip-success-fg"
-                      : "text-chip-warning-fg"
-                  }
-                >
-                  {m.status}
-                </span>
-                {m.visualDistance != null ? (
-                  <span title="dHash hamming distance">
-                    · v:{m.visualDistance}
-                  </span>
-                ) : null}
-                {m.semanticScore != null ? (
-                  <span title="cosine similarity">
-                    · s:{m.semanticScore.toFixed(2)}
-                  </span>
-                ) : null}
-              </div>
-            </Link>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -1,11 +1,16 @@
 // Embed a search query into the same vector space the catalog lives in.
 // Cached in Upstash Redis by SHA1(query) so the second user typing
-// "cozy night programmer" doesn't burn another OpenAI call.
+// "cozy night programmer" doesn't burn another embedding call.
 
 import { createHash } from "node:crypto";
 
-import OpenAI from "openai";
 import { Redis } from "@upstash/redis";
+
+import {
+  embedTextValue,
+  hasCurrentEmbeddingDimensions,
+  PETDEX_EMBEDDING_MODEL,
+} from "@/lib/embeddings";
 
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -15,38 +20,29 @@ const redis =
 const TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 function cacheKey(text: string): string {
-  return `petdex:queryvec:${createHash("sha1").update(text).digest("hex")}`;
+  return `petdex:queryvec:${PETDEX_EMBEDDING_MODEL}:${createHash("sha1").update(text).digest("hex")}`;
 }
 
 export async function embedQuery(text: string): Promise<number[] | null> {
   const trimmed = text.trim().toLowerCase();
-  if (!trimmed || !process.env.OPENAI_API_KEY) return null;
+  if (!trimmed) return null;
 
   if (redis) {
     try {
       const cached = await redis.get<number[]>(cacheKey(trimmed));
-      if (cached && Array.isArray(cached) && cached.length === 1536) {
+      if (hasCurrentEmbeddingDimensions(cached)) {
         return cached;
       }
     } catch {
-      /* fall through to OpenAI */
+      /* fall through to provider */
     }
   }
 
-  try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const r = await client.embeddings.create({
-      model: "text-embedding-3-small",
-      input: trimmed.slice(0, 8000),
-    });
-    const v = r.data[0]?.embedding ?? null;
-    if (v && redis) {
-      await redis.set(cacheKey(trimmed), v, { ex: TTL_SECONDS }).catch(() => {});
-    }
-    return v;
-  } catch {
-    return null;
+  const v = await embedTextValue(trimmed);
+  if (v && redis) {
+    await redis.set(cacheKey(trimmed), v, { ex: TTL_SECONDS }).catch(() => {});
   }
+  return v;
 }
 
 /** Decide whether a search query is "vibey" enough to embed instead of

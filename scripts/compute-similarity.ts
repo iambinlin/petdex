@@ -1,18 +1,20 @@
-// Compute perceptual hash + semantic embedding for every approved /
-// pending pet. Re-runs are idempotent: rows already populated are
-// skipped unless --force is passed.
+// Compute perceptual hash + current-model semantic embedding for every
+// approved / pending pet. Re-runs are idempotent: rows already populated
+// for PETDEX_EMBEDDING_MODEL are skipped unless --force is passed.
 //
 // Usage:
 //   bun scripts/compute-similarity.ts          # only un-hashed rows
 //   bun scripts/compute-similarity.ts --force  # rehash everything
 
-import { eq, isNull, or, sql as drizzleSql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import OpenAI from "openai";
 import sharp from "sharp";
 
-import * as schema from "../src/lib/db/schema";
+import {
+  buildPetEmbeddingText,
+  embeddingVectorLiteral,
+  embedTextValue,
+  PETDEX_EMBEDDING_MODEL,
+} from "../src/lib/embeddings";
 
 const args = new Set(process.argv.slice(2));
 const FORCE = args.has("--force");
@@ -23,9 +25,6 @@ function env(name: string): string {
   return v;
 }
 
-const sqlite = neon(env("DATABASE_URL"));
-const db = drizzle(sqlite, { schema });
-const openai = new OpenAI({ apiKey: env("OPENAI_API_KEY") });
 const sql = neon(env("DATABASE_URL")); // raw for vector inserts
 
 // dHash: 9x8 grayscale, compare adjacent columns. 64 bits = 16 hex.
@@ -56,25 +55,6 @@ async function dhash(spriteUrl: string): Promise<string | null> {
   }
 }
 
-async function embed(text: string): Promise<number[] | null> {
-  if (!text.trim()) return null;
-  try {
-    const r = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: text.slice(0, 8000),
-    });
-    return r.data[0]?.embedding ?? null;
-  } catch (err) {
-    console.warn("  embed fail:", (err as Error).message);
-    return null;
-  }
-}
-
-function vectorLiteral(v: number[]): string {
-  // pgvector text format: '[0.1,0.2,...]'
-  return `[${v.join(",")}]`;
-}
-
 async function main() {
   // Process approved + pending. Curated featured already approved.
   const rows = await sql`
@@ -103,13 +83,14 @@ async function main() {
     };
     const needsDhash = FORCE || !r.dhash;
 
-    // Check if embedding exists. We can't use drizzle's findFirst because
-    // the column isn't declared in schema yet, so probe via raw SQL.
+    // Check if a current-model embedding exists. We can't use drizzle's
+    // findFirst because the vector columns aren't declared in schema.ts.
     const [exist] = await sql`
-      SELECT (embedding IS NOT NULL) as has_embedding
+      SELECT (embedding IS NOT NULL AND embedding_model = ${PETDEX_EMBEDDING_MODEL}) as has_embedding
       FROM submitted_pets WHERE id = ${r.id}
     `;
-    const needsEmbed = FORCE || !(exist as { has_embedding: boolean }).has_embedding;
+    const needsEmbed =
+      FORCE || !(exist as { has_embedding: boolean }).has_embedding;
 
     if (!needsDhash && !needsEmbed) {
       skipped++;
@@ -128,19 +109,22 @@ async function main() {
     if (needsEmbed) {
       const tagsArr = Array.isArray(r.tags) ? (r.tags as string[]) : [];
       const vibesArr = Array.isArray(r.vibes) ? (r.vibes as string[]) : [];
-      const text = [
-        r.display_name,
-        r.description,
-        r.kind,
-        tagsArr.join(" "),
-        vibesArr.join(" "),
-      ]
-        .filter(Boolean)
-        .join("\n");
-      const v = await embed(text);
+      const text = buildPetEmbeddingText({
+        displayName: r.display_name,
+        description: r.description,
+        kind: r.kind,
+        tags: tagsArr,
+        vibes: vibesArr,
+      });
+      const v = await embedTextValue(text);
       if (v) {
-        const lit = vectorLiteral(v);
-        await sql`UPDATE submitted_pets SET embedding = ${lit}::vector WHERE id = ${r.id}`;
+        const lit = embeddingVectorLiteral(v);
+        await sql`
+          UPDATE submitted_pets
+          SET embedding = ${lit}::vector,
+              embedding_model = ${PETDEX_EMBEDDING_MODEL}
+          WHERE id = ${r.id}
+        `;
       }
     }
 

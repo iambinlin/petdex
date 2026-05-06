@@ -162,6 +162,10 @@
     },
     "status": {
       "pending": "待处理",
+      "held": "已保留",
+      "review_failed": "审核失败",
+      "auto_approved": "自动通过",
+      "auto_rejected": "自动拒绝",
       "approved": "已通过",
       "rejected": "已拒绝",
       "discovered": "已发现",
@@ -367,7 +371,21 @@
         "ariaLabel": "已上传宠物动画预览"
       },
       "success": {
-        "review": "{name} 正在审核中。通过后我们会通知你。"
+        "approved": "{name} 已通过自动审核，现在已上线。",
+        "rejected": "{name} 未通过自动审核。你可以调整包内容后重新提交。",
+        "hold": "{name} 需要人工审核。管理员处理后我们会通知你。",
+        "review": "{name} 正在审核中。通过后我们会通知你。",
+        "viewPet": "查看宠物",
+        "details": {
+          "duplicate": "原因：它似乎与现有宠物重复。{summary}",
+          "duplicateFallback": "提交的资源与现有宠物包匹配。",
+          "policy": "原因：自动审核发现可能的政策问题，需要管理员审核后才能上线。",
+          "assets": "原因：自动审核发现包文件或 spritesheet 存在问题。",
+          "timeout": "原因：自动审核耗时过长，所以我们改为人工审核，避免做出有风险的决定。",
+          "reviewFailed": "原因：自动审核失败，所以我们改为人工审核，避免做出有风险的决定。",
+          "rejectedGeneric": "原因：自动审核发现这个提交存在高置信度问题。",
+          "holdGeneric": "原因：自动审核没有足够信心自动批准。"
+        }
       },
       "fallback": {
         "beforeLink": "卡住了？",

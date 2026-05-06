@@ -61,8 +61,5 @@ export async function POST(req: Request): Promise<Response> {
     const { status, ...rest } = result;
     return NextResponse.json(rest, { status });
   }
-  return NextResponse.json(
-    { ok: true, id: result.id, slug: result.slug },
-    { status: 201 },
-  );
+  return NextResponse.json(result, { status: 201 });
 }

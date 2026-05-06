@@ -35,11 +35,30 @@ type ParsedPet = {
   source: "folder" | "zip";
 };
 
+type SubmissionReviewOutcome = {
+  decision: "approved" | "rejected" | "hold";
+  applied: boolean;
+  reasonCode: string | null;
+  summary: string | null;
+};
+
 type SubmissionResult =
   | { kind: "idle" }
   | { kind: "uploading"; step: "validating" | "uploading" | "registering" }
   | { kind: "error"; message: string }
-  | { kind: "success"; slug: string; displayName: string };
+  | {
+      kind: "success";
+      slug: string;
+      displayName: string;
+      status: "pending" | "approved" | "rejected";
+      review: SubmissionReviewOutcome;
+    };
+
+type SubmitResponse = {
+  slug: string;
+  status: "pending" | "approved" | "rejected";
+  review: SubmissionReviewOutcome;
+};
 
 const REQUIRED = { width: 1536, height: 1872 } as const;
 const PETS_DIR = "~/.codex/pets";
@@ -451,15 +470,19 @@ export function PetSubmitForm() {
       return;
     }
 
-    const data = (await res.json()) as { slug: string };
+    const data = (await res.json()) as SubmitResponse;
     track("pet_submission_succeeded", {
       pet_id: parsed.petId,
       slug: data.slug,
+      review_decision: data.review.decision,
+      review_applied: data.review.applied,
     });
     setSubmission({
       kind: "success",
       slug: data.slug,
       displayName: parsed.displayName,
+      status: data.status,
+      review: data.review,
     });
   }
 
@@ -625,9 +648,7 @@ export function PetSubmitForm() {
             ) : null}
 
             {submission.kind === "success" ? (
-              <p className="rounded-2xl bg-chip-success-bg p-3 text-sm text-chip-success-fg">
-                {t("success.review", { name: submission.displayName })}
-              </p>
+              <SubmissionSuccessMessage submission={submission} />
             ) : null}
           </div>
         ) : (
@@ -647,6 +668,59 @@ export function PetSubmitForm() {
       </p>
     </div>
   );
+}
+
+function SubmissionSuccessMessage({
+  submission,
+}: {
+  submission: Extract<SubmissionResult, { kind: "success" }>;
+}) {
+  const t = useTranslations("submit.form.success");
+  const explanation = reviewExplanation(submission.review, t);
+  const tone =
+    submission.review.decision === "approved"
+      ? "bg-chip-success-bg text-chip-success-fg"
+      : submission.review.decision === "rejected"
+        ? "bg-chip-danger-bg text-chip-danger-fg"
+        : "bg-chip-warning-bg text-chip-warning-fg";
+
+  return (
+    <div className={`rounded-2xl p-3 text-sm ${tone}`}>
+      <p>{t(submission.review.decision, { name: submission.displayName })}</p>
+      {explanation ? (
+        <p className="mt-2 text-xs leading-5">{explanation}</p>
+      ) : null}
+      {submission.review.decision === "approved" ? (
+        <a
+          href={`/pets/${submission.slug}`}
+          className="mt-2 inline-flex font-medium underline underline-offset-4"
+        >
+          {t("viewPet")}
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function reviewExplanation(
+  review: SubmissionReviewOutcome,
+  t: ReturnType<typeof useTranslations>,
+): string | null {
+  const reasonCode = review.reasonCode ?? "";
+  if (reasonCode.startsWith("duplicate_")) {
+    return t("details.duplicate", {
+      summary: review.summary ?? t("details.duplicateFallback"),
+    });
+  }
+  if (reasonCode.startsWith("policy_")) return t("details.policy");
+  if (reasonCode.startsWith("asset_")) return t("details.assets");
+  if (reasonCode === "review_timeout") return t("details.timeout");
+  if (reasonCode === "review_error" || reasonCode === "review_failed") {
+    return t("details.reviewFailed");
+  }
+  if (review.decision === "rejected") return t("details.rejectedGeneric");
+  if (review.decision === "hold") return t("details.holdGeneric");
+  return null;
 }
 
 function submissionErrorMessage(

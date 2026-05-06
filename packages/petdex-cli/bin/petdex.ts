@@ -167,10 +167,8 @@ async function cmdLogin() {
   try {
     const auth = await getAuth();
     const { user } = await auth.login();
-    s.stop(
-      pc.green("✓ ") +
-        `Signed in as ${pc.cyan(user.email ?? user.username ?? user.sub)}`,
-    );
+    const label = firstString(user.email, user.username, user.sub) ?? "unknown";
+    s.stop(`${pc.green("✓ ")}Signed in as ${pc.cyan(label)}`);
     p.outro(
       `Try ${pc.cyan("petdex submit ~/.codex/pets")} to share your pets.`,
     );
@@ -183,19 +181,23 @@ async function cmdLogin() {
 async function cmdLogout() {
   const auth = await getAuth();
   await auth.logout();
-  console.log(pc.green("✓ ") + "Signed out");
+  console.log(`${pc.green("✓ ")}Signed out`);
 }
 
 async function cmdWhoami() {
   try {
     const auth = await getAuth();
     const me = await auth.whoami();
+    if (!me) throw new Error("not signed in");
+    const name = [asString(me.given_name), asString(me.family_name)]
+      .filter(Boolean)
+      .join(" ");
     p.note(
       [
         `${pc.dim("user:    ")}${me.sub}`,
         `${pc.dim("email:   ")}${me.email ?? "—"}`,
-        `${pc.dim("name:    ")}${[me.given_name, me.family_name].filter(Boolean).join(" ") || "—"}`,
-        `${pc.dim("username:")}${me.preferred_username ?? "—"}`,
+        `${pc.dim("name:    ")}${name || "—"}`,
+        `${pc.dim("username:")}${asString(me.preferred_username) ?? "—"}`,
       ].join("\n"),
       "Signed in",
     );
@@ -415,7 +417,7 @@ async function cmdSubmit(args: string[]) {
       skipped = dupes.length;
       if (toSubmit.length === 0) {
         p.outro(
-          `Nothing new to submit. Track approval at ${pc.underline(PETDEX_URL + "/my-pets")}.`,
+          `Nothing new to submit. Track approval at ${pc.underline(`${PETDEX_URL}/my-pets`)}.`,
         );
         return;
       }
@@ -445,7 +447,7 @@ async function cmdSubmit(args: string[]) {
       token = t;
       const result = await submitOne(cand, token);
       ps.stop(
-        `${pc.green("✓")} ${pc.cyan(cand.label)} → ${pc.dim(result.slug)}`,
+        `${pc.green("✓")} ${pc.cyan(cand.label)} → ${formatSubmissionOutcome(result)}`,
       );
       succeeded++;
     } catch (err) {
@@ -473,7 +475,7 @@ async function cmdSubmit(args: string[]) {
       `${pc.green(String(succeeded))} submitted${skipPart}, ${
         failed > 0 ? pc.red(String(failed)) : pc.dim(String(failed))
       } failed.`,
-      `Track approval at ${pc.underline(PETDEX_URL + "/my-pets")} — you'll get an email when each pet is reviewed.`,
+      `Held submissions stay visible at ${pc.underline(`${PETDEX_URL}/my-pets`)}.`,
     ].join("\n"),
   );
   if (failed > 0) process.exit(1);
@@ -491,6 +493,18 @@ type Candidate = {
   spritesheetBuffer: Buffer;
   spritesheetExt: "webp" | "png";
   petIdHint: string;
+};
+
+type SubmissionReviewOutcome = {
+  decision: "approved" | "rejected" | "hold";
+  applied: boolean;
+  reasonCode: string | null;
+  summary: string | null;
+};
+
+type SubmitOneResult = {
+  slug: string;
+  review: SubmissionReviewOutcome;
 };
 
 async function collectCandidates(
@@ -608,7 +622,7 @@ async function readZipCandidate(zipPath: string): Promise<Candidate | null> {
 async function submitOne(
   cand: Candidate,
   bearer: string,
-): Promise<{ slug: string }> {
+): Promise<SubmitOneResult> {
   const { width, height } = parseImageDims(cand.spritesheetBuffer);
   if (width === 0 || height === 0) {
     throw new Error("spritesheet dimensions could not be parsed");
@@ -687,8 +701,42 @@ async function submitOne(
     throw new Error(`register ${reg.status} ${text.slice(0, 100)}`);
   }
 
-  const data = (await reg.json()) as { slug: string };
+  const data = (await reg.json()) as SubmitOneResult;
   return data;
+}
+
+function formatSubmissionOutcome(result: SubmitOneResult): string {
+  const slug = pc.dim(result.slug);
+  const explanation = reviewExplanation(result.review);
+  if (result.review.decision === "approved") {
+    return `${slug} ${pc.green("approved")}`;
+  }
+  if (result.review.decision === "rejected") {
+    return `${slug} ${pc.red("rejected")}${explanation ? pc.dim(` — ${explanation}`) : ""}`;
+  }
+  return `${slug} ${pc.yellow("held for review")}${explanation ? pc.dim(` — ${explanation}`) : ""}`;
+}
+
+function reviewExplanation(review: SubmissionReviewOutcome): string | null {
+  const reasonCode = review.reasonCode ?? "";
+  if (reasonCode.startsWith("duplicate_")) {
+    return review.summary ?? "appears to duplicate an existing pet";
+  }
+  if (reasonCode.startsWith("policy_")) {
+    return "possible policy issue";
+  }
+  if (reasonCode.startsWith("asset_")) {
+    return "package file or spritesheet issue";
+  }
+  if (reasonCode === "review_timeout") return "automated review timed out";
+  if (reasonCode === "review_error" || reasonCode === "review_failed") {
+    return "automated review failed";
+  }
+  if (review.decision === "rejected")
+    return "high-confidence automated review issue";
+  if (review.decision === "hold")
+    return "not confident enough to approve automatically";
+  return null;
 }
 
 async function putR2(
@@ -790,6 +838,18 @@ async function fileExists(p: string): Promise<boolean> {
 function pickString(value: unknown, fallback: string): string {
   if (typeof value === "string" && value.trim()) return value.trim();
   return fallback;
+}
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function firstString(...values: unknown[]): string | null {
+  for (const value of values) {
+    const str = asString(value);
+    if (str) return str;
+  }
+  return null;
 }
 
 function slugify(value: string): string {

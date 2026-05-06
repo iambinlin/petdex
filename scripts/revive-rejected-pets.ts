@@ -8,7 +8,11 @@ import { neon } from "@neondatabase/serverless";
 import { Resend } from "resend";
 
 const PROD_URL = "https://petdex.crafter.run";
-const sql = neon(process.env.DATABASE_URL!);
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set");
+}
+const sql = neon(databaseUrl);
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
@@ -88,8 +92,7 @@ async function main() {
     }
   }
 
-  // Best-effort embedding refresh so the revived pets show up in vibe
-  // search. Hits the same internal endpoint /api/admin/similar uses.
+  // Best-effort embedding refresh so the revived pets show up in vibe search.
   if (!dryRun) {
     console.log("\nKick off similarity refresh via /api/admin/edits is not");
     console.log("strictly needed — the daily auto-tag cron picks them up.");

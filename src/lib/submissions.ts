@@ -8,9 +8,12 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
+import type { SubmissionReview, SubmittedPet } from "@/lib/db/schema";
 import { renderNewSubmissionEmail } from "@/lib/email-templates/new-submission";
-import { getPreferredLocaleForUser } from "@/lib/user-locale";
 import { isAllowedAssetUrl } from "@/lib/url-allowlist";
+import { getPreferredLocaleForUser } from "@/lib/user-locale";
+
+const SUBMISSION_REVIEW_TIMEOUT_MS = 30_000;
 
 export type SubmissionPrincipal = {
   userId: string;
@@ -34,8 +37,21 @@ export type SubmissionInput = {
   spritesheetHeight: number;
 };
 
+export type SubmissionReviewOutcome = {
+  decision: "approved" | "rejected" | "hold";
+  applied: boolean;
+  reasonCode: string | null;
+  summary: string | null;
+};
+
 export type SubmissionResult =
-  | { ok: true; id: string; slug: string }
+  | {
+      ok: true;
+      id: string;
+      slug: string;
+      status: SubmittedPet["status"];
+      review: SubmissionReviewOutcome;
+    }
   | {
       ok: false;
       status: number;
@@ -103,8 +119,9 @@ export function validateSubmission(
   return null;
 }
 
-const ASSET_URL_FIELDS: ReadonlyArray<"zipUrl" | "spritesheetUrl" | "petJsonUrl"> =
-  ["zipUrl", "spritesheetUrl", "petJsonUrl"];
+const ASSET_URL_FIELDS: ReadonlyArray<
+  "zipUrl" | "spritesheetUrl" | "petJsonUrl"
+> = ["zipUrl", "spritesheetUrl", "petJsonUrl"];
 
 /** Persist a submission. Caller is responsible for authn/ratelimit.
  *  Slug collisions get suffixed (boba -> boba-2) by resolveUniqueSlug.
@@ -150,9 +167,7 @@ export async function persistSubmission(
     // SMTP header injection defense — strip control chars from anything
     // that could end up in a header. The Resend SDK probably escapes, but
     // we don't trust user-controlled fields anywhere near a header.
-    const safeName = body.displayName
-      .replace(/[\r\n\t]+/g, " ")
-      .slice(0, 80);
+    const safeName = body.displayName.replace(/[\r\n\t]+/g, " ").slice(0, 80);
     void (async () => {
       try {
         const resend = new Resend(resendKey);
@@ -178,7 +193,19 @@ export async function persistSubmission(
     })();
   }
 
-  return { ok: true, id, slug };
+  const review = await reviewNewSubmission(id);
+  const current = await db.query.submittedPets.findFirst({
+    where: eq(schema.submittedPets.id, id),
+  });
+  const status = current?.status ?? "pending";
+
+  return {
+    ok: true,
+    id,
+    slug,
+    status,
+    review: alignReviewWithStatus(review, status),
+  };
 }
 
 export function creditFromPrincipal(p: SubmissionPrincipal): {
@@ -227,4 +254,75 @@ export async function resolveUniqueSlug(base: string): Promise<string> {
     if (!(await isTaken(candidate))) return candidate;
   }
   return `${base.slice(0, 32)}-${crypto.randomUUID().slice(0, 6)}`;
+}
+
+async function reviewNewSubmission(
+  id: string,
+): Promise<SubmissionReviewOutcome> {
+  const reviewModule = await import("@/lib/submission-review");
+
+  const reviewPromise = reviewModule.reviewSubmission(id).catch((error) => {
+    console.warn(
+      "[submission] automated review failed:",
+      error instanceof Error ? error.message : String(error),
+    );
+    throw error;
+  });
+
+  const timeout = new Promise<"timeout">((resolve) => {
+    setTimeout(() => resolve("timeout"), SUBMISSION_REVIEW_TIMEOUT_MS);
+  });
+
+  try {
+    const result = await Promise.race([reviewPromise, timeout]);
+    if (result === "timeout") {
+      void reviewPromise.catch(() => {});
+      const hold = await reviewModule.recordSubmissionReviewHold(id, {
+        reasonCode: "review_timeout",
+        summary: "Automated review timed out and needs manual review.",
+        error: `Timed out after ${SUBMISSION_REVIEW_TIMEOUT_MS}ms`,
+      });
+      return normalizeReviewOutcome(hold.review, hold.applied);
+    }
+    return normalizeReviewOutcome(result.review, result.applied);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const hold = await reviewModule.recordSubmissionReviewHold(id, {
+      reasonCode: "review_error",
+      summary: "Automated review failed and needs manual review.",
+      error: message,
+    });
+    return normalizeReviewOutcome(hold.review, hold.applied);
+  }
+}
+
+function normalizeReviewOutcome(
+  review: SubmissionReview,
+  applied: boolean,
+): SubmissionReviewOutcome {
+  const decision =
+    review.decision === "auto_approve" && applied
+      ? "approved"
+      : review.decision === "auto_reject" && applied
+        ? "rejected"
+        : "hold";
+  return {
+    decision,
+    applied,
+    reasonCode: review.reasonCode,
+    summary: review.summary,
+  };
+}
+
+function alignReviewWithStatus(
+  review: SubmissionReviewOutcome,
+  status: SubmittedPet["status"],
+): SubmissionReviewOutcome {
+  if (status === "approved") {
+    return { ...review, decision: "approved", applied: true };
+  }
+  if (status === "rejected") {
+    return { ...review, decision: "rejected", applied: true };
+  }
+  return review;
 }

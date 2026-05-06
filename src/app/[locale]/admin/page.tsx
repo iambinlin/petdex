@@ -1,6 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
-import { listAllSubmittedPets } from "@/lib/db/queries";
+import {
+  listAllSubmittedPetsWithLatestReview,
+  type SubmittedPetWithReview,
+} from "@/lib/db/queries";
 import { resolveOwnerCredits } from "@/lib/owner-credit";
 import { petStates } from "@/lib/pet-states";
 
@@ -25,7 +28,16 @@ export const dynamic = "force-dynamic";
 
 type SP = { status?: string };
 
-type Filter = "all" | "pending" | "approved" | "rejected" | "discovered";
+type Filter =
+  | "all"
+  | "pending"
+  | "held"
+  | "review_failed"
+  | "auto_approved"
+  | "auto_rejected"
+  | "approved"
+  | "rejected"
+  | "discovered";
 
 export default async function AdminPage({
   params,
@@ -39,7 +51,7 @@ export default async function AdminPage({
   const { status } = await searchParams;
   const filter = (status ?? "pending") as Filter;
 
-  const pets = await listAllSubmittedPets();
+  const pets = await listAllSubmittedPetsWithLatestReview();
   // Pending and Discovered are orthogonal axes — every discovered pet
   // is also technically pending until an admin reviews it. To make
   // the queue actionable we treat 'pending' as "user-submitted +
@@ -51,21 +63,28 @@ export default async function AdminPage({
     pending: pets.filter(
       (p) => p.status === "pending" && p.source !== "discover",
     ).length,
+    held: pets.filter(
+      (p) => p.status === "pending" && p.latestReview?.decision === "hold",
+    ).length,
+    review_failed: pets.filter((p) => p.latestReview?.status === "failed")
+      .length,
+    auto_approved: pets.filter(
+      (p) => p.latestReview?.decision === "auto_approve",
+    ).length,
+    auto_rejected: pets.filter(
+      (p) => p.latestReview?.decision === "auto_reject",
+    ).length,
     approved: pets.filter((p) => p.status === "approved").length,
     rejected: pets.filter((p) => p.status === "rejected").length,
     discovered: pets.filter((p) => p.source === "discover").length,
   };
 
-  const visible =
-    filter === "all"
-      ? pets
-      : filter === "discovered"
-        ? pets.filter((p) => p.source === "discover")
-        : filter === "pending"
-          ? pets.filter(
-              (p) => p.status === "pending" && p.source !== "discover",
-            )
-          : pets.filter((p) => p.status === filter);
+  const visible = filterPets(pets, filter);
+
+  const prioritizedVisible =
+    filter === "pending" || filter === "held" || filter === "review_failed"
+      ? [...visible].sort(reviewPrioritySort)
+      : visible;
 
   // Resolve Clerk handles for every owner shown in the visible queue so
   // each row gets a /u/<handle> link without doing N round-trips. Proxy
@@ -73,7 +92,7 @@ export default async function AdminPage({
   // is fine here — the admin needs to land on whichever profile is
   // actually wired up, including their own.
   const credits = await resolveOwnerCredits(
-    visible.map((p) => ({
+    prioritizedVisible.map((p) => ({
       ownerId: p.ownerId,
       creditName: p.creditName,
       creditUrl: p.creditUrl,
@@ -93,13 +112,13 @@ export default async function AdminPage({
         <AdminStatusFilter counts={counts} />
       </header>
 
-      {visible.length === 0 ? (
+      {prioritizedVisible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
           {t("empty")}
         </div>
       ) : (
         <div className="space-y-3">
-          {visible.map((pet) => (
+          {prioritizedVisible.map((pet) => (
             <AdminReviewRow
               key={pet.id}
               pet={pet}
@@ -111,4 +130,53 @@ export default async function AdminPage({
       )}
     </section>
   );
+}
+
+function reviewPrioritySort(
+  a: SubmittedPetWithReview,
+  b: SubmittedPetWithReview,
+): number {
+  const priority = reviewPriority(a) - reviewPriority(b);
+  if (priority !== 0) return priority;
+  return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+}
+
+function filterPets(
+  pets: SubmittedPetWithReview[],
+  filter: Filter,
+): SubmittedPetWithReview[] {
+  if (filter === "all") return pets;
+  if (filter === "discovered")
+    return pets.filter((p) => p.source === "discover");
+  if (filter === "held") {
+    return pets.filter(
+      (p) => p.status === "pending" && p.latestReview?.decision === "hold",
+    );
+  }
+  if (filter === "review_failed") {
+    return pets.filter((p) => p.latestReview?.status === "failed");
+  }
+  if (filter === "auto_approved") {
+    return pets.filter((p) => p.latestReview?.decision === "auto_approve");
+  }
+  if (filter === "auto_rejected") {
+    return pets.filter((p) => p.latestReview?.decision === "auto_reject");
+  }
+  if (filter === "pending") {
+    return pets.filter(
+      (p) => p.status === "pending" && p.source !== "discover",
+    );
+  }
+  return pets.filter((p) => p.status === filter);
+}
+
+function reviewPriority(pet: SubmittedPetWithReview): number {
+  const review = pet.latestReview;
+  if (!review) return 5;
+  if (review.status === "failed") return 0;
+  if (review.decision !== "hold") return 5;
+  if (review.reasonCode?.includes("policy")) return 1;
+  if (review.reasonCode?.includes("duplicate")) return 2;
+  if (review.reasonCode?.includes("asset")) return 3;
+  return 4;
 }

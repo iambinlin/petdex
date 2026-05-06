@@ -17,8 +17,9 @@ import {
 } from "drizzle-orm";
 
 import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
-import { getAvailableBatches } from "@/lib/dex-batch.server";
 import { db, schema } from "@/lib/db/client";
+import { getAvailableBatches } from "@/lib/dex-batch.server";
+import { PETDEX_EMBEDDING_MODEL } from "@/lib/embeddings";
 import type { PetWithMetrics } from "@/lib/pets";
 import { rowToPet } from "@/lib/pets";
 import { embedQuery, looksLikeVibeQuery } from "@/lib/query-embed";
@@ -223,7 +224,7 @@ async function vibeSearch(args: {
       sp.id, sp.slug, sp.display_name, sp.description,
       sp.spritesheet_url, sp.pet_json_url, sp.zip_url, sp.sound_url,
       sp.kind, sp.vibes, sp.tags, sp.dominant_color, sp.color_family,
-      sp.featured, sp.status, sp.source,
+      sp.featured, sp.dhash, sp.status, sp.source,
       sp.owner_id, sp.owner_email,
       sp.credit_name, sp.credit_url, sp.credit_image,
       sp.created_at, sp.approved_at, sp.rejected_at, sp.rejection_reason,
@@ -233,7 +234,9 @@ async function vibeSearch(args: {
       1 - (sp.embedding <=> ${literal}::vector) as similarity
     FROM submitted_pets sp
     LEFT JOIN pet_metrics pm ON pm.pet_slug = sp.slug
-    WHERE sp.status = 'approved' AND sp.embedding IS NOT NULL
+    WHERE sp.status = 'approved'
+      AND sp.embedding IS NOT NULL
+      AND sp.embedding_model = ${PETDEX_EMBEDDING_MODEL}
     ORDER BY sp.embedding <=> ${literal}::vector
     LIMIT ${args.limit + args.cursor + 1}
   `) as Array<Record<string, unknown> & { similarity: number }>;
