@@ -5,6 +5,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const IS_MOCK = process.env.PETDEX_MOCK === "1";
+const IS_MOCK_AUTH = IS_MOCK || process.env.PETDEX_MOCK_AUTH === "1";
 
 // Content-Security-Policy. Blocks inline <script> sources we didn't ship,
 // caps img / connect / frame ancestors. The `unsafe-inline` allowance for
@@ -88,11 +89,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // In PETDEX_MOCK=1 mode, redirect every Clerk import to in-process
-  // mocks so contributors can boot without a publishable key. We set
-  // both webpack and turbopack aliases since `next dev` defaults to
-  // turbopack on recent versions.
-  ...(IS_MOCK
+  // In mock auth mode, redirect every Clerk import to in-process mocks
+  // so contributors can boot without a Clerk backend secret. We set both
+  // webpack and turbopack aliases since `next dev` defaults to turbopack
+  // on recent versions.
+  ...(IS_MOCK_AUTH
     ? {
         turbopack: {
           // Turbopack expects relative paths (with leading "./") rooted at

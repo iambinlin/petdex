@@ -9,28 +9,147 @@
 // Usage:
 //   bun run dev:docker
 //
-// .env.dev is the shared committed defaults; .env.local is layered on
-// top so personal credentials win. PETDEX_MOCK is explicitly cleared
-// so the mock shims don't accidentally swap real Clerk for the stub.
+// .env.dev is the shared committed defaults. If .env.local has Clerk
+// credentials, we lift only the Clerk key pair into the dev overlay so
+// production DATABASE_URL/R2/etc. values can't leak into the
+// docker-backed path. .env.dev.local can still override other dev-only
+// settings and is created automatically on first docker boot. If no Clerk
+// secret is available, this script falls back to mock auth while keeping
+// the docker database and Redis.
 
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-type Engine = { cmd: string; args: string[] };
+type Engine = {
+  cmd: string;
+  args: string[];
+  label: string;
+  diagnostics: string[];
+};
 
-function detectEngine(): Engine {
+type CommandCheck = {
+  ok: boolean;
+  missing: boolean;
+  output: string;
+  status: number;
+};
+
+type EngineFailure = {
+  engine: Engine;
+  result: CommandCheck;
+};
+
+function checkCommand(cmd: string, args: string[]): CommandCheck {
+  const r = spawnSync(cmd, args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const output = [r.stdout, r.stderr].filter(Boolean).join("\n").trim();
+  return {
+    ok: r.status === 0,
+    missing: (r.error as NodeJS.ErrnoException | undefined)?.code === "ENOENT",
+    output,
+    status: r.status ?? 1,
+  };
+}
+
+function checkEngineReady(engine: Engine, composeArgs: string[]): CommandCheck {
+  return checkCommand(engine.cmd, [...engine.args, ...composeArgs, "ps"]);
+}
+
+function startHintFor(engine: Engine): string {
+  return engine.cmd === "podman"
+    ? "If you use Podman on macOS, start its VM first:\n" +
+        "  podman machine start\n\n" +
+        "If this is your first Podman setup, initialize it once, then start it:\n" +
+        "  podman machine init\n" +
+        "  podman machine start\n\n"
+    : "Start Docker Desktop or OrbStack, then wait until Docker reports it is running.\n\n";
+}
+
+function failEngineReady(engine: Engine, r: CommandCheck): never {
+  console.error(
+    `[dev:docker] ${engine.label} is installed but cannot connect to a running container service.`,
+  );
+  if (r.output) console.error(`\n${r.output}\n`);
+  if (engine.diagnostics.length > 0) {
+    console.error(
+      `[dev:docker] earlier engine probes also failed:\n${engine.diagnostics.join("\n\n")}\n`,
+    );
+  }
+  console.error(
+    `${startHintFor(engine)}After that, rerun:\n  pnpm run dev:docker`,
+  );
+  process.exit(r.status ?? 1);
+}
+
+function failNoReadyEngine(failures: EngineFailure[]): never {
+  console.error(
+    "[dev:docker] container engines are installed but none can connect to a running container service.",
+  );
+  for (const { engine, result } of failures) {
+    console.error(`\n[dev:docker] ${engine.label} failed:`);
+    if (result.output) console.error(result.output);
+  }
+  console.error(
+    "\nDocker: start Docker Desktop or OrbStack, then wait until Docker reports it is running.\n\n" +
+      "Podman: start its VM with:\n" +
+      "  podman machine start\n\n" +
+      "After that, rerun:\n" +
+      "  pnpm run dev:docker",
+  );
+  process.exit(failures[0]?.result.status ?? 1);
+}
+
+function detectEngine(composeArgs: string[]): Engine {
   // Prefer docker, fall back to podman. Both expose the same compose v2
-  // subcommand surface for our use case.
+  // subcommand surface for our use case. A CLI with a stopped daemon does
+  // not count as ready; keep probing so Podman can rescue a stopped Docker.
+  const diagnostics: string[] = [];
+  const failures: EngineFailure[] = [];
   for (const cmd of ["docker", "podman"]) {
-    const r = spawnSync(cmd, ["compose", "version"], {
-      stdio: "ignore",
-    });
-    if (r.status === 0) return { cmd, args: ["compose"] };
+    const r = checkCommand(cmd, ["compose", "version"]);
+    if (r.ok) {
+      const engine = {
+        cmd,
+        args: ["compose"],
+        label: `${cmd} compose`,
+        diagnostics: [...diagnostics],
+      };
+      const ready = checkEngineReady(engine, composeArgs);
+      if (ready.ok) return engine;
+      failures.push({ engine, result: ready });
+      diagnostics.push(`${engine.label} ps failed:\n${ready.output}`);
+      continue;
+    }
+    if (!r.missing) {
+      diagnostics.push(`${cmd} compose version failed:\n${r.output}`);
+    }
   }
   // Some users only have docker-compose v1 (still common on Linux).
-  const v1 = spawnSync("docker-compose", ["version"], { stdio: "ignore" });
-  if (v1.status === 0) return { cmd: "docker-compose", args: [] };
+  const v1 = checkCommand("docker-compose", ["version"]);
+  if (v1.ok) {
+    const engine = {
+      cmd: "docker-compose",
+      args: [],
+      label: "docker-compose",
+      diagnostics: [...diagnostics],
+    };
+    const ready = checkEngineReady(engine, composeArgs);
+    if (ready.ok) return engine;
+    failures.push({ engine, result: ready });
+    diagnostics.push(`${engine.label} ps failed:\n${ready.output}`);
+  }
+  if (!v1.missing) {
+    diagnostics.push(`docker-compose version failed:\n${v1.output}`);
+  }
+  if (failures.length === 1) {
+    failEngineReady(failures[0].engine, failures[0].result);
+  }
+  if (failures.length > 1) {
+    failNoReadyEngine(failures);
+  }
   console.error(
     "[dev:docker] no container engine found.\n" +
       "  Install Docker Desktop, OrbStack, or Podman, then rerun:\n" +
@@ -54,6 +173,72 @@ function loadEnvFile(path: string): Record<string, string> {
   return out;
 }
 
+function ensureDevLocalFile(path: string) {
+  if (existsSync(path)) return false;
+  const lines = [
+    "# Local overrides for `pnpm run dev:docker`.",
+    "# This file is ignored by git and is safe for personal dev values.",
+    "",
+    "# Optional: Clerk user id to receive seeded personal pets on docker boot.",
+    "# Use the Clerk Dashboard User ID, not the username/handle.",
+    "PETDEX_DEV_SEED_USER_ID=",
+    "",
+  ];
+  writeFileSync(path, lines.join("\n"));
+  return true;
+}
+
+function firstNonEmpty(
+  ...values: Array<string | undefined>
+): string | undefined {
+  return values.find((value) => value !== undefined && value.trim() !== "");
+}
+
+function pickClerkEnv(
+  envDev: Record<string, string>,
+  envDevLocal: Record<string, string>,
+  envLocal: Record<string, string>,
+): {
+  publishableKey?: string;
+  secretKey?: string;
+  source: "env.local" | "process.env" | "env.dev.local" | "env.dev";
+} {
+  if (firstNonEmpty(process.env.CLERK_SECRET_KEY)) {
+    return {
+      publishableKey: firstNonEmpty(
+        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+        envDev.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      ),
+      secretKey: process.env.CLERK_SECRET_KEY,
+      source: "process.env",
+    };
+  }
+  if (firstNonEmpty(envLocal.CLERK_SECRET_KEY)) {
+    return {
+      publishableKey: firstNonEmpty(
+        envLocal.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+        envDev.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      ),
+      secretKey: envLocal.CLERK_SECRET_KEY,
+      source: "env.local",
+    };
+  }
+  if (firstNonEmpty(envDevLocal.CLERK_SECRET_KEY)) {
+    return {
+      publishableKey: firstNonEmpty(
+        envDevLocal.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+        envDev.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      ),
+      secretKey: envDevLocal.CLERK_SECRET_KEY,
+      source: "env.dev.local",
+    };
+  }
+  return {
+    publishableKey: envDev.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    source: "env.dev",
+  };
+}
+
 function compose(engine: Engine, ...rest: string[]): number {
   const r = spawnSync(engine.cmd, [...engine.args, ...rest], {
     stdio: "inherit",
@@ -75,10 +260,17 @@ async function waitForPostgres(timeoutMs = 60_000): Promise<void> {
 
 async function main() {
   const root = process.cwd();
-  const engine = detectEngine();
-  console.log(
-    `[dev:docker] using ${engine.cmd} ${engine.args.join(" ")} for compose`,
-  );
+  const envDevLocalPath = join(root, ".env.dev.local");
+  if (ensureDevLocalFile(envDevLocalPath)) {
+    console.log(
+      "[dev:docker] created .env.dev.local; set PETDEX_DEV_SEED_USER_ID there to seed your profile",
+    );
+  }
+
+  const composeArgs = ["-f", "docker-compose.dev.yml"];
+  const engine = detectEngine(composeArgs);
+  const engineCommand = [engine.cmd, ...engine.args].join(" ");
+  console.log(`[dev:docker] using ${engineCommand} for compose`);
 
   // Next loads env files in this order (dev, highest priority first):
   //   .env.development.local   <- we own this one
@@ -92,11 +284,38 @@ async function main() {
   const overlayPath = join(root, ".env.development.local");
 
   const envDev = loadEnvFile(join(root, ".env.dev"));
-  const envDevLocal = loadEnvFile(join(root, ".env.dev.local"));
+  const envLocal = loadEnvFile(join(root, ".env.local"));
+  const envDevLocal = loadEnvFile(envDevLocalPath);
   const merged = { ...envDev, ...envDevLocal };
+  const clerkEnv = pickClerkEnv(envDev, envDevLocal, envLocal);
+  const publishableKey = firstNonEmpty(clerkEnv.publishableKey);
+  if (publishableKey) {
+    merged.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = publishableKey;
+  }
+  const secretKey = firstNonEmpty(clerkEnv.secretKey);
+  if (secretKey) {
+    merged.CLERK_SECRET_KEY = secretKey;
+  }
+  const seedUserId = firstNonEmpty(
+    envDevLocal.PETDEX_DEV_SEED_USER_ID,
+    envLocal.PETDEX_DEV_SEED_USER_ID,
+  );
+  if (seedUserId) {
+    merged.PETDEX_DEV_SEED_USER_ID = seedUserId;
+  }
+  const useMockAuth = !firstNonEmpty(merged.CLERK_SECRET_KEY);
+  merged.PETDEX_MOCK_AUTH = useMockAuth ? "1" : "";
+  if (useMockAuth) {
+    console.log(
+      "[dev:docker] CLERK_SECRET_KEY not set; using mock auth with docker Postgres/Redis",
+    );
+  } else {
+    console.log(`[dev:docker] using Clerk credentials from ${clerkEnv.source}`);
+  }
+
   const lines = [
     "# Auto-generated by `bun run dev:docker`. Do not edit by hand.",
-    "# Source: .env.dev (committed) + .env.dev.local (personal).",
+    "# Source: .env.dev + .env.dev.local, with Clerk key pair override from .env.local.",
     "# Removed on clean exit; safe to delete by hand if it sticks around.",
     "",
     ...Object.entries(merged).map(([k, v]) => `${k}=${v}`),
@@ -122,12 +341,11 @@ async function main() {
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     ...merged,
-    // Mock mode and the docker path are mutually exclusive — clear it
-    // so we don't accidentally double-shim Clerk.
+    // Full mock mode and the docker path are mutually exclusive. Auth-only
+    // mock stays controlled by PETDEX_MOCK_AUTH above.
     PETDEX_MOCK: "",
+    PETDEX_MOCK_AUTH: useMockAuth ? "1" : "",
   };
-
-  const composeArgs = ["-f", "docker-compose.dev.yml"];
 
   console.log("[dev:docker] bringing up postgres + redis");
   const upStatus = compose(engine, ...composeArgs, "up", "-d");
@@ -171,9 +389,9 @@ async function main() {
     env,
   });
 
-  // Forward signals to the child so containers stop cleanly. The exit
-  // handler installed earlier restores .env.local. Containers stay up
-  // by default — they're cheap and the next dev:docker boot is faster.
+  // Forward signals to the child and remove the generated Next overlay.
+  // Containers stay up by default — they're cheap and the next dev:docker
+  // boot is faster.
   for (const sig of ["SIGINT", "SIGTERM"] as const) {
     process.on(sig, () => {
       child.kill(sig);
