@@ -95,6 +95,22 @@ describe("decideAutomatedReview", () => {
     expect(result.reasonCode).toBe("duplicate_near_exact_sprite");
   });
 
+  it("auto-rejects pending near-exact visual matches with metadata corroboration", () => {
+    const checks = cleanChecks();
+    checks.duplicates.decision = "fail";
+    checks.duplicates.visualMatches.push({
+      id: "pet_existing",
+      slug: "existing",
+      displayName: "Existing",
+      status: "pending",
+      visualDistance: 2,
+      matchedFields: ["displayName"],
+    });
+    const result = decideAutomatedReview(checks);
+    expect(result.decision).toBe("auto_reject");
+    expect(result.reasonCode).toBe("duplicate_near_exact_sprite");
+  });
+
   it("holds semantic-only duplicate risk", () => {
     const checks = cleanChecks();
     checks.duplicates.decision = "hold";

@@ -797,9 +797,8 @@ function duplicateCheckDecision(args: {
   const identicalMatch = args.visualMatches.some(
     (match) => match.visualDistance === 0,
   );
-  const nearExactApproved = args.visualMatches.some(
+  const nearExact = args.visualMatches.some(
     (match) =>
-      match.status === "approved" &&
       typeof match.visualDistance === "number" &&
       match.visualDistance <= SUBMISSION_NEAR_EXACT_VISUAL_THRESHOLD &&
       (match.matchedFields?.length ||
@@ -810,7 +809,7 @@ function duplicateCheckDecision(args: {
               SUBMISSION_STRONG_SEMANTIC_CORROBORATION_THRESHOLD,
         )),
   );
-  if (exactMatch || identicalMatch || nearExactApproved) return "fail";
+  if (exactMatch || identicalMatch || nearExact) return "fail";
   if (
     args.exactMatches.length > 0 ||
     args.visualMatches.length > 0 ||

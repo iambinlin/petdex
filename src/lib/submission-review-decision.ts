@@ -47,19 +47,18 @@ export function decideAutomatedReview(
     });
   }
 
-  const nearExactApproved = checks.duplicates.visualMatches.find(
+  const nearExact = checks.duplicates.visualMatches.find(
     (match) =>
-      match.status === "approved" &&
       typeof match.visualDistance === "number" &&
       match.visualDistance >= 1 &&
       match.visualDistance <= SUBMISSION_NEAR_EXACT_VISUAL_THRESHOLD &&
       hasStrongCorroboration(match, checks),
   );
-  if (nearExactApproved) {
+  if (nearExact) {
     return applyDecision({
       decision: "auto_reject",
       reasonCode: "duplicate_near_exact_sprite",
-      summary: `Near-exact sprite duplicate of ${nearExactApproved.displayName}.`,
+      summary: `Near-exact sprite duplicate of ${nearExact.displayName}.`,
       confidence: 0.96,
     });
   }

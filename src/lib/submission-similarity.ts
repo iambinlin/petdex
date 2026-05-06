@@ -3,16 +3,16 @@ type SimilaritySignal = {
   semanticScore?: number | null;
 };
 
-export const SUBMISSION_SIMILARITY_MIN_SCORE = 0.82;
+export const SUBMISSION_SIMILARITY_MIN_SCORE = 0.9;
 
 // Visual dHash hamming threshold. 0 = identical, 64 = inverted. Keep only
-// matches whose displayed similarity score is at least 82%.
+// matches whose displayed similarity score is at least 90%.
 export const SUBMISSION_SIMILARITY_VISUAL_THRESHOLD = Math.floor(
   64 * (1 - SUBMISSION_SIMILARITY_MIN_SCORE),
 );
 
 // Cosine similarity threshold (0..1). Gemini embeddings produced too many
-// loose character/style matches around 0.75-0.80, so stay above that band.
+// loose character/style matches below 0.90, so stay above that band.
 export const SUBMISSION_SIMILARITY_SEMANTIC_THRESHOLD =
   SUBMISSION_SIMILARITY_MIN_SCORE;
 
