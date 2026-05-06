@@ -12,6 +12,7 @@ import {
   Mail,
   Pencil,
   Slash,
+  Trash2,
   User,
   X,
 } from "lucide-react";
@@ -152,6 +153,47 @@ export function AdminReviewRow({
           : "rejected",
     );
     setBusy(false);
+  }
+
+  async function takedown() {
+    if (busy) return;
+
+    // Double confirmation: typing the slug avoids muscle-memory clicks
+    // wiping a popular pet. The reason ends up in the audit log + email.
+    const typed = window.prompt(
+      `Type the slug "${pet.slug}" to confirm takedown.\nThis deletes the row and every R2 asset. Slug becomes free again.`,
+    );
+    if (typed?.trim() !== pet.slug) {
+      if (typed !== null) {
+        window.alert("Slug did not match. Takedown cancelled.");
+      }
+      return;
+    }
+    const reason =
+      window.prompt("Reason (sent to owner email, optional)") ?? "";
+
+    setBusy(true);
+    setError(null);
+
+    const res = await fetch(`/api/admin/${pet.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    });
+
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      setError(data.message ?? data.error ?? `Request failed (${res.status})`);
+      setBusy(false);
+      return;
+    }
+
+    // Refresh so the row disappears from the queue.
+    setBusy(false);
+    window.location.reload();
   }
 
   async function saveEdit() {
@@ -399,18 +441,43 @@ export function AdminReviewRow({
             </button>
           </>
         ) : status === "rejected" ? (
+          <>
+            <button
+              type="button"
+              onClick={() => void decide("revive")}
+              disabled={busy}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-warning-fg/30 bg-chip-warning-bg px-4 text-xs font-medium text-chip-warning-fg transition hover:border-chip-warning-fg/50 disabled:opacity-60"
+            >
+              {busy ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Clock className="size-3.5" />
+              )}
+              Revive to pending
+            </button>
+            <button
+              type="button"
+              onClick={() => void takedown()}
+              disabled={busy}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-danger-fg/30 bg-chip-danger-bg px-4 text-xs font-medium text-chip-danger-fg transition hover:border-chip-danger-fg/50 disabled:opacity-60"
+            >
+              <Trash2 className="size-3.5" />
+              Take down
+            </button>
+          </>
+        ) : status === "approved" ? (
           <button
             type="button"
-            onClick={() => void decide("revive")}
+            onClick={() => void takedown()}
             disabled={busy}
-            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-warning-fg/30 bg-chip-warning-bg px-4 text-xs font-medium text-chip-warning-fg transition hover:border-chip-warning-fg/50 disabled:opacity-60"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-chip-danger-fg/30 bg-chip-danger-bg px-4 text-xs font-medium text-chip-danger-fg transition hover:border-chip-danger-fg/50 disabled:opacity-60"
           >
             {busy ? (
               <Loader2 className="size-3.5 animate-spin" />
             ) : (
-              <Clock className="size-3.5" />
+              <Trash2 className="size-3.5" />
             )}
-            Revive to pending
+            Take down
           </button>
         ) : null}
         {!editing ? (

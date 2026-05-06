@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 // Inline "Is this you?" prompt shown on /pets/[slug] for discovered
 // pets when the viewer is either signed-out or signed in as someone
 // other than the listed author. Pushes them to sign in with the
-// expectation that the claim banner on /my-pets will pick the row
+// expectation that the claim banner on /u/<handle> will pick the row
 // up automatically (case-insensitive github match landed earlier).
 export function ClaimCTA({
   petName,
@@ -24,8 +24,8 @@ export function ClaimCTA({
   if (!isLoaded) return null;
 
   // If signed in and the viewer's github already matches, hide. The
-  // /my-pets banner will surface the actual claim button there. We
-  // only check github match here — if their email matches but no
+  // banner on /u/<handle> will surface the actual claim button there.
+  // We only check github match here — if their email matches but no
   // github linked, the banner still shows so they're nudged into
   // adding GitHub OAuth which makes the claim cleaner.
   if (isSignedIn && githubUrl && user) {
@@ -53,25 +53,23 @@ export function ClaimCTA({
         {t.rich("body", {
           author: authorLabel,
           petName,
-          strong: (chunks) => <strong className="font-semibold">{chunks}</strong>,
+          strong: (chunks) => (
+            <strong className="font-semibold">{chunks}</strong>
+          ),
         })}
       </span>
       {isSignedIn ? (
-        // Already signed in — direct them to /my-pets where the claim
-        // banner does the actual transfer.
+        // Already signed in — send them to their own profile where the
+        // claim banner inside ProfileTabs does the actual transfer.
         <a
-          href="/my-pets"
+          href={profileHrefForUser(user)}
           onClick={() => track("claim_cta_clicked", { signed_in: true })}
           className="inline-flex"
         >
           {inner}
         </a>
       ) : (
-        <SignInButton
-          mode="modal"
-          forceRedirectUrl="/my-pets"
-          fallbackRedirectUrl="/my-pets"
-        >
+        <SignInButton mode="modal" forceRedirectUrl="/" fallbackRedirectUrl="/">
           <button
             type="button"
             onClick={() => track("claim_cta_clicked", { signed_in: false })}
@@ -83,4 +81,14 @@ export function ClaimCTA({
       )}
     </aside>
   );
+}
+
+function profileHrefForUser(
+  user: { username?: string | null; id: string } | null | undefined,
+): string {
+  if (!user) return "/";
+  const handle = user.username
+    ? user.username.toLowerCase()
+    : user.id.slice(-8).toLowerCase();
+  return `/u/${handle}`;
 }

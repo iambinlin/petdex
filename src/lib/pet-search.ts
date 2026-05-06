@@ -27,7 +27,7 @@ import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
 
 const rawSql = neon(process.env.DATABASE_URL ?? "");
 
-export type SortKey = "curated" | "popular" | "installed" | "alpha";
+export type SortKey = "curated" | "popular" | "installed" | "alpha" | "recent";
 
 export type SearchInput = {
   q?: string;
@@ -321,6 +321,13 @@ function orderForSort(
       return [desc(installCountSql), asc(schema.submittedPets.displayName)];
     case "alpha":
       return [asc(schema.submittedPets.displayName)];
+    case "recent":
+      // Newest approvals first. Falls back to displayName so two pets
+      // approved in the same second still get a stable order.
+      return [
+        desc(schema.submittedPets.approvedAt),
+        asc(schema.submittedPets.displayName),
+      ];
     default: {
       // Per-visitor stable shuffle: featured pets keep their pinned
       // tier, then everything else is ordered by a deterministic hash

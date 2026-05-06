@@ -100,6 +100,17 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           >
             {t("requests")}
           </Link>
+          {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
+            <Link
+              href={href("/community")}
+              className="inline-flex items-center gap-1.5 transition hover:text-foreground"
+            >
+              {t("community")}
+              <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
+                new
+              </span>
+            </Link>
+          ) : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -186,6 +197,19 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             <MobileLink href={href("/requests")} onClick={() => setOpen(false)}>
               {t("requests")}
             </MobileLink>
+            {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
+              <MobileLink
+                href={href("/community")}
+                onClick={() => setOpen(false)}
+              >
+                <span className="inline-flex items-center gap-2">
+                  {t("community")}
+                  <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
+                    new
+                  </span>
+                </span>
+              </MobileLink>
+            ) : null}
             <MobileLink href={href("/about")} onClick={() => setOpen(false)}>
               {t("about")}
             </MobileLink>

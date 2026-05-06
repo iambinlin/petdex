@@ -58,10 +58,11 @@ type PetGalleryProps = {
   dexMap?: Record<string, number>;
 };
 
-type SortKey = "curated" | "popular" | "installed" | "alpha";
+type SortKey = "curated" | "popular" | "installed" | "alpha" | "recent";
 
 const SORT_LABELS: Record<SortKey, string> = {
   curated: "Curated",
+  recent: "Newest",
   popular: "Most liked",
   installed: "Most installed",
   alpha: "Alphabetical",

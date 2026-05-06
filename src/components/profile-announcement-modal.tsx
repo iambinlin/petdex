@@ -128,11 +128,8 @@ export function ProfileAnnouncementModal() {
             URL in your bio.
           </p>
           <p className="text-sm leading-6 text-muted-2">
-            Add a bio and pin a pet from{" "}
-            <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-stone-900 dark:text-stone-100">
-              /my-pets
-            </span>{" "}
-            so visitors land somewhere opinionated.
+            Add a bio, pin a pet, and review your submissions, all from your
+            profile page.
           </p>
 
           <div className="flex items-center gap-2 pt-1">
@@ -143,13 +140,6 @@ export function ProfileAnnouncementModal() {
             >
               View my profile
               <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/my-pets#profile"
-              onClick={() => close("cta_customize")}
-              className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
-            >
-              Customize
             </Link>
           </div>
         </div>

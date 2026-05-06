@@ -4,16 +4,30 @@
 // MUST come from a verified caller (Clerk session for web, OAuth bearer for
 // CLI) — never from request body — so this module accepts them as `principal`.
 
+import "server-only";
+
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
 import type { SubmissionReview, SubmittedPet } from "@/lib/db/schema";
 import { renderNewSubmissionEmail } from "@/lib/email-templates/new-submission";
-import { isAllowedAssetUrl } from "@/lib/url-allowlist";
+import {
+  type SubmissionInput,
+  slugify as slugifySubmission,
+} from "@/lib/submissions-validation";
 import { getPreferredLocaleForUser } from "@/lib/user-locale";
 
+export type { SubmissionInput } from "@/lib/submissions-validation";
+export {
+  MIN_SPRITE_DIM,
+  REQUIRED_FIELDS,
+  validateSubmission,
+} from "@/lib/submissions-validation";
+
 const SUBMISSION_REVIEW_TIMEOUT_MS = 30_000;
+
+export const slugify = slugifySubmission;
 
 export type SubmissionPrincipal = {
   userId: string;
@@ -24,17 +38,6 @@ export type SubmissionPrincipal = {
   lastName: string | null;
   /** Pre-computed external profile URL (X or GitHub) when available. */
   url?: string | null;
-};
-
-export type SubmissionInput = {
-  zipUrl: string;
-  spritesheetUrl: string;
-  petJsonUrl: string;
-  displayName: string;
-  description: string;
-  petId: string;
-  spritesheetWidth: number;
-  spritesheetHeight: number;
 };
 
 export type SubmissionReviewOutcome = {
@@ -60,68 +63,6 @@ export type SubmissionResult =
       field?: string;
       got?: unknown;
     };
-
-export const REQUIRED_FIELDS: ReadonlyArray<keyof SubmissionInput> = [
-  "zipUrl",
-  "spritesheetUrl",
-  "petJsonUrl",
-  "displayName",
-  "description",
-  "petId",
-  "spritesheetWidth",
-  "spritesheetHeight",
-] as const;
-
-export const MIN_SPRITE_DIM = 256;
-
-export function validateSubmission(
-  body: Partial<SubmissionInput>,
-): SubmissionResult | null {
-  for (const field of REQUIRED_FIELDS) {
-    if (!body[field]) {
-      return {
-        ok: false,
-        status: 400,
-        error: "missing_field",
-        field,
-      };
-    }
-  }
-  if (
-    !body.spritesheetWidth ||
-    !body.spritesheetHeight ||
-    body.spritesheetWidth < MIN_SPRITE_DIM ||
-    body.spritesheetHeight < MIN_SPRITE_DIM
-  ) {
-    return {
-      ok: false,
-      status: 400,
-      error: "invalid_spritesheet",
-      message: `Spritesheet seems too small. Got ${body.spritesheetWidth}x${body.spritesheetHeight}, expected at least ${MIN_SPRITE_DIM}x${MIN_SPRITE_DIM} (ideal 1536x1872).`,
-      got: { width: body.spritesheetWidth, height: body.spritesheetHeight },
-    };
-  }
-  // Reject any URL outside the allowlist. Without this, a malicious
-  // submission could land javascript:, attacker.com, or LAN IPs into the
-  // pet detail page (XSS) and the install script (RCE on every viewer who
-  // pipes it through sh).
-  for (const field of ASSET_URL_FIELDS) {
-    if (!isAllowedAssetUrl(body[field])) {
-      return {
-        ok: false,
-        status: 400,
-        error: "invalid_asset_url",
-        field,
-        message: `${field} must be hosted on the petdex R2 bucket.`,
-      };
-    }
-  }
-  return null;
-}
-
-const ASSET_URL_FIELDS: ReadonlyArray<
-  "zipUrl" | "spritesheetUrl" | "petJsonUrl"
-> = ["zipUrl", "spritesheetUrl", "petJsonUrl"];
 
 /** Persist a submission. Caller is responsible for authn/ratelimit.
  *  Slug collisions get suffixed (boba -> boba-2) by resolveUniqueSlug.
@@ -228,15 +169,6 @@ export function creditFromPrincipal(p: SubmissionPrincipal): {
     url: p.url ?? null,
     imageUrl: p.imageUrl ?? null,
   };
-}
-
-export function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
 }
 
 export async function resolveUniqueSlug(base: string): Promise<string> {

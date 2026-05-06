@@ -20,6 +20,7 @@ import { readShuffleSeed } from "@/lib/shuffle-seed";
 
 import { CollectionCover } from "@/components/collection-cover";
 import { CommandLine } from "@/components/command-line";
+import { DiscordLink } from "@/components/discord-link";
 import { JsonLd } from "@/components/json-ld";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
@@ -149,12 +150,22 @@ export default async function Home() {
             <SubmitCTA className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover">
               {t("submitCta")}
             </SubmitCTA>
-            <Link
-              href="#gallery"
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-surface"
-            >
-              {t("browseGallery")}
-            </Link>
+            {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
+              <DiscordLink
+                href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL}
+                source="hero_secondary"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-surface"
+              >
+                {t("joinDiscord")}
+              </DiscordLink>
+            ) : (
+              <Link
+                href="#gallery"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-surface"
+              >
+                {t("browseGallery")}
+              </Link>
+            )}
           </div>
         </div>
       </section>

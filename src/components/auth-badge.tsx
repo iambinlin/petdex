@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { SignInButton, UserButton, useAuth, useUser } from "@clerk/nextjs";
-import { MessageSquare, Shield, Sparkles, UserSquare } from "lucide-react";
+import { MessageSquare, Shield, UserSquare } from "lucide-react";
 
 import { isAdminClientSafe } from "@/lib/admin";
 
@@ -67,11 +67,6 @@ function UserButtonWithAdminLink() {
               href={`/u/${handle}`}
             />
           ) : null}
-          <UserButton.Link
-            label="My submissions"
-            labelIcon={<Sparkles className="size-4" />}
-            href="/my-pets"
-          />
           <UserButton.Link
             label={unread > 0 ? `My feedback (${unread})` : "My feedback"}
             labelIcon={<MessageSquare className="size-4" />}
