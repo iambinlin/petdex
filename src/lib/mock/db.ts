@@ -157,6 +157,12 @@ async function bootstrap(client: PGlite): Promise<void> {
       "last_installed_at" timestamp with time zone,
       "updated_at" timestamp with time zone NOT NULL DEFAULT now()
     )`,
+    `CREATE TABLE IF NOT EXISTS "pet_likes" (
+      "user_id" text NOT NULL,
+      "pet_slug" text NOT NULL,
+      "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+      PRIMARY KEY ("user_id", "pet_slug")
+    )`,
   ];
   for (const stmt of fixups) {
     try {

@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 
 import { isAdmin } from "@/lib/admin";
-import { getCatchProgress } from "@/lib/catch-status";
+import { getCatchProgress, getLikedPetsForUser } from "@/lib/catch-status";
 import { hasCreatorCollectionMetadata } from "@/lib/collection-access";
 import { getOwnerCollection } from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
@@ -112,7 +112,10 @@ export default async function MyPetsPage() {
   handle = profile?.handle ?? handle;
   displayName = profile?.displayName ?? displayName;
 
-  const catchProgress = await getCatchProgress(userId);
+  const [catchProgress, likedPets] = await Promise.all([
+    getCatchProgress(userId),
+    getLikedPetsForUser(userId),
+  ]);
   const collection = await getOwnerCollection(userId);
 
   const approvedSummaries = submissions
@@ -132,6 +135,7 @@ export default async function MyPetsPage() {
         <MyPetsView
           submissions={submissions}
           catchProgress={catchProgress}
+          likedPets={likedPets}
           canManageCollections={canManageCollections}
           collection={
             collection
