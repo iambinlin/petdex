@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { getTranslations } from "next-intl/server";
 
+import { getActiveFeedAds } from "@/lib/ads/queries";
 import {
   getFeaturedCollections,
   type PetCollectionWithPets,
@@ -48,6 +49,7 @@ export default async function Home() {
     initialSearch,
     dexEntries,
     allFeaturedCollections,
+    feedAds,
   ] = await Promise.all([
     getFeaturedPetsWithMetrics(6),
     getApprovedPetCount(),
@@ -57,6 +59,7 @@ export default async function Home() {
     searchPets({ sort: "curated" }),
     getDexNumberMap(),
     getFeaturedCollections(20),
+    getActiveFeedAds(6),
   ]);
 
   // Hand-pick the 3 collections that show on the landing strip in a
@@ -176,6 +179,7 @@ export default async function Home() {
             initial={initialSearch}
             totalPets={totalPets}
             dexMap={dexMap}
+            ads={feedAds}
           />
         ) : null}
       </section>

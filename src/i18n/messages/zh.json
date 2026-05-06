@@ -45,6 +45,10 @@
     "creators__fixme": true,
     "requests": "请求",
     "requests__fixme": true,
+    "advertise": "投放广告",
+    "advertise__fixme": true,
+    "adDashboard": "广告仪表盘",
+    "adDashboard__fixme": true,
     "community": "社区",
     "community__fixme": true,
     "discord": "Discord",
@@ -80,6 +84,8 @@
     "topCreators__fixme": true,
     "takedown": "下架请求",
     "takedown__fixme": true,
+    "advertise": "投放广告",
+    "advertise__fixme": true,
     "github": "GitHub",
     "discord": "Discord",
     "sponsor": "赞助",
@@ -122,6 +128,136 @@
     "jsonLdDescription__fixme": true,
     "jsonLdFeaturedPets": "精选 Codex 宠物",
     "jsonLdFeaturedPets__fixme": true
+  },
+  "advertise": {
+    "metadata": {
+      "title": "在 Petdex 投放广告",
+      "description": "通过 Petdex 赞助卡片触达正在发现并安装 AI 与开发者工具的开发者。"
+    },
+    "eyebrow": "Petdex 广告",
+    "hero": {
+      "title": "把你的开发者工具展示给愿意尝试新工具的 builders。",
+      "body": "Petdex 正在吸引越来越多浏览 Codex 伙伴和开发者文化的开发者。他们已经习惯尝试 CLI 工具、AI 工作流和订阅产品，因此这里适合介绍 AI 与开发者工具。"
+    },
+    "heroCards": {
+      "starting": "$50 起",
+      "impressions": "可见曝光",
+      "native": "原生赞助卡片",
+      "audience": "开发者受众"
+    },
+    "checkout": {
+      "successTitle": "已收到付款",
+      "successBody": "Stripe 正在确认付款。Webhook 激活后，你的广告会自动开始投放。",
+      "dashboardCta": "查看广告仪表盘",
+      "cancelTitle": "Checkout 已取消",
+      "cancelBody": "没有扣款。你可以调整广告后再试一次。"
+    },
+    "sections": {
+      "audience": {
+        "title": "开发者优先的受众",
+        "body": "Petdex 访客是开发者和 AI 工具用户，他们正在浏览围绕 Codex 构建的目录，愿意安装工具并评估付费订阅。"
+      },
+      "placement": {
+        "title": "克制的赞助卡片",
+        "body": "广告会以明确标记的卡片出现在宠物卡片之间，融入图库节奏，不打断浏览。"
+      },
+      "billing": {
+        "title": "保证可见曝光",
+        "body": "你购买的是保证可见曝光。我们也会报告悬停、点击、CTR 和平均可见时长。"
+      }
+    },
+    "acceptableUse": {
+      "title": "可接受使用政策",
+      "items": {
+        "malware": "不得包含恶意软件、钓鱼、诈骗、误导下载或凭据收集。",
+        "adult": "不得包含成人、性或露骨内容。",
+        "hate": "不得包含仇恨、骚扰、歧视或辱骂内容。",
+        "illegal": "不得宣传非法产品、受监管商品或违反适用法律的服务。",
+        "impersonation": "不得冒充个人、公司、社区或开源项目。",
+        "misleading": "不得包含误导性的 AI 声明、虚假基准或歪曲工具功能的广告。"
+      }
+    },
+    "legal": {
+      "eyebrow": "法律提示",
+      "title": "Petdex 可以移除不符合社区预期的广告。",
+      "body": "我们保留暂停、删除或拒绝任何不符合 Petdex 政策、社区预期或产品质量标准的广告的权利。被移除的广告不予退款。"
+    },
+    "form": {
+      "companyName": "公司名称",
+      "contactEmail": "联系邮箱",
+      "title": "广告标题",
+      "description": "描述",
+      "creativeDisclosure": "你的广告标题、图片和描述会显示在 Petdex 信息流中的赞助卡片里。",
+      "destinationUrl": "目标 URL",
+      "image": "广告图片",
+      "imageCta": "上传 PNG、JPG 或 WebP 素材",
+      "imageHelp": "最大 10 MB。建议使用清晰的产品图、Logo 卡片或截图。",
+      "package": "选择广告系列规模",
+      "pricingTrust": "我们只计算可见曝光：广告 50% 以上区域连续可见 2 秒。",
+      "utmTitle": "自定义 UTM 设置",
+      "utmHelp": "可选。如果留空，Petdex 会向广告链接添加 utm_source=petdex。",
+      "legalAccept": "我接受 Petdex 可以暂停或删除不符合政策的广告，并且此类删除不予退款。",
+      "signIn": "登录后提交广告",
+      "submit": "继续到 Stripe checkout",
+      "status": {
+        "uploading": "正在上传图片",
+        "creating": "正在创建广告系列",
+        "checkout": "正在打开 checkout"
+      },
+      "errors": {
+        "imageRequired": "请先上传广告图片。",
+        "imageTooLarge": "图片必须小于或等于 10 MB。",
+        "submitFailed": "无法创建广告系列。",
+        "checkoutFailed": "无法启动 Stripe checkout。",
+        "network": "网络错误。请重试。"
+      }
+    },
+    "card": {
+      "sponsored": "赞助",
+      "cta": "访问赞助商",
+      "dismiss": "隐藏赞助卡片"
+    },
+    "dashboard": {
+      "metadata": {
+        "title": "广告仪表盘 — Petdex",
+        "description": "查看你的 Petdex 广告系列、花费、状态和预付曝光交付情况。"
+      },
+      "eyebrow": "广告主仪表盘",
+      "title": "你的 Petdex 广告系列",
+      "body": "跟踪每张赞助卡片的状态、预付曝光交付和剩余库存。",
+      "newCampaign": "购买另一个广告系列",
+      "progress": "交付进度",
+      "destination": "目标 URL",
+      "created": "创建于 {date}",
+      "activated": "激活于 {date}",
+      "removedFallback": "该广告系列因不符合 Petdex 政策而被移除。",
+      "metrics": {
+        "package": "套餐",
+        "served": "已曝光",
+        "remaining": "剩余",
+        "spend": "花费",
+        "hovers": "悬停",
+        "clicks": "点击",
+        "ctr": "CTR",
+        "avgTime": "平均可见时长"
+      },
+      "empty": {
+        "eyebrow": "还没有广告系列",
+        "title": "启动你的第一张赞助卡片",
+        "body": "提交素材，选择预付曝光套餐，并在 Stripe 确认付款后开始触达开发者。",
+        "cta": "创建广告系列"
+      },
+      "chart": {
+        "label": "曝光随时间变化",
+        "empty": "还没有记录到活动。",
+        "windows": {
+          "eightHours": "最近 8 小时",
+          "day": "最近 24 小时",
+          "week": "最近一周",
+          "month": "最近一月"
+        }
+      }
+    }
   },
   "feedback": {
     "trigger": "反馈",
