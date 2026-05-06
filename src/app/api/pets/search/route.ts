@@ -12,7 +12,13 @@ const KIND_SET = new Set<string>(PET_KINDS);
 const VIBE_SET = new Set<string>(PET_VIBES);
 const COLOR_SET = new Set<string>(COLOR_FAMILIES);
 const BATCH_KEY_RE = /^\d{4}-\d{2}$/;
-const SORT_SET = new Set<SortKey>(["curated", "popular", "installed", "alpha"]);
+const SORT_SET = new Set<SortKey>([
+  "curated",
+  "popular",
+  "installed",
+  "alpha",
+  "recent",
+]);
 
 export async function GET(req: Request): Promise<Response> {
   const url = new URL(req.url);
