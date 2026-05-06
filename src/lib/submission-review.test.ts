@@ -49,6 +49,21 @@ describe("decideAutomatedReview", () => {
     expect(result.reasonCode).toBe("duplicate_exact_asset");
   });
 
+  it("auto-approves metadata-only overlaps", () => {
+    const checks = cleanChecks();
+    checks.duplicates.decision = "hold";
+    checks.duplicates.metadataMatches.push({
+      id: "pet_existing",
+      slug: "existing",
+      displayName: "Existing",
+      status: "approved",
+      matchedFields: ["creditName"],
+    });
+    const result = decideAutomatedReview(checks);
+    expect(result.decision).toBe("auto_approve");
+    expect(result.reasonCode).toBe("clean_unique_submission");
+  });
+
   it("auto-rejects 100% visual sprite duplicates", () => {
     const checks = cleanChecks();
     checks.duplicates.decision = "fail";

@@ -78,7 +78,9 @@ export function decideAutomatedReview(
   const confidence = Math.min(
     checks.policy.confidence || 0,
     checks.assets.decision === "pass" ? 1 : 0,
-    checks.duplicates.decision === "pass" ? 1 : 0,
+    checks.duplicates.decision === "pass" || !hasHardDuplicateSignal(checks)
+      ? 1
+      : 0,
   );
 
   if (confidence >= AUTO_APPROVE_CONFIDENCE) {
@@ -165,17 +167,7 @@ function firstHoldReason(
     };
   }
 
-  const metadata = checks.duplicates.metadataMatches[0];
-  if (metadata) {
-    return {
-      code: "duplicate_metadata_hold",
-      summary:
-        metadata.reason ?? `Metadata overlaps with ${metadata.displayName}.`,
-      confidence: 0.75,
-    };
-  }
-
-  if (checks.duplicates.decision !== "pass") {
+  if (checks.duplicates.decision !== "pass" && hasHardDuplicateSignal(checks)) {
     return {
       code: "duplicate_review_hold",
       summary:
@@ -197,5 +189,16 @@ function hasStrongCorroboration(
       semantic.id === match.id &&
       (semantic.semanticScore ?? 0) >=
         SUBMISSION_STRONG_SEMANTIC_CORROBORATION_THRESHOLD,
+  );
+}
+
+function hasHardDuplicateSignal(checks: ReviewChecks): boolean {
+  return (
+    checks.duplicates.exactMatches.length > 0 ||
+    checks.duplicates.visualMatches.length > 0 ||
+    checks.duplicates.semanticMatches.some(
+      (match) =>
+        (match.semanticScore ?? 0) >= SUBMISSION_SEMANTIC_HOLD_THRESHOLD,
+    )
   );
 }

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { generateText } from "ai";
-import { and, desc, eq, inArray, isNotNull, ne } from "drizzle-orm";
+import { and, desc, eq, isNotNull, ne } from "drizzle-orm";
 import JSZip from "jszip";
 import sharp from "sharp";
 
@@ -569,7 +569,7 @@ async function findExactHashMatches(
              sprite_sha256, pet_json_sha256, zip_sha256
       FROM submitted_pets
       WHERE id <> ${row.id}
-        AND status IN ('approved','pending')
+        AND status = 'approved'
         AND (
           (${hashes.spriteSha256}::text IS NOT NULL AND sprite_sha256 = ${hashes.spriteSha256}) OR
           (${hashes.petJsonSha256}::text IS NOT NULL AND pet_json_sha256 = ${hashes.petJsonSha256}) OR
@@ -640,7 +640,7 @@ async function findVisualMatches(
       .where(
         and(
           ne(schema.submittedPets.id, row.id),
-          inArray(schema.submittedPets.status, ["approved", "pending"]),
+          eq(schema.submittedPets.status, "approved"),
           isNotNull(schema.submittedPets.dhash),
         ),
       )
@@ -700,7 +700,7 @@ async function findMetadataMatches(
     .where(
       and(
         ne(schema.submittedPets.id, row.id),
-        inArray(schema.submittedPets.status, ["approved", "pending"]),
+        eq(schema.submittedPets.status, "approved"),
       ),
     );
 
@@ -759,7 +759,7 @@ async function findSemanticMatches(
     WHERE embedding IS NOT NULL
       AND embedding_model = ${PETDEX_EMBEDDING_MODEL}
       AND id <> ${petId}
-      AND status IN ('approved','pending')
+      AND status = 'approved'
     ORDER BY similarity DESC
     LIMIT 30
   `) as Array<{
