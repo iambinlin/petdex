@@ -1,4 +1,4 @@
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 
 import { runtimeDb as db, schema } from "../src/lib/db/runtime";
 
@@ -13,6 +13,7 @@ const CONCURRENCY = Math.min(
 const STALE_RUNNING_MINUTES = 60;
 
 type ReviewError = { slug: string; reason: string };
+type ReviewRow = { id: string; slug: string; latestDecision: string | null };
 
 const errors: ReviewError[] = [];
 
@@ -20,15 +21,46 @@ async function main() {
   const { reviewSubmission } = await import("../src/lib/submission-review");
   await buryStaleRunningReviews();
 
-  const rows = await db
-    .select({ id: schema.submittedPets.id, slug: schema.submittedPets.slug })
+  const latestReviews = db
+    .select({
+      submittedPetId: schema.submissionReviews.submittedPetId,
+      decision: schema.submissionReviews.decision,
+      rank: sql<number>`row_number() over (partition by ${schema.submissionReviews.submittedPetId} order by ${schema.submissionReviews.createdAt} desc)`.as(
+        "rank",
+      ),
+    })
+    .from(schema.submissionReviews)
+    .as("latest_reviews");
+
+  const rows: ReviewRow[] = await db
+    .select({
+      id: schema.submittedPets.id,
+      slug: schema.submittedPets.slug,
+      latestDecision: latestReviews.decision,
+    })
     .from(schema.submittedPets)
-    .where(eq(schema.submittedPets.status, "pending"))
+    .leftJoin(
+      latestReviews,
+      and(
+        eq(latestReviews.submittedPetId, schema.submittedPets.id),
+        eq(latestReviews.rank, 1),
+      ),
+    )
+    .where(
+      and(
+        eq(schema.submittedPets.status, "pending"),
+        or(
+          sql`${latestReviews.decision} IS NULL`,
+          inArray(latestReviews.decision, ["hold", "no_decision"]),
+        ),
+      ),
+    )
     .orderBy(desc(schema.submittedPets.createdAt))
     .limit(LIMIT ?? 500);
 
+  const heldCount = rows.filter((row) => row.latestDecision === "hold").length;
   console.log(
-    `reviewing ${rows.length} pending submissions with concurrency=${CONCURRENCY} force=${FORCE}`,
+    `reviewing ${rows.length} pending/held submissions (${heldCount} held) with concurrency=${CONCURRENCY} force=${FORCE}`,
   );
 
   let nextIndex = 0;
@@ -41,7 +73,7 @@ async function main() {
       const row = rows[index];
       try {
         const result = await reviewSubmission(row.id, {
-          force: FORCE,
+          force: FORCE || row.latestDecision === "hold",
         });
         processed += 1;
         console.log(
