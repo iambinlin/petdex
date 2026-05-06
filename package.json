@@ -4,7 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:docker": "bun scripts/dev-docker.ts",
     "dev:mock": "bun scripts/dev-mock.ts",
+    "docker:down": "docker compose -f docker-compose.dev.yml down || podman compose -f docker-compose.dev.yml down",
+    "docker:nuke": "docker compose -f docker-compose.dev.yml down -v || podman compose -f docker-compose.dev.yml down -v",
+    "seed:dev": "bun scripts/seed-dev.ts",
     "build": "next build",
     "start": "next start",
     "check": "biome check .",
@@ -50,6 +54,7 @@
     "@types/react-dom": "^19.2.3",
     "bun-types": "^1.3.13",
     "drizzle-kit": "^0.31.10",
+    "postgres": "^3.4.9",
     "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3"
   },
