@@ -100,6 +100,12 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
           >
             {t("requests")}
           </Link>
+          <Link
+            href={href("/advertise")}
+            className="transition hover:text-foreground"
+          >
+            {t("advertise")}
+          </Link>
           {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
             <Link
               href={href("/community")}
@@ -197,6 +203,12 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             <MobileLink href={href("/requests")} onClick={() => setOpen(false)}>
               {t("requests")}
             </MobileLink>
+            <MobileLink
+              href={href("/advertise")}
+              onClick={() => setOpen(false)}
+            >
+              {t("advertise")}
+            </MobileLink>
             {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
               <MobileLink
                 href={href("/community")}
@@ -274,6 +286,12 @@ function HeaderSettingsMenu({
         </SettingsLink>
         <SettingsLink href={href("/about")} onClick={onNavigate}>
           {t("about")}
+        </SettingsLink>
+        <SettingsLink href={href("/advertise")} onClick={onNavigate}>
+          {t("advertise")}
+        </SettingsLink>
+        <SettingsLink href={href("/advertise/dashboard")} onClick={onNavigate}>
+          {t("adDashboard")}
         </SettingsLink>
         <a
           href="https://x.com/raillyhugo"

@@ -35,6 +35,8 @@
     "topCreators": "Creators",
     "creators": "Creators",
     "requests": "Requests",
+    "advertise": "Advertise",
+    "adDashboard": "Ad dashboard",
     "community": "Community",
     "discord": "Discord",
     "about": "About",
@@ -59,6 +61,7 @@
     "rightsNotice": "Pets are user-submitted fan art. Petdex does not claim rights to any underlying IP.",
     "topCreators": "Creators",
     "takedown": "Takedown",
+    "advertise": "Advertise",
     "github": "GitHub",
     "discord": "Discord",
     "sponsor": "Sponsor",
@@ -87,6 +90,136 @@
     },
     "jsonLdDescription": "Public gallery of animated companions for Codex. Install one with a single command.",
     "jsonLdFeaturedPets": "Featured Codex pets"
+  },
+  "advertise": {
+    "metadata": {
+      "title": "Advertise on Petdex",
+      "description": "Reach developers who discover and install new AI and developer tools through Petdex sponsored cards."
+    },
+    "eyebrow": "Petdex ads",
+    "hero": {
+      "title": "Put your dev tool in front of builders who try new things.",
+      "body": "Petdex has a growing audience of developers browsing Codex companions and developer culture. They already try CLI tools, AI workflows, and subscription products, making this a focused place to introduce AI and developer tools."
+    },
+    "heroCards": {
+      "starting": "Starting at $50",
+      "impressions": "Viewable impressions",
+      "native": "Native sponsor card",
+      "audience": "Developer-focused audience"
+    },
+    "checkout": {
+      "successTitle": "Payment received",
+      "successBody": "Stripe is confirming the payment. Your campaign will start automatically once the webhook activates it.",
+      "dashboardCta": "View ad dashboard",
+      "cancelTitle": "Checkout cancelled",
+      "cancelBody": "No payment was captured. You can adjust the ad and try again."
+    },
+    "sections": {
+      "audience": {
+        "title": "A developer-first audience",
+        "body": "Petdex visitors are developers and AI-tool users browsing a catalog built around Codex. They are comfortable installing tools and evaluating paid subscriptions."
+      },
+      "placement": {
+        "title": "Subtle sponsored cards",
+        "body": "Ads appear as clearly labeled cards between pet cards, matching the gallery rhythm without interrupting browsing."
+      },
+      "billing": {
+        "title": "Guaranteed viewable impressions",
+        "body": "You buy guaranteed viewable impressions. We also report hovers, clicks, CTR, and average time in view."
+      }
+    },
+    "acceptableUse": {
+      "title": "Acceptable use",
+      "items": {
+        "malware": "No malware, phishing, scams, deceptive downloads, or credential collection.",
+        "adult": "No adult, sexual, or explicit content.",
+        "hate": "No hate, harassment, discriminatory, or abusive content.",
+        "illegal": "No illegal products, regulated goods, or services that violate applicable law.",
+        "impersonation": "No impersonation of people, companies, communities, or open-source projects.",
+        "misleading": "No misleading AI claims, fake benchmarks, or ads that misrepresent what the tool does."
+      }
+    },
+    "legal": {
+      "eyebrow": "Legal notice",
+      "title": "Petdex can remove ads that do not fit the community.",
+      "body": "We reserve the right to pause, delete, or refuse any ad that does not align with Petdex policies, community expectations, or product quality standards. Removed ads are not reimbursed."
+    },
+    "form": {
+      "companyName": "Company name",
+      "contactEmail": "Contact email",
+      "title": "Ad title",
+      "description": "Description",
+      "creativeDisclosure": "Your ad title, image, and description will appear in the sponsored card shown in the Petdex feed.",
+      "destinationUrl": "Destination URL",
+      "image": "Ad image",
+      "imageCta": "Upload PNG, JPG, or WebP creative",
+      "imageHelp": "Max 10 MB. Use a clean product image, logo card, or screenshot.",
+      "package": "Choose your campaign size",
+      "pricingTrust": "We only count viewable impressions: 50%+ of the ad visible for 2 seconds.",
+      "utmTitle": "Custom UTM settings",
+      "utmHelp": "Optional. If left blank, Petdex adds utm_source=petdex to the ad link.",
+      "legalAccept": "I accept that Petdex may pause or delete ads that do not align with its policies, and that those removals are not reimbursed.",
+      "signIn": "Sign in to submit an ad",
+      "submit": "Continue to Stripe checkout",
+      "status": {
+        "uploading": "Uploading image",
+        "creating": "Creating campaign",
+        "checkout": "Opening checkout"
+      },
+      "errors": {
+        "imageRequired": "Upload an ad image first.",
+        "imageTooLarge": "Image must be 10 MB or smaller.",
+        "submitFailed": "Could not create the campaign.",
+        "checkoutFailed": "Could not start Stripe checkout.",
+        "network": "Network error. Try again."
+      }
+    },
+    "card": {
+      "sponsored": "Sponsored",
+      "cta": "Visit sponsor",
+      "dismiss": "Hide sponsored card"
+    },
+    "dashboard": {
+      "metadata": {
+        "title": "Ad dashboard — Petdex",
+        "description": "Review your Petdex ad campaigns, spend, status, and prepaid impression delivery."
+      },
+      "eyebrow": "Advertiser dashboard",
+      "title": "Your Petdex campaigns",
+      "body": "Track campaign status, prepaid impression delivery, and remaining inventory for every sponsored card you have submitted.",
+      "newCampaign": "Buy another campaign",
+      "progress": "Delivery",
+      "destination": "Destination URL",
+      "created": "Created {date}",
+      "activated": "Activated {date}",
+      "removedFallback": "This campaign was removed because it did not align with Petdex policies.",
+      "metrics": {
+        "package": "Package",
+        "served": "Impressions served",
+        "remaining": "Remaining",
+        "spend": "Spend",
+        "hovers": "Hovers",
+        "clicks": "Clicks",
+        "ctr": "CTR",
+        "avgTime": "Avg. time in view"
+      },
+      "empty": {
+        "eyebrow": "No campaigns yet",
+        "title": "Launch your first sponsored card",
+        "body": "Submit a creative, choose a prepaid impression package, and start reaching developers after Stripe confirms payment.",
+        "cta": "Create campaign"
+      },
+      "chart": {
+        "label": "Impressions over time",
+        "empty": "No activity recorded yet.",
+        "windows": {
+          "eightHours": "Last 8 hours",
+          "day": "Last 24 hours",
+          "week": "Last week",
+          "month": "Last month"
+        }
+      }
+    }
   },
   "feedback": {
     "trigger": "Feedback",
