@@ -176,7 +176,11 @@ export async function reviewSubmission(
                 reason:
                   "This submission appears to duplicate an existing pet pack. If you believe this is incorrect, contact support with the submission ID.",
               },
-          { actor: "auto-review" },
+          {
+            actor: "auto-review",
+            db,
+            skipSideEffects: process.env.PETDEX_REVIEW_DB === "runtime",
+          },
         );
         applied = actionResult.ok;
         checks.autopilot.applied = applied;
@@ -199,7 +203,8 @@ export async function reviewSubmission(
       applied,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message =
+      err instanceof Error ? (err.stack ?? err.message) : String(err);
     checks.autopilot.reason = "review_failed";
     return await finishReview(reviewId, {
       checks,

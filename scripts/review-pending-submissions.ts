@@ -77,7 +77,7 @@ async function main() {
         });
         processed += 1;
         console.log(
-          `[${index + 1}/${rows.length}] worker=${workerId} ${row.slug} -> ${result.review.decision} (${result.review.reasonCode ?? "no_reason"}) applied=${result.applied} reused=${Boolean(result.reused)}`,
+          `[${index + 1}/${rows.length}] worker=${workerId} ${row.slug} -> ${result.review.decision} (${result.review.reasonCode ?? "no_reason"}) applied=${result.applied} reused=${Boolean(result.reused)}${result.review.error ? ` error=${result.review.error}` : ""}`,
         );
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error);

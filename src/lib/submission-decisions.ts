@@ -1,19 +1,10 @@
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
-import { classifyPet } from "@/lib/auto-tag";
-import { classifyColorFamily, extractDominantColor } from "@/lib/color-extract";
-import { db, schema } from "@/lib/db/client";
 import type { SubmittedPet } from "@/lib/db/schema";
+import * as schema from "@/lib/db/schema";
 import { renderSubmissionApprovedEmail } from "@/lib/email-templates/submission-approved";
 import { renderSubmissionRejectedEmail } from "@/lib/email-templates/submission-rejected";
-import { createNotification } from "@/lib/notifications";
-import {
-  getApprovedPetMissingSoundBySlug,
-  processPetSound,
-} from "@/lib/pet-sound";
-import { refreshSimilarityFor } from "@/lib/similarity";
-import { getPreferredLocaleForUser } from "@/lib/user-locale";
 
 export type SubmissionAdminAction = "approve" | "reject" | "edit" | "pending";
 
@@ -35,12 +26,19 @@ export type SubmissionActionResult =
       body: { error: string; message?: string };
     };
 
+type SubmissionActionDb = Awaited<typeof import("@/lib/db/client")>["db"];
+
 export async function applySubmissionAction(
   id: string,
   body: SubmissionActionInput,
-  options: { actor?: SubmissionActionActor } = {},
+  options: {
+    actor?: SubmissionActionActor;
+    db?: SubmissionActionDb;
+    skipSideEffects?: boolean;
+  } = {},
 ): Promise<SubmissionActionResult> {
   const actor = options.actor ?? "admin";
+  const db = options.db ?? (await import("@/lib/db/client")).db;
   const now = new Date();
   const editPatch: Record<string, unknown> = {};
 
@@ -110,11 +108,14 @@ export async function applySubmissionAction(
   }
 
   let row = updated;
-  if (body.action === "approve") {
-    row = await runPostApprovalEffects(row, actor);
+  if (body.action === "approve" && !options.skipSideEffects) {
+    row = await runPostApprovalEffects(row, actor, db);
   }
 
-  if (body.action === "approve" || body.action === "reject") {
+  if (
+    !options.skipSideEffects &&
+    (body.action === "approve" || body.action === "reject")
+  ) {
     await notifySubmissionOwner(row);
   }
 
@@ -124,11 +125,13 @@ export async function applySubmissionAction(
 async function runPostApprovalEffects(
   row: SubmittedPet,
   actor: SubmissionActionActor,
+  db: SubmissionActionDb,
 ): Promise<SubmittedPet> {
   const needsTagging =
     ((row.tags as string[]) ?? []).length === 0 ||
     ((row.vibes as string[]) ?? []).length === 0;
   if (needsTagging) {
+    const { classifyPet } = await import("@/lib/auto-tag");
     const cls = await classifyPet(row.displayName, row.description);
     if (cls) {
       const [tagged] = await db
@@ -140,6 +143,7 @@ async function runPostApprovalEffects(
     }
   }
 
+  const { refreshSimilarityFor } = await import("@/lib/similarity");
   void refreshSimilarityFor(row.id).catch((err) => {
     console.warn(`[${actor}] similarity refresh failed:`, err);
   });
@@ -147,6 +151,9 @@ async function runPostApprovalEffects(
   if (!row.dominantColor) {
     void (async () => {
       try {
+        const { classifyColorFamily, extractDominantColor } = await import(
+          "@/lib/color-extract"
+        );
         const dominantColor = await extractDominantColor(row.spritesheetUrl);
         if (!dominantColor) return;
         await db
@@ -164,6 +171,8 @@ async function runPostApprovalEffects(
 
   void (async () => {
     try {
+      const { getApprovedPetMissingSoundBySlug, processPetSound } =
+        await import("@/lib/pet-sound");
       const pet = await getApprovedPetMissingSoundBySlug(row.slug);
       if (!pet) return;
       await processPetSound(pet, { workerKey: `${actor}-${row.slug}` });
@@ -176,6 +185,7 @@ async function runPostApprovalEffects(
 }
 
 async function notifySubmissionOwner(row: SubmittedPet): Promise<void> {
+  const { createNotification } = await import("@/lib/notifications");
   void createNotification({
     userId: row.ownerId,
     kind: row.status === "approved" ? "pet_approved" : "pet_rejected",
@@ -193,6 +203,7 @@ async function notifySubmissionOwner(row: SubmittedPet): Promise<void> {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const from =
       process.env.RESEND_FROM ?? "Petdex <petdex@updates.railly.dev>";
+    const { getPreferredLocaleForUser } = await import("@/lib/user-locale");
     const locale = await getPreferredLocaleForUser(row.ownerId);
 
     if (row.status === "approved") {

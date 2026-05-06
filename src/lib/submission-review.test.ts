@@ -26,9 +26,9 @@ describe("decideAutomatedReview", () => {
     expect(result.canApply).toBe(true);
   });
 
-  it("holds clean submissions below the first-week approval confidence", () => {
+  it("holds clean submissions below the approval confidence", () => {
     const checks = cleanChecks();
-    checks.policy.confidence = 0.94;
+    checks.policy.confidence = 0.89;
     const result = decideAutomatedReview(checks);
     expect(result.decision).toBe("hold");
     expect(result.reasonCode).toBe("low_confidence");
