@@ -135,6 +135,10 @@
     },
     "status": {
       "pending": "Pendiente",
+      "held": "Retenido",
+      "review_failed": "Revisión fallida",
+      "auto_approved": "Autoaprobado",
+      "auto_rejected": "Autorechazado",
       "approved": "Aprobado",
       "rejected": "Rechazado",
       "discovered": "Descubierto",
@@ -334,7 +338,21 @@
         "ariaLabel": "Vista previa de la animación subida"
       },
       "success": {
-        "review": "{name} está en revisión. Te avisaremos cuando se apruebe."
+        "approved": "{name} pasó la revisión automática y ya está publicada.",
+        "rejected": "{name} fue rechazada por la revisión automática. Puedes ajustar el paquete y enviarlo de nuevo.",
+        "hold": "{name} necesita revisión manual. Te avisaremos cuando un admin decida.",
+        "review": "{name} está en revisión. Te avisaremos cuando se apruebe.",
+        "viewPet": "Ver mascota",
+        "details": {
+          "duplicate": "Motivo: parece duplicar una mascota existente. {summary}",
+          "duplicateFallback": "Los archivos enviados coincidieron con un paquete de mascota existente.",
+          "policy": "Motivo: la revisión automática encontró posibles problemas de política, así que un admin debe revisarla antes de publicarla.",
+          "assets": "Motivo: la revisión automática encontró un problema con los archivos del paquete o la spritesheet.",
+          "timeout": "Motivo: la revisión automática tardó demasiado, así que la dejamos para revisión manual en vez de tomar una decisión arriesgada.",
+          "reviewFailed": "Motivo: la revisión automática falló, así que la dejamos para revisión manual en vez de tomar una decisión arriesgada.",
+          "rejectedGeneric": "Motivo: la revisión automática encontró un problema de alta confianza con este envío.",
+          "holdGeneric": "Motivo: la revisión automática no tuvo suficiente confianza para aprobarla automáticamente."
+        }
       },
       "fallback": {
         "beforeLink": "¿Atascado?",

@@ -1,17 +1,17 @@
 // Server-side auto-tag classifier. Same prompt as scripts/auto-tag.ts but runs
-// against OpenAI's API (gpt-5-mini) so it works inside Vercel serverless.
+// through AI Gateway so it works inside Vercel serverless.
 //
 // Returns null on failure — caller is responsible for fallback (leave kind/
 // vibes/tags as-is). Never throws.
 
-import OpenAI from "openai";
+import { generateText } from "ai";
 
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
 
 const VIBE_SET = new Set<string>(PET_VIBES);
 const KIND_SET = new Set<string>(PET_KINDS);
 
-const MODEL = process.env.PETDEX_AUTOTAG_MODEL ?? "gpt-5-mini";
+const MODEL = "openai/gpt-5-mini";
 
 export type Classification = {
   kind: PetKind;
@@ -23,29 +23,16 @@ export async function classifyPet(
   displayName: string,
   description: string,
 ): Promise<Classification | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.warn("[auto-tag] OPENAI_API_KEY not set, skipping classification");
-    return null;
-  }
-
-  const client = new OpenAI({ apiKey });
   const prompt = buildPrompt(displayName, description);
 
   try {
-    const completion = await client.chat.completions.create({
+    const result = await generateText({
       model: MODEL,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a strict JSON classifier. Output ONLY the requested JSON object, no prose, no markdown fences.",
-        },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
+      system:
+        "You are a strict JSON classifier. Output ONLY the requested JSON object, no prose, no markdown fences.",
+      messages: [{ role: "user", content: prompt }],
     });
-    const raw = completion.choices[0]?.message?.content ?? "";
+    const raw = result.text;
     const json = JSON.parse(raw);
     return validate(json);
   } catch (err) {

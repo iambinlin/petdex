@@ -135,6 +135,10 @@
     },
     "status": {
       "pending": "Pending",
+      "held": "Held",
+      "review_failed": "Review failed",
+      "auto_approved": "Auto approved",
+      "auto_rejected": "Auto rejected",
       "approved": "Approved",
       "rejected": "Rejected",
       "discovered": "Discovered",
@@ -334,7 +338,21 @@
         "ariaLabel": "Uploaded pet animation preview"
       },
       "success": {
-        "review": "{name} is in review. You'll be notified when it's approved."
+        "approved": "{name} passed automated review and is live now.",
+        "rejected": "{name} was rejected by automated review. You can adjust the package and submit it again.",
+        "hold": "{name} needs manual review. We'll notify you when an admin decides.",
+        "review": "{name} is in review. You'll be notified when it's approved.",
+        "viewPet": "View pet",
+        "details": {
+          "duplicate": "Reason: it appears to duplicate an existing pet. {summary}",
+          "duplicateFallback": "The submitted assets matched an existing pet pack.",
+          "policy": "Reason: automated review found possible policy issues, so an admin needs to review it before it can go live.",
+          "assets": "Reason: automated review found an issue with the package files or spritesheet.",
+          "timeout": "Reason: automated review took too long, so we held it for manual review instead of making a risky decision.",
+          "reviewFailed": "Reason: automated review failed, so we held it for manual review instead of making a risky decision.",
+          "rejectedGeneric": "Reason: automated review found a high-confidence issue with this submission.",
+          "holdGeneric": "Reason: automated review was not confident enough to approve it automatically."
+        }
       },
       "fallback": {
         "beforeLink": "Stuck?",
