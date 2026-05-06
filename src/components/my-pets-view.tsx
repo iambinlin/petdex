@@ -270,7 +270,9 @@ function LikedPets({ pets }: { pets: PetWithMetrics[] }) {
   );
 }
 
-function SubmissionCard({ submission }: { submission: Submission }) {
+export type { Submission };
+
+export function SubmissionCard({ submission }: { submission: Submission }) {
   const [isPending, startTransition] = useTransition();
   const [withdrawn, setWithdrawn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -540,7 +542,7 @@ type Claimable = {
   status: "pending" | "approved" | "rejected";
 };
 
-function ClaimableBanner() {
+export function ClaimableBanner() {
   const [pets, setPets] = useState<Claimable[] | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [githubUrl, setGithubUrl] = useState<string | null>(null);

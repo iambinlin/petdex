@@ -50,10 +50,6 @@ const isProtected = createRouteMatcher([
   "/:locale/admin/(.*)",
   "/api/admin",
   "/api/admin/(.*)",
-  "/my-pets",
-  "/my-pets/(.*)",
-  "/:locale/my-pets",
-  "/:locale/my-pets/(.*)",
   "/api/my-pets",
   "/api/my-pets/(.*)",
 ]);

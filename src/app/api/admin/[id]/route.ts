@@ -209,7 +209,7 @@ export async function PATCH(
         petName: row.displayName,
         ...(row.rejectionReason ? { reason: row.rejectionReason } : {}),
       },
-      href: row.status === "approved" ? `/pets/${row.slug}` : "/my-pets",
+      href: row.status === "approved" ? `/pets/${row.slug}` : "/",
     }).catch(() => {});
   }
 
@@ -362,7 +362,7 @@ export async function DELETE(
       ...(reason ? { reason } : {}),
       takedown: true,
     },
-    href: "/my-pets",
+    href: "/",
   }).catch(() => {});
 
   if (pet.ownerEmail && process.env.RESEND_API_KEY) {

@@ -18,7 +18,8 @@ type Step = {
 
 const ALL_STEPS: Step[] = [
   {
-    selector: 'a[href="#gallery"], a[href="/#gallery"], a[href="/api/manifest"]',
+    selector:
+      'a[href="#gallery"], a[href="/#gallery"], a[href="/api/manifest"]',
     eyebrow: "What's new",
     title: "Petdex is now an index, not a list",
     body: "Browse 100+ animated companions, filter by vibe or kind, share any pet with one click. We'll show you the new bits in 30 seconds.",
@@ -39,10 +40,10 @@ const ALL_STEPS: Step[] = [
     placement: "bottom",
   },
   {
-    selector: 'a[href="/my-pets"]',
+    selector: 'a[href^="/u/"]',
     eyebrow: "Track",
-    title: "Your submissions live here",
-    body: "Head to My pets to see every submission's status. Withdraw pending ones, see install and like counts on approved ones.",
+    title: "Your submissions live on your profile",
+    body: "Open your profile to see every submission's status. Withdraw pending ones, see install and like counts on approved ones.",
     placement: "bottom",
   },
 ];

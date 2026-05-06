@@ -1,4 +1,3 @@
-import type { Locale } from "@/i18n/config";
 import {
   codeBlock,
   normalizeLocale,
@@ -6,6 +5,8 @@ import {
   petdexUrl,
   wrapEmail,
 } from "@/lib/email-templates/shared";
+
+import type { Locale } from "@/i18n/config";
 
 type Vars = {
   petName: string;
@@ -18,7 +19,7 @@ export function renderSubmissionApprovedEmail(
 ): { subject: string; html: string; text: string } {
   const current = normalizeLocale(locale);
   const pageUrl = petdexUrl(current, `/pets/${vars.petSlug}`);
-  const myPetsUrl = petdexUrl(current, "/my-pets");
+  const homeUrl = petdexUrl(current, "/");
   const installCmd = `curl -sSf https://petdex.crafter.run/install/${vars.petSlug} | sh`;
   const copy =
     current === "es"
@@ -64,7 +65,7 @@ export function renderSubmissionApprovedEmail(
     "",
     ...copy.actions.map((line) => `- ${line}`),
     "",
-    `Profile: ${myPetsUrl}`,
+    `Profile: ${homeUrl}`,
     "",
     "Petdex",
   ].join("\n");
@@ -75,7 +76,7 @@ export function renderSubmissionApprovedEmail(
     p(copy.install),
     codeBlock(installCmd),
     p(copy.actions.map((line) => `- ${line}`).join("\n")),
-    p(`Profile: ${myPetsUrl}`),
+    p(`Profile: ${homeUrl}`),
   ]);
 
   return { subject: copy.subject, html, text };
