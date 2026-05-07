@@ -129,6 +129,14 @@
       "native": "Native sponsor card",
       "audience": "Developer-focused audience"
     },
+    "landing": {
+      "primaryCta": "Create campaign",
+      "secondaryCta": "Open dashboard",
+      "pricingEyebrow": "Simple prepaid packages",
+      "pricingTitle": "Buy viewable impressions without a sales call.",
+      "finalTitle": "Ready when your creative is ready.",
+      "finalBody": "Create a campaign, upload a clean sponsored card image, choose a prepaid package, and continue to Stripe checkout. You can edit the creative from your dashboard after launch."
+    },
     "checkout": {
       "successTitle": "Payment received",
       "successBody": "Stripe is confirming the payment. Your campaign will start automatically once the webhook activates it.",
@@ -200,6 +208,30 @@
         "network": "Network error. Try again."
       }
     },
+    "create": {
+      "metadata": {
+        "title": "Create a Petdex ad campaign",
+        "description": "Build a Petdex sponsored card, choose a prepaid impression package, and continue to Stripe checkout."
+      },
+      "eyebrow": "Campaign setup",
+      "title": "Create your sponsored card.",
+      "body": "Add the creative, destination, tracking, and prepaid impression package for your Petdex campaign.",
+      "backToLanding": "Back to advertising",
+      "help": {
+        "creative": {
+          "title": "Use a clear creative",
+          "body": "A logo card, product screenshot, or simple product visual works best in the Petdex feed."
+        },
+        "review": {
+          "title": "Keep it community-safe",
+          "body": "Ads remain subject to Petdex policies and can be removed if they mislead or harm the community."
+        },
+        "billing": {
+          "title": "Checkout is prepaid",
+          "body": "Stripe collects payment after your campaign is created. Delivery starts after payment activation."
+        }
+      }
+    },
     "card": {
       "sponsored": "Sponsored",
       "cta": "Visit sponsor",
@@ -220,6 +252,17 @@
       "created": "Created {date}",
       "activated": "Activated {date}",
       "removedFallback": "This campaign was removed because it did not align with Petdex policies.",
+      "checkout": {
+        "successTitle": "Payment received",
+        "successBody": "Stripe is confirming the payment. Your campaign will start automatically once the webhook activates it."
+      },
+      "summary": {
+        "total": "Campaigns",
+        "active": "Active",
+        "served": "Impressions",
+        "clicks": "Clicks",
+        "ctr": "CTR"
+      },
       "metrics": {
         "package": "Package",
         "served": "Impressions served",
@@ -247,9 +290,21 @@
         "imageHelp": "PNG, JPG, or WebP. Max 10 MB.",
         "currentImage": "Preview",
         "save": "Save changes",
+        "saved": "Campaign saved.",
         "saving": "Saving campaign",
         "uploading": "Uploading image",
         "cancel": "Cancel",
+        "backToDashboard": "Back to dashboard",
+        "delivery": "Delivery",
+        "deliveryBody": "{served} of {total} impressions served.",
+        "metadata": {
+          "title": "Edit ad campaign — Petdex",
+          "description": "Update your Petdex sponsored card creative, destination, and tracking fields."
+        },
+        "notEditable": {
+          "title": "This campaign cannot be edited",
+          "body": "Deleted or removed campaigns cannot be changed. Create a new campaign if you want to run a new sponsored card."
+        },
         "utmTitle": "Custom UTM settings",
         "utmHelp": "Leave fields blank to clear them. If utm_source is blank, Petdex adds utm_source=petdex to clicks.",
         "errors": {

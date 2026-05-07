@@ -124,6 +124,37 @@ export async function getPendingOwnedCampaign(id: string, userId: string) {
   return rows[0] ?? null;
 }
 
+export async function getOwnedAdCampaignForEditing(id: string, userId: string) {
+  const rows = await db
+    .select({
+      id: schema.adCampaigns.id,
+      companyName: schema.adCampaigns.companyName,
+      title: schema.adCampaigns.title,
+      description: schema.adCampaigns.description,
+      imageUrl: schema.adCampaigns.imageUrl,
+      destinationUrl: schema.adCampaigns.destinationUrl,
+      utmSource: schema.adCampaigns.utmSource,
+      utmMedium: schema.adCampaigns.utmMedium,
+      utmCampaign: schema.adCampaigns.utmCampaign,
+      utmTerm: schema.adCampaigns.utmTerm,
+      utmContent: schema.adCampaigns.utmContent,
+      packageViews: schema.adCampaigns.packageViews,
+      priceCents: schema.adCampaigns.priceCents,
+      viewsServed: schema.adCampaigns.viewsServed,
+      status: schema.adCampaigns.status,
+      createdAt: schema.adCampaigns.createdAt,
+      activatedAt: schema.adCampaigns.activatedAt,
+      deletedAt: schema.adCampaigns.deletedAt,
+      removalReason: schema.adCampaigns.removalReason,
+    })
+    .from(schema.adCampaigns)
+    .where(
+      and(eq(schema.adCampaigns.id, id), eq(schema.adCampaigns.userId, userId)),
+    )
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export async function updateOwnedAdCampaignCreative(
   params: UpdateOwnedAdCampaignCreativeParams,
 ): Promise<

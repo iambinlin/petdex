@@ -167,6 +167,14 @@
       "native": "原生赞助卡片",
       "audience": "开发者受众"
     },
+    "landing": {
+      "primaryCta": "创建广告系列",
+      "secondaryCta": "打开仪表盘",
+      "pricingEyebrow": "简单的预付套餐",
+      "pricingTitle": "无需销售沟通即可购买可见曝光。",
+      "finalTitle": "素材准备好后即可开始。",
+      "finalBody": "创建广告系列，上传清晰的赞助卡片图片，选择预付套餐，然后继续到 Stripe checkout。上线后你可以在仪表盘中编辑素材。"
+    },
     "checkout": {
       "successTitle": "已收到付款",
       "successBody": "Stripe 正在确认付款。Webhook 激活后，你的广告会自动开始投放。",
@@ -238,6 +246,30 @@
         "network": "网络错误。请重试。"
       }
     },
+    "create": {
+      "metadata": {
+        "title": "创建 Petdex 广告系列",
+        "description": "制作 Petdex 赞助卡片，选择预付曝光套餐，并继续到 Stripe checkout。"
+      },
+      "eyebrow": "广告系列设置",
+      "title": "创建你的赞助卡片。",
+      "body": "为你的 Petdex 广告系列添加素材、目标地址、跟踪字段和预付曝光套餐。",
+      "backToLanding": "返回广告介绍",
+      "help": {
+        "creative": {
+          "title": "使用清晰素材",
+          "body": "Logo 卡片、产品截图或简洁的产品视觉在 Petdex 信息流中效果最好。"
+        },
+        "review": {
+          "title": "保持社区安全",
+          "body": "广告仍需遵守 Petdex 政策；误导或伤害社区的广告可能会被移除。"
+        },
+        "billing": {
+          "title": "Checkout 为预付费",
+          "body": "创建广告系列后由 Stripe 收款。付款激活后开始交付。"
+        }
+      }
+    },
     "card": {
       "sponsored": "赞助",
       "cta": "访问赞助商",
@@ -258,6 +290,17 @@
       "created": "创建于 {date}",
       "activated": "激活于 {date}",
       "removedFallback": "该广告系列因不符合 Petdex 政策而被移除。",
+      "checkout": {
+        "successTitle": "已收到付款",
+        "successBody": "Stripe 正在确认付款。Webhook 激活后，你的广告会自动开始投放。"
+      },
+      "summary": {
+        "total": "广告系列",
+        "active": "活跃",
+        "served": "曝光",
+        "clicks": "点击",
+        "ctr": "CTR"
+      },
       "metrics": {
         "package": "套餐",
         "served": "已曝光",
@@ -285,9 +328,21 @@
         "imageHelp": "PNG、JPG 或 WebP。最大 10 MB。",
         "currentImage": "预览",
         "save": "保存更改",
+        "saved": "广告系列已保存。",
         "saving": "正在保存广告系列",
         "uploading": "正在上传图片",
         "cancel": "取消",
+        "backToDashboard": "返回仪表盘",
+        "delivery": "交付进度",
+        "deliveryBody": "已交付 {served} / {total} 次曝光。",
+        "metadata": {
+          "title": "编辑广告系列 — Petdex",
+          "description": "更新你的 Petdex 赞助卡片素材、目标地址和跟踪字段。"
+        },
+        "notEditable": {
+          "title": "该广告系列无法编辑",
+          "body": "已删除或已移除的广告系列不能更改。如果要运行新的赞助卡片，请创建新的广告系列。"
+        },
         "utmTitle": "自定义 UTM 设置",
         "utmHelp": "留空可清除字段。如果 utm_source 为空，Petdex 会为点击添加 utm_source=petdex。",
         "errors": {
