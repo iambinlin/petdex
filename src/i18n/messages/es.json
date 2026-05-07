@@ -129,6 +129,14 @@
       "native": "Tarjeta sponsor nativa",
       "audience": "Audiencia developer"
     },
+    "landing": {
+      "primaryCta": "Crear campaña",
+      "secondaryCta": "Abrir panel",
+      "pricingEyebrow": "Paquetes prepagados simples",
+      "pricingTitle": "Compra impresiones visibles sin llamada comercial.",
+      "finalTitle": "Listo cuando tu creatividad esté lista.",
+      "finalBody": "Crea una campaña, sube una imagen limpia para la tarjeta patrocinada, elige un paquete prepago y continúa a Stripe checkout. Puedes editar la creatividad desde tu panel después del lanzamiento."
+    },
     "checkout": {
       "successTitle": "Pago recibido",
       "successBody": "Stripe está confirmando el pago. Tu campaña empezará automáticamente cuando el webhook la active.",
@@ -200,6 +208,30 @@
         "network": "Error de red. Inténtalo de nuevo."
       }
     },
+    "create": {
+      "metadata": {
+        "title": "Crear una campaña de anuncios en Petdex",
+        "description": "Crea una tarjeta patrocinada en Petdex, elige un paquete de impresiones prepagadas y continúa a Stripe checkout."
+      },
+      "eyebrow": "Configuración de campaña",
+      "title": "Crea tu tarjeta patrocinada.",
+      "body": "Agrega creatividad, destino, tracking y paquete de impresiones prepagadas para tu campaña en Petdex.",
+      "backToLanding": "Volver a anuncios",
+      "help": {
+        "creative": {
+          "title": "Usa una creatividad clara",
+          "body": "Una tarjeta con logo, captura de producto o visual simple funciona mejor en el feed de Petdex."
+        },
+        "review": {
+          "title": "Mantén la campaña segura",
+          "body": "Los anuncios siguen sujetos a las políticas de Petdex y pueden retirarse si engañan o dañan a la comunidad."
+        },
+        "billing": {
+          "title": "Checkout prepago",
+          "body": "Stripe cobra el pago después de crear la campaña. La entrega empieza tras la activación del pago."
+        }
+      }
+    },
     "card": {
       "sponsored": "Patrocinado",
       "cta": "Visitar sponsor",
@@ -220,6 +252,17 @@
       "created": "Creada {date}",
       "activated": "Activada {date}",
       "removedFallback": "Esta campaña fue retirada porque no se alineó con las políticas de Petdex.",
+      "checkout": {
+        "successTitle": "Pago recibido",
+        "successBody": "Stripe está confirmando el pago. Tu campaña empezará automáticamente cuando el webhook la active."
+      },
+      "summary": {
+        "total": "Campañas",
+        "active": "Activas",
+        "served": "Impresiones",
+        "clicks": "Clicks",
+        "ctr": "CTR"
+      },
       "metrics": {
         "package": "Paquete",
         "served": "Impresiones servidas",
@@ -247,9 +290,21 @@
         "imageHelp": "PNG, JPG o WebP. Máximo 10 MB.",
         "currentImage": "Vista previa",
         "save": "Guardar cambios",
+        "saved": "Campaña guardada.",
         "saving": "Guardando campaña",
         "uploading": "Subiendo imagen",
         "cancel": "Cancelar",
+        "backToDashboard": "Volver al panel",
+        "delivery": "Entrega",
+        "deliveryBody": "{served} de {total} impresiones servidas.",
+        "metadata": {
+          "title": "Editar campaña de anuncios — Petdex",
+          "description": "Actualiza la creatividad, el destino y los campos de tracking de tu tarjeta patrocinada en Petdex."
+        },
+        "notEditable": {
+          "title": "Esta campaña no se puede editar",
+          "body": "Las campañas borradas o retiradas no se pueden cambiar. Crea una campaña nueva si quieres publicar otra tarjeta patrocinada."
+        },
         "utmTitle": "UTM personalizados",
         "utmHelp": "Deja campos vacíos para limpiarlos. Si utm_source queda vacío, Petdex agrega utm_source=petdex a los clicks.",
         "errors": {

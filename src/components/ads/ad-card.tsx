@@ -30,7 +30,7 @@ export function AdCard({
   return (
     <article
       onPointerEnter={onHover}
-      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-black/10 bg-surface/76 shadow-sm shadow-blue-950/5 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 dark:hover:bg-stone-800"
+      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/76 shadow-sm shadow-blue-950/5 backdrop-blur transition hover:-translate-y-0.5 hover:bg-surface hover:shadow-xl hover:shadow-blue-950/10"
     >
       <a
         href={ad.clickUrl}
@@ -40,7 +40,7 @@ export function AdCard({
         onClick={handleClick}
         className="flex flex-1 flex-col rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
       >
-        <div className="flex min-h-[46px] items-center justify-between rounded-t-3xl border-black/[0.06] border-b px-5 py-3 dark:border-white/[0.06]">
+        <div className="flex min-h-[46px] items-center justify-between rounded-t-3xl border-border-base border-b px-5 py-3">
           <span className="font-mono text-[11px] tracking-[0.22em] text-muted-3 uppercase">
             {t("sponsored")}
           </span>
@@ -62,7 +62,7 @@ export function AdCard({
             Sponsor
           </span>
         </div>
-        <div className="flex flex-1 flex-col gap-2 border-black/[0.06] border-t px-5 pt-4 pb-3 dark:border-white/[0.06]">
+        <div className="flex flex-1 flex-col gap-2 border-border-base border-t px-5 pt-4 pb-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="line-clamp-1 text-lg font-semibold tracking-tight text-foreground">
               {ad.title}
@@ -74,7 +74,7 @@ export function AdCard({
           <p className="line-clamp-2 text-sm leading-6 text-muted-2">
             {ad.description}
           </p>
-          <span className="inline-flex w-fit items-center rounded-full border border-black/[0.08] bg-black/[0.03] px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-muted-2 uppercase dark:border-white/[0.1] dark:bg-white/[0.04]">
+          <span className="inline-flex w-fit items-center rounded-full border border-border-base bg-background px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-muted-2 uppercase">
             Promoted
           </span>
           <div className="mt-1 flex flex-wrap gap-1.5">
@@ -85,12 +85,12 @@ export function AdCard({
               #partner
             </span>
           </div>
-          <div className="mt-2 flex items-center gap-1.5 border-black/[0.05] border-t pt-2 font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase dark:border-white/[0.05]">
+          <div className="mt-2 flex items-center gap-1.5 border-border-base border-t pt-2 font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase">
             {t("cta")}
           </div>
         </div>
       </a>
-      <div className="mt-auto flex min-h-[52px] items-center border-black/[0.05] border-t px-5 py-2 dark:border-white/[0.05]" />
+      <div className="mt-auto flex min-h-[52px] items-center border-border-base border-t px-5 py-2" />
     </article>
   );
 }

@@ -55,7 +55,8 @@ export async function POST(req: Request): Promise<Response> {
 
   const localePrefix =
     body.locale && body.locale !== "en" ? `/${body.locale}` : "";
-  const returnBase = `${getSiteUrl()}${localePrefix}/advertise`;
+  const dashboardReturnUrl = `${getSiteUrl()}${localePrefix}/advertise/dashboard`;
+  const createReturnUrl = `${getSiteUrl()}${localePrefix}/advertise/new`;
   const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -79,8 +80,8 @@ export async function POST(req: Request): Promise<Response> {
       userId,
       packageViews: String(campaign.packageViews),
     },
-    success_url: `${returnBase}?checkout=success`,
-    cancel_url: `${returnBase}?checkout=cancelled`,
+    success_url: `${dashboardReturnUrl}?checkout=success`,
+    cancel_url: `${createReturnUrl}?checkout=cancelled`,
   });
 
   await setCampaignCheckoutSession(campaign.id, session.id);
