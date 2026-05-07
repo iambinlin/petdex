@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -8,6 +7,8 @@ import { Loader2, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import type { AdvertiserCampaign } from "@/lib/ads/queries";
+
+import { AdCard } from "@/components/ads/ad-card";
 
 type EditableCampaign = Pick<
   AdvertiserCampaign,
@@ -56,6 +57,13 @@ export function AdCampaignEditDialog({
   const [state, setState] = useState<SaveState>({ kind: "idle" });
 
   const isBusy = state.kind === "uploading" || state.kind === "saving";
+  const previewAd = {
+    id: campaign.id,
+    title: title.trim() || campaign.title,
+    description: description.trim() || campaign.description,
+    imageUrl: previewUrl ?? uploadedImageUrl ?? campaign.imageUrl,
+    clickUrl: destinationUrl.trim() || campaign.destinationUrl,
+  };
 
   useEffect(() => {
     if (!imageFile) {
@@ -165,7 +173,7 @@ export function AdCampaignEditDialog({
 
             <form
               onSubmit={(event) => void handleSubmit(event)}
-              className="mt-5 grid gap-5 md:grid-cols-[1fr_220px]"
+              className="mt-5 grid gap-5 md:grid-cols-[1fr_minmax(260px,320px)]"
             >
               <div className="space-y-4">
                 <Field
@@ -299,27 +307,7 @@ export function AdCampaignEditDialog({
                 <p className="mb-3 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
                   {t("currentImage")}
                 </p>
-                <div className="relative aspect-square overflow-hidden rounded-xl border border-border-base bg-surface">
-                  <Image
-                    src={previewUrl ?? uploadedImageUrl ?? campaign.imageUrl}
-                    alt=""
-                    fill
-                    sizes="220px"
-                    className="object-cover"
-                    unoptimized={Boolean(previewUrl)}
-                  />
-                </div>
-                <div className="mt-4 rounded-xl bg-surface p-3">
-                  <p className="font-mono text-[10px] tracking-[0.16em] text-muted-3 uppercase">
-                    Sponsored preview
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-                    {title || campaign.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-5 text-muted-2">
-                    {description || campaign.description}
-                  </p>
-                </div>
+                <AdCard ad={previewAd} disableNavigation />
               </aside>
             </form>
           </div>
