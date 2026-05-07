@@ -1,8 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import type { CSSProperties } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { track } from "@vercel/analytics";
 import {
@@ -16,6 +22,7 @@ import {
   X,
 } from "lucide-react";
 
+import type { PublicFeedAd } from "@/lib/ads/queries";
 import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
 import { formatBatchLabel, getBatchKey } from "@/lib/dex-batch";
 import { petStates } from "@/lib/pet-states";
@@ -23,6 +30,8 @@ import type { PetWithMetrics } from "@/lib/pets";
 import { PET_KINDS, PET_VIBES, type PetKind, type PetVibe } from "@/lib/types";
 import { isAllowedAvatarUrl } from "@/lib/url-allowlist";
 
+import { FeedAdSlot } from "@/components/ads/feed-ad-slot";
+import { useHeaderState } from "@/components/header-state-provider";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetCardFooter } from "@/components/pet-card-footer";
 import { PetSprite } from "@/components/pet-sprite";
@@ -56,6 +65,7 @@ type PetGalleryProps = {
    * without a per-row lookup.
    */
   dexMap?: Record<string, number>;
+  ads?: PublicFeedAd[];
 };
 
 type SortKey = "curated" | "popular" | "installed" | "alpha" | "recent";
@@ -90,6 +100,7 @@ export function PetGallery({
   totalPets,
   dexMap,
   caughtSlugs,
+  ads = [],
 }: PetGalleryProps) {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -100,29 +111,12 @@ export function PetGallery({
   const [activeBatches, setActiveBatches] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortKey>("curated");
   // The home page no longer ships caughtSlugs server-side — that would
-  // make every SSR render per-visitor and kill ISR. When the prop is
-  // missing we fetch /api/me/caught-slugs after hydration so the
-  // "caught" highlight on PetCard still works for signed-in users
-  // without holding up the static shell.
-  const [hydratedCaught, setHydratedCaught] = useState<string[] | null>(null);
-  useEffect(() => {
-    if (caughtSlugs !== undefined) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/me/caught-slugs");
-        if (!res.ok) return;
-        const data = (await res.json()) as { caught: string[] };
-        if (!cancelled) setHydratedCaught(data.caught);
-      } catch {
-        /* anonymous viewers + offline fall through */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [caughtSlugs]);
-  const caughtSet = new Set(caughtSlugs ?? hydratedCaught ?? []);
+  // make every SSR render per-visitor and kill ISR. We pull the caught
+  // slug set from the shared HeaderStateProvider (one polled aggregate
+  // instead of per-component fetch) so the "caught" highlight still
+  // works for signed-in users without an extra Edge Request per page.
+  const headerCaught = useHeaderState().state.caught;
+  const caughtSet = new Set(caughtSlugs ?? headerCaught);
 
   const [pets, setPets] = useState<PetWithMetrics[]>(initial.pets);
   const [total, setTotal] = useState<number>(initial.total);
@@ -540,16 +534,21 @@ export function PetGallery({
           loadingPage ? "opacity-60 transition" : ""
         }`}
       >
-        {pets.map((pet, index) => (
-          <PetCard
-            key={pet.slug}
-            pet={pet}
-            index={index}
-            stateCount={stateCount}
-            dexNumber={dexMap?.[pet.slug] ?? null}
-            caught={caughtSet.has(pet.slug)}
-          />
-        ))}
+        {pets.map((pet, index) => {
+          const ad = adForPetIndex(ads, index);
+          return (
+            <Fragment key={pet.slug}>
+              <PetCard
+                pet={pet}
+                index={index}
+                stateCount={stateCount}
+                dexNumber={dexMap?.[pet.slug] ?? null}
+                caught={caughtSet.has(pet.slug)}
+              />
+              {ad ? <FeedAdSlot ad={ad} /> : null}
+            </Fragment>
+          );
+        })}
       </div>
 
       {pets.length === 0 && !loadingPage ? (
@@ -666,6 +665,18 @@ function FilterChips({
       })}
     </>
   );
+}
+
+function adForPetIndex(
+  ads: PublicFeedAd[],
+  index: number,
+): PublicFeedAd | null {
+  if (ads.length === 0) return null;
+  const petPosition = index + 1;
+  if (petPosition < 6) return null;
+  if (petPosition !== 6 && (petPosition - 6) % 12 !== 0) return null;
+  const adIndex = Math.floor((petPosition - 6) / 12) % ads.length;
+  return ads[adIndex] ?? null;
 }
 
 export type PetCardOwnerActions = {

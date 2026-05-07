@@ -35,11 +35,30 @@ type ParsedPet = {
   source: "folder" | "zip";
 };
 
+type SubmissionReviewOutcome = {
+  decision: "approved" | "rejected" | "hold";
+  applied: boolean;
+  reasonCode: string | null;
+  summary: string | null;
+};
+
 type SubmissionResult =
   | { kind: "idle" }
   | { kind: "uploading"; step: "validating" | "uploading" | "registering" }
   | { kind: "error"; message: string }
-  | { kind: "success"; slug: string; displayName: string };
+  | {
+      kind: "success";
+      slug: string;
+      displayName: string;
+      status: "pending" | "approved" | "rejected";
+      review: SubmissionReviewOutcome;
+    };
+
+type SubmitResponse = {
+  slug: string;
+  status: "pending" | "approved" | "rejected";
+  review: SubmissionReviewOutcome;
+};
 
 const REQUIRED = { width: 1536, height: 1872 } as const;
 const PETS_DIR = "~/.codex/pets";
@@ -287,6 +306,9 @@ export function PetSubmitForm() {
     if (!parsed || parsed.issues.length > 0) return;
     if (!isSignedIn) return;
 
+    const startedAt = performance.now();
+    let uploadStartedAt = startedAt;
+    let uploadFinishedAt = startedAt;
     track("pet_submission_started", { pet_id: parsed.petId });
     setSubmission({ kind: "uploading", step: "validating" });
 
@@ -316,6 +338,7 @@ export function PetSubmitForm() {
     let petJsonUrl: string;
 
     try {
+      uploadStartedAt = performance.now();
       const presignRes = await fetch("/api/r2/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -401,12 +424,16 @@ export function PetSubmitForm() {
       zipUrl = zipSlot.publicUrl;
       spritesheetUrl = spriteSlot.publicUrl;
       petJsonUrl = petJsonSlot.publicUrl;
+      uploadFinishedAt = performance.now();
     } catch (err) {
       const reason = (err as Error).message ?? "unknown";
       track("pet_submission_failed", {
         pet_id: parsed.petId,
         stage: "upload",
         reason: reason.slice(0, 120),
+        duration_ms: elapsedMs(startedAt),
+        duration_bucket: durationBucket(elapsedMs(startedAt)),
+        upload_duration_ms: elapsedMs(uploadStartedAt),
       });
       setSubmission({
         kind: "error",
@@ -416,6 +443,7 @@ export function PetSubmitForm() {
     }
 
     setSubmission({ kind: "uploading", step: "registering" });
+    const registerStartedAt = performance.now();
 
     const res = await fetch("/api/submit", {
       method: "POST",
@@ -443,6 +471,11 @@ export function PetSubmitForm() {
         stage: "register",
         error_code: errorCode,
         status: res.status,
+        duration_ms: elapsedMs(startedAt),
+        duration_bucket: durationBucket(elapsedMs(startedAt)),
+        upload_duration_ms: Math.round(uploadFinishedAt - uploadStartedAt),
+        register_duration_ms: elapsedMs(registerStartedAt),
+        register_duration_bucket: durationBucket(elapsedMs(registerStartedAt)),
       });
       setSubmission({
         kind: "error",
@@ -451,15 +484,24 @@ export function PetSubmitForm() {
       return;
     }
 
-    const data = (await res.json()) as { slug: string };
+    const data = (await res.json()) as SubmitResponse;
     track("pet_submission_succeeded", {
       pet_id: parsed.petId,
       slug: data.slug,
+      review_decision: data.review.decision,
+      review_applied: data.review.applied,
+      duration_ms: elapsedMs(startedAt),
+      duration_bucket: durationBucket(elapsedMs(startedAt)),
+      upload_duration_ms: Math.round(uploadFinishedAt - uploadStartedAt),
+      register_duration_ms: elapsedMs(registerStartedAt),
+      register_duration_bucket: durationBucket(elapsedMs(registerStartedAt)),
     });
     setSubmission({
       kind: "success",
       slug: data.slug,
       displayName: parsed.displayName,
+      status: data.status,
+      review: data.review,
     });
   }
 
@@ -625,9 +667,7 @@ export function PetSubmitForm() {
             ) : null}
 
             {submission.kind === "success" ? (
-              <p className="rounded-2xl bg-chip-success-bg p-3 text-sm text-chip-success-fg">
-                {t("success.review", { name: submission.displayName })}
-              </p>
+              <SubmissionSuccessMessage submission={submission} />
             ) : null}
           </div>
         ) : (
@@ -647,6 +687,59 @@ export function PetSubmitForm() {
       </p>
     </div>
   );
+}
+
+function SubmissionSuccessMessage({
+  submission,
+}: {
+  submission: Extract<SubmissionResult, { kind: "success" }>;
+}) {
+  const t = useTranslations("submit.form.success");
+  const explanation = reviewExplanation(submission.review, t);
+  const tone =
+    submission.review.decision === "approved"
+      ? "bg-chip-success-bg text-chip-success-fg"
+      : submission.review.decision === "rejected"
+        ? "bg-chip-danger-bg text-chip-danger-fg"
+        : "bg-chip-warning-bg text-chip-warning-fg";
+
+  return (
+    <div className={`rounded-2xl p-3 text-sm ${tone}`}>
+      <p>{t(submission.review.decision, { name: submission.displayName })}</p>
+      {explanation ? (
+        <p className="mt-2 text-xs leading-5">{explanation}</p>
+      ) : null}
+      {submission.review.decision === "approved" ? (
+        <a
+          href={`/pets/${submission.slug}`}
+          className="mt-2 inline-flex font-medium underline underline-offset-4"
+        >
+          {t("viewPet")}
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function reviewExplanation(
+  review: SubmissionReviewOutcome,
+  t: ReturnType<typeof useTranslations>,
+): string | null {
+  const reasonCode = review.reasonCode ?? "";
+  if (reasonCode.startsWith("duplicate_")) {
+    return t("details.duplicate", {
+      summary: review.summary ?? t("details.duplicateFallback"),
+    });
+  }
+  if (reasonCode.startsWith("policy_")) return t("details.policy");
+  if (reasonCode.startsWith("asset_")) return t("details.assets");
+  if (reasonCode === "review_timeout") return t("details.timeout");
+  if (reasonCode === "review_error" || reasonCode === "review_failed") {
+    return t("details.reviewFailed");
+  }
+  if (review.decision === "rejected") return t("details.rejectedGeneric");
+  if (review.decision === "hold") return t("details.holdGeneric");
+  return null;
 }
 
 function submissionErrorMessage(
@@ -673,6 +766,17 @@ function submissionErrorMessage(
     default:
       return t("errors.submissionFailedWithCode", { code });
   }
+}
+
+function elapsedMs(startedAt: number): number {
+  return Math.max(0, Math.round(performance.now() - startedAt));
+}
+
+function durationBucket(ms: number): string {
+  if (ms < 5000) return "under_5s";
+  if (ms < 15_000) return "5_15s";
+  if (ms < 30_000) return "15_30s";
+  return "over_30s";
 }
 
 function CopyPathButton({ path }: { path: string }) {

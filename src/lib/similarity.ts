@@ -7,10 +7,15 @@
 //   - scripts/compute-similarity.ts for bulk backfill
 
 import { eq } from "drizzle-orm";
-import OpenAI from "openai";
 import sharp from "sharp";
 
 import { db, schema } from "@/lib/db/client";
+import {
+  buildPetEmbeddingText,
+  embeddingVectorLiteral,
+  embedTextValue,
+  PETDEX_EMBEDDING_MODEL,
+} from "@/lib/embeddings";
 import { isAllowedAssetUrl } from "@/lib/url-allowlist";
 
 const FRAME_W = 192;
@@ -24,6 +29,16 @@ export async function dhashFromSpriteUrl(
     const res = await fetch(spriteUrl);
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
+    return dhashFromSpriteBuffer(buf);
+  } catch {
+    return null;
+  }
+}
+
+export async function dhashFromSpriteBuffer(
+  buf: Buffer,
+): Promise<string | null> {
+  try {
     const frame = await sharp(buf)
       .extract({ left: 0, top: 0, width: FRAME_W, height: FRAME_H })
       .resize(9, 8, { fit: "fill" })
@@ -44,6 +59,18 @@ export async function dhashFromSpriteUrl(
   }
 }
 
+export function hammingDistanceHex(a: string, b: string): number {
+  const ZERO = BigInt(0);
+  const ONE = BigInt(1);
+  let xor = BigInt(`0x${a}`) ^ BigInt(`0x${b}`);
+  let distance = 0;
+  while (xor !== ZERO) {
+    distance += Number(xor & ONE);
+    xor >>= ONE;
+  }
+  return distance;
+}
+
 export async function embedPetText(args: {
   displayName: string;
   description: string;
@@ -51,28 +78,7 @@ export async function embedPetText(args: {
   tags: string[];
   vibes: string[];
 }): Promise<number[] | null> {
-  if (!process.env.OPENAI_API_KEY) return null;
-  const text = [
-    args.displayName,
-    args.description,
-    args.kind,
-    args.tags.join(" "),
-    args.vibes.join(" "),
-  ]
-    .filter(Boolean)
-    .join("\n")
-    .slice(0, 8000);
-  if (!text.trim()) return null;
-  try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const r = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: text,
-    });
-    return r.data[0]?.embedding ?? null;
-  } catch {
-    return null;
-  }
+  return embedTextValue(buildPetEmbeddingText(args));
 }
 
 /** Persist dhash + embedding for the given pet id. */
@@ -100,14 +106,23 @@ export async function refreshSimilarityFor(petId: string): Promise<void> {
       .where(eq(schema.submittedPets.id, petId));
   }
   if (vec) {
-    // Drizzle doesn't model pgvector yet; raw SQL via the neon-http driver.
-    const literal = `[${vec.join(",")}]`;
-    const { neon } = await import("@neondatabase/serverless");
-    const sql = neon(process.env.DATABASE_URL!);
-    await sql`
-      UPDATE submitted_pets
-      SET embedding = ${literal}::vector
-      WHERE id = ${petId}
-    `;
+    await persistPetEmbedding(petId, vec);
   }
+}
+
+export async function persistPetEmbedding(
+  petId: string,
+  vec: number[],
+): Promise<void> {
+  if (!process.env.DATABASE_URL) return;
+  // Drizzle doesn't model pgvector yet; raw SQL via the neon-http driver.
+  const literal = embeddingVectorLiteral(vec);
+  const { neon } = await import("@neondatabase/serverless");
+  const sql = neon(process.env.DATABASE_URL);
+  await sql`
+    UPDATE submitted_pets
+    SET embedding = ${literal}::vector,
+        embedding_model = ${PETDEX_EMBEDDING_MODEL}
+    WHERE id = ${petId}
+  `;
 }

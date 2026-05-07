@@ -35,6 +35,8 @@
     "topCreators": "Creadores",
     "creators": "Creadores",
     "requests": "Pedidos",
+    "advertise": "Anunciarse",
+    "adDashboard": "Panel de anuncios",
     "community": "Comunidad",
     "discord": "Discord",
     "about": "Acerca de",
@@ -59,6 +61,7 @@
     "rightsNotice": "Las mascotas son fan art enviado por usuarios. Petdex no reclama derechos sobre ninguna propiedad intelectual subyacente.",
     "topCreators": "Creadores",
     "takedown": "Retiro de contenido",
+    "advertise": "Anunciarse",
     "github": "GitHub",
     "discord": "Discord",
     "sponsor": "Patrocinar",
@@ -87,6 +90,136 @@
     },
     "jsonLdDescription": "Galería pública de compañeros animados para Codex. Instala uno con un solo comando.",
     "jsonLdFeaturedPets": "Mascotas destacadas de Codex"
+  },
+  "advertise": {
+    "metadata": {
+      "title": "Anúnciate en Petdex",
+      "description": "Llega a desarrolladores que descubren e instalan herramientas de IA y desarrollo mediante tarjetas patrocinadas en Petdex."
+    },
+    "eyebrow": "Anuncios de Petdex",
+    "hero": {
+      "title": "Pon tu herramienta frente a builders que prueban cosas nuevas.",
+      "body": "Petdex tiene una audiencia creciente de desarrolladores que exploran compañeros para Codex y cultura developer. Ya prueban herramientas CLI, flujos de IA y productos por suscripción, así que es un lugar enfocado para presentar herramientas de IA y desarrollo."
+    },
+    "heroCards": {
+      "starting": "Desde $50",
+      "impressions": "Impresiones visibles",
+      "native": "Tarjeta sponsor nativa",
+      "audience": "Audiencia developer"
+    },
+    "checkout": {
+      "successTitle": "Pago recibido",
+      "successBody": "Stripe está confirmando el pago. Tu campaña empezará automáticamente cuando el webhook la active.",
+      "dashboardCta": "Ver panel de anuncios",
+      "cancelTitle": "Checkout cancelado",
+      "cancelBody": "No se capturó ningún pago. Puedes ajustar el anuncio e intentarlo otra vez."
+    },
+    "sections": {
+      "audience": {
+        "title": "Audiencia developer",
+        "body": "Los visitantes de Petdex son desarrolladores y usuarios de herramientas de IA explorando un catálogo construido alrededor de Codex. Están cómodos instalando herramientas y evaluando suscripciones pagas."
+      },
+      "placement": {
+        "title": "Tarjetas patrocinadas sutiles",
+        "body": "Los anuncios aparecen como tarjetas claramente marcadas entre las mascotas, manteniendo el ritmo de la galería sin interrumpir la navegación."
+      },
+      "billing": {
+        "title": "Impresiones visibles garantizadas",
+        "body": "Compras impresiones visibles garantizadas. También reportamos hovers, clicks, CTR y tiempo promedio visible."
+      }
+    },
+    "acceptableUse": {
+      "title": "Uso aceptable",
+      "items": {
+        "malware": "Sin malware, phishing, estafas, descargas engañosas ni recolección de credenciales.",
+        "adult": "Sin contenido adulto, sexual o explícito.",
+        "hate": "Sin odio, acoso, discriminación ni abuso.",
+        "illegal": "Sin productos ilegales, bienes regulados o servicios que violen la ley aplicable.",
+        "impersonation": "Sin suplantar personas, empresas, comunidades o proyectos open source.",
+        "misleading": "Sin claims engañosos de IA, benchmarks falsos o anuncios que tergiversen lo que hace la herramienta."
+      }
+    },
+    "legal": {
+      "eyebrow": "Aviso legal",
+      "title": "Petdex puede quitar anuncios que no encajen con la comunidad.",
+      "body": "Nos reservamos el derecho de pausar, borrar o rechazar cualquier anuncio que no se alinee con las políticas de Petdex, expectativas de la comunidad o estándares de calidad. Los anuncios retirados no se reembolsan."
+    },
+    "form": {
+      "companyName": "Empresa",
+      "contactEmail": "Email de contacto",
+      "title": "Título del anuncio",
+      "description": "Descripción",
+      "creativeDisclosure": "El título, la imagen y la descripción de tu anuncio aparecerán en la tarjeta patrocinada que se muestra en el feed de Petdex.",
+      "destinationUrl": "URL de destino",
+      "image": "Imagen del anuncio",
+      "imageCta": "Sube una creatividad PNG, JPG o WebP",
+      "imageHelp": "Máximo 10 MB. Usa una imagen de producto, tarjeta de logo o screenshot claro.",
+      "package": "Elige el tamaño de tu campaña",
+      "pricingTrust": "Solo contamos impresiones visibles: 50%+ del anuncio visible durante 2 segundos.",
+      "utmTitle": "UTM personalizados",
+      "utmHelp": "Opcional. Si lo dejas vacío, Petdex agrega utm_source=petdex al enlace del anuncio.",
+      "legalAccept": "Acepto que Petdex puede pausar o borrar anuncios que no se alineen con sus políticas, y que esas eliminaciones no se reembolsan.",
+      "signIn": "Inicia sesión para enviar un anuncio",
+      "submit": "Continuar a Stripe checkout",
+      "status": {
+        "uploading": "Subiendo imagen",
+        "creating": "Creando campaña",
+        "checkout": "Abriendo checkout"
+      },
+      "errors": {
+        "imageRequired": "Sube primero una imagen del anuncio.",
+        "imageTooLarge": "La imagen debe pesar 10 MB o menos.",
+        "submitFailed": "No se pudo crear la campaña.",
+        "checkoutFailed": "No se pudo iniciar Stripe checkout.",
+        "network": "Error de red. Inténtalo de nuevo."
+      }
+    },
+    "card": {
+      "sponsored": "Patrocinado",
+      "cta": "Visitar sponsor",
+      "dismiss": "Ocultar tarjeta patrocinada"
+    },
+    "dashboard": {
+      "metadata": {
+        "title": "Panel de anuncios — Petdex",
+        "description": "Revisa tus campañas de Petdex, gasto, estado y entrega de impresiones prepagadas."
+      },
+      "eyebrow": "Panel de anunciantes",
+      "title": "Tus campañas en Petdex",
+      "body": "Sigue el estado, la entrega de impresiones prepagadas y el inventario restante de cada tarjeta patrocinada enviada.",
+      "newCampaign": "Comprar otra campaña",
+      "progress": "Entrega",
+      "destination": "URL de destino",
+      "created": "Creada {date}",
+      "activated": "Activada {date}",
+      "removedFallback": "Esta campaña fue retirada porque no se alineó con las políticas de Petdex.",
+      "metrics": {
+        "package": "Paquete",
+        "served": "Impresiones servidas",
+        "remaining": "Restantes",
+        "spend": "Gasto",
+        "hovers": "Hovers",
+        "clicks": "Clicks",
+        "ctr": "CTR",
+        "avgTime": "Tiempo visible prom."
+      },
+      "empty": {
+        "eyebrow": "Sin campañas todavía",
+        "title": "Lanza tu primera tarjeta patrocinada",
+        "body": "Envía una creatividad, elige un paquete de impresiones prepagadas y empieza a llegar a desarrolladores cuando Stripe confirme el pago.",
+        "cta": "Crear campaña"
+      },
+      "chart": {
+        "label": "Impresiones en el tiempo",
+        "empty": "Todavía no hay actividad registrada.",
+        "windows": {
+          "eightHours": "Últimas 8 horas",
+          "day": "Últimas 24 horas",
+          "week": "Última semana",
+          "month": "Último mes"
+        }
+      }
+    }
   },
   "feedback": {
     "trigger": "Comentarios",
@@ -135,6 +268,10 @@
     },
     "status": {
       "pending": "Pendiente",
+      "held": "Retenido",
+      "review_failed": "Revisión fallida",
+      "auto_approved": "Autoaprobado",
+      "auto_rejected": "Autorechazado",
       "approved": "Aprobado",
       "rejected": "Rechazado",
       "discovered": "Descubierto",
@@ -334,7 +471,21 @@
         "ariaLabel": "Vista previa de la animación subida"
       },
       "success": {
-        "review": "{name} está en revisión. Te avisaremos cuando se apruebe."
+        "approved": "{name} pasó la revisión automática y ya está publicada.",
+        "rejected": "{name} fue rechazada por la revisión automática. Puedes ajustar el paquete y enviarlo de nuevo.",
+        "hold": "{name} necesita revisión manual. Te avisaremos cuando un admin decida.",
+        "review": "{name} está en revisión. Te avisaremos cuando se apruebe.",
+        "viewPet": "Ver mascota",
+        "details": {
+          "duplicate": "Motivo: parece duplicar una mascota existente. {summary}",
+          "duplicateFallback": "Los archivos enviados coincidieron con un paquete de mascota existente.",
+          "policy": "Motivo: la revisión automática encontró posibles problemas de política, así que un admin debe revisarla antes de publicarla.",
+          "assets": "Motivo: la revisión automática encontró un problema con los archivos del paquete o la spritesheet.",
+          "timeout": "Motivo: la revisión automática tardó demasiado, así que la dejamos para revisión manual en vez de tomar una decisión arriesgada.",
+          "reviewFailed": "Motivo: la revisión automática falló, así que la dejamos para revisión manual en vez de tomar una decisión arriesgada.",
+          "rejectedGeneric": "Motivo: la revisión automática encontró un problema de alta confianza con este envío.",
+          "holdGeneric": "Motivo: la revisión automática no tuvo suficiente confianza para aprobarla automáticamente."
+        }
       },
       "fallback": {
         "beforeLink": "¿Atascado?",

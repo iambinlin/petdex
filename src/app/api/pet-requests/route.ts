@@ -5,6 +5,10 @@ import { neon } from "@neondatabase/serverless";
 import { desc, eq, inArray, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
+import {
+  embeddingVectorLiteral,
+  PETDEX_EMBEDDING_MODEL,
+} from "@/lib/embeddings";
 import { embedQuery } from "@/lib/query-embed";
 import { R2_PUBLIC_BASE } from "@/lib/r2";
 import { petRequestRatelimit } from "@/lib/ratelimit";
@@ -264,10 +268,13 @@ export async function POST(req: Request): Promise<Response> {
     imageReviewStatus: imageUrl ? "pending" : "none",
   });
   if (vec) {
-    const literal = `[${vec.join(",")}]`;
+    const literal = embeddingVectorLiteral(vec);
     await rawSql`
-      UPDATE pet_requests SET embedding = ${literal}::vector WHERE id = ${id}
-    `;
+      UPDATE pet_requests
+      SET embedding = ${literal}::vector,
+          embedding_model = ${PETDEX_EMBEDDING_MODEL}
+      WHERE id = ${id}
+    `.catch(() => {});
   }
   // First vote = creator's own.
   await rawSql`

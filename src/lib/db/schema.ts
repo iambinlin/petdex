@@ -12,6 +12,12 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import type {
+  ReviewChecks,
+  SubmissionReviewDecision,
+  SubmissionReviewStatus,
+} from "@/lib/submission-review-types";
+
 export const approvalStatus = pgEnum("approval_status", [
   "pending",
   "approved",
@@ -29,6 +35,21 @@ export const petSource = pgEnum("pet_source", [
   "submit",
   "discover",
   "claimed",
+]);
+
+export const adCampaignStatus = pgEnum("ad_campaign_status", [
+  "pending_payment",
+  "active",
+  "exhausted",
+  "paused",
+  "deleted",
+]);
+
+export const adEventKind = pgEnum("ad_event_kind", [
+  "hover",
+  "click",
+  "dismissed",
+  "time_in_view",
 ]);
 
 export const submittedPets = pgTable(
@@ -51,10 +72,9 @@ export const submittedPets = pgTable(
     // 64-bit dHash of the first idle frame as a 16-char hex string. Used
     // for fast perceptual-similarity dedup at admin review time.
     dhash: text("dhash"),
-    // OpenAI text-embedding-3-small (1536 dims) over displayName +
-    // description + tags. Drizzle has no first-class pgvector type yet,
-    // so we keep it as `unknown` here and cast at the query boundary.
-    // The actual column is declared via ALTER TABLE in scripts/.
+    // Gemini embedding + embedding_model live in raw pgvector columns.
+    // Drizzle has no first-class pgvector type yet, so they are kept out
+    // of this model and cast at query boundaries.
     status: approvalStatus("status").notNull().default("pending"),
     source: petSource("source").notNull().default("submit"),
     ownerId: text("owner_id").notNull(),
@@ -84,6 +104,15 @@ export const submittedPets = pgTable(
     statusIdx: index("submitted_pets_status_idx").on(table.status),
     ownerIdx: index("submitted_pets_owner_idx").on(table.ownerId),
     slugUnique: uniqueIndex("submitted_pets_slug_unique").on(table.slug),
+    reviewDhashIdx: index("submitted_pets_review_dhash_idx")
+      .on(table.status, table.createdAt.desc())
+      .where(
+        sql`${table.dhash} IS NOT NULL AND ${table.status} IN ('approved', 'pending')`,
+      ),
+    statusCreatedAtIdx: index("submitted_pets_status_created_at_idx").on(
+      table.status,
+      table.createdAt.desc(),
+    ),
     statusFeaturedNameIdx: index("submitted_pets_status_featured_name_idx").on(
       table.status,
       table.featured,
@@ -101,6 +130,46 @@ export const submittedPets = pgTable(
       table.vibes,
     ),
     tagsGinIdx: index("submitted_pets_tags_gin_idx").using("gin", table.tags),
+  }),
+);
+
+export const submissionReviews = pgTable(
+  "submission_reviews",
+  {
+    id: text("id").primaryKey(),
+    submittedPetId: text("submitted_pet_id").notNull(),
+    status: text("status").$type<SubmissionReviewStatus>().notNull(),
+    decision: text("decision").$type<SubmissionReviewDecision>().notNull(),
+    reasonCode: text("reason_code"),
+    summary: text("summary"),
+    // Integer percent, 0..100. Keeps the schema simple while the app uses
+    // normalized 0..1 confidence internally.
+    confidence: integer("confidence"),
+    checks: jsonb("checks").$type<ReviewChecks>().notNull(),
+    model: text("model"),
+    dryRun: boolean("dry_run").notNull().default(false),
+    error: text("error"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    submittedPetIdx: index("submission_reviews_pet_idx").on(
+      table.submittedPetId,
+    ),
+    statusIdx: index("submission_reviews_status_idx").on(table.status),
+    decisionIdx: index("submission_reviews_decision_idx").on(table.decision),
+    createdAtIdx: index("submission_reviews_created_at_idx").on(
+      table.createdAt,
+    ),
+    petCreatedAtIdx: index("submission_reviews_pet_created_at_idx").on(
+      table.submittedPetId,
+      table.createdAt.desc(),
+    ),
   }),
 );
 
@@ -129,6 +198,121 @@ export const petMetrics = pgTable("pet_metrics", {
     .notNull()
     .defaultNow(),
 });
+
+export const adCampaigns = pgTable(
+  "ad_campaigns",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    companyName: text("company_name").notNull(),
+    contactEmail: text("contact_email").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    imageUrl: text("image_url").notNull(),
+    destinationUrl: text("destination_url").notNull(),
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    utmTerm: text("utm_term"),
+    utmContent: text("utm_content"),
+    packageViews: integer("package_views").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    viewsServed: integer("views_served").notNull().default(0),
+    status: adCampaignStatus("status").notNull().default("pending_payment"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    acceptedTermsAt: timestamp("accepted_terms_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    pausedAt: timestamp("paused_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    removalReason: text("removal_reason"),
+  },
+  (table) => ({
+    userIdx: index("ad_campaigns_user_idx").on(table.userId),
+    activeIdx: index("ad_campaigns_active_idx").on(
+      table.status,
+      table.viewsServed,
+      table.createdAt,
+    ),
+    stripeSessionUnique: uniqueIndex("ad_campaigns_stripe_session_unique").on(
+      table.stripeCheckoutSessionId,
+    ),
+  }),
+);
+
+export const adImpressions = pgTable(
+  "ad_impressions",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => adCampaigns.id, { onDelete: "cascade" }),
+    userId: text("user_id"),
+    anonymousId: text("anonymous_id"),
+    sessionId: text("session_id").notNull(),
+    requestId: text("request_id").notNull(),
+    visibleMs: integer("visible_ms").notNull(),
+    path: text("path").notNull(),
+    locale: text("locale").notNull(),
+    userAgentHash: text("user_agent_hash"),
+    ipHash: text("ip_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    campaignIdx: index("ad_impressions_campaign_idx").on(
+      table.campaignId,
+      table.createdAt,
+    ),
+    dedupeUnique: uniqueIndex("ad_impressions_dedupe_unique").on(
+      table.campaignId,
+      table.sessionId,
+      table.requestId,
+    ),
+  }),
+);
+
+export const adEvents = pgTable(
+  "ad_events",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => adCampaigns.id, { onDelete: "cascade" }),
+    kind: adEventKind("kind").notNull(),
+    userId: text("user_id"),
+    anonymousId: text("anonymous_id"),
+    sessionId: text("session_id").notNull(),
+    requestId: text("request_id").notNull(),
+    durationMs: integer("duration_ms"),
+    path: text("path").notNull(),
+    locale: text("locale").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    campaignKindIdx: index("ad_events_campaign_kind_idx").on(
+      table.campaignId,
+      table.kind,
+      table.createdAt,
+    ),
+    dedupeUnique: uniqueIndex("ad_events_dedupe_unique").on(
+      table.campaignId,
+      table.kind,
+      table.sessionId,
+      table.requestId,
+    ),
+  }),
+);
 
 export const feedbackKind = pgEnum("feedback_kind", [
   "suggestion",
@@ -397,7 +581,7 @@ export const petRequests = pgTable(
     query: text("query").notNull(),
     // Lowercased + collapsed-whitespace key for dedup look-ups.
     normalized: text("normalized").notNull(),
-    // OpenAI embedding lives in a pgvector column added via raw SQL.
+    // Gemini embedding + embedding_model live in pgvector columns added via raw SQL.
     requestedBy: text("requested_by"),
     upvoteCount: integer("upvote_count").notNull().default(1),
     // open / fulfilled / dismissed
@@ -440,7 +624,13 @@ export const petRequestVotes = pgTable(
 
 export type SubmittedPet = typeof submittedPets.$inferSelect;
 export type NewSubmittedPet = typeof submittedPets.$inferInsert;
+export type SubmissionReview = typeof submissionReviews.$inferSelect;
+export type NewSubmissionReview = typeof submissionReviews.$inferInsert;
 export type PetLike = typeof petLikes.$inferSelect;
 export type PetMetric = typeof petMetrics.$inferSelect;
+export type AdCampaign = typeof adCampaigns.$inferSelect;
+export type NewAdCampaign = typeof adCampaigns.$inferInsert;
+export type AdImpression = typeof adImpressions.$inferSelect;
+export type AdEvent = typeof adEvents.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
 export type PetRequest = typeof petRequests.$inferSelect;
