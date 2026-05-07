@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { getTranslations } from "next-intl/server";
@@ -43,9 +42,13 @@ export default async function AdvertiseDashboardPage({
 }) {
   const { locale } = await params;
   const { checkout } = await searchParams;
-  const { userId } = await auth();
+  const { userId, redirectToSignIn } = await auth();
   const localeValue = locale as Locale;
-  if (!userId) redirect(withLocale("/advertise", localeValue));
+  if (!userId) {
+    return redirectToSignIn({
+      returnBackUrl: withLocale("/advertise/dashboard", localeValue),
+    });
+  }
 
   const t = await getTranslations("advertise.dashboard");
   const campaigns = await getUserAdCampaigns(userId);

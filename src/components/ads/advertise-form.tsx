@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { SignInButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { Loader2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -21,7 +21,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export function AdvertiseForm() {
   const t = useTranslations("advertise.form");
   const locale = useLocale();
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { isSignedIn, user } = useUser();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const imagePreviewUrlRef = useRef<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -237,31 +237,20 @@ export function AdvertiseForm() {
             </p>
           ) : null}
 
-          {!isLoaded ? null : !isSignedIn ? (
-            <SignInButton mode="modal">
-              <button
-                type="button"
-                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
-              >
-                {t("signIn")}
-              </button>
-            </SignInButton>
-          ) : (
-            <button
-              type="submit"
-              disabled={state.kind === "submitting"}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {state.kind === "submitting" ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {state.message}
-                </>
-              ) : (
-                t("submit")
-              )}
-            </button>
-          )}
+          <button
+            type="submit"
+            disabled={!isSignedIn || state.kind === "submitting"}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {state.kind === "submitting" ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                {state.message}
+              </>
+            ) : (
+              t("submit")
+            )}
+          </button>
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-24">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 import { getTranslations } from "next-intl/server";
@@ -40,9 +40,16 @@ export default async function EditAdCampaignPage({
   params: Promise<{ locale: string; campaignId: string }>;
 }) {
   const { locale, campaignId } = await params;
-  const { userId } = await auth();
+  const { userId, redirectToSignIn } = await auth();
   const localeValue = locale as Locale;
-  if (!userId) redirect(withLocale("/advertise", localeValue));
+  if (!userId) {
+    return redirectToSignIn({
+      returnBackUrl: withLocale(
+        `/advertise/dashboard/${campaignId}/edit`,
+        localeValue,
+      ),
+    });
+  }
 
   const campaign = await getOwnedAdCampaignForEditing(campaignId, userId);
   if (!campaign) notFound();

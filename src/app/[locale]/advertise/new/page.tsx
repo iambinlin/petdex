@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { auth } from "@clerk/nextjs/server";
 import { getTranslations } from "next-intl/server";
 
 import {
@@ -42,6 +43,12 @@ export default async function NewAdvertisePage({
   const { checkout } = await searchParams;
   const t = await getTranslations("advertise");
   const localeValue = locale as Locale;
+  const { userId, redirectToSignIn } = await auth();
+  if (!userId) {
+    return redirectToSignIn({
+      returnBackUrl: withLocale("/advertise/new", localeValue),
+    });
+  }
 
   return (
     <main className="min-h-dvh bg-background text-foreground">
