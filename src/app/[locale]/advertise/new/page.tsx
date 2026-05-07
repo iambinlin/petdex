@@ -3,15 +3,13 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { getTranslations } from "next-intl/server";
 
-import {
-  buildLocaleAlternates,
-  type Locale,
-  withLocale,
-} from "@/lib/locale-routing";
+import { buildLocaleAlternates, withLocale } from "@/lib/locale-routing";
 
 import { AdvertiseForm } from "@/components/ads/advertise-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+
+import type { Locale } from "@/i18n/config";
 
 export async function generateMetadata({
   params,

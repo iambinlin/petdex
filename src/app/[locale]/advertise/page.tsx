@@ -10,15 +10,13 @@ import {
 import { getTranslations } from "next-intl/server";
 
 import { AD_PACKAGES, formatUsd } from "@/lib/ads/packages";
-import {
-  buildLocaleAlternates,
-  type Locale,
-  withLocale,
-} from "@/lib/locale-routing";
+import { buildLocaleAlternates, withLocale } from "@/lib/locale-routing";
 
 import { JsonLd } from "@/components/json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+
+import type { Locale } from "@/i18n/config";
 
 const SITE_URL = "https://petdex.crafter.run";
 const PACKAGE_IDS = Object.keys(AD_PACKAGES) as Array<keyof typeof AD_PACKAGES>;

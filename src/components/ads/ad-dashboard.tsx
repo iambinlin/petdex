@@ -6,9 +6,11 @@ import { getTranslations } from "next-intl/server";
 
 import { formatUsd } from "@/lib/ads/packages";
 import type { AdvertiserCampaign } from "@/lib/ads/queries";
-import { type Locale, withLocale } from "@/lib/locale-routing";
+import { withLocale } from "@/lib/locale-routing";
 
 import { AdAnalyticsTabs } from "@/components/ads/ad-analytics-tabs";
+
+import type { Locale } from "@/i18n/config";
 
 export async function AdDashboard({
   campaigns,
