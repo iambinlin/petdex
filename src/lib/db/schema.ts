@@ -37,6 +37,21 @@ export const petSource = pgEnum("pet_source", [
   "claimed",
 ]);
 
+export const adCampaignStatus = pgEnum("ad_campaign_status", [
+  "pending_payment",
+  "active",
+  "exhausted",
+  "paused",
+  "deleted",
+]);
+
+export const adEventKind = pgEnum("ad_event_kind", [
+  "hover",
+  "click",
+  "dismissed",
+  "time_in_view",
+]);
+
 export const submittedPets = pgTable(
   "submitted_pets",
   {
@@ -183,6 +198,121 @@ export const petMetrics = pgTable("pet_metrics", {
     .notNull()
     .defaultNow(),
 });
+
+export const adCampaigns = pgTable(
+  "ad_campaigns",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    companyName: text("company_name").notNull(),
+    contactEmail: text("contact_email").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    imageUrl: text("image_url").notNull(),
+    destinationUrl: text("destination_url").notNull(),
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    utmTerm: text("utm_term"),
+    utmContent: text("utm_content"),
+    packageViews: integer("package_views").notNull(),
+    priceCents: integer("price_cents").notNull(),
+    viewsServed: integer("views_served").notNull().default(0),
+    status: adCampaignStatus("status").notNull().default("pending_payment"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    acceptedTermsAt: timestamp("accepted_terms_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    pausedAt: timestamp("paused_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    removalReason: text("removal_reason"),
+  },
+  (table) => ({
+    userIdx: index("ad_campaigns_user_idx").on(table.userId),
+    activeIdx: index("ad_campaigns_active_idx").on(
+      table.status,
+      table.viewsServed,
+      table.createdAt,
+    ),
+    stripeSessionUnique: uniqueIndex("ad_campaigns_stripe_session_unique").on(
+      table.stripeCheckoutSessionId,
+    ),
+  }),
+);
+
+export const adImpressions = pgTable(
+  "ad_impressions",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => adCampaigns.id, { onDelete: "cascade" }),
+    userId: text("user_id"),
+    anonymousId: text("anonymous_id"),
+    sessionId: text("session_id").notNull(),
+    requestId: text("request_id").notNull(),
+    visibleMs: integer("visible_ms").notNull(),
+    path: text("path").notNull(),
+    locale: text("locale").notNull(),
+    userAgentHash: text("user_agent_hash"),
+    ipHash: text("ip_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    campaignIdx: index("ad_impressions_campaign_idx").on(
+      table.campaignId,
+      table.createdAt,
+    ),
+    dedupeUnique: uniqueIndex("ad_impressions_dedupe_unique").on(
+      table.campaignId,
+      table.sessionId,
+      table.requestId,
+    ),
+  }),
+);
+
+export const adEvents = pgTable(
+  "ad_events",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => adCampaigns.id, { onDelete: "cascade" }),
+    kind: adEventKind("kind").notNull(),
+    userId: text("user_id"),
+    anonymousId: text("anonymous_id"),
+    sessionId: text("session_id").notNull(),
+    requestId: text("request_id").notNull(),
+    durationMs: integer("duration_ms"),
+    path: text("path").notNull(),
+    locale: text("locale").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    campaignKindIdx: index("ad_events_campaign_kind_idx").on(
+      table.campaignId,
+      table.kind,
+      table.createdAt,
+    ),
+    dedupeUnique: uniqueIndex("ad_events_dedupe_unique").on(
+      table.campaignId,
+      table.kind,
+      table.sessionId,
+      table.requestId,
+    ),
+  }),
+);
 
 export const feedbackKind = pgEnum("feedback_kind", [
   "suggestion",
@@ -498,5 +628,9 @@ export type SubmissionReview = typeof submissionReviews.$inferSelect;
 export type NewSubmissionReview = typeof submissionReviews.$inferInsert;
 export type PetLike = typeof petLikes.$inferSelect;
 export type PetMetric = typeof petMetrics.$inferSelect;
+export type AdCampaign = typeof adCampaigns.$inferSelect;
+export type NewAdCampaign = typeof adCampaigns.$inferInsert;
+export type AdImpression = typeof adImpressions.$inferSelect;
+export type AdEvent = typeof adEvents.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
 export type PetRequest = typeof petRequests.$inferSelect;

@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { SignInButton, UserButton, useAuth, useUser } from "@clerk/nextjs";
 import { MessageSquare, Shield, UserSquare } from "lucide-react";
 
 import { isAdminClientSafe } from "@/lib/admin";
 
+import { useHeaderState } from "@/components/header-state-provider";
 import { NotificationsBell } from "@/components/notifications-bell";
 
 export function AuthBadge({ beforeUser }: { beforeUser?: React.ReactNode }) {
@@ -56,7 +55,11 @@ function UserButtonWithAdminLink() {
     <div className="relative">
       <UserButton
         appearance={{
-          elements: { avatarBox: "size-11 rounded-full ring-1 ring-black/10" },
+          elements: {
+            userButtonTrigger: "size-11 rounded-full",
+            userButtonAvatarBox: "size-11 rounded-full ring-1 ring-black/10",
+            avatarBox: "size-11 rounded-full ring-1 ring-black/10",
+          },
         }}
       >
         <UserButton.MenuItems>
@@ -94,25 +97,5 @@ function UserButtonWithAdminLink() {
 }
 
 function useUnreadFeedback(): number {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    let stop = false;
-    async function load() {
-      try {
-        const res = await fetch("/api/feedback/unread", { cache: "no-store" });
-        if (!res.ok) return;
-        const j = (await res.json()) as { count?: number };
-        if (!stop) setCount(j.count ?? 0);
-      } catch {
-        /* silent */
-      }
-    }
-    void load();
-    const interval = setInterval(() => void load(), 60000);
-    return () => {
-      stop = true;
-      clearInterval(interval);
-    };
-  }, []);
-  return count;
+  return useHeaderState().state.feedback.count;
 }

@@ -25,6 +25,12 @@ export function SiteFooter() {
           >
             {t("takedown")}
           </Link>
+          <Link
+            href="/advertise"
+            className="underline underline-offset-4 transition hover:text-foreground"
+          >
+            {t("advertise")}
+          </Link>
           <a
             href="https://github.com/crafter-station/petdex"
             target="_blank"

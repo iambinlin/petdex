@@ -5,6 +5,18 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const IS_MOCK = process.env.PETDEX_MOCK === "1";
+const IS_MOCK_AUTH = IS_MOCK || process.env.PETDEX_MOCK_AUTH === "1";
+
+const DEFAULT_R2_PUBLIC_HOST = "pub-94495283df974cfea5e98d6a9e3fa462.r2.dev";
+
+function r2PublicHost(): string {
+  if (!process.env.R2_PUBLIC_BASE) return DEFAULT_R2_PUBLIC_HOST;
+  try {
+    return new URL(process.env.R2_PUBLIC_BASE).hostname;
+  } catch {
+    return DEFAULT_R2_PUBLIC_HOST;
+  }
+}
 
 // Content-Security-Policy. Blocks inline <script> sources we didn't ship,
 // caps img / connect / frame ancestors. The `unsafe-inline` allowance for
@@ -77,6 +89,18 @@ const mockRoot = path.resolve(__dirname, "src/lib/mock");
 const nextConfig: NextConfig = {
   // Hide the framework banner on every response.
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: DEFAULT_R2_PUBLIC_HOST },
+      { protocol: "https", hostname: r2PublicHost() },
+      { protocol: "https", hostname: "yu2vz9gndp.ufs.sh" },
+      { protocol: "https", hostname: "img.clerk.com" },
+      { protocol: "https", hostname: "images.clerk.dev" },
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
+      { protocol: "https", hostname: "pbs.twimg.com" },
+      { protocol: "https", hostname: "storage.googleapis.com" },
+    ],
+  },
   // PGlite ships native wasm + workers that webpack/turbopack mangle when
   // bundled. Mark it external so the server runtime requires() it directly.
   ...(IS_MOCK ? { serverExternalPackages: ["@electric-sql/pglite"] } : {}),
@@ -88,11 +112,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  // In PETDEX_MOCK=1 mode, redirect every Clerk import to in-process
-  // mocks so contributors can boot without a publishable key. We set
-  // both webpack and turbopack aliases since `next dev` defaults to
-  // turbopack on recent versions.
-  ...(IS_MOCK
+  // In mock auth mode, redirect every Clerk import to in-process mocks
+  // so contributors can boot without a Clerk backend secret. We set both
+  // webpack and turbopack aliases since `next dev` defaults to turbopack
+  // on recent versions.
+  ...(IS_MOCK_AUTH
     ? {
         turbopack: {
           // Turbopack expects relative paths (with leading "./") rooted at
