@@ -23,6 +23,13 @@ export type ValidAdCampaignInput = {
   acceptedTerms: true;
 } & AdUtmFields;
 
+export type ValidAdCampaignUpdateInput = {
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  destinationUrl?: string;
+} & Partial<AdUtmFields>;
+
 export type AdValidationResult =
   | { ok: true; value: ValidAdCampaignInput }
   | { ok: false; error: string };
@@ -78,6 +85,63 @@ export function validateAdCampaignInput(body: unknown): AdValidationResult {
       utmContent: cleanUtmValue(data.utmContent),
     },
   };
+}
+
+export function validateAdCampaignUpdateInput(
+  body: unknown,
+):
+  | { ok: true; value: ValidAdCampaignUpdateInput }
+  | { ok: false; error: string } {
+  if (!body || typeof body !== "object") {
+    return { ok: false, error: "invalid_body" };
+  }
+  const data = body as Record<string, unknown>;
+  const value: ValidAdCampaignUpdateInput = {};
+
+  if (Object.hasOwn(data, "title")) {
+    const title = cleanText(data.title, 80);
+    if (!title) return { ok: false, error: "title_required" };
+    value.title = title;
+  }
+  if (Object.hasOwn(data, "description")) {
+    const description = cleanText(data.description, 180);
+    if (!description) return { ok: false, error: "description_required" };
+    value.description = description;
+  }
+  if (Object.hasOwn(data, "imageUrl")) {
+    if (!isAllowedAdImageUrl(data.imageUrl)) {
+      return { ok: false, error: "image_url_invalid" };
+    }
+    value.imageUrl = data.imageUrl;
+  }
+  if (Object.hasOwn(data, "destinationUrl")) {
+    const destinationUrl = validateAdDestinationUrl(data.destinationUrl);
+    if (!destinationUrl) {
+      return { ok: false, error: "destination_url_invalid" };
+    }
+    value.destinationUrl = destinationUrl;
+  }
+  if (Object.hasOwn(data, "utmSource")) {
+    value.utmSource = cleanUtmValue(data.utmSource);
+  }
+  if (Object.hasOwn(data, "utmMedium")) {
+    value.utmMedium = cleanUtmValue(data.utmMedium);
+  }
+  if (Object.hasOwn(data, "utmCampaign")) {
+    value.utmCampaign = cleanUtmValue(data.utmCampaign);
+  }
+  if (Object.hasOwn(data, "utmTerm")) {
+    value.utmTerm = cleanUtmValue(data.utmTerm);
+  }
+  if (Object.hasOwn(data, "utmContent")) {
+    value.utmContent = cleanUtmValue(data.utmContent);
+  }
+
+  if (Object.keys(value).length === 0) {
+    return { ok: false, error: "no_edit_fields" };
+  }
+
+  return { ok: true, value };
 }
 
 export function validateImpressionInput(body: unknown):

@@ -248,6 +248,7 @@
       "title": "你的 Petdex 广告系列",
       "body": "跟踪每张赞助卡片的状态、预付曝光交付和剩余库存。",
       "newCampaign": "购买另一个广告系列",
+      "editCreative": "编辑素材",
       "progress": "交付进度",
       "destination": "目标 URL",
       "created": "创建于 {date}",
@@ -268,6 +269,34 @@
         "title": "启动你的第一张赞助卡片",
         "body": "提交素材，选择预付曝光套餐，并在 Stripe 确认付款后开始触达开发者。",
         "cta": "创建广告系列"
+      },
+      "edit": {
+        "title": "编辑广告系列",
+        "body": "更改素材、目标地址或跟踪字段。活跃广告系列的修改会立即生效，并且仍需遵守 Petdex 广告政策。",
+        "titleLabel": "广告标题",
+        "descriptionLabel": "描述",
+        "destinationUrlLabel": "目标 URL",
+        "imageLabel": "广告图片",
+        "imageCta": "上传替换素材",
+        "imageHelp": "PNG、JPG 或 WebP。最大 10 MB。",
+        "currentImage": "预览",
+        "save": "保存更改",
+        "saving": "正在保存广告系列",
+        "uploading": "正在上传图片",
+        "cancel": "取消",
+        "utmTitle": "自定义 UTM 设置",
+        "utmHelp": "留空可清除字段。如果 utm_source 为空，Petdex 会为点击添加 utm_source=petdex。",
+        "errors": {
+          "imageTooLarge": "图片必须小于或等于 10 MB。",
+          "nothingChanged": "保存前请至少更改一个字段。",
+          "submitFailed": "无法更新广告系列。",
+          "uploadFailed": "图片上传失败。",
+          "network": "网络错误。请重试。",
+          "imageInvalid": "请上传有效的 Petdex 广告图片。",
+          "destinationInvalid": "请输入有效的 HTTPS 目标 URL。",
+          "titleRequired": "请填写广告标题。",
+          "descriptionRequired": "请填写广告描述。"
+        }
       },
       "chart": {
         "label": "曝光随时间变化",
