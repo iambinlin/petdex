@@ -1,18 +1,31 @@
 "use client";
 
-// Owner-only reorderable pinned-pets grid for /u/<handle>. The pinned
-// set is capped at 6, so pointer events give us desktop + touch drag
-// without adding a drag-and-drop dependency.
+// Owner-only reorderable pinned-pets grid for /u/<handle>. The pinned set is
+// capped at 6; dnd-kit gives us GitHub-like drag overlays, placeholder slots,
+// pointer/touch support, and keyboard sorting without a custom drag engine.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  GripVertical,
-  RefreshCcw,
-} from "lucide-react";
+  closestCenter,
+  DndContext,
+  type DragCancelEvent,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Check, GripVertical, RefreshCcw } from "lucide-react";
 
 import type { PetWithMetrics } from "@/lib/pets";
 import { MAX_PINNED_PETS } from "@/lib/profiles";
@@ -25,18 +38,13 @@ type PinnedReorderGridProps = {
   petStateCount: number;
 };
 
-type DragState = {
-  slug: string;
-  fromIndex: number;
-  targetIndex: number;
-  pointerId: number;
-  startX: number;
-  startY: number;
-  x: number;
-  y: number;
-};
-
 type SaveState = "idle" | "saving" | "saved" | "error";
+
+type ActiveDrag = {
+  slug: string;
+  width?: number;
+  height?: number;
+};
 
 export function movePinnedPets<T>(items: T[], from: number, to: number): T[] {
   if (
@@ -58,43 +66,61 @@ export function PinnedReorderGrid({
   pets,
   petStateCount,
 }: PinnedReorderGridProps) {
-  const itemRefs = useRef(new Map<string, HTMLDivElement>());
+  const orderRef = useRef<PetWithMetrics[]>(pets);
   const [order, setOrder] = useState<PetWithMetrics[]>(pets);
   const [savedSlugs, setSavedSlugs] = useState<string[]>(
     pets.map((pet) => pet.slug),
   );
-  const [editing, setEditing] = useState(false);
-  const [drag, setDrag] = useState<DragState | null>(null);
+  const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
   useEffect(() => {
     const slugs = pets.map((pet) => pet.slug);
+    orderRef.current = pets;
     setOrder(pets);
     setSavedSlugs(slugs);
-    setDrag(null);
+    setActiveDrag(null);
     setError(null);
     setSaveState("idle");
   }, [pets]);
 
-  const isSaving = saveState === "saving";
-  const activeSlug = drag?.slug ?? null;
+  useEffect(() => {
+    if (saveState !== "saved") return;
 
-  function setItemRef(slug: string) {
-    return (node: HTMLDivElement | null) => {
-      if (node) {
-        itemRefs.current.set(slug, node);
-      } else {
-        itemRefs.current.delete(slug);
-      }
-    };
-  }
+    const timer = window.setTimeout(() => {
+      setSaveState((current) => (current === "saved" ? "idle" : current));
+    }, 1800);
+
+    return () => window.clearTimeout(timer);
+  }, [saveState]);
+
+  const isSaving = saveState === "saving";
+  const oneOnly = order.length <= 1;
+  const itemIds = useMemo(() => order.map((pet) => pet.slug), [order]);
+  const activePet = activeDrag
+    ? orderRef.current.find((pet) => pet.slug === activeDrag.slug)
+    : null;
 
   function orderFromSlugs(slugs: string[]): PetWithMetrics[] {
     const bySlug = new Map(pets.map((pet) => [pet.slug, pet]));
     return slugs
       .map((slug) => bySlug.get(slug))
       .filter((pet): pet is PetWithMetrics => Boolean(pet));
+  }
+
+  function setNextOrder(next: PetWithMetrics[]) {
+    orderRef.current = next;
+    setOrder(next);
   }
 
   async function saveOrder(nextOrder: PetWithMetrics[]) {
@@ -122,114 +148,52 @@ export function PinnedReorderGrid({
   }
 
   function restoreSavedOrder() {
-    setOrder(orderFromSlugs(savedSlugs));
-    setDrag(null);
-    setError(null);
-    setSaveState("idle");
-  }
-
-  function startEditing() {
-    setEditing(true);
-    setError(null);
-    setSaveState("idle");
-  }
-
-  function finishEditing() {
-    if (isSaving || saveState === "error") return;
-    setEditing(false);
-    setDrag(null);
+    setNextOrder(orderFromSlugs(savedSlugs));
+    setActiveDrag(null);
     setError(null);
     setSaveState("idle");
   }
 
   function retrySave() {
     if (isSaving) return;
-    void saveOrder(order);
+    void saveOrder(orderRef.current);
   }
 
-  function moveAndSave(from: number, to: number) {
-    if (isSaving) return;
-    const next = movePinnedPets(order, from, to);
-    if (next === order) return;
-    setOrder(next);
-    void saveOrder(next);
-  }
-
-  function targetIndexForPoint(clientX: number, clientY: number): number {
-    let targetIndex = drag?.targetIndex ?? 0;
-    let bestDistance = Number.POSITIVE_INFINITY;
-    for (const [index, pet] of order.entries()) {
-      if (pet.slug === drag?.slug) continue;
-      const rect = itemRefs.current.get(pet.slug)?.getBoundingClientRect();
-      if (!rect) continue;
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const distance = (clientX - centerX) ** 2 + (clientY - centerY) ** 2;
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        targetIndex = index;
-      }
-    }
-    return targetIndex;
-  }
-
-  function onHandlePointerDown(
-    event: React.PointerEvent<HTMLButtonElement>,
-    slug: string,
-    index: number,
-  ) {
-    if (!editing || isSaving) return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
+  function handleDragStart(event: DragStartEvent) {
+    const slug = String(event.active.id);
+    const rect = event.active.rect.current.initial;
     setError(null);
     setSaveState("idle");
-    setDrag({
+    setActiveDrag({
       slug,
-      fromIndex: index,
-      targetIndex: index,
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      x: event.clientX,
-      y: event.clientY,
+      width: rect?.width,
+      height: rect?.height,
     });
   }
 
-  function onHandlePointerMove(event: React.PointerEvent<HTMLButtonElement>) {
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    const targetIndex = targetIndexForPoint(event.clientX, event.clientY);
-    setDrag((current) =>
-      current
-        ? {
-            ...current,
-            targetIndex,
-            x: event.clientX,
-            y: event.clientY,
-          }
-        : current,
-    );
+  function finishDrag() {
+    setActiveDrag(null);
   }
 
-  function onHandlePointerUp(event: React.PointerEvent<HTMLButtonElement>) {
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    const { fromIndex, targetIndex } = drag;
-    setDrag(null);
-    if (fromIndex !== targetIndex) {
-      const next = movePinnedPets(order, fromIndex, targetIndex);
-      setOrder(next);
-      void saveOrder(next);
-    }
+  function handleDragCancel(_event: DragCancelEvent) {
+    finishDrag();
   }
 
-  function onHandlePointerCancel(event: React.PointerEvent<HTMLButtonElement>) {
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    setDrag(null);
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    finishDrag();
+    if (!over || active.id === over.id) return;
+
+    const current = orderRef.current;
+    const from = current.findIndex((pet) => pet.slug === active.id);
+    const to = current.findIndex((pet) => pet.slug === over.id);
+    const next = movePinnedPets(current, from, to);
+    if (next === current) return;
+
+    setNextOrder(next);
+    void saveOrder(next);
   }
 
-  const oneOnly = order.length <= 1;
   const statusLabel =
     saveState === "saving"
       ? "Saving..."
@@ -261,28 +225,6 @@ export function PinnedReorderGrid({
           <p className="font-mono text-[10px] tracking-[0.18em] text-muted-4 uppercase">
             {order.length} of {MAX_PINNED_PETS}
           </p>
-          {!editing ? (
-            order.length >= 2 ? (
-              <button
-                type="button"
-                onClick={startEditing}
-                className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border-base bg-surface px-3 text-[11px] font-medium text-muted-2 transition hover:border-border-strong hover:text-foreground"
-              >
-                <GripVertical className="size-3" />
-                Reorder
-              </button>
-            ) : null
-          ) : (
-            <button
-              type="button"
-              onClick={finishEditing}
-              disabled={isSaving || saveState === "error"}
-              className="inline-flex h-7 items-center gap-1 rounded-full bg-inverse px-3 text-[11px] font-medium text-on-inverse transition hover:bg-inverse-hover disabled:opacity-50"
-            >
-              <Check className="size-3" />
-              Done
-            </button>
-          )}
         </div>
       </div>
 
@@ -311,106 +253,137 @@ export function PinnedReorderGrid({
         </div>
       ) : null}
 
-      {editing ? (
+      {!oneOnly ? (
         <p className="text-xs text-muted-3">
-          Drag a pet by its handle to reorder. Drops are saved automatically.
+          Drag a pet by its handle to reorder. Changes save when you drop.
         </p>
       ) : null}
 
-      <div
-        className={
-          oneOnly
-            ? "relative"
-            : "grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-6"
-        }
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragCancel={handleDragCancel}
+        onDragEnd={handleDragEnd}
       >
-        {order.map((pet, index) => {
-          const isActive = activeSlug === pet.slug;
-          const isTarget =
-            editing &&
-            drag?.targetIndex === index &&
-            drag.fromIndex !== index &&
-            activeSlug !== pet.slug;
-          const translate =
-            isActive && drag
-              ? {
-                  transform: `translate3d(${drag.x - drag.startX}px, ${
-                    drag.y - drag.startY
-                  }px, 0) scale(1.03)`,
-                }
-              : undefined;
-          return (
-            <div
-              key={pet.slug}
-              ref={setItemRef(pet.slug)}
-              style={translate}
-              className={`relative h-full transition ${
-                isActive
-                  ? "z-30 cursor-grabbing opacity-95 shadow-2xl shadow-blue-950/20"
-                  : ""
-              } ${
-                isTarget
-                  ? "rounded-3xl ring-2 ring-brand ring-offset-2 ring-offset-background after:absolute after:inset-0 after:rounded-3xl after:border-2 after:border-dashed after:border-brand/70 after:bg-brand/5"
-                  : ""
-              }`}
-            >
-              <PetCard pet={pet} index={index} stateCount={petStateCount} />
+        <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+          <div
+            className={
+              oneOnly
+                ? "relative"
+                : "grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-6"
+            }
+          >
+            {order.map((pet, index) => (
+              <SortablePinnedPet
+                key={pet.slug}
+                pet={pet}
+                index={index}
+                isSaving={isSaving}
+                oneOnly={oneOnly}
+                petStateCount={petStateCount}
+                pinnedCount={order.length}
+              />
+            ))}
+          </div>
+        </SortableContext>
 
-              {editing ? (
-                <>
-                  <button
-                    type="button"
-                    onPointerDown={(event) =>
-                      onHandlePointerDown(event, pet.slug, index)
-                    }
-                    onPointerMove={onHandlePointerMove}
-                    onPointerUp={onHandlePointerUp}
-                    onPointerCancel={onHandlePointerCancel}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    }}
-                    disabled={isSaving}
-                    aria-label={`Drag ${pet.displayName} to reorder`}
-                    className="absolute top-3 left-3 z-40 grid size-8 touch-none place-items-center rounded-full bg-surface/95 text-muted-2 shadow-sm ring-1 ring-black/5 transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 dark:ring-white/10"
-                  >
-                    <GripVertical className="size-3.5" />
-                  </button>
-                  <div className="absolute bottom-3 left-3 z-40 flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => moveAndSave(index, index - 1)}
-                      disabled={index === 0 || isSaving}
-                      aria-label={`Move ${pet.displayName} left`}
-                      className="grid size-7 place-items-center rounded-full bg-surface/95 text-muted-2 shadow-sm ring-1 ring-black/5 transition hover:text-foreground disabled:opacity-30 dark:ring-white/10"
-                    >
-                      <ArrowLeft className="size-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveAndSave(index, index + 1)}
-                      disabled={index === order.length - 1 || isSaving}
-                      aria-label={`Move ${pet.displayName} right`}
-                      className="grid size-7 place-items-center rounded-full bg-surface/95 text-muted-2 shadow-sm ring-1 ring-black/5 transition hover:text-foreground disabled:opacity-30 dark:ring-white/10"
-                    >
-                      <ArrowRight className="size-3.5" />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="absolute top-3 right-14">
-                  <ProfilePinButton
-                    slug={pet.slug}
-                    isPinned
-                    pinnedCount={order.length}
-                    maxPins={MAX_PINNED_PETS}
-                  />
-                </div>
-              )}
+        <DragOverlay dropAnimation={null}>
+          {activePet ? (
+            <div
+              className="opacity-95 shadow-2xl shadow-blue-950/20"
+              style={{
+                width: activeDrag?.width,
+                height: activeDrag?.height,
+              }}
+            >
+              <PetCard
+                pet={activePet}
+                index={orderRef.current.findIndex(
+                  (pet) => pet.slug === activePet.slug,
+                )}
+                stateCount={petStateCount}
+              />
             </div>
-          );
-        })}
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+    </div>
+  );
+}
+
+type SortablePinnedPetProps = {
+  pet: PetWithMetrics;
+  index: number;
+  isSaving: boolean;
+  oneOnly: boolean;
+  petStateCount: number;
+  pinnedCount: number;
+};
+
+function SortablePinnedPet({
+  pet,
+  index,
+  isSaving,
+  oneOnly,
+  petStateCount,
+  pinnedCount,
+}: SortablePinnedPetProps) {
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({
+    id: pet.slug,
+    disabled: oneOnly || isSaving,
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative h-full ${
+        isDragging
+          ? "rounded-3xl bg-sky-100/80 ring-2 ring-sky-200 dark:bg-sky-950/30 dark:ring-sky-800/60"
+          : ""
+      }`}
+    >
+      <div className={isDragging ? "opacity-0" : ""}>
+        <PetCard pet={pet} index={index} stateCount={petStateCount} />
       </div>
+
+      {!oneOnly && !isDragging ? (
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          disabled={isSaving}
+          aria-label={`Drag ${pet.displayName} to reorder`}
+          className="absolute top-3 left-3 z-40 grid size-8 cursor-grab touch-none place-items-center rounded-full bg-surface/95 text-muted-2 shadow-sm ring-1 ring-black/5 transition hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50 dark:ring-white/10"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-3.5" />
+        </button>
+      ) : null}
+
+      {!isDragging ? (
+        <div className="absolute top-3 right-14">
+          <ProfilePinButton
+            slug={pet.slug}
+            isPinned
+            pinnedCount={pinnedCount}
+            maxPins={MAX_PINNED_PETS}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
