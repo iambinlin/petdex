@@ -9,12 +9,23 @@ export function AdCard({
   ad,
   onClick,
   onHover,
+  disableNavigation = false,
+  showImagePlaceholder = false,
 }: {
   ad: PublicFeedAd;
   onClick?: () => void;
   onHover?: () => void;
+  disableNavigation?: boolean;
+  showImagePlaceholder?: boolean;
 }) {
   const t = useTranslations("advertise.card");
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (disableNavigation) {
+      event.preventDefault();
+      return;
+    }
+    onClick?.();
+  };
 
   return (
     <article
@@ -25,7 +36,8 @@ export function AdCard({
         href={ad.clickUrl}
         target="_blank"
         rel="noopener noreferrer sponsored"
-        onClick={onClick}
+        aria-disabled={disableNavigation}
+        onClick={handleClick}
         className="flex flex-1 flex-col rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
       >
         <div className="flex min-h-[46px] items-center justify-between rounded-t-3xl border-black/[0.06] border-b px-5 py-3 dark:border-white/[0.06]">
@@ -35,13 +47,17 @@ export function AdCard({
           <ExternalLink className="size-4 text-muted-4 transition group-hover:text-brand" />
         </div>
         <div className="relative h-[210px] max-h-[210px] overflow-hidden bg-background md:h-[190px] md:max-h-[190px] 2xl:h-[210px] 2xl:max-h-[210px]">
-          <Image
-            src={ad.imageUrl}
-            alt=""
-            fill
-            sizes="(min-width: 1536px) 260px, (min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition duration-300 group-hover:scale-[1.02]"
-          />
+          {showImagePlaceholder ? (
+            <div className="h-full w-full bg-muted-4/20" />
+          ) : (
+            <Image
+              src={ad.imageUrl}
+              alt=""
+              fill
+              sizes="(min-width: 1536px) 260px, (min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition duration-300 group-hover:scale-[1.02]"
+            />
+          )}
           <span className="pointer-events-none absolute right-5 bottom-2 font-mono text-[10px] tracking-[0.22em] text-muted-4 uppercase">
             Sponsor
           </span>
