@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { Loader2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { AD_PACKAGES, type AdPackageId, formatUsd } from "@/lib/ads/packages";
+
+import { AdCard } from "@/components/ads/ad-card";
 
 type SubmissionState =
   | { kind: "idle" }
@@ -21,10 +23,47 @@ export function AdvertiseForm() {
   const locale = useLocale();
   const { isLoaded, isSignedIn, user } = useUser();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imagePreviewUrlRef = useRef<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState("");
+  const [previewDescription, setPreviewDescription] = useState("");
+  const [previewDestinationUrl, setPreviewDestinationUrl] = useState("");
   const [packageId, setPackageId] = useState<AdPackageId>("impressions_5000");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [state, setState] = useState<SubmissionState>({ kind: "idle" });
+  const previewAd = {
+    id: "ad-preview",
+    title: previewTitle.trim() || t("previewFallbackTitle"),
+    description: previewDescription.trim() || t("previewFallbackDescription"),
+    imageUrl: imagePreviewUrl ?? "https://example.com/ad-preview.png",
+    clickUrl: previewDestinationUrl.trim() || "https://example.com",
+  };
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrlRef.current) {
+        URL.revokeObjectURL(imagePreviewUrlRef.current);
+      }
+    };
+  }, []);
+
+  function handleImageChange(file: File | null) {
+    if (imagePreviewUrlRef.current) {
+      URL.revokeObjectURL(imagePreviewUrlRef.current);
+      imagePreviewUrlRef.current = null;
+    }
+
+    setImageFile(file);
+    if (!file) {
+      setImagePreviewUrl(null);
+      return;
+    }
+
+    const nextPreviewUrl = URL.createObjectURL(file);
+    imagePreviewUrlRef.current = nextPreviewUrl;
+    setImagePreviewUrl(nextPreviewUrl);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -107,12 +146,19 @@ export function AdvertiseForm() {
           defaultValue={user?.primaryEmailAddress?.emailAddress ?? ""}
           required
         />
-        <Field label={t("title")} name="title" maxLength={80} required />
+        <Field
+          label={t("title")}
+          name="title"
+          maxLength={80}
+          onChange={setPreviewTitle}
+          required
+        />
         <Field
           label={t("destinationUrl")}
           name="destinationUrl"
           type="url"
           placeholder="https://example.com"
+          onChange={setPreviewDestinationUrl}
           required
         />
         <p className="md:col-span-2 rounded-2xl border border-border-base bg-background px-4 py-3 text-xs leading-5 text-muted-2">
@@ -127,6 +173,7 @@ export function AdvertiseForm() {
             required
             maxLength={180}
             rows={4}
+            onChange={(event) => setPreviewDescription(event.target.value)}
             className="mt-2 w-full rounded-2xl border border-border-base bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-3 focus:border-brand/60 focus:ring-2 focus:ring-brand/15"
           />
         </label>
@@ -147,11 +194,29 @@ export function AdvertiseForm() {
             type="file"
             accept="image/png,image/jpeg,image/webp"
             className="sr-only"
-            onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
+            onChange={(event) =>
+              handleImageChange(event.target.files?.[0] ?? null)
+            }
           />
           <p className="mt-2 text-xs text-muted-3">{t("imageHelp")}</p>
         </div>
       </div>
+
+      <section className="mt-7 rounded-3xl border border-border-base bg-background p-4">
+        <div className="mb-4">
+          <p className="font-mono text-[11px] tracking-[0.16em] text-muted-3 uppercase">
+            {t("previewTitle")}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-muted-2">
+            {t("previewHelp")}
+          </p>
+        </div>
+        <AdCard
+          ad={previewAd}
+          disableNavigation
+          showImagePlaceholder={!imagePreviewUrl}
+        />
+      </section>
 
       <div className="mt-7">
         <p className="text-sm font-medium text-foreground">{t("package")}</p>
@@ -254,6 +319,7 @@ function Field({
   maxLength,
   placeholder,
   defaultValue,
+  onChange,
 }: {
   label: string;
   name: string;
@@ -262,6 +328,7 @@ function Field({
   maxLength?: number;
   placeholder?: string;
   defaultValue?: string;
+  onChange?: (value: string) => void;
 }) {
   return (
     <label>
@@ -273,6 +340,7 @@ function Field({
         maxLength={maxLength}
         placeholder={placeholder}
         defaultValue={defaultValue}
+        onChange={(event) => onChange?.(event.target.value)}
         className="mt-2 h-11 w-full rounded-full border border-border-base bg-background px-4 text-sm text-foreground outline-none transition placeholder:text-muted-3 focus:border-brand/60 focus:ring-2 focus:ring-brand/15"
       />
     </label>
