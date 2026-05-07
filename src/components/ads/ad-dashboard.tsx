@@ -8,6 +8,7 @@ import { formatUsd } from "@/lib/ads/packages";
 import type { AdvertiserCampaign } from "@/lib/ads/queries";
 
 import { AdAnalyticsTabs } from "@/components/ads/ad-analytics-tabs";
+import { AdCampaignEditDialog } from "@/components/ads/ad-campaign-edit-dialog";
 
 export async function AdDashboard({
   campaigns,
@@ -45,6 +46,7 @@ export async function AdDashboard({
         const remaining = Math.max(campaign.packageViews - served, 0);
         const progress = Math.round((served / campaign.packageViews) * 100);
         const ctr = served > 0 ? (campaign.clicks / served) * 100 : 0;
+        const editable = campaign.status !== "deleted" && !campaign.deletedAt;
         return (
           <article
             key={campaign.id}
@@ -153,6 +155,12 @@ export async function AdDashboard({
                   <span>
                     {t("activated", { date: formatDate(campaign.activatedAt) })}
                   </span>
+                ) : null}
+                {editable ? (
+                  <AdCampaignEditDialog
+                    campaign={campaign}
+                    triggerLabel={t("editCreative")}
+                  />
                 ) : null}
               </div>
             </div>

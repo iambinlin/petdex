@@ -91,6 +91,12 @@ export const adCampaignRatelimit = createRatelimit({
   prefix: "petdex:ad-campaign",
 });
 
+export const adCampaignEditRatelimit = createRatelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "24 h"),
+  prefix: "petdex:ad-campaign-edit",
+});
+
 export const adCheckoutRatelimit = createRatelimit({
   redis,
   limiter: Ratelimit.slidingWindow(20, "1 h"),

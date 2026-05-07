@@ -214,6 +214,7 @@
       "title": "Your Petdex campaigns",
       "body": "Track campaign status, prepaid impression delivery, and remaining inventory for every sponsored card you have submitted.",
       "newCampaign": "Buy another campaign",
+      "editCreative": "Edit creative",
       "progress": "Delivery",
       "destination": "Destination URL",
       "created": "Created {date}",
@@ -234,6 +235,34 @@
         "title": "Launch your first sponsored card",
         "body": "Submit a creative, choose a prepaid impression package, and start reaching developers after Stripe confirms payment.",
         "cta": "Create campaign"
+      },
+      "edit": {
+        "title": "Edit campaign",
+        "body": "Change the creative, destination, or tracking fields. Active campaign edits go live immediately and remain subject to Petdex ad policies.",
+        "titleLabel": "Ad title",
+        "descriptionLabel": "Description",
+        "destinationUrlLabel": "Destination URL",
+        "imageLabel": "Ad image",
+        "imageCta": "Upload replacement creative",
+        "imageHelp": "PNG, JPG, or WebP. Max 10 MB.",
+        "currentImage": "Preview",
+        "save": "Save changes",
+        "saving": "Saving campaign",
+        "uploading": "Uploading image",
+        "cancel": "Cancel",
+        "utmTitle": "Custom UTM settings",
+        "utmHelp": "Leave fields blank to clear them. If utm_source is blank, Petdex adds utm_source=petdex to clicks.",
+        "errors": {
+          "imageTooLarge": "Image must be 10 MB or smaller.",
+          "nothingChanged": "Change at least one field before saving.",
+          "submitFailed": "Could not update the campaign.",
+          "uploadFailed": "Image upload failed.",
+          "network": "Network error. Try again.",
+          "imageInvalid": "Upload a valid Petdex ad image.",
+          "destinationInvalid": "Enter a valid HTTPS destination URL.",
+          "titleRequired": "Add an ad title.",
+          "descriptionRequired": "Add an ad description."
+        }
       },
       "chart": {
         "label": "Impressions over time",

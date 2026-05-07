@@ -214,6 +214,7 @@
       "title": "Tus campañas en Petdex",
       "body": "Sigue el estado, la entrega de impresiones prepagadas y el inventario restante de cada tarjeta patrocinada enviada.",
       "newCampaign": "Comprar otra campaña",
+      "editCreative": "Editar creatividad",
       "progress": "Entrega",
       "destination": "URL de destino",
       "created": "Creada {date}",
@@ -234,6 +235,34 @@
         "title": "Lanza tu primera tarjeta patrocinada",
         "body": "Envía una creatividad, elige un paquete de impresiones prepagadas y empieza a llegar a desarrolladores cuando Stripe confirme el pago.",
         "cta": "Crear campaña"
+      },
+      "edit": {
+        "title": "Editar campaña",
+        "body": "Cambia la creatividad, el destino o los campos de tracking. Los cambios en campañas activas se publican de inmediato y siguen sujetos a las políticas de anuncios de Petdex.",
+        "titleLabel": "Título del anuncio",
+        "descriptionLabel": "Descripción",
+        "destinationUrlLabel": "URL de destino",
+        "imageLabel": "Imagen del anuncio",
+        "imageCta": "Subir creatividad de reemplazo",
+        "imageHelp": "PNG, JPG o WebP. Máximo 10 MB.",
+        "currentImage": "Vista previa",
+        "save": "Guardar cambios",
+        "saving": "Guardando campaña",
+        "uploading": "Subiendo imagen",
+        "cancel": "Cancelar",
+        "utmTitle": "UTM personalizados",
+        "utmHelp": "Deja campos vacíos para limpiarlos. Si utm_source queda vacío, Petdex agrega utm_source=petdex a los clicks.",
+        "errors": {
+          "imageTooLarge": "La imagen debe pesar 10 MB o menos.",
+          "nothingChanged": "Cambia al menos un campo antes de guardar.",
+          "submitFailed": "No se pudo actualizar la campaña.",
+          "uploadFailed": "Falló la subida de imagen.",
+          "network": "Error de red. Inténtalo de nuevo.",
+          "imageInvalid": "Sube una imagen de anuncio válida para Petdex.",
+          "destinationInvalid": "Ingresa una URL HTTPS válida.",
+          "titleRequired": "Agrega un título para el anuncio.",
+          "descriptionRequired": "Agrega una descripción para el anuncio."
+        }
       },
       "chart": {
         "label": "Impresiones en el tiempo",

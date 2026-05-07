@@ -18,6 +18,11 @@ export type AdvertiserCampaign = {
   description: string;
   imageUrl: string;
   destinationUrl: string;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmTerm: string | null;
+  utmContent: string | null;
   packageViews: number;
   priceCents: number;
   viewsServed: number;
@@ -33,6 +38,15 @@ export type AdvertiserCampaign = {
   dismissals: number;
   avgTimeInViewMs: number;
 };
+
+export type UpdateOwnedAdCampaignCreativeParams = {
+  id: string;
+  userId: string;
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  destinationUrl?: string;
+} & Partial<AdUtmFields>;
 
 export type AdCampaignTimeSeries = {
   eightHours: AdCampaignSeriesPoint[];
@@ -108,6 +122,100 @@ export async function getPendingOwnedCampaign(id: string, userId: string) {
     )
     .limit(1);
   return rows[0] ?? null;
+}
+
+export async function updateOwnedAdCampaignCreative(
+  params: UpdateOwnedAdCampaignCreativeParams,
+): Promise<
+  | {
+      ok: true;
+      campaign: {
+        id: string;
+        title: string;
+        description: string;
+        imageUrl: string;
+        destinationUrl: string;
+        updatedAt: Date;
+      };
+    }
+  | {
+      ok: false;
+      error: "not_found" | "campaign_not_editable" | "nothing_changed";
+    }
+> {
+  const row = await db.query.adCampaigns.findFirst({
+    where: and(
+      eq(schema.adCampaigns.id, params.id),
+      eq(schema.adCampaigns.userId, params.userId),
+    ),
+  });
+
+  if (!row) return { ok: false, error: "not_found" };
+  if (row.status === "deleted" || row.deletedAt) {
+    return { ok: false, error: "campaign_not_editable" };
+  }
+
+  const patch: Partial<typeof schema.adCampaigns.$inferInsert> = {};
+  if (params.title !== undefined && params.title !== row.title) {
+    patch.title = params.title;
+  }
+  if (
+    params.description !== undefined &&
+    params.description !== row.description
+  ) {
+    patch.description = params.description;
+  }
+  if (params.imageUrl !== undefined && params.imageUrl !== row.imageUrl) {
+    patch.imageUrl = params.imageUrl;
+  }
+  if (
+    params.destinationUrl !== undefined &&
+    params.destinationUrl !== row.destinationUrl
+  ) {
+    patch.destinationUrl = params.destinationUrl;
+  }
+  if (params.utmSource !== undefined && params.utmSource !== row.utmSource) {
+    patch.utmSource = params.utmSource;
+  }
+  if (params.utmMedium !== undefined && params.utmMedium !== row.utmMedium) {
+    patch.utmMedium = params.utmMedium;
+  }
+  if (
+    params.utmCampaign !== undefined &&
+    params.utmCampaign !== row.utmCampaign
+  ) {
+    patch.utmCampaign = params.utmCampaign;
+  }
+  if (params.utmTerm !== undefined && params.utmTerm !== row.utmTerm) {
+    patch.utmTerm = params.utmTerm;
+  }
+  if (params.utmContent !== undefined && params.utmContent !== row.utmContent) {
+    patch.utmContent = params.utmContent;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return { ok: false, error: "nothing_changed" };
+  }
+
+  const [updated] = await db
+    .update(schema.adCampaigns)
+    .set({ ...patch, updatedAt: new Date() })
+    .where(
+      and(
+        eq(schema.adCampaigns.id, params.id),
+        eq(schema.adCampaigns.userId, params.userId),
+      ),
+    )
+    .returning({
+      id: schema.adCampaigns.id,
+      title: schema.adCampaigns.title,
+      description: schema.adCampaigns.description,
+      imageUrl: schema.adCampaigns.imageUrl,
+      destinationUrl: schema.adCampaigns.destinationUrl,
+      updatedAt: schema.adCampaigns.updatedAt,
+    });
+
+  return { ok: true, campaign: updated };
 }
 
 export async function setCampaignCheckoutSession(
@@ -189,6 +297,11 @@ export async function getUserAdCampaigns(
       description: schema.adCampaigns.description,
       imageUrl: schema.adCampaigns.imageUrl,
       destinationUrl: schema.adCampaigns.destinationUrl,
+      utmSource: schema.adCampaigns.utmSource,
+      utmMedium: schema.adCampaigns.utmMedium,
+      utmCampaign: schema.adCampaigns.utmCampaign,
+      utmTerm: schema.adCampaigns.utmTerm,
+      utmContent: schema.adCampaigns.utmContent,
       packageViews: schema.adCampaigns.packageViews,
       priceCents: schema.adCampaigns.priceCents,
       viewsServed: schema.adCampaigns.viewsServed,
