@@ -7,7 +7,8 @@ import createMiddleware from "next-intl/middleware";
 
 import { defaultLocale, locales } from "@/i18n/config";
 
-const IS_MOCK = process.env.PETDEX_MOCK === "1";
+const IS_MOCK_AUTH =
+  process.env.PETDEX_MOCK === "1" || process.env.PETDEX_MOCK_AUTH === "1";
 
 // Per-visitor stable shuffle seed used by the curated gallery sort
 // (see lib/shuffle-seed.ts). Minted here rather than from the page
@@ -60,10 +61,10 @@ const handleI18nRouting = createMiddleware({
   localePrefix: "as-needed",
 });
 
-// In mock mode the user is always signed in, so we skip clerkMiddleware
-// entirely (it would otherwise try to validate a real publishable key
-// before our shims have a chance to short-circuit). Everything else —
-// next-intl routing, the shuffle cookie — keeps working.
+// In mock auth mode the user is always signed in, so we skip
+// clerkMiddleware entirely (it would otherwise try to validate a real
+// backend secret before our shims have a chance to short-circuit).
+// Everything else — next-intl routing, the shuffle cookie — keeps working.
 const baseMiddleware = (req: Request) => {
   if (new URL(req.url).pathname.startsWith("/api")) {
     const res = NextResponse.next();
@@ -75,7 +76,7 @@ const baseMiddleware = (req: Request) => {
   return res;
 };
 
-export default IS_MOCK
+export default IS_MOCK_AUTH
   ? baseMiddleware
   : clerkMiddleware(async (auth, req) => {
       if (isProtected(req)) {
