@@ -1,31 +1,53 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
-import { useClerk } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
 import { Heart } from "lucide-react";
 
 type LikeButtonProps = {
   slug: string;
   initialCount: number;
-  initialLiked: boolean;
-  signedIn: boolean;
 };
 
-export function LikeButton({
-  slug,
-  initialCount,
-  initialLiked,
-  signedIn,
-}: LikeButtonProps) {
+export function LikeButton({ slug, initialCount }: LikeButtonProps) {
   const [count, setCount] = useState(initialCount);
-  const [liked, setLiked] = useState(initialLiked);
+  const [liked, setLiked] = useState(false);
   const [pending, start] = useTransition();
+  const { isLoaded, isSignedIn } = useAuth();
   const clerk = useClerk();
 
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) {
+      setLiked(false);
+      setCount(initialCount);
+      return;
+    }
+    const controller = new AbortController();
+
+    void fetch(`/api/pets/${slug}/like`, {
+      signal: controller.signal,
+      headers: { accept: "application/json" },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { liked: boolean; count: number } | null) => {
+        if (!data) return;
+        setLiked(data.liked);
+        setCount(data.count);
+      })
+      .catch((error: unknown) => {
+        if ((error as Error).name !== "AbortError") {
+          setLiked(false);
+          setCount(initialCount);
+        }
+      });
+
+    return () => controller.abort();
+  }, [initialCount, isLoaded, isSignedIn, slug]);
+
   function handleClick() {
-    if (!signedIn) {
+    if (!isLoaded || !isSignedIn) {
       clerk.openSignIn({});
       return;
     }

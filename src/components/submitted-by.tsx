@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { useTranslations } from "next-intl";
@@ -45,6 +46,7 @@ function XIcon({ className }: { className?: string }) {
 export function SubmittedBy({ credit }: SubmittedByProps) {
   const t = useTranslations("submittedBy");
   const showAvatar = credit.imageUrl && isAllowedAvatarUrl(credit.imageUrl);
+  const avatarUrl = showAvatar ? credit.imageUrl : null;
   const profileHref = `/u/${credit.handle}`;
 
   return (
@@ -54,11 +56,12 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
       className="group block rounded-2xl border border-border-base bg-surface/76 p-4 backdrop-blur transition hover:border-border-strong hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
     >
       <div className="flex items-center gap-3">
-        {showAvatar ? (
-          // biome-ignore lint/performance/noImgElement: external avatar URL
-          <img
-            src={credit.imageUrl ?? undefined}
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
             alt=""
+            width={40}
+            height={40}
             className="size-10 shrink-0 rounded-full ring-1 ring-border-base"
           />
         ) : (

@@ -10,6 +10,8 @@ import { requireSameOrigin } from "@/lib/same-origin";
 
 export const runtime = "nodejs";
 
+const PRIVATE_HEADERS = { "Cache-Control": "private, no-store" };
+
 type Params = { slug: string };
 
 export async function POST(
@@ -72,7 +74,10 @@ export async function POST(
   const count = Number(countRow[0]?.c ?? 0);
   await setLikeCount(slug, count);
 
-  return NextResponse.json({ ok: true, liked, count });
+  return NextResponse.json(
+    { ok: true, liked, count },
+    { headers: PRIVATE_HEADERS },
+  );
 }
 
 export async function GET(
@@ -99,5 +104,5 @@ export async function GET(
     liked = Boolean(row);
   }
 
-  return NextResponse.json({ count, liked });
+  return NextResponse.json({ count, liked }, { headers: PRIVATE_HEADERS });
 }

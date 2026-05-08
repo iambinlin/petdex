@@ -261,3 +261,52 @@ export async function resolveOwnerCreditFor(
     }
   );
 }
+
+export async function resolveStoredOwnerCreditFor(
+  row: RowCreditFallback,
+): Promise<OwnerCredit> {
+  let profile: { displayName: string | null; handle: string | null } | null =
+    null;
+
+  if (!row.ownerIsProxy) {
+    try {
+      const [storedProfile] = await db
+        .select({
+          displayName: schema.userProfiles.displayName,
+          handle: schema.userProfiles.handle,
+        })
+        .from(schema.userProfiles)
+        .where(inArray(schema.userProfiles.userId, [row.ownerId]));
+      profile = storedProfile ?? null;
+    } catch {
+      profile = null;
+    }
+  }
+
+  const externals: OwnerExternal[] = [];
+  if (row.creditUrl) {
+    try {
+      const url = new URL(row.creditUrl);
+      const username = url.pathname.slice(1);
+      if (url.host === "github.com" && username) {
+        externals.push({ provider: "github", username, url: row.creditUrl });
+      } else if (
+        (url.host === "x.com" || url.host === "twitter.com") &&
+        username
+      ) {
+        externals.push({ provider: "x", username, url: row.creditUrl });
+      }
+    } catch {
+      /* ignore malformed stored URL */
+    }
+  }
+
+  return {
+    userId: row.ownerId,
+    name: (profile?.displayName ?? row.creditName?.trim()) || "anonymous",
+    handle: profile?.handle ?? fallbackHandle(row.ownerId),
+    username: null,
+    externals,
+    imageUrl: row.creditImage,
+  };
+}
