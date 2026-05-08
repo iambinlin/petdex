@@ -1,4 +1,4 @@
-import { inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 
 import { db, schema } from "./client";
 
@@ -106,7 +106,12 @@ export async function getMetricsSummary(): Promise<MetricsSummary> {
       maxInstallCount: sql<number>`coalesce(max(${schema.petMetrics.installCount}), 0)::int`,
       maxLikeCount: sql<number>`coalesce(max(${schema.petMetrics.likeCount}), 0)::int`,
     })
-    .from(schema.petMetrics);
+    .from(schema.petMetrics)
+    .innerJoin(
+      schema.submittedPets,
+      eq(schema.petMetrics.petSlug, schema.submittedPets.slug),
+    )
+    .where(eq(schema.submittedPets.status, "approved"));
 
   return {
     maxInstallCount: row?.maxInstallCount ?? 0,

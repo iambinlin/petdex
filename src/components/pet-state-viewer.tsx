@@ -80,7 +80,7 @@ export function PetStateViewer({ src, petName }: PetStateViewerProps) {
                 </p>
               </div>
               <div className="rounded-md border border-border-base bg-surface-muted p-2">
-                <StaticPetSprite src={src} scale={0.32} />
+                <StaticPetSprite src={src} state={state.id} scale={0.32} />
               </div>
             </div>
           </button>

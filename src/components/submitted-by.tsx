@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 
-import type { OwnerCredit } from "@/lib/owner-credit";
+import type { OwnerCredit, OwnerExternal } from "@/lib/owner-credit";
 import { isAllowedAvatarUrl } from "@/lib/url-allowlist";
 
 type SubmittedByProps = {
@@ -45,14 +46,17 @@ function XIcon({ className }: { className?: string }) {
 
 export function SubmittedBy({ credit }: SubmittedByProps) {
   const t = useTranslations("submittedBy");
-  const showAvatar = credit.imageUrl && isAllowedAvatarUrl(credit.imageUrl);
-  const avatarUrl = showAvatar ? credit.imageUrl : null;
-  const profileHref = `/u/${credit.handle}`;
+  const { user } = useUser();
+  const displayCredit = mergeCurrentUserCredit(credit, user);
+  const showAvatar =
+    displayCredit.imageUrl && isAllowedAvatarUrl(displayCredit.imageUrl);
+  const avatarUrl = showAvatar ? displayCredit.imageUrl : null;
+  const profileHref = `/u/${displayCredit.handle}`;
 
   return (
     <Link
       href={profileHref}
-      aria-label={t("viewProfile", { name: credit.name })}
+      aria-label={t("viewProfile", { name: displayCredit.name })}
       className="group block rounded-2xl border border-border-base bg-surface/76 p-4 backdrop-blur transition hover:border-border-strong hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
     >
       <div className="flex items-center gap-3">
@@ -66,7 +70,7 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
           />
         ) : (
           <div className="grid size-10 shrink-0 place-items-center rounded-full bg-surface-muted font-mono text-sm text-muted-2 ring-1 ring-border-base">
-            {credit.name.slice(0, 1).toUpperCase()}
+            {displayCredit.name.slice(0, 1).toUpperCase()}
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -75,20 +79,20 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
           </p>
           <div className="flex flex-wrap items-baseline gap-x-2">
             <p className="truncate text-sm font-medium text-foreground">
-              {credit.name}
+              {displayCredit.name}
             </p>
-            {credit.username ? (
+            {displayCredit.username ? (
               <p className="font-mono text-[11px] text-muted-4">
-                @{credit.username}
+                @{displayCredit.username}
               </p>
             ) : null}
           </div>
         </div>
       </div>
 
-      {credit.externals.length > 0 ? (
+      {displayCredit.externals.length > 0 ? (
         <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border-base pt-3">
-          {credit.externals.map((ext) => (
+          {displayCredit.externals.map((ext) => (
             // Rendered as a button (not nested <a>, which would be
             // invalid HTML inside the wrapping profile <Link>). The
             // button calls window.open and stops propagation so the
@@ -115,4 +119,68 @@ export function SubmittedBy({ credit }: SubmittedByProps) {
       ) : null}
     </Link>
   );
+}
+
+function mergeCurrentUserCredit(
+  credit: OwnerCredit,
+  user:
+    | {
+        id: string;
+        imageUrl?: string;
+        username?: string | null;
+        fullName?: string | null;
+        primaryEmailAddress?: { emailAddress?: string | null } | null;
+        externalAccounts?: Array<{ provider?: string; username?: string }>;
+      }
+    | null
+    | undefined,
+): OwnerCredit {
+  if (!user || user.id !== credit.userId) return credit;
+
+  const externals = externalsFor(user.externalAccounts ?? []);
+
+  return {
+    ...credit,
+    name:
+      credit.name === "anonymous"
+        ? user.fullName ||
+          user.username ||
+          user.primaryEmailAddress?.emailAddress ||
+          credit.name
+        : credit.name,
+    username: user.username ?? credit.username,
+    externals: externals.length > 0 ? externals : credit.externals,
+    imageUrl: user.imageUrl ?? credit.imageUrl,
+  };
+}
+
+function externalsFor(
+  externalAccounts: Array<{ provider?: string; username?: string }>,
+): OwnerExternal[] {
+  let github: OwnerExternal | null = null;
+  let x: OwnerExternal | null = null;
+
+  for (const account of externalAccounts) {
+    if (!account.username) continue;
+    if (account.provider === "oauth_github" && !github) {
+      github = {
+        provider: "github",
+        username: account.username,
+        url: `https://github.com/${account.username}`,
+      };
+    }
+    if (
+      (account.provider === "oauth_x" ||
+        account.provider === "oauth_twitter") &&
+      !x
+    ) {
+      x = {
+        provider: "x",
+        username: account.username,
+        url: `https://x.com/${account.username}`,
+      };
+    }
+  }
+
+  return [github, x].filter((item): item is OwnerExternal => Boolean(item));
 }

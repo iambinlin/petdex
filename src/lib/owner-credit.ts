@@ -265,6 +265,9 @@ export async function resolveOwnerCreditFor(
 export async function resolveStoredOwnerCreditFor(
   row: RowCreditFallback,
 ): Promise<OwnerCredit> {
+  // ISR pet pages render from persisted public identity fields only.
+  // Keeping live Clerk avatar/external-account freshness requires a future
+  // DB sync/webhook rather than a per-render Clerk lookup.
   let profile: { displayName: string | null; handle: string | null } | null =
     null;
 

@@ -30,14 +30,12 @@ type OwnerPetControlsProps = {
   slug: string;
   currentDisplayName: string;
   currentDescription: string;
-  render?: "edit" | "suggestions";
 };
 
 export function OwnerPetControls({
   slug,
   currentDisplayName,
   currentDescription,
-  render = "edit",
 }: OwnerPetControlsProps) {
   const { isLoaded, isSignedIn } = useAuth();
   const [state, setState] = useState<OwnerState | null>(null);
@@ -64,27 +62,25 @@ export function OwnerPetControls({
 
   if (!state?.isOwner || !state.petId) return null;
 
-  if (render === "suggestions") {
-    if (!state.collectionSuggest?.candidates.length) return null;
-    return (
-      <SuggestCollectionButton
-        petSlug={slug}
-        petDisplayName={currentDisplayName}
-        candidateCollections={state.collectionSuggest.candidates}
-        alreadyRequested={state.collectionSuggest.alreadyRequested}
-      />
-    );
-  }
-
   return (
-    <OwnerEditPanel
-      petId={state.petId}
-      slug={slug}
-      currentDisplayName={currentDisplayName}
-      currentDescription={currentDescription}
-      currentTags={state.currentTags}
-      initialPending={state.pending}
-      initialRejection={state.lastRejection}
-    />
+    <div className="flex flex-col items-start gap-3">
+      <OwnerEditPanel
+        petId={state.petId}
+        slug={slug}
+        currentDisplayName={currentDisplayName}
+        currentDescription={currentDescription}
+        currentTags={state.currentTags}
+        initialPending={state.pending}
+        initialRejection={state.lastRejection}
+      />
+      {state.collectionSuggest?.candidates.length ? (
+        <SuggestCollectionButton
+          petSlug={slug}
+          petDisplayName={currentDisplayName}
+          candidateCollections={state.collectionSuggest.candidates}
+          alreadyRequested={state.collectionSuggest.alreadyRequested}
+        />
+      ) : null}
+    </div>
   );
 }

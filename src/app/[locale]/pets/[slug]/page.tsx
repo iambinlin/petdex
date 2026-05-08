@@ -199,9 +199,8 @@ export default async function PetPage({ params }: PageProps) {
           ownerRow.source === "discover" ? null : ownerRow.creditImage,
         // For 'discover' rows the ownerId is the admin who imported
         // on the author's behalf, NOT the author. Use stored credit_*
-        // exclusively so the author keeps the byline. After someone
-        // claims the row source flips to 'claimed' and we go back to
-        // resolving from the live Clerk profile.
+        // exclusively so the author keeps the byline. Claimed/submit rows
+        // use stored credit plus local userProfiles so this route stays ISR.
         ownerIsProxy: ownerRow.source === "discover",
       })
     : null;
@@ -401,13 +400,6 @@ export default async function PetPage({ params }: PageProps) {
                 ))}
               </div>
             ) : null}
-
-            <OwnerPetControls
-              slug={pet.slug}
-              currentDisplayName={pet.displayName}
-              currentDescription={pet.description}
-              render="suggestions"
-            />
 
             {/* Keyboard hint strip — minimal, mono-spaced, only on
                 pointer-fine media so we don't spam mobile users with
