@@ -28,7 +28,17 @@ jobs:
           model: openai/gpt-5.5
           use_github_token: true
           prompt: |
-            Review this pull request:
-            - Check for code quality issues
-            - Look for potential bugs
-            - Suggest improvements
+            Review this pull request following the repo-local
+            code-review-excellence skill at
+            .agents/skills/code-review-excellence/SKILL.md.
+
+            Prioritize actionable findings over summary. Focus on:
+            - Correctness bugs and edge cases
+            - Security and data exposure risks
+            - Performance regressions
+            - Missing or weak tests
+            - Maintainability issues that affect future changes
+
+            Use severity labels such as [blocking], [important], [nit],
+            and [suggestion]. Keep feedback specific, constructive, and
+            tied to affected files or lines when possible.
