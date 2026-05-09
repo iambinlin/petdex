@@ -82,7 +82,7 @@ export function CollectionsBrowser({
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-2 z-10 -mx-2 rounded-2xl border border-border-base bg-background/85 p-3 backdrop-blur md:-mx-3">
+      <div className="sticky top-16 z-30 -mx-2 rounded-2xl border border-border-base bg-background/95 p-3 backdrop-blur md:-mx-3 md:top-20">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <label className="relative flex flex-1 items-center md:max-w-md">
             <Search className="pointer-events-none absolute left-3 size-4 text-muted-3" />
