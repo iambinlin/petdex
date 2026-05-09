@@ -1,6 +1,5 @@
-import { buildLocaleAlternates } from "@/lib/locale-routing";
-
 import { findByToken } from "@/lib/email-preferences";
+import { buildLocaleAlternates } from "@/lib/locale-routing";
 
 import { SiteHeader } from "@/components/site-header";
 
