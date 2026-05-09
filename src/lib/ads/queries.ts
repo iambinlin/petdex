@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   desc,
   eq,
   ilike,
@@ -119,6 +120,8 @@ export type CreateAdCampaignParams = {
   packageViews: number;
   priceCents: number;
 } & AdUtmFields;
+
+const FEED_AD_ROTATION_SECONDS = 60 * 60;
 
 export function createAdCampaignId(): string {
   return `ad_${crypto.randomUUID().replace(/-/g, "").slice(0, 22)}`;
@@ -330,37 +333,59 @@ export async function activateCampaignFromCheckout(params: {
 }
 
 export async function getActiveFeedAds(limit = 6): Promise<PublicFeedAd[]> {
-  const rows = await db
-    .select({
-      id: schema.adCampaigns.id,
-      title: schema.adCampaigns.title,
-      description: schema.adCampaigns.description,
-      imageUrl: schema.adCampaigns.imageUrl,
-      destinationUrl: schema.adCampaigns.destinationUrl,
-      utmSource: schema.adCampaigns.utmSource,
-      utmMedium: schema.adCampaigns.utmMedium,
-      utmCampaign: schema.adCampaigns.utmCampaign,
-      utmTerm: schema.adCampaigns.utmTerm,
-      utmContent: schema.adCampaigns.utmContent,
-    })
-    .from(schema.adCampaigns)
-    .where(
-      and(
-        eq(schema.adCampaigns.status, "active"),
-        isNull(schema.adCampaigns.deletedAt),
-        lt(schema.adCampaigns.viewsServed, schema.adCampaigns.packageViews),
-      ),
-    )
-    .orderBy(sql`random()`)
-    .limit(limit);
+  const requestedLimit = Math.max(0, Math.floor(limit));
+  if (requestedLimit === 0) return [];
 
-  return rows.map((row) => ({
+  const poolLimit = Math.min(Math.max(requestedLimit * 4, requestedLimit), 60);
+  const [rows, bucketResult] = await Promise.all([
+    db
+      .select({
+        id: schema.adCampaigns.id,
+        title: schema.adCampaigns.title,
+        description: schema.adCampaigns.description,
+        imageUrl: schema.adCampaigns.imageUrl,
+        destinationUrl: schema.adCampaigns.destinationUrl,
+        utmSource: schema.adCampaigns.utmSource,
+        utmMedium: schema.adCampaigns.utmMedium,
+        utmCampaign: schema.adCampaigns.utmCampaign,
+        utmTerm: schema.adCampaigns.utmTerm,
+        utmContent: schema.adCampaigns.utmContent,
+      })
+      .from(schema.adCampaigns)
+      .where(
+        and(
+          eq(schema.adCampaigns.status, "active"),
+          isNull(schema.adCampaigns.deletedAt),
+          lt(schema.adCampaigns.viewsServed, schema.adCampaigns.packageViews),
+        ),
+      )
+      .orderBy(
+        asc(schema.adCampaigns.viewsServed),
+        asc(schema.adCampaigns.createdAt),
+        asc(schema.adCampaigns.id),
+      )
+      .limit(poolLimit),
+    db.execute<{ bucket: number }>(sql`
+      SELECT floor(extract(epoch from now()) / ${FEED_AD_ROTATION_SECONDS})::int AS bucket
+    `),
+  ]);
+
+  const bucket = Number(bucketResult.rows[0]?.bucket ?? 0);
+  const selectedRows = rotateWindow(rows, requestedLimit, bucket);
+
+  return selectedRows.map((row) => ({
     id: row.id,
     title: row.title,
     description: row.description,
     imageUrl: row.imageUrl,
     clickUrl: buildAdClickUrl(row.destinationUrl, row),
   }));
+}
+
+function rotateWindow<T>(rows: T[], limit: number, bucket: number): T[] {
+  if (rows.length <= limit) return rows;
+  const offset = bucket % rows.length;
+  return [...rows.slice(offset), ...rows.slice(0, offset)].slice(0, limit);
 }
 
 export async function getUserAdCampaigns(
