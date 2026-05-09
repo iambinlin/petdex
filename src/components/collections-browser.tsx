@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ExternalLink, Search } from "lucide-react";
 
@@ -41,6 +41,8 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "title", label: "A → Z" },
 ];
 
+const PAGE_SIZE = 12;
+
 export function CollectionsBrowser({
   collections,
   credits,
@@ -51,6 +53,7 @@ export function CollectionsBrowser({
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<"all" | CollectionKind>("all");
   const [sort, setSort] = useState<SortKey>("size");
+  const [pageCount, setPageCount] = useState(1);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { all: collections.length };
@@ -80,9 +83,37 @@ export function CollectionsBrowser({
     return list;
   }, [collections, query, kind, sort]);
 
+  // Reset paginator whenever the filtered set changes — otherwise users
+  // who scrolled deep into "Themed" then switched to "Franchises" would
+  // see N pages of franchises pre-rendered without scrolling.
+  useEffect(() => {
+    setPageCount(1);
+  }, [query, kind, sort]);
+
+  const visibleSlice = useMemo(
+    () => visible.slice(0, pageCount * PAGE_SIZE),
+    [visible, pageCount],
+  );
+  const hasMore = visibleSlice.length < visible.length;
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) setPageCount((p) => p + 1);
+      },
+      { rootMargin: "600px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore]);
+
   return (
     <div className="space-y-6">
-      <div className="sticky top-16 z-30 -mx-2 rounded-2xl border border-border-base bg-background/95 p-3 backdrop-blur md:-mx-3 md:top-20">
+      <div className="rounded-2xl border border-border-base bg-surface/60 p-3 backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <label className="relative flex flex-1 items-center md:max-w-md">
             <Search className="pointer-events-none absolute left-3 size-4 text-muted-3" />
@@ -151,7 +182,7 @@ export function CollectionsBrowser({
         </div>
       ) : (
         <div className="grid auto-rows-fr gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {visible.map((c) => {
+          {visibleSlice.map((c) => {
             const owner = c.ownerId ? credits[c.ownerId] : null;
             const k = collectionKind(c.slug);
             return (
@@ -211,6 +242,20 @@ export function CollectionsBrowser({
           })}
         </div>
       )}
+
+      {hasMore ? (
+        <div
+          ref={sentinelRef}
+          aria-hidden="true"
+          className="flex h-24 items-center justify-center text-xs text-muted-3"
+        >
+          Loading more…
+        </div>
+      ) : visible.length > PAGE_SIZE ? (
+        <p className="pt-2 text-center text-xs text-muted-3">
+          End of results — {visible.length} collections
+        </p>
+      ) : null}
     </div>
   );
 }
