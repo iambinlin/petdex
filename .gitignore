@@ -62,6 +62,8 @@ seed/
 # Franchise classification working files — derived from prod DB + codex
 scripts/.franchise-buckets.json
 scripts/.franchise-cache.json
+scripts/.unflagged-cache.json
+scripts/.merged-classifications.json
 
 # End-of-session handoff doc — local only, not committed
 HANDOFF.md
