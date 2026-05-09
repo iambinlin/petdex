@@ -25,46 +25,17 @@ export type PetCollectionWithPets = PetCollection & {
   pets: PetWithMetrics[];
 };
 
-// Hand-picked slugs that appear in the home page hero. These take
-// priority over alphabetical/size order so the editorial mix stays
-// consistent across deploys. Add or reorder here to change the
-// landing showcase.
-const HOME_FEATURED_SLUGS = [
-  "franchise-pokemon",
-  "franchise-league-of-legends",
-  "franchise-jojos-bizarre-adventure",
-];
-
 export async function getFeaturedCollections(
   limit = 3,
 ): Promise<PetCollectionWithPets[]> {
   let rows: PetCollection[];
   try {
-    if (HOME_FEATURED_SLUGS.length > 0) {
-      // Explicit slug list. Preserves the curated order regardless of
-      // SQL ordering by re-sorting in JS after fetch.
-      const wanted = HOME_FEATURED_SLUGS.slice(0, limit);
-      const fetched = await db
-        .select()
-        .from(schema.petCollections)
-        .where(inArray(schema.petCollections.slug, wanted));
-      const order = new Map(wanted.map((s, i) => [s, i]));
-      rows = fetched
-        .filter((r) => order.has(r.slug))
-        .sort(
-          (a, b) => (order.get(a.slug) ?? 0) - (order.get(b.slug) ?? 0),
-        );
-    } else {
-      // Fallback: top featured by raw row count. Old alphabetical
-      // ordering surfaced 2-pet collections; size-first reflects what
-      // the catalog actually has.
-      rows = await db
-        .select()
-        .from(schema.petCollections)
-        .where(eq(schema.petCollections.featured, true))
-        .orderBy(asc(schema.petCollections.title))
-        .limit(limit);
-    }
+    rows = await db
+      .select()
+      .from(schema.petCollections)
+      .where(eq(schema.petCollections.featured, true))
+      .orderBy(asc(schema.petCollections.title))
+      .limit(limit);
   } catch (error) {
     if (isMissingCollectionTableError(error)) return [];
     throw error;

@@ -60,10 +60,15 @@ export default async function Home() {
   const totalPets = initialSearch.total;
 
   // Hand-pick the 3 collections that show on the landing strip in a
-  // specific narrative order: GRAYCRAFT (creator IP) → Meme Lords (cultural
-  // hook) → Anime Heroes (mainstream pull). Anything else lives behind
-  // the View all button.
-  const LANDING_COLLECTION_ORDER = ["graycraft", "meme-lords", "anime-heroes"];
+  // specific narrative order: Pokemon (instant recognition) →
+  // League of Legends (largest deck, gamer pull) →
+  // JoJo's Bizarre Adventure (anime culture). Anything else lives
+  // behind the View all button.
+  const LANDING_COLLECTION_ORDER = [
+    "franchise-pokemon",
+    "franchise-league-of-legends",
+    "franchise-jojos-bizarre-adventure",
+  ];
   const collectionsBySlug = new Map(
     allFeaturedCollections.map((c) => [c.slug, c]),
   );
