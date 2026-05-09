@@ -72,6 +72,7 @@ type SearchPayload = {
   nextCursor: number | null;
   searchMode?: SearchMode;
   facets?: Facets;
+  shuffleSeed?: string;
 };
 
 type InitialSearchPayload = SearchPayload & {
@@ -156,6 +157,7 @@ export function PetGallery({
   const [loadingMore, setLoadingMore] = useState(false);
 
   const requestSeq = useRef(0);
+  const shuffleSeedRef = useRef<string | null>(initial.shuffleSeed ?? null);
   const stateCount = petStates.length;
 
   const buildParams = useCallback(
@@ -168,7 +170,13 @@ export function PetGallery({
       if (activeBatches.size > 0) {
         p.set("batches", [...activeBatches].join(","));
       }
-      if (sort !== "curated") p.set("sort", sort);
+      if (sort === "curated") {
+        if (shuffleSeedRef.current) {
+          p.set("shuffleSeed", shuffleSeedRef.current);
+        }
+      } else {
+        p.set("sort", sort);
+      }
       if (cursor > 0) p.set("cursor", String(cursor));
       p.set("limit", String(PAGE_SIZE));
       if (!includeMeta) p.set("includeMeta", "0");
@@ -193,6 +201,7 @@ export function PetGallery({
         if (!res.ok) throw new Error("search_failed");
         const data = (await res.json()) as SearchPayload;
         if (cancelled || seq !== requestSeq.current) return;
+        if (data.shuffleSeed) shuffleSeedRef.current = data.shuffleSeed;
         const nextTotal = data.total ?? data.pets.length;
         setPets(data.pets);
         setTotal(nextTotal);
@@ -241,6 +250,7 @@ export function PetGallery({
       if (!res.ok) throw new Error("search_failed");
       const data = (await res.json()) as SearchPayload;
       if (seq !== requestSeq.current) return;
+      if (data.shuffleSeed) shuffleSeedRef.current = data.shuffleSeed;
       setPets((prev) => [...prev, ...data.pets]);
       setNextCursor(data.nextCursor);
     } catch {

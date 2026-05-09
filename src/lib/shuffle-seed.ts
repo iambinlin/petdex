@@ -29,6 +29,12 @@ export function createShuffleSeed(): string {
   return randomBytes(8).toString("hex");
 }
 
+export function normalizeShuffleSeed(
+  value: string | null | undefined,
+): string | null {
+  return value && SEED_PATTERN.test(value) ? value : null;
+}
+
 export function setShuffleSeedCookie(
   response: NextResponse,
   seed: string,
@@ -48,6 +54,5 @@ export function setShuffleSeedCookie(
  */
 export async function readShuffleSeed(): Promise<string | null> {
   const jar = await cookies();
-  const existing = jar.get(COOKIE_NAME)?.value;
-  return existing && SEED_PATTERN.test(existing) ? existing : null;
+  return normalizeShuffleSeed(jar.get(COOKIE_NAME)?.value);
 }

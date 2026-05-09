@@ -158,6 +158,24 @@ describe("searchPets", () => {
     }
   });
 
+  it("seeded curated pagination returns disjoint slices", async () => {
+    const searchPets = await loadSearchPets();
+    const limit = 5;
+    const shuffleSeed = "0123456789abcdef";
+    const first = await searchPets({ limit, sort: "curated", shuffleSeed });
+    if (first.nextCursor == null) return; // dataset too small
+    const second = await searchPets({
+      limit,
+      sort: "curated",
+      cursor: first.nextCursor,
+      shuffleSeed,
+    });
+    const firstSlugs = new Set(first.pets.map((p) => p.slug));
+    for (const pet of second.pets) {
+      expect(firstSlugs.has(pet.slug)).toBe(false);
+    }
+  });
+
   it("can skip total and facets for pagination payloads", async () => {
     const searchPets = await loadSearchPets();
     const out = await searchPets(

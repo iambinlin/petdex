@@ -4,6 +4,7 @@ import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
 import { SEARCH_LIMITS, type SortKey, searchPets } from "@/lib/pet-search";
 import {
   createShuffleSeed,
+  normalizeShuffleSeed,
   readShuffleSeed,
   setShuffleSeedCookie,
 } from "@/lib/shuffle-seed";
@@ -57,7 +58,9 @@ export async function GET(req: Request): Promise<Response> {
   let mintedShuffleSeed: string | null = null;
   let shuffleSeed: string | null = null;
   if (sort === "curated") {
-    shuffleSeed = await readShuffleSeed();
+    shuffleSeed =
+      normalizeShuffleSeed(params.get("shuffleSeed")) ??
+      (await readShuffleSeed());
     if (!shuffleSeed) {
       shuffleSeed = createShuffleSeed();
       mintedShuffleSeed = shuffleSeed;
@@ -88,7 +91,10 @@ export async function GET(req: Request): Promise<Response> {
       ? "private, no-store"
       : "public, max-age=60, s-maxage=120, stale-while-revalidate=600";
 
-  const response = NextResponse.json(result, {
+  const payload =
+    sort === "curated" && shuffleSeed ? { ...result, shuffleSeed } : result;
+
+  const response = NextResponse.json(payload, {
     headers: { "Cache-Control": cacheHeader },
   });
   if (mintedShuffleSeed) {
