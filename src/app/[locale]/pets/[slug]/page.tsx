@@ -1,43 +1,35 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { auth } from "@clerk/nextjs/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { Layers, Shuffle, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-import {
-  getCollectionCandidatesForPet,
-  getCollectionsContainingPet,
-} from "@/lib/collections";
+import { getCollectionsContainingPet } from "@/lib/collections";
 import { db, schema } from "@/lib/db/client";
+import { getMetricsForSlug, getMetricsSummary } from "@/lib/db/metrics";
 import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
-import { resolveOwnerCreditFor } from "@/lib/owner-credit";
-import { computeStats } from "@/lib/pet-stats";
-import {
-  getApprovedPetsWithMetrics,
-  getPet,
-  getStaticPetSlugs,
-} from "@/lib/pets";
+import { resolveStoredOwnerCreditFor } from "@/lib/owner-credit";
+import { computeStatsFromSummary } from "@/lib/pet-stats";
+import { getPet, getStaticPetSlugs } from "@/lib/pets";
 import { getVariantsFor } from "@/lib/variants";
 
 import { ClaimCTA } from "@/components/claim-cta";
 import { InstallCommand } from "@/components/install-command";
 import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
-import { OwnerEditPanel } from "@/components/owner-edit-panel";
+import { OwnerPetControls } from "@/components/owner-pet-controls";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetFloater } from "@/components/pet-floater";
 import { PetKeyboardNav } from "@/components/pet-keyboard-nav";
 import { PetRadar } from "@/components/pet-radar";
 import { PetSoundButton } from "@/components/pet-sound-button";
-import { PetSprite } from "@/components/pet-sprite";
 import { PetStateViewer } from "@/components/pet-state-viewer";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { StaticPetSprite } from "@/components/static-pet-sprite";
 import { SubmittedBy } from "@/components/submitted-by";
-import { SuggestCollectionButton } from "@/components/suggest-collection-button";
 
 const SITE_URL = "https://petdex.crafter.run";
 
@@ -172,48 +164,28 @@ export default async function PetPage({ params }: PageProps) {
         }
       : null;
 
-  const [{ userId }, allPets, ownerRow, variants, memberOfCollections] =
+  const [metrics, metricsSummary, ownerRow, variants, memberOfCollections] =
     await Promise.all([
-      auth(),
-      getApprovedPetsWithMetrics(),
+      getMetricsForSlug(slug),
+      getMetricsSummary(),
       db.query.submittedPets.findFirst({
         where: eq(schema.submittedPets.slug, slug),
       }),
       getVariantsFor(slug),
       getCollectionsContainingPet(slug),
     ]);
-  const petWithMetrics = allPets.find((candidate) => candidate.slug === slug);
-  const metrics = petWithMetrics?.metrics ?? {
-    installCount: 0,
-    zipDownloadCount: 0,
-    likeCount: 0,
-  };
-  const stats = computeStats(
+  const stats = computeStatsFromSummary(
     {
       importedAt: pet.importedAt,
       metrics,
     },
-    allPets.map((candidate) => ({
-      importedAt: candidate.importedAt,
-      metrics: candidate.metrics,
-    })),
+    metricsSummary,
   );
-  const initialLiked = userId
-    ? Boolean(
-        await db.query.petLikes.findFirst({
-          where: and(
-            eq(schema.petLikes.userId, userId),
-            eq(schema.petLikes.petSlug, slug),
-          ),
-        }),
-      )
-    : false;
 
-  // Resolve the "submitted by" credit live from Clerk so name/url/avatar
-  // reflect the user's *current* profile (not the snapshot taken at
-  // submit time). Falls back to row.credit_* for orphan rows.
+  // Resolve public credit from local data so the ISR shell is not blocked by
+  // a per-request Clerk lookup. Profile sync keeps userProfiles fresh enough.
   const ownerCredit = ownerRow
-    ? await resolveOwnerCreditFor({
+    ? await resolveStoredOwnerCreditFor({
         ownerId: ownerRow.ownerId,
         creditName: ownerRow.creditName,
         creditUrl: ownerRow.creditUrl,
@@ -227,51 +199,11 @@ export default async function PetPage({ params }: PageProps) {
           ownerRow.source === "discover" ? null : ownerRow.creditImage,
         // For 'discover' rows the ownerId is the admin who imported
         // on the author's behalf, NOT the author. Use stored credit_*
-        // exclusively so the author keeps the byline. After someone
-        // claims the row source flips to 'claimed' and we go back to
-        // resolving from the live Clerk profile.
+        // exclusively so the author keeps the byline. Claimed/submit rows
+        // use stored credit plus local userProfiles so this route stays ISR.
         ownerIsProxy: ownerRow.source === "discover",
       })
     : null;
-
-  let ownerEditState: {
-    isOwner: boolean;
-    petId: string;
-    currentTags: string[];
-    pending: {
-      displayName: string | null;
-      description: string | null;
-      tags: string[] | null;
-      submittedAt: string | null;
-    } | null;
-    lastRejection: string | null;
-  } | null = null;
-  if (userId && ownerRow && ownerRow.ownerId === userId) {
-    const hasPending = Boolean(ownerRow.pendingSubmittedAt);
-    ownerEditState = {
-      isOwner: true,
-      petId: ownerRow.id,
-      currentTags: (ownerRow.tags as string[]) ?? [],
-      pending: hasPending
-        ? {
-            displayName: ownerRow.pendingDisplayName,
-            description: ownerRow.pendingDescription,
-            tags: (ownerRow.pendingTags as string[] | null) ?? null,
-            submittedAt: ownerRow.pendingSubmittedAt
-              ? ownerRow.pendingSubmittedAt.toISOString()
-              : null,
-          }
-        : null,
-      lastRejection: ownerRow.pendingRejectionReason,
-    };
-  }
-
-  // Owner-only: candidate featured collections + already-submitted
-  // pending requests for the suggest button.
-  const collectionSuggest =
-    userId && ownerRow && ownerRow.ownerId === userId
-      ? await getCollectionCandidatesForPet(slug, userId)
-      : null;
 
   const url = `${SITE_URL}/pets/${pet.slug}`;
   const jsonLd = [
@@ -404,29 +336,18 @@ export default async function PetPage({ params }: PageProps) {
               <h1 className="text-balance text-[44px] leading-[1] font-semibold tracking-tight text-foreground md:text-[64px]">
                 {pet.displayName}
               </h1>
-              {ownerEditState ? (
-                <OwnerEditPanel
-                  petId={ownerEditState.petId}
-                  slug={pet.slug}
-                  currentDisplayName={pet.displayName}
-                  currentDescription={pet.description}
-                  currentTags={ownerEditState.currentTags}
-                  initialPending={ownerEditState.pending}
-                  initialRejection={ownerEditState.lastRejection}
-                />
-              ) : null}
+              <OwnerPetControls
+                slug={pet.slug}
+                currentDisplayName={pet.displayName}
+                currentDescription={pet.description}
+              />
             </div>
             <p className="max-w-3xl text-balance text-base leading-7 text-muted-1 md:text-lg">
               {pet.description}
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <LikeButton
-                slug={pet.slug}
-                initialCount={metrics.likeCount}
-                initialLiked={initialLiked}
-                signedIn={Boolean(userId)}
-              />
+              <LikeButton slug={pet.slug} initialCount={metrics.likeCount} />
               {pet.soundUrl ? (
                 <PetSoundButton
                   soundUrl={pet.soundUrl}
@@ -480,15 +401,6 @@ export default async function PetPage({ params }: PageProps) {
               </div>
             ) : null}
 
-            {collectionSuggest && collectionSuggest.candidates.length > 0 ? (
-              <SuggestCollectionButton
-                petSlug={slug}
-                petDisplayName={pet.displayName}
-                candidateCollections={collectionSuggest.candidates}
-                alreadyRequested={collectionSuggest.alreadyRequested}
-              />
-            ) : null}
-
             {/* Keyboard hint strip — minimal, mono-spaced, only on
                 pointer-fine media so we don't spam mobile users with
                 Esc/arrow chrome. */}
@@ -528,7 +440,7 @@ export default async function PetPage({ params }: PageProps) {
           {ownerCredit ? (
             <div className="space-y-3">
               <SubmittedBy credit={ownerCredit} />
-              {ownerRow?.source === "discover" && !userId ? (
+              {ownerRow?.source === "discover" ? (
                 <ClaimCTA
                   petName={pet.displayName}
                   authorLabel={ownerCredit.name}
@@ -578,10 +490,10 @@ export default async function PetPage({ params }: PageProps) {
                     className="group flex items-center gap-3 rounded-2xl border border-border-base bg-background/70 p-3 transition hover:-translate-y-0.5 hover:border-brand/35 hover:bg-background"
                   >
                     <div className="shrink-0 rounded-2xl border border-border-base bg-surface p-2">
-                      <PetSprite
+                      <StaticPetSprite
                         src={variant.spritesheetUrl}
                         scale={0.45}
-                        label={`${variant.displayName} animated`}
+                        label={variant.displayName}
                       />
                     </div>
                     <div className="min-w-0">
