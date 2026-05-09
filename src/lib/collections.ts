@@ -1,4 +1,13 @@
-import { and, asc, desc, eq, getTableColumns, inArray } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  sql as dsql,
+  eq,
+  getTableColumns,
+  gte,
+  inArray,
+} from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs, type Metrics } from "@/lib/db/metrics";
@@ -48,6 +57,55 @@ export async function getAllCollections(): Promise<PetCollectionWithPets[]> {
   }
 
   return hydrateCollections(rows);
+}
+
+// Returns featured collections that have at least `minPets` approved
+// pets, with a small sample for the cover preview. Used by the public
+// /collections listing — keeps the page fast even with hundreds of
+// collections by filtering at the SQL level.
+export async function getCollectionsForListing(
+  minPets = 4,
+  petsPerPreview = 6,
+): Promise<(PetCollectionWithPets & { petCount: number })[]> {
+  let rows: (PetCollection & { petCount: number })[];
+  try {
+    const result = await db
+      .select({
+        ...getTableColumns(schema.petCollections),
+        petCount: dsql<number>`count(${schema.petCollectionItems.petSlug})`.as(
+          "pet_count",
+        ),
+      })
+      .from(schema.petCollections)
+      .leftJoin(
+        schema.petCollectionItems,
+        eq(schema.petCollectionItems.collectionId, schema.petCollections.id),
+      )
+      .where(eq(schema.petCollections.featured, true))
+      .groupBy(schema.petCollections.id)
+      .having(
+        gte(dsql<number>`count(${schema.petCollectionItems.petSlug})`, minPets),
+      )
+      .orderBy(
+        desc(dsql`count(${schema.petCollectionItems.petSlug})`),
+        asc(schema.petCollections.title),
+      );
+    rows = result.map((r) => ({
+      ...r,
+      petCount: Number(r.petCount),
+    }));
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return [];
+    throw error;
+  }
+
+  const hydrated = await hydrateCollections(rows, petsPerPreview);
+  // Re-attach the pet count we computed (hydrate doesn't carry it).
+  const countBySlug = new Map(rows.map((r) => [r.slug, r.petCount]));
+  return hydrated.map((c) => ({
+    ...c,
+    petCount: countBySlug.get(c.slug) ?? c.pets.length,
+  }));
 }
 
 export async function getCollection(
