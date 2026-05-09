@@ -373,6 +373,7 @@
       "requests": "Requests",
       "collections": "Collections",
       "feedback": "Feedback",
+      "campaigns": "Campaigns",
       "manifest": "Manifest",
       "insights": "Insights"
     },
@@ -484,6 +485,53 @@
       "archive": "Archive",
       "reopen": "Re-open into pending",
       "failed": "Failed: {error}"
+    },
+    "campaigns": {
+      "eyebrow": "Ad operations",
+      "title": "Ad campaigns",
+      "description": "Review every advertiser campaign across users, including owner details, delivery metrics, and charted activity.",
+      "overview": {
+        "totalCampaigns": "Total campaigns",
+        "totalSpend": "{value} booked spend",
+        "active": "Active",
+        "statusDetail": "{paused} paused, {exhausted} exhausted",
+        "pendingPayment": "Pending payment",
+        "deletedDetail": "{count} deleted",
+        "inventory": "Purchased impressions",
+        "servedDetail": "{value} served",
+        "impressions": "Raw impressions",
+        "rawImpressionsDetail": "Rows in ad_impressions",
+        "clicks": "Clicks",
+        "ctr": "{value} CTR",
+        "hovers": "Hovers",
+        "dismissals": "{value} dismissals",
+        "avgTime": "Avg. time in view",
+        "avgTimeDetail": "Across time-in-view events"
+      },
+      "filters": {
+        "status": "Status",
+        "search": "Search",
+        "searchPlaceholder": "Title, company, email, user ID, URL",
+        "limit": "Limit",
+        "apply": "Apply filters",
+        "clear": "Clear"
+      },
+      "statuses": {
+        "all": "All statuses",
+        "pending_payment": "Pending payment",
+        "active": "Active",
+        "exhausted": "Exhausted",
+        "paused": "Paused",
+        "deleted": "Deleted"
+      },
+      "owner": {
+        "title": "Owner",
+        "userId": "User ID",
+        "contactEmail": "Contact email",
+        "company": "Company"
+      },
+      "showing": "Showing {shown} of {total} matching campaigns",
+      "empty": "No ad campaigns match these filters."
     },
     "requests": {
       "eyebrow": "Community wishlist",

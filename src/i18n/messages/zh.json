@@ -411,6 +411,7 @@
       "requests": "请求",
       "collections": "合集",
       "feedback": "反馈",
+      "campaigns": "广告活动",
       "manifest": "Manifest",
       "insights": "数据"
     },
@@ -522,6 +523,53 @@
       "archive": "归档",
       "reopen": "重新打开为待处理",
       "failed": "失败：{error}"
+    },
+    "campaigns": {
+      "eyebrow": "广告运营",
+      "title": "广告活动",
+      "description": "查看所有用户的广告活动，包括所有者信息、投放指标和活动图表。",
+      "overview": {
+        "totalCampaigns": "活动总数",
+        "totalSpend": "已预订花费 {value}",
+        "active": "投放中",
+        "statusDetail": "{paused} 个暂停，{exhausted} 个耗尽",
+        "pendingPayment": "待付款",
+        "deletedDetail": "{count} 个已删除",
+        "inventory": "已购买曝光",
+        "servedDetail": "已投放 {value}",
+        "impressions": "原始曝光",
+        "rawImpressionsDetail": "ad_impressions 表记录数",
+        "clicks": "点击",
+        "ctr": "点击率 {value}",
+        "hovers": "悬停",
+        "dismissals": "{value} 次隐藏",
+        "avgTime": "平均可见时间",
+        "avgTimeDetail": "基于 time-in-view 事件"
+      },
+      "filters": {
+        "status": "状态",
+        "search": "搜索",
+        "searchPlaceholder": "标题、公司、邮箱、用户 ID、URL",
+        "limit": "数量限制",
+        "apply": "应用筛选",
+        "clear": "清除"
+      },
+      "statuses": {
+        "all": "所有状态",
+        "pending_payment": "待付款",
+        "active": "投放中",
+        "exhausted": "已耗尽",
+        "paused": "已暂停",
+        "deleted": "已删除"
+      },
+      "owner": {
+        "title": "所有者",
+        "userId": "用户 ID",
+        "contactEmail": "联系邮箱",
+        "company": "公司"
+      },
+      "showing": "显示 {total} 个匹配活动中的 {shown} 个",
+      "empty": "没有广告活动匹配这些筛选条件。"
     },
     "requests": {
       "eyebrow": "社区愿望单",

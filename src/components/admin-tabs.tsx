@@ -15,6 +15,7 @@ const TABS: Array<{
     | "requests"
     | "collections"
     | "feedback"
+    | "campaigns"
     | "manifest"
     | "insights";
   match: (pathname: string) => boolean;
@@ -43,6 +44,11 @@ const TABS: Array<{
     href: "/admin/feedback",
     key: "feedback",
     match: (p) => p.startsWith("/admin/feedback"),
+  },
+  {
+    href: "/admin/campaigns",
+    key: "campaigns",
+    match: (p) => p.startsWith("/admin/campaigns"),
   },
   {
     href: "/admin/manifest",
