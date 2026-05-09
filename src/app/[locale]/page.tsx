@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { getActiveFeedAds } from "@/lib/ads/queries";
 import {
-  getFeaturedCollections,
+  getCollectionsBySlugs,
   type PetCollectionWithPets,
 } from "@/lib/collections";
 import { getDexNumberMap } from "@/lib/dex";
@@ -46,19 +46,6 @@ export function generateStaticParams() {
 export default async function Home() {
   const t = await getTranslations("home");
 
-  const [heroPets, initialSearch, dexEntries, allFeaturedCollections, feedAds] =
-    await Promise.all([
-      getFeaturedPetsWithMetrics(6),
-      // No shuffleSeed → searchPets falls back to alpha order, which is
-      // the same for every visitor and therefore safe to cache. The
-      // client re-fetches with the visitor's seed on hydration.
-      searchPets({ sort: "curated" }),
-      getDexNumberMap(),
-      getFeaturedCollections(20),
-      getActiveFeedAds(6),
-    ]);
-  const totalPets = initialSearch.total;
-
   // Hand-pick the 3 collections that show on the landing strip in a
   // specific narrative order: Pokemon (instant recognition) →
   // League of Legends (largest deck, gamer pull) →
@@ -69,12 +56,19 @@ export default async function Home() {
     "franchise-league-of-legends",
     "franchise-jojos-bizarre-adventure",
   ];
-  const collectionsBySlug = new Map(
-    allFeaturedCollections.map((c) => [c.slug, c]),
-  );
-  const collections = LANDING_COLLECTION_ORDER.map((slug) =>
-    collectionsBySlug.get(slug),
-  ).filter((c): c is NonNullable<typeof c> => Boolean(c));
+
+  const [heroPets, initialSearch, dexEntries, collections, feedAds] =
+    await Promise.all([
+      getFeaturedPetsWithMetrics(6),
+      // No shuffleSeed → searchPets falls back to alpha order, which is
+      // the same for every visitor and therefore safe to cache. The
+      // client re-fetches with the visitor's seed on hydration.
+      searchPets({ sort: "curated" }),
+      getDexNumberMap(),
+      getCollectionsBySlugs(LANDING_COLLECTION_ORDER, 6),
+      getActiveFeedAds(6),
+    ]);
+  const totalPets = initialSearch.total;
 
   // Plain-object so the server -> client serializer doesn't choke on a
   // Map. Same source of truth either way.

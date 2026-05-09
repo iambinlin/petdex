@@ -44,6 +44,32 @@ export async function getFeaturedCollections(
   return hydrateCollections(rows, 6);
 }
 
+// Fetch a specific set of collections by slug. Order of the returned
+// array matches the order of the input slugs. Missing slugs are
+// silently skipped. Used by the home page to show a curated strip
+// without paying for a full alphabetical scan + JS filter.
+export async function getCollectionsBySlugs(
+  slugs: string[],
+  petsPerCollection = 6,
+): Promise<PetCollectionWithPets[]> {
+  if (slugs.length === 0) return [];
+  let rows: PetCollection[];
+  try {
+    rows = await db
+      .select()
+      .from(schema.petCollections)
+      .where(inArray(schema.petCollections.slug, slugs));
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return [];
+    throw error;
+  }
+  const order = new Map(slugs.map((s, i) => [s, i]));
+  rows = rows
+    .filter((r) => order.has(r.slug))
+    .sort((a, b) => (order.get(a.slug) ?? 0) - (order.get(b.slug) ?? 0));
+  return hydrateCollections(rows, petsPerCollection);
+}
+
 export async function getAllCollections(): Promise<PetCollectionWithPets[]> {
   let rows: PetCollection[];
   try {
