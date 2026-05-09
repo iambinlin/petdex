@@ -3,9 +3,19 @@
 //
 // Run: DATABASE_URL=... bun run test:db
 
-import { describe, expect, it } from "bun:test";
+import * as BunTest from "bun:test";
 
 import type { searchPets as searchPetsFn } from "@/lib/pet-search";
+
+const { describe, expect, it } = BunTest;
+const testMock = (
+  BunTest as typeof BunTest & {
+    mock: { module: (specifier: string, factory: () => object) => void };
+  }
+).mock;
+
+testMock.module("server-only", () => ({}));
+process.env.PETDEX_DISABLE_NEXT_CACHE = "1";
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is required for pet-search integration tests");
@@ -146,6 +156,17 @@ describe("searchPets", () => {
     for (const pet of second.pets) {
       expect(firstSlugs.has(pet.slug)).toBe(false);
     }
+  });
+
+  it("can skip total and facets for pagination payloads", async () => {
+    const searchPets = await loadSearchPets();
+    const out = await searchPets(
+      { limit: 5, sort: "alpha", cursor: 5 },
+      { includeTotal: false, includeFacets: false },
+    );
+    expect(out.pets.length).toBeGreaterThan(0);
+    expect(out.total).toBeUndefined();
+    expect(out.facets).toBeUndefined();
   });
 
   it("limit is clamped to MAX_LIMIT", async () => {
