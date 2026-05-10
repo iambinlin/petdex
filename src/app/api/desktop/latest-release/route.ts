@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 // Cache the resolved desktop release URL for 5 minutes. Releases ship
@@ -23,75 +23,125 @@ const DESKTOP_TAG_PREFIX = "desktop-v";
 const RELEASES_PAGE =
   "https://github.com/crafter-station/petdex/releases";
 
-// Hard-pin the redirect target to the petdex repo on github.com. The
-// `html_url` on the response is technically attacker-controlled (a
-// compromised GH response, an MITM, or a future API shape change
-// could surface a non-GH URL), and forwarding it blindly into a 307
-// turns this endpoint into an open redirect. Anything that fails the
-// prefix check falls back to the static releases page, which is
-// always safe.
+// Hard-pin every redirect target to the petdex repo on github.com.
+// The html_url / browser_download_url fields on the response are
+// technically attacker-controlled (a compromised GH response, an
+// MITM, or a future API shape change could surface a non-GH URL),
+// and forwarding them blindly turns this endpoint into an open
+// redirect. Anything that fails the prefix check falls back to the
+// static releases page, which is always safe.
 const SAFE_URL_PREFIX = "https://github.com/crafter-station/petdex/";
 
-function isTrustedReleaseUrl(url: string): boolean {
+function isTrustedUrl(url: string): boolean {
   return url.startsWith(SAFE_URL_PREFIX);
 }
+
+type GhAsset = {
+  name?: string;
+  browser_download_url?: string;
+};
 
 type GhRelease = {
   tag_name?: string;
   html_url?: string;
   draft?: boolean;
   prerelease?: boolean;
+  assets?: GhAsset[];
 };
 
-async function resolveDesktopRelease(): Promise<string> {
-  try {
-    // Walk pages newest-first until we hit a desktop-v* tag or
-    // exhaust the cap. Most repos resolve on page 1; the loop
-    // exists so a long run of web-v*/sidecar-v* releases doesn't
-    // hide the latest desktop tag behind page 1.
-    for (let page = 1; page <= RELEASES_MAX_PAGES; page++) {
-      const url = `${RELEASES_API_BASE}?per_page=${RELEASES_PAGE_SIZE}&page=${page}`;
-      const res = await fetch(url, {
-        headers: { Accept: "application/vnd.github+json" },
-        signal: AbortSignal.timeout(5_000),
-      });
-      if (!res.ok) return RELEASES_PAGE;
-      const data = (await res.json()) as GhRelease[];
-      if (!Array.isArray(data) || data.length === 0) return RELEASES_PAGE;
-      const hit = data.find(
-        (r) =>
-          !r.draft &&
-          !r.prerelease &&
-          typeof r.tag_name === "string" &&
-          r.tag_name.startsWith(DESKTOP_TAG_PREFIX),
-      );
-      if (hit) {
-        // Trust html_url only when it points back at our own repo on
-        // github.com. Anything else gets discarded in favor of a URL
-        // we construct ourselves from the tag name (which we already
-        // validated by prefix, so it's a-z0-9.- safe).
-        if (hit.html_url && isTrustedReleaseUrl(hit.html_url)) {
-          return hit.html_url;
-        }
-        if (hit.tag_name) {
-          return `${SAFE_URL_PREFIX}releases/tag/${hit.tag_name}`;
-        }
-        return RELEASES_PAGE;
-      }
-      // Short page = end of list, no point asking for the next.
-      if (data.length < RELEASES_PAGE_SIZE) return RELEASES_PAGE;
-    }
-    return RELEASES_PAGE;
-  } catch {
-    return RELEASES_PAGE;
+async function findLatestDesktopRelease(): Promise<GhRelease | null> {
+  // Walk pages newest-first until we hit a desktop-v* tag or
+  // exhaust the cap. Most repos resolve on page 1; the loop
+  // exists so a long run of web-v*/sidecar-v* releases doesn't
+  // hide the latest desktop tag behind page 1.
+  for (let page = 1; page <= RELEASES_MAX_PAGES; page++) {
+    const url = `${RELEASES_API_BASE}?per_page=${RELEASES_PAGE_SIZE}&page=${page}`;
+    const res = await fetch(url, {
+      headers: { Accept: "application/vnd.github+json" },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as GhRelease[];
+    if (!Array.isArray(data) || data.length === 0) return null;
+    const hit = data.find(
+      (r) =>
+        !r.draft &&
+        !r.prerelease &&
+        typeof r.tag_name === "string" &&
+        r.tag_name.startsWith(DESKTOP_TAG_PREFIX),
+    );
+    if (hit) return hit;
+    if (data.length < RELEASES_PAGE_SIZE) return null;
   }
+  return null;
 }
 
-// 307 redirect (preserves method, doesn't get cached as a permanent
-// move) to the newest desktop-v* release page. Anchored at a stable
-// app URL so the /download link doesn't bake the GitHub URL into HTML
-// and we can swap the resolution logic without touching the page.
-export async function GET(): Promise<Response> {
-  const target = await resolveDesktopRelease();
-  return NextResponse.redirect(target, 307);
+// Pick the binary asset for a target platform. Today darwin-arm64
+// is the only one we ship; when we add darwin-x64/linux-arm64/etc
+// they'll just need to land in the release with the matching
+// `petdex-desktop-<platform>` prefix.
+function pickAssetForPlatform(
+  release: GhRelease,
+  platform: string,
+): GhAsset | null {
+  if (!Array.isArray(release.assets)) return null;
+  const wantedPrefix = `petdex-desktop-${platform}`;
+  return (
+    release.assets.find(
+      (a) =>
+        typeof a.name === "string" &&
+        a.name.startsWith(wantedPrefix) &&
+        typeof a.browser_download_url === "string" &&
+        isTrustedUrl(a.browser_download_url),
+    ) ?? null
+  );
+}
+
+function releasePageUrl(release: GhRelease | null): string {
+  if (!release) return RELEASES_PAGE;
+  if (release.html_url && isTrustedUrl(release.html_url)) return release.html_url;
+  if (release.tag_name) return `${SAFE_URL_PREFIX}releases/tag/${release.tag_name}`;
+  return RELEASES_PAGE;
+}
+
+/**
+ * GET /api/desktop/latest-release
+ *
+ * Default behavior: 307 to the latest desktop-v* release page on
+ * GitHub. This is the "show me where the desktop app lives" UX —
+ * the user lands on a page they can browse.
+ *
+ * `?asset=darwin-arm64` (or any future platform suffix): 307 directly
+ * to the platform-specific binary asset's download URL. The browser
+ * starts the file save immediately — no extra click on a release
+ * page, no asset confusion. This is what /download's "Download for
+ * macOS" button uses.
+ *
+ * Falls back to the release page (or to /releases) on any GitHub
+ * API failure or missing asset, so the user always lands somewhere
+ * useful.
+ */
+export async function GET(req: NextRequest): Promise<Response> {
+  const asset = req.nextUrl.searchParams.get("asset");
+  let release: GhRelease | null = null;
+  try {
+    release = await findLatestDesktopRelease();
+  } catch {
+    // fall through with release=null → fallback page
+  }
+
+  if (asset) {
+    if (release) {
+      const hit = pickAssetForPlatform(release, asset);
+      if (hit?.browser_download_url) {
+        return NextResponse.redirect(hit.browser_download_url, 307);
+      }
+    }
+    // Asked for a specific binary but couldn't resolve. Sending the
+    // user to the release page is strictly better than a 404 — they
+    // can pick the asset by hand.
+    return NextResponse.redirect(releasePageUrl(release), 307);
+  }
+
+  return NextResponse.redirect(releasePageUrl(release), 307);
 }

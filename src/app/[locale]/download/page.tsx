@@ -38,12 +38,17 @@ export const metadata = {
 // for everyone.
 export const dynamic = "force-dynamic";
 
-// Resolves to the newest desktop-v* GitHub release via 307 redirect.
-// Goes through our API rather than linking GH's /releases/latest
-// directly because /releases/latest returns whichever lineage shipped
-// most recently — a web-v* or sidecar-v* release would point users to
-// a tag that doesn't have desktop assets attached.
-const RELEASES_URL = "/api/desktop/latest-release";
+// "Download for macOS" goes straight to the macOS binary so the
+// browser starts the file save immediately — no extra click on a
+// release page, no two-asset confusion. The route also redirects on
+// missing/failed asset resolution to the release page so the user
+// always lands somewhere they can browse.
+//
+// Goes through our API rather than linking GH directly because
+// /releases/latest would return whichever lineage shipped most
+// recently — a web-v* or sidecar-v* release wouldn't have a
+// petdex-desktop-darwin-arm64 asset and the link would 404.
+const MACOS_DOWNLOAD_URL = "/api/desktop/latest-release?asset=darwin-arm64";
 
 type DownloadPageProps = {
   searchParams: Promise<{ next?: string | string[] }>;
@@ -156,8 +161,7 @@ export default async function DownloadPage({
           <div className="mt-10 flex w-full flex-col items-center gap-3">
             <div className="flex w-full flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <a
-                href={RELEASES_URL}
-                target="_blank"
+                href={MACOS_DOWNLOAD_URL}
                 rel="noreferrer"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
               >
