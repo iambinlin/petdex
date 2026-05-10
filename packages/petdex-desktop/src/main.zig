@@ -7,7 +7,10 @@ const zero_native = @import("zero-native");
 pub const panic = std.debug.FullPanic(zero_native.debug.capturePanic);
 
 const WINDOW_W: f32 = 140;
-const WINDOW_H: f32 = 160;
+// 180px tall: pet at top:34 + 78px sprite = 112; +16 bottom margin
+// after gravity-throw recovery. The bubble sits in the 30px strip
+// above the pet via getBoundingClientRect anchoring.
+const WINDOW_H: f32 = 180;
 const MENU_W: u32 = 480;
 const MENU_H: u32 = 420;
 const MAX_PET_BYTES: usize = 16 * 1024 * 1024;
@@ -18,10 +21,17 @@ const html_head =
     \\<html>
     \\<head>
     \\<meta charset="utf-8">
+    \\<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+    \\<meta http-equiv="pragma" content="no-cache">
+    \\<meta http-equiv="expires" content="0">
     \\<style>
     \\  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; width: 100%; height: 100%; font-family: -apple-system, system-ui, sans-serif; }
     \\  body { -webkit-user-select: none; user-select: none; pointer-events: none; }
-    \\  .stage { position: fixed; top: 8px; left: 8px; pointer-events: none; }
+    \\  // Pet positioned 60px from the top to leave room for a
+    \\  // bubble tooltip + visual gap above. Forced via inline JS
+    \\  // below since something in WebKit kept caching/overriding
+    \\  // the rule when we used .stage{top:Xpx}.
+    \\  .stage { position: fixed; left: 8px; pointer-events: none; }
     \\  .pet {
     \\    aspect-ratio: 192 / 208;
     \\    width: 4.5rem;
@@ -195,6 +205,16 @@ const html_tail =
     \\  }
     \\  function pos(c, r) { return `${c/(COLS-1)*100}% ${r/(ROWS-1)*100}%`; }
     \\  const pet = document.getElementById('pet');
+    \\  // Force the pet's container down via inline JS to leave room
+    \\  // for the bubble tooltip above. CSS .stage{top:Xpx} kept
+    \\  // appearing not to apply during testing — inline style on the
+    \\  // element wins over any cached/conflicting rule.
+    \\  const stageEl = pet.parentElement;
+    \\  if (stageEl) {
+    \\    stageEl.style.top = '34px';
+    \\    stageEl.style.left = '8px';
+    \\    stageEl.style.position = 'fixed';
+    \\  }
     \\  let currentState = 'idle';
     \\  let stateTimer = null;
     \\  function play(state) {
@@ -251,9 +271,41 @@ const html_tail =
     \\    if (bubbleEl) return bubbleEl;
     \\    bubbleEl = document.createElement('div');
     \\    bubbleEl.id = 'pet-bubble';
-    \\    bubbleEl.style.cssText = 'position:fixed;left:50%;top:6px;transform:translateX(-50%);max-width:220px;padding:5px 9px;border-radius:9px;background:rgba(15,18,30,0.92);color:#e8eaf3;font:600 11px system-ui,-apple-system,sans-serif;line-height:1.3;box-shadow:0 2px 10px rgba(0,0,0,0.30);backdrop-filter:blur(8px);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity 180ms ease;pointer-events:none;z-index:5;';
+    \\    // Speech bubble anchored to the pet's bounding rect so it
+    \\    // tracks the pet wherever it lives in the WebView (compact
+    \\    // mode, picker-expanded mode, after a drag/throw, etc.).
+    \\    // We position it absolutely with top/left computed from
+    \\    // the pet's getBoundingClientRect() each time we render.
+    \\    // z-index 5: below the picker menu (which uses 999) so the
+    \\    // user's pet-browsing flow takes precedence — the bubble
+    \\    // is ambient feedback, the picker is an active modal.
+    \\    bubbleEl.style.cssText = 'position:fixed;padding:4px 9px;border-radius:9px;background:#ffffff;color:#111;font:600 11px system-ui,-apple-system,sans-serif;line-height:1.2;box-shadow:0 2px 6px rgba(0,0,0,0.30);text-align:center;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity 180ms ease;pointer-events:none;z-index:5;';
     \\    document.body.appendChild(bubbleEl);
     \\    return bubbleEl;
+    \\  }
+    \\  function positionBubbleNearPet(el) {
+    \\    // Anchor the bubble ABOVE the pet. The picker menu opens to
+    \\    // the right of the pet, so right-side placement collides;
+    \\    // top placement is the only spot that's stable across the
+    \\    // pet's compact + picker-expanded modes.
+    \\    // We measure the bubble AFTER setting its text (caller
+    \\    // ensures that order), so el.offsetWidth is the real width.
+    \\    const rect = pet.getBoundingClientRect();
+    \\    const bw = el.offsetWidth || 100;
+    \\    const bh = el.offsetHeight || 22;
+    \\    const ww = window.innerWidth;
+    \\    const gap = 6;
+    \\    // Center horizontally on the pet, clamp inside viewport.
+    \\    const desiredLeft = rect.left + (rect.width - bw) / 2;
+    \\    const left = Math.max(4, Math.min(ww - bw - 4, desiredLeft));
+    \\    // Always above the pet. If the pet is too close to the top
+    \\    // edge to fit the bubble cleanly, we still pin to top:2 —
+    \\    // the bubble overlapping the pet's hairline is preferable
+    \\    // to it jumping below the body, which the user explicitly
+    \\    // didn't want.
+    \\    const top = Math.max(2, rect.top - bh - gap);
+    \\    el.style.left = left + 'px';
+    \\    el.style.top = top + 'px';
     \\  }
     \\  async function pollBubble() {
     \\    if (!(window.zero && window.zero.invoke)) return;
@@ -266,6 +318,7 @@ const html_tail =
     \\      const el = ensureBubble();
     \\      if (text) {
     \\        el.textContent = text;
+    \\        positionBubbleNearPet(el);
     \\        el.style.opacity = '1';
     \\      } else {
     \\        el.style.opacity = '0';
@@ -274,6 +327,13 @@ const html_tail =
     \\  }
     \\  setInterval(pollBubble, 200);
     \\  pollBubble();
+    \\  // Reposition the bubble whenever the pet might have moved —
+    \\  // window resize, drag, throw. Cheap (one rect read + two
+    \\  // style writes); the polling interval already handles
+    \\  // most updates, this just keeps it glued during interaction.
+    \\  window.addEventListener('resize', () => {
+    \\    if (bubbleEl && bubbleEl.style.opacity === '1') positionBubbleNearPet(bubbleEl);
+    \\  });
     \\
     \\  // Layer 1 autoupdate: read update.json (written by the sidecar's
     \\  // periodic GH releases poll) and render a notification card. A
