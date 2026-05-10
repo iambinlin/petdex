@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { UnsubscribeForm } from "./unsubscribe-form";
 
 export const metadata = {
-  title: "Unsubscribe — Petdex",
+  title: "Unsubscribe | Petdex",
   description: "Manage your Petdex email preferences.",
   alternates: buildLocaleAlternates("/unsubscribe"),
   robots: { index: false, follow: false },

@@ -6,7 +6,7 @@ import { db, schema } from "@/lib/db/client";
 import { ComposeForm } from "./compose-form";
 
 export const metadata = {
-  title: "New broadcast — Petdex Admin",
+  title: "New broadcast | Petdex Admin",
   robots: { index: false, follow: false },
 };
 

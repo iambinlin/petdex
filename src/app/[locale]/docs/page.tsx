@@ -340,7 +340,7 @@ export default function DocsPage() {
               One-shot wake/sleep for the mascot. <code>up</code> enables
               hooks AND launches the desktop. <code>down</code> disables hooks
               AND stops the desktop. <code>toggle</code> flips between them
-              based on current state — that's what the <code>/petdex</code>{" "}
+              based on current state. That's what the <code>/petdex</code>{" "}
               slash command runs from inside your agent.
             </p>
             <CommandLine
@@ -360,19 +360,19 @@ export default function DocsPage() {
             </p>
             <ul className="ml-6 list-disc space-y-1 text-muted-2">
               <li>
-                <code>/petdex</code> — toggle (wake if asleep, sleep if awake)
+                <code>/petdex</code>: toggle (wake if asleep, sleep if awake)
               </li>
               <li>
-                <code>/petdex up</code> — force-wake
+                <code>/petdex up</code>: force-wake
               </li>
               <li>
-                <code>/petdex down</code> — force-sleep
+                <code>/petdex down</code>: force-sleep
               </li>
               <li>
-                <code>/petdex status</code> — show whether hooks are enabled
+                <code>/petdex status</code>: show whether hooks are enabled
               </li>
               <li>
-                <code>/petdex doctor</code> — diagnose install + agent wiring
+                <code>/petdex doctor</code>: diagnose install + agent wiring
               </li>
             </ul>
 
@@ -447,7 +447,7 @@ export default function DocsPage() {
               Anything that can <code>curl</code> + read the per-session token
               at <code>~/.petdex/runtime/update-token</code> can drive the pet.
               The token rotates every sidecar boot and lives at mode{" "}
-              <code>0600</code>, so only your user can read it — browsers and
+              <code>0600</code>, so only your user can read it. Browsers and
               remote sites can't:
               <pre className="mt-3 overflow-x-auto rounded-lg bg-surface-muted p-3 font-mono text-xs leading-relaxed">
                 {[

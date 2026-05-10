@@ -331,7 +331,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                   <Link
                     href="/leaderboard"
                     className="inline-flex items-center gap-1 rounded-full bg-chip-warning-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] text-chip-warning-fg uppercase transition hover:opacity-80"
-                    title={`Ranked #${rank.rank} of ${rank.total} by approved pets — see the full leaderboard`}
+                    title={`Ranked #${rank.rank} of ${rank.total} by approved pets. See the full leaderboard`}
                   >
                     <Trophy className="size-3" />#{rank.rank} most pets
                   </Link>

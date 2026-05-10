@@ -69,7 +69,7 @@ export async function generateMetadata({ params }: PageProps) {
     };
   }
 
-  const title = `${pet.displayName} — Animated Codex pet`;
+  const title = `${pet.displayName}: Animated Codex pet`;
   const description = `Install ${pet.displayName} for Codex: ${pet.description} One command, animated pixel art, ${pet.tags.slice(0, 3).join(" + ") || "open source"}.`;
   const url = `${SITE_URL}/pets/${pet.slug}`;
 

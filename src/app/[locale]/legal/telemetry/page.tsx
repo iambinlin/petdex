@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 export const metadata = {
-  title: "Telemetry — Petdex",
+  title: "Telemetry | Petdex",
   description: "What petdex CLI telemetry collects and how to opt out.",
   alternates: buildLocaleAlternates("/legal/telemetry"),
   robots: { index: true, follow: true },
@@ -73,7 +73,7 @@ export default function TelemetryPrivacyPage() {
                     desktop_first_state_received
                   </code>{" "}
                   (the desktop sidecar emits this once per session when a hook
-                  first reaches the mascot — it lets us measure how many
+                  first reaches the mascot. It lets us measure how many
                   installs go all the way through the install, configure, and
                   run flow).
                 </td>

@@ -12,7 +12,7 @@ import { getTelemetrySummary } from "@/lib/telemetry/queries";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Telemetry — Petdex admin",
+  title: "Telemetry | Petdex admin",
   robots: { index: false, follow: false },
 };
 
