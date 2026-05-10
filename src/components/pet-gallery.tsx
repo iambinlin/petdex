@@ -309,7 +309,7 @@ export function PetGallery({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-xs tracking-[0.18em] text-brand-light uppercase">
-            Gallery — {totalPets} pets
+            Gallery · {totalPets} pets
           </p>
           <h2 className="mt-1.5 text-3xl font-medium tracking-tight text-black md:text-4xl dark:text-stone-100">
             Pick a companion
@@ -608,7 +608,7 @@ export function PetGallery({
         </div>
       ) : pets.length > 0 ? (
         <p className="py-6 text-center font-mono text-[10px] tracking-[0.22em] text-muted-4 uppercase">
-          End of gallery — {total} shown
+          End of gallery · {total} shown
         </p>
       ) : null}
     </section>

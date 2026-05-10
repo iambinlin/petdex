@@ -218,7 +218,7 @@ export function CollectionsBrowser({
         </div>
       ) : visible.length > PAGE_SIZE ? (
         <p className="pt-2 text-center text-xs text-muted-3">
-          End of results — {visible.length} collections
+          End of results · {visible.length} collections
         </p>
       ) : null}
     </div>

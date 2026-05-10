@@ -523,8 +523,8 @@ export function PetFloater({
     return createPortal(
       <button
         type="button"
-        aria-label={`${petName} — drag, click, or just watch`}
-        title={`${petName} — drag me, click me`}
+        aria-label={`${petName}: drag, click, or just watch`}
+        title={`${petName}: drag me, click me`}
         onPointerDown={onPointerDown}
         className={`absolute z-30 select-none rounded-3xl p-2 transition-transform ${
           dragging

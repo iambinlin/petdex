@@ -71,7 +71,7 @@ export function CollectionPetGrid({ pets, dexMap, caughtSlugs }: Props) {
         </div>
       ) : pets.length > PAGE_SIZE ? (
         <p className="pt-4 text-center text-xs text-muted-3">
-          End of collection — {pets.length} pets
+          End of collection · {pets.length} pets
         </p>
       ) : null}
     </>
