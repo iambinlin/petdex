@@ -14,6 +14,17 @@ import type { OwnerCredit } from "@/lib/owner-credit";
 import type { PetWithMetrics } from "@/lib/pets";
 
 import { CollectionCover } from "@/components/collection-cover";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 
 type CollectionItem = {
   slug: string;
@@ -113,38 +124,44 @@ export function CollectionsBrowser({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-border-base bg-surface/60 p-3 backdrop-blur">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <label className="relative flex flex-1 items-center md:max-w-md">
-            <Search className="pointer-events-none absolute left-3 size-4 text-muted-3" />
-            <input
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <InputGroup className="h-11 flex-1 rounded-full bg-background/40">
+            <InputGroupAddon align="inline-start">
+              <Search className="size-4 text-muted-3" />
+            </InputGroupAddon>
+            <InputGroupInput
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search collections — title, slug, description"
-              className="h-10 w-full rounded-full border border-border-base bg-transparent pr-4 pl-9 text-sm placeholder:text-muted-3 focus:outline-none focus:ring-1 focus:ring-brand"
+              placeholder="Try 'pokemon' or 'cozy cat' or 'developer'"
               aria-label="Search collections"
+              className="text-sm placeholder:text-muted-3"
             />
-          </label>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-3" htmlFor="sort">
-              Sort
-            </label>
-            <select
-              id="sort"
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortKey)}
-              className="h-10 rounded-full border border-border-base bg-transparent px-3 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
+          </InputGroup>
+          <Select
+            value={sort}
+            onValueChange={(v) => setSort(v as SortKey)}
+          >
+            <SelectTrigger
+              aria-label="Sort collections"
+              className="w-full shrink-0 sm:w-auto sm:min-w-[180px]"
             >
+              <span className="text-muted-3">Sort:</span>
+              <span className="text-foreground">
+                {SORT_OPTIONS.find((o) => o.value === sort)?.label}
+              </span>
+            </SelectTrigger>
+            <SelectContent align="end">
               {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+                <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           {KIND_FILTERS.map((f) => {
             const c = counts[f.value] ?? 0;
             const active = kind === f.value;

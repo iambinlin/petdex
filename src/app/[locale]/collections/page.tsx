@@ -72,7 +72,7 @@ export default async function CollectionsPage() {
       <JsonLd data={jsonLd} />
       <SiteHeader />
       <section className="petdex-cloud relative -mt-[84px] overflow-clip pt-[84px]">
-        <div className="relative mx-auto flex w-full max-w-6xl flex-col px-5 pb-10 md:px-8">
+        <div className="relative mx-auto flex w-full max-w-[1440px] flex-col px-5 pb-10 md:px-8">
           <div className="mt-12 max-w-2xl md:mt-16">
             <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
               Featured collections
@@ -88,7 +88,7 @@ export default async function CollectionsPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-[1280px] px-5 py-10 md:px-8 md:py-14">
+      <section className="mx-auto w-full max-w-[1440px] px-5 py-10 md:px-8 md:py-14">
         <CollectionsBrowser collections={browserItems} credits={creditsObj} />
       </section>
 
