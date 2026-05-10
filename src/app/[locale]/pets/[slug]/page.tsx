@@ -20,7 +20,12 @@ import { InstallCommand } from "@/components/install-command";
 import { InstallCommandCompact } from "@/components/install-command-compact";
 import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
-import { OpenInPetdexButton } from "@/components/open-in-petdex-button";
+// Paused — see CTA block below. Keep the import so re-enabling is a
+// one-line uncomment and we catch any rename at typecheck time.
+// biome-ignore lint/correctness/noUnusedImports: scheduled to come back when /download is public
+import { OpenInPetdexButton as _OpenInPetdexButton } from "@/components/open-in-petdex-button";
+
+void _OpenInPetdexButton;
 import { OwnerPetControls } from "@/components/owner-pet-controls";
 import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetFloater } from "@/components/pet-floater";
@@ -387,9 +392,11 @@ export default async function PetPage({ params }: PageProps) {
                 {pet.description}
               </p>
 
-              {/* Primary CTA. macOS-only; Linux/Windows users get nothing
-                  here and the compact command below carries the load. */}
-              <OpenInPetdexButton slug={pet.slug} />
+              {/* Primary CTA paused while the desktop app is in admin-
+                  only pre-launch (see /download gate). Restore once
+                  the binary is publicly available — no other change
+                  needed, the component still works. */}
+              {/* <OpenInPetdexButton slug={pet.slug} /> */}
 
               {/* Secondary CTA: single-line npx command + link to the
                   full install guide. The verbose tabs/instructions
