@@ -105,7 +105,7 @@ async function getAuth(): Promise<ClerkCliAuth> {
   return _auth;
 }
 
-const VERSION = "0.3.3";
+const VERSION = "0.3.4";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -1133,6 +1133,42 @@ async function cmdHooks(args: string[]) {
       await runHooksUninstall({ removeToken });
       break;
     }
+    case "refresh": {
+      // Non-interactive re-write for already-wired agents. Picks up
+      // changes to slash command body, hook templates, or the
+      // persisted binary without a fresh `init`. Used after
+      // `petdex update` and as a manual recovery command.
+      const { runRefresh } = await import("../src/hooks/refresh");
+      const result = await runRefresh();
+      if (result.binaryPersisted) {
+        console.log(
+          `${pc.green("✓")} Snapshotted petdex binary at ${pc.dim("~/.petdex/bin/petdex.js")}`,
+        );
+      } else if (result.binaryReason) {
+        console.log(
+          `${pc.yellow("!")} Binary snapshot skipped: ${result.binaryReason}`,
+        );
+      }
+      for (const id of result.refreshed) {
+        console.log(`${pc.green("✓")} Refreshed ${id}`);
+      }
+      for (const { id, reason } of result.skipped) {
+        if (reason === "not installed") continue;
+        console.log(`${pc.yellow("!")} Skipped ${id}: ${reason}`);
+      }
+      const totalRefreshed = result.refreshed.length;
+      console.log("");
+      if (totalRefreshed === 0) {
+        console.log(
+          `${pc.dim("No wired agents found. Run")} ${pc.cyan("petdex init")} ${pc.dim("first.")}`,
+        );
+      } else {
+        console.log(
+          `${pc.green("✓")} ${pc.bold(`${totalRefreshed} agent${totalRefreshed === 1 ? "" : "s"} refreshed.`)} Restart your agent to load the new hooks.`,
+        );
+      }
+      break;
+    }
     default:
       console.error(pc.red(`Unknown hooks command: ${sub}`));
       printHooksHelp();
@@ -1280,6 +1316,7 @@ function printHooksHelp() {
       "",
       `  ${c("Commands")}`,
       `    ${pc.bold("install")}              Wire petdex into your coding agents`,
+      `    ${pc.bold("refresh")}              Re-write hook configs + slash commands for already-wired agents (non-interactive)`,
       `    ${pc.bold("uninstall")}            Remove petdex from your agent configs (--remove-token also drops the auth token)`,
       `    ${pc.bold("toggle")}               Flip the killswitch — disable/enable hooks without restarting agents`,
       `    ${pc.bold("on")}                   Enable hooks (clears the killswitch)`,

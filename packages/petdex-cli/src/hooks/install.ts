@@ -23,7 +23,7 @@ import { installSlashCommand } from "./slash-command.js";
 
 type Detection = { agent: Agent; installed: boolean };
 
-async function detectAgents(): Promise<Detection[]> {
+export async function detectAgents(): Promise<Detection[]> {
   return Promise.all(
     AGENTS.map(async (agent) => ({
       agent,
@@ -172,9 +172,9 @@ export async function runInstall(): Promise<HooksInstallResult> {
   return { installedAgents };
 }
 
-type InstallResult = { backupPath: string | null };
+export type InstallResult = { backupPath: string | null };
 
-async function installForAgent(agent: Agent): Promise<InstallResult> {
+export async function installForAgent(agent: Agent): Promise<InstallResult> {
   await mkdir(path.dirname(agent.configFile), { recursive: true });
 
   const config = agent.build();

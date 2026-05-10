@@ -292,6 +292,26 @@ export async function runUpdate(args: string[] = []): Promise<void> {
     }
   }
 
+  // Auto-refresh hook configs for every wired agent. The new desktop
+  // binary likely ships changes to the slash command body or hook
+  // templates (matchers, agent_source naming, bubble runner subcommand);
+  // forcing the user to re-run `petdex hooks install` would be silly.
+  // Refresh is non-interactive and idempotent — safe to run on every
+  // update, even on no-op upgrades.
+  try {
+    const { runRefresh } = await import("../hooks/refresh");
+    const result = await runRefresh();
+    if (result.refreshed.length > 0) {
+      info(
+        silent
+          ? `Refreshed hooks for: ${result.refreshed.join(", ")}`
+          : `Refreshed hooks for ${pc.cyan(result.refreshed.join(", "))}`,
+      );
+    }
+  } catch (err) {
+    warn(`Hook refresh failed: ${(err as Error).message}`);
+  }
+
   const note = installed
     ? `${installed}  →  ${release.tag_name}`
     : release.tag_name;

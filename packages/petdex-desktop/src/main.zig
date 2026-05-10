@@ -279,7 +279,22 @@ const html_tail =
     \\    // z-index 5: below the picker menu (which uses 999) so the
     \\    // user's pet-browsing flow takes precedence — the bubble
     \\    // is ambient feedback, the picker is an active modal.
-    \\    bubbleEl.style.cssText = 'position:fixed;padding:4px 9px;border-radius:9px;background:#ffffff;color:#111;font:600 11px system-ui,-apple-system,sans-serif;line-height:1.2;box-shadow:0 2px 6px rgba(0,0,0,0.30);text-align:center;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity 180ms ease;pointer-events:none;z-index:5;';
+    \\    // White-space: normal (wrap) instead of nowrap so longer
+    \\    // tool names ("mcp__custom__do_thing", "AskUserQuestion")
+    \\    // don't get clipped with an ellipsis. We cap at max-width
+    \\    // so it wraps to a 2-3 line tooltip rather than expanding
+    \\    // sideways forever and overlapping the picker menu.
+    \\    // overflow-wrap:anywhere forces breaks at any character —
+    \\    // critical for our content (mcp__custom__foo, snake_case
+    \\    // tool names, paths with no spaces). word-break:break-word
+    \\    // alone leaves these unbroken and the bubble clips. The
+    \\    // pair (word-break + overflow-wrap) covers every browser.
+    \\    // No width:max-content — that lets the bubble grow past
+    \\    // max-width because max-content is the intrinsic width of
+    \\    // an unwrapped text run, which beats max-width. Default
+    \\    // (auto width) plus inline-block lets the bubble shrink
+    \\    // to short text yet still respect max-width on long ones.
+    \\    bubbleEl.style.cssText = 'position:fixed;padding:4px 9px;border-radius:9px;background:#ffffff;color:#111;font:600 11px system-ui,-apple-system,sans-serif;line-height:1.2;box-shadow:0 2px 6px rgba(0,0,0,0.30);text-align:center;white-space:normal;word-break:break-word;overflow-wrap:anywhere;max-width:170px;display:inline-block;opacity:0;transition:opacity 180ms ease;pointer-events:none;z-index:5;';
     \\    document.body.appendChild(bubbleEl);
     \\    return bubbleEl;
     \\  }
@@ -294,34 +309,94 @@ const html_tail =
     \\    const bw = el.offsetWidth || 100;
     \\    const bh = el.offsetHeight || 22;
     \\    const ww = window.innerWidth;
-    \\    const gap = 6;
-    \\    // Center horizontally on the pet, clamp inside viewport.
-    \\    const desiredLeft = rect.left + (rect.width - bw) / 2;
-    \\    const left = Math.max(4, Math.min(ww - bw - 4, desiredLeft));
-    \\    // Always above the pet. If the pet is too close to the top
-    \\    // edge to fit the bubble cleanly, we still pin to top:2 —
-    \\    // the bubble overlapping the pet's hairline is preferable
-    \\    // to it jumping below the body, which the user explicitly
-    \\    // didn't want.
-    \\    const top = Math.max(2, rect.top - bh - gap);
+    \\    const gap = 14;
+    \\    // Center horizontally on the pet's center, clamp inside
+    \\    // viewport. We re-read offsetWidth after the textContent
+    \\    // change so the wrap is fully resolved before we compute
+    \\    // the center.
+    \\    const petCenterX = rect.left + rect.width / 2;
+    \\    const realBw = el.offsetWidth;
+    \\    const desiredLeft = petCenterX - realBw / 2;
+    \\    const left = Math.max(4, Math.min(ww - realBw - 4, desiredLeft));
+    \\    // Pet slide-down policy: when the bubble is too tall to
+    \\    // fit above the default pet position (top:34), shove the
+    \\    // pet down ONCE for this bubble. Subsequent re-positions
+    \\    // (resize, picker close) keep the pet wherever it landed
+    \\    // until a NEW bubble arrives — that prevents the flicker
+    \\    // where the pet bobs back up when a modal closes.
+    \\    const stageEl = pet.parentElement;
+    \\    const currentPetTop = stageEl
+    \\      ? parseInt(stageEl.style.top || '34', 10)
+    \\      : 34;
+    \\    let top = rect.top - bh - gap;
+    \\    if (top < 2) {
+    \\      // Need more room. Bump pet down once, but only if the new
+    \\      // position is BELOW where it currently sits — never push
+    \\      // the pet upward as a side effect of a re-render.
+    \\      const newPetTop = bh + gap + 4;
+    \\      if (stageEl && newPetTop > currentPetTop) {
+    \\        stageEl.style.top = newPetTop + 'px';
+    \\        const rect2 = pet.getBoundingClientRect();
+    \\        top = Math.max(2, rect2.top - bh - gap);
+    \\      } else {
+    \\        // Pet is already low enough — just clamp the bubble.
+    \\        top = Math.max(2, top);
+    \\      }
+    \\    }
+    \\    // Note: we don't snap the pet back to 34 on short bubbles
+    \\    // here — that's done in pollBubble when a bubble counter
+    \\    // change with shorter content lands.
     \\    el.style.left = left + 'px';
     \\    el.style.top = top + 'px';
     \\  }
     \\  async function pollBubble() {
     \\    if (!(window.zero && window.zero.invoke)) return;
+    \\    // While the picker menu is open, hide the bubble. The
+    \\    // picker is a modal flow (user is browsing pets); the
+    \\    // bubble is ambient feedback that should defer. Without
+    \\    // this, the bubble either overlaps the pet ugly or shoves
+    \\    // it sideways into the menu — both feel wrong. We bring
+    \\    // the bubble back when the picker closes.
+    \\    if (menuEl) {
+    \\      if (bubbleEl) bubbleEl.style.opacity = '0';
+    \\      return;
+    \\    }
     \\    try {
     \\      const r = await window.zero.invoke('petdex.read_runtime_bubble', {});
     \\      if (!r || typeof r.counter !== 'number') return;
-    \\      if (r.counter === lastBubbleCounter) return;
+    \\      if (r.counter === lastBubbleCounter) {
+    \\        // Same bubble — but it may have been hidden while the
+    \\        // picker was open. Re-show it now that we're back to
+    \\        // the compact single-pet view.
+    \\        if (bubbleEl && bubbleEl.style.opacity === '0' && bubbleEl.textContent) {
+    \\          positionBubbleNearPet(bubbleEl);
+    \\          bubbleEl.style.opacity = '1';
+    \\        }
+    \\        return;
+    \\      }
     \\      lastBubbleCounter = r.counter;
     \\      const text = typeof r.text === 'string' ? r.text : '';
     \\      const el = ensureBubble();
     \\      if (text) {
+    \\        // Reset pet to its default top:34 BEFORE measuring the
+    \\        // new bubble. positionBubbleNearPet will only push down
+    \\        // if the new content actually needs more room. This
+    \\        // is what makes the pet snap back to default when a
+    \\        // short bubble follows a long one.
+    \\        const stageEl = pet.parentElement;
+    \\        if (stageEl && stageEl.style.top !== '34px') {
+    \\          stageEl.style.top = '34px';
+    \\        }
     \\        el.textContent = text;
     \\        positionBubbleNearPet(el);
     \\        el.style.opacity = '1';
     \\      } else {
     \\        el.style.opacity = '0';
+    \\        // Empty text means "no current bubble" — restore pet.
+    \\        const stageEl = pet.parentElement;
+    \\        if (stageEl && stageEl.style.top !== '34px') {
+    \\          stageEl.style.top = '34px';
+    \\        }
     \\      }
     \\    } catch (e) {}
     \\  }
@@ -332,6 +407,11 @@ const html_tail =
     \\  // style writes); the polling interval already handles
     \\  // most updates, this just keeps it glued during interaction.
     \\  window.addEventListener('resize', () => {
+    \\    // Skip when the picker is open — the picker's resize is
+    \\    // what's firing this event, and we don't want to chase it
+    \\    // (would shove the pet around mid-modal). pollBubble is
+    \\    // also paused while menuEl exists.
+    \\    if (menuEl) return;
     \\    if (bubbleEl && bubbleEl.style.opacity === '1') positionBubbleNearPet(bubbleEl);
     \\  });
     \\
@@ -346,7 +426,16 @@ const html_tail =
     \\    if (updateCard) return updateCard;
     \\    updateCard = document.createElement('div');
     \\    updateCard.id = 'update-card';
-    \\    updateCard.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;padding:8px 10px;border-radius:10px;background:rgba(15,18,30,0.92);color:#e8eaf3;font:600 11px system-ui,-apple-system,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,0.35);backdrop-filter:blur(8px);display:none;cursor:pointer;line-height:1.3;';
+    \\    // Match the bubble's white-card style for visual consistency.
+    \\    // The update card was originally dark; once the bubble shipped
+    \\    // with white-on-black, the dark update card felt out of place
+    \\    // sitting underneath the same pet.
+    \\    // pointer-events: auto is REQUIRED — body sets it to none
+    \\    // for the whole document so the pet click-through works
+    \\    // outside the sprite. Without auto here, click handler never
+    \\    // fires and the user clicks "Update available" but nothing
+    \\    // happens. (Hunter hit this 2026-05-10.)
+    \\    updateCard.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;padding:6px 9px;border-radius:9px;background:#ffffff;color:#111;font:600 11px system-ui,-apple-system,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.30);display:none;cursor:pointer;pointer-events:auto;line-height:1.25;text-align:center;';
     \\    updateCard.addEventListener('click', async () => {
     \\      if (!(window.zero && window.zero.invoke)) return;
     \\      try {
@@ -365,7 +454,7 @@ const html_tail =
     \\    }
     \\    let text = '';
     \\    if (info.status === 'available') {
-    \\      text = 'Update ' + (info.latest || 'available') + ' — click to install';
+    \\      text = 'Update ' + (info.latest || 'available') + ' - click to install';
     \\    } else if (info.status === 'running') {
     \\      text = info.message || 'Updating...';
     \\    } else if (info.status === 'done') {

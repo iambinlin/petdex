@@ -285,6 +285,15 @@ setInterval(() => {
 
 writeState("idle");
 
+// Reset bubble on every sidecar boot. Without this, the WebView reads
+// whatever bubble.json was last written (which may be a stale "Reading
+// server.ts" from a dev session) and pins it as the welcome message.
+// An empty bubble means the WebView's pollBubble sees text="" and
+// hides the element — clean slate until the first real hook fires.
+try {
+  writeBubble("", null);
+} catch {}
+
 function jsonResponse(res: http.ServerResponse, status: number, body: unknown) {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
