@@ -12,21 +12,20 @@ type OpenInPetdexButtonProps = {
 };
 
 /**
- * Hero CTA on /pets/<slug> that points the user at /download with a
- * pendingPet hint so the install banner picks the slug back up. macOS-
- * only for now since the desktop binary is mac-first.
+ * Hero CTA on /pets/<slug>. macOS-only for now since the desktop binary
+ * is mac-first.
  *
- * Why a plain link (not a `petdex://` scheme attempt yet):
+ * Click behavior:
+ * - Tries to launch `petdex://<slug>` via the registered URL scheme.
+ *   If Petdex is installed (CFBundleURLSchemes in Info.plist), macOS
+ *   routes the URL to the app via AppleEvent and the running pet
+ *   swaps to <slug> (auto-installing if missing).
+ * - If the app isn't installed, the scheme silently fails. We start
+ *   a fallback timer that redirects to /download?next=install/<slug>
+ *   after 1200ms — a delay long enough that an installed app will
+ *   blur the page (cancelling the redirect) before it fires.
  *
- * The desktop binary is currently shipped as a bare executable, not a
- * macOS .app bundle. macOS only registers URL schemes for bundles
- * declared via CFBundleURLTypes in Info.plist, so a `petdex://` link
- * would always fall through to the fallback redirect anyway. Skipping
- * the scheme attempt keeps the click predictable, avoids a confusing
- * 1500ms delay, and the copy stays honest. When we ship a real .app
- * bundle this component will gain back the scheme attempt path.
- *
- * Render rules:
+ * Detection:
  * - Server-renders nothing. The client detects platform after hydration
  *   and unhides on macOS so Linux/Windows/iOS users don't see a CTA
  *   that would dead-end at a binary they can't install.
@@ -64,10 +63,40 @@ export function OpenInPetdexButton({ slug }: OpenInPetdexButtonProps) {
   if (!mounted || !isMac) return null;
 
   const downloadHref = `/${locale}/download?next=${encodeURIComponent(`install/${slug}`)}`;
+  const deepLink = `petdex://${slug}`;
+
+  function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
+    // Only intercept if the user isn't doing meta/ctrl/middle-click.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    // Schedule the fallback redirect first so that even if the deep
+    // link blocks the browser somehow, the user still ends up
+    // somewhere useful.
+    let cancelled = false;
+    const timeout = window.setTimeout(() => {
+      if (cancelled) return;
+      window.location.href = downloadHref;
+    }, 1200);
+    // If the OS hands the URL off to Petdex, the page loses focus
+    // briefly. We use that as a signal to cancel the fallback.
+    const onBlur = () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("pagehide", onBlur);
+    };
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("pagehide", onBlur);
+    // Trigger the URL scheme. Setting location.href is the most
+    // reliable way — it won't open a new tab and it survives popup
+    // blockers because we're inside a synchronous click handler.
+    window.location.href = deepLink;
+  }
 
   return (
     <Link
       href={downloadHref}
+      onClick={handleClick}
       aria-label={t("ariaLabel", { slug })}
       className="group relative isolate inline-flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/15 via-brand-light/10 to-brand-deep/15 p-3 text-left shadow-[0_8px_32px_-8px_oklch(from_var(--brand)_l_c_h/0.35)] transition-all hover:border-brand/50 hover:shadow-[0_12px_40px_-8px_oklch(from_var(--brand)_l_c_h/0.45)] active:scale-[0.99]"
     >

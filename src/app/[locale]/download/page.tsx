@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
-import { auth } from "@clerk/nextjs/server";
 import {
   ArrowRight,
   CheckCircle,
@@ -13,7 +11,6 @@ import {
 } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { isAdmin } from "@/lib/admin";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
 
 import { CommandLine } from "@/components/command-line";
@@ -34,15 +31,14 @@ const SITE_URL = "https://petdex.crafter.run";
 // metadata does.
 const OG_IMAGE = `${SITE_URL}/download/opengraph-image`;
 
-// Page is admin-only during the desktop pre-launch period. We
-// keep noindex in metadata so even if the page leaks via an
-// internal share link, search engines don't surface it.
+// Public page now (admin gate lifted on 2026-05-10 alongside the
+// petdex:// URL scheme + 9-state bubble UI launch). Index + follow
+// so the desktop landing surfaces in search.
 export const metadata = {
   title: "Download Petdex Desktop",
   description:
     "Download Petdex Desktop for macOS. Your pet, floating beside every coding agent.",
   alternates: buildLocaleAlternates("/download"),
-  robots: { index: false, follow: false },
   openGraph: {
     title: "Petdex Desktop",
     description:
@@ -58,9 +54,9 @@ export const metadata = {
   },
 };
 
-// Force-dynamic so the auth check runs on every request — a
-// statically-generated page would cache the admin-only response
-// for everyone.
+// Force-dynamic so the latest-release fetch runs per request —
+// otherwise users see a cached release tag that drifts behind
+// what's actually on GitHub.
 export const dynamic = "force-dynamic";
 
 type DownloadPageProps = {
@@ -70,11 +66,6 @@ type DownloadPageProps = {
 export default async function DownloadPage({
   searchParams,
 }: DownloadPageProps) {
-  // Admin gate (pre-launch). Anyone else gets a 404 — same response
-  // shape as a typo'd URL, so we don't telegraph that the page exists.
-  const { userId } = await auth();
-  if (!isAdmin(userId)) notFound();
-
   const t = await getTranslations("download");
   const locale = await getLocale();
   const params = await searchParams;

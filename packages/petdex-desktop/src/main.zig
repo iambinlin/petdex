@@ -402,6 +402,75 @@ const html_tail =
     \\  }
     \\  setInterval(pollBubble, 200);
     \\  pollBubble();
+    \\
+    \\  // Custom URL scheme handling: macOS routes `petdex://<slug>`
+    \\  // launches via AppleEvent, which the native side persists to
+    \\  // ~/.petdex-desktop/runtime/incoming-url.txt. We poll for it
+    \\  // here, parse + validate the slug, and call set_active to swap
+    \\  // pets without restarting the app. The native side deletes the
+    \\  // file after handing it to us via the bridge.
+    \\  //
+    \\  // If the slug isn't installed locally, we narrate progress
+    \\  // through the bubble system ("Installing aurora..."), shell
+    \\  // out to `petdex install <slug>` via the bridge, and retry
+    \\  // set_active when it finishes. The current pet stays visible
+    \\  // throughout so there's no empty-stage flash.
+    \\  let incomingUrlPolling = false;
+    \\  function showLocalBubble(text) {
+    \\    const el = ensureBubble();
+    \\    el.textContent = text;
+    \\    positionBubbleNearPet(el);
+    \\    el.style.opacity = '1';
+    \\  }
+    \\  async function activateOrInstall(slug) {
+    \\    if (!(window.zero && window.zero.invoke)) return;
+    \\    try {
+    \\      await window.zero.invoke('petdex.set_active', { slug });
+    \\      location.reload();
+    \\      return;
+    \\    } catch (_) {}
+    \\    // First attempt failed (most likely "slug not installed").
+    \\    // Narrate + shell out to `petdex install <slug>`.
+    \\    showLocalBubble('Installing ' + slug + '…');
+    \\    try {
+    \\      const r = await window.zero.invoke('petdex.install_pet', { slug });
+    \\      if (r && r.ok) {
+    \\        try {
+    \\          await window.zero.invoke('petdex.set_active', { slug });
+    \\          location.reload();
+    \\          return;
+    \\        } catch (e) {
+    \\          showLocalBubble('Install ok but activation failed');
+    \\          return;
+    \\        }
+    \\      }
+    \\      // install_pet returned ok:false — error code is in r.error
+    \\      const err = (r && r.error) || 'unknown';
+    \\      if (err === 'cli_not_persisted') {
+    \\        showLocalBubble('Run `petdex init` first');
+    \\      } else if (err.indexOf('exit_') === 0) {
+    \\        showLocalBubble(slug + ' not found');
+    \\      } else {
+    \\        showLocalBubble('Install failed');
+    \\      }
+    \\    } catch (e) {
+    \\      showLocalBubble('Install crashed');
+    \\    }
+    \\  }
+    \\  async function pollIncomingUrl() {
+    \\    if (incomingUrlPolling) return;
+    \\    if (!(window.zero && window.zero.invoke)) return;
+    \\    incomingUrlPolling = true;
+    \\    try {
+    \\      const r = await window.zero.invoke('petdex.read_incoming_url', {});
+    \\      if (!r || typeof r.slug !== 'string' || !r.slug) return;
+    \\      await activateOrInstall(r.slug);
+    \\    } catch (e) {} finally {
+    \\      incomingUrlPolling = false;
+    \\    }
+    \\  }
+    \\  setInterval(pollIncomingUrl, 1000);
+    \\  pollIncomingUrl();
     \\  // Reposition the bubble whenever the pet might have moved —
     \\  // window resize, drag, throw. Cheap (one rect read + two
     \\  // style writes); the polling interval already handles
@@ -906,7 +975,7 @@ const PetdexState = struct {
     // having to re-resolve sidecar_dir or rebuild the env map.
     sidecar_dir: []u8,
     env_map: *std.process.Environ.Map,
-    bridge_handlers: [7]zero_native.BridgeHandler = undefined,
+    bridge_handlers: [9]zero_native.BridgeHandler = undefined,
 
     fn deinit(self: *PetdexState) void {
         self.allocator.free(self.config_dir);
@@ -922,6 +991,8 @@ const PetdexState = struct {
             .{ .name = "petdex.quit", .context = self, .invoke_fn = quitCmd },
             .{ .name = "petdex.read_runtime_state", .context = self, .invoke_fn = readRuntimeStateCmd },
             .{ .name = "petdex.read_runtime_bubble", .context = self, .invoke_fn = readRuntimeBubbleCmd },
+            .{ .name = "petdex.read_incoming_url", .context = self, .invoke_fn = readIncomingUrlCmd },
+            .{ .name = "petdex.install_pet", .context = self, .invoke_fn = installPetCmd },
             .{ .name = "petdex.read_update_info", .context = self, .invoke_fn = readUpdateInfoCmd },
             .{ .name = "petdex.trigger_update", .context = self, .invoke_fn = triggerUpdateCmd },
             .{ .name = "petdex.respawn_sidecar", .context = self, .invoke_fn = respawnSidecarCmd },
@@ -963,6 +1034,27 @@ const PetdexState = struct {
         return output[0..read];
     }
 
+    // Read + consume the incoming-url.txt the AppleEvent handler writes.
+    // Returns {slug:"<slug>"} on a valid URL, or {slug:""} otherwise.
+    // Always deletes the file after read so re-polling doesn't see
+    // stale URLs.
+    fn readIncomingUrlCmd(context: *anyopaque, invocation: zero_native.bridge.Invocation, output: []u8) anyerror![]const u8 {
+        _ = invocation;
+        const self: *PetdexState = @ptrCast(@alignCast(context));
+        const home = self.env_map.get("HOME") orelse {
+            return std.fmt.bufPrint(output, "{{\"slug\":\"\"}}", .{});
+        };
+        const path = try std.fs.path.join(self.allocator, &.{ home, ".petdex-desktop", "runtime", "incoming-url.txt" });
+        defer self.allocator.free(path);
+        const slug_opt = parseIncomingUrlFile(self.allocator, self.io, path) catch null;
+        defer if (slug_opt) |s| self.allocator.free(s);
+        std.Io.Dir.deleteFileAbsolute(self.io, path) catch {};
+        if (slug_opt) |slug| {
+            return std.fmt.bufPrint(output, "{{\"slug\":\"{s}\"}}", .{slug});
+        }
+        return std.fmt.bufPrint(output, "{{\"slug\":\"\"}}", .{});
+    }
+
     // Mirror of readRuntimeStateCmd, but reads ~/.petdex/runtime/bubble.json
     // (written by the sidecar's POST /bubble handler). The WebView polls
     // this every 200ms via the bridge, alongside the state poll. A
@@ -984,6 +1076,53 @@ const PetdexState = struct {
         }
         const read = try file.readPositionalAll(self.io, output[0..size], 0);
         return output[0..read];
+    }
+
+    // Spawn `node ~/.petdex/bin/petdex.js install <slug>` and wait for
+    // it to finish. Used by the URL-scheme deep-link path: when the
+    // user opens petdex://<slug> for a pet they don't have installed,
+    // we shell out to the CLI which downloads the sprite + petJson
+    // from petdex.crafter.run, validates the host allowlist, and
+    // writes them under ~/.petdex/pets/<slug>. The CLI is the
+    // single source of truth for install logic — replicating it in
+    // zig would mean two places to keep in sync.
+    fn installPetCmd(context: *anyopaque, invocation: zero_native.bridge.Invocation, output: []u8) anyerror![]const u8 {
+        const self: *PetdexState = @ptrCast(@alignCast(context));
+        const slug = jsonStringField(invocation.request.payload, "slug") orelse return error.MissingSlug;
+
+        const home = self.env_map.get("HOME") orelse {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"no_home\"}}", .{});
+        };
+        const cli_path = try std.fs.path.join(self.allocator, &.{ home, ".petdex", "bin", "petdex.js" });
+        defer self.allocator.free(cli_path);
+
+        // Verify the CLI snapshot exists. If `petdex hooks install`
+        // was never run, this file is absent and we can't auto-install.
+        std.Io.Dir.accessAbsolute(self.io, cli_path, .{}) catch {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"cli_not_persisted\"}}", .{});
+        };
+
+        const argv = &[_][]const u8{ "node", cli_path, "install", slug };
+        var child = std.process.spawn(self.io, .{
+            .argv = argv,
+            .stdin = .ignore,
+            .stdout = .ignore,
+            .stderr = .ignore,
+        }) catch |err| {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"{s}\"}}", .{@errorName(err)});
+        };
+        const term = child.wait(self.io) catch |err| {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"{s}\"}}", .{@errorName(err)});
+        };
+        switch (term) {
+            .exited => |code| {
+                if (code == 0) {
+                    return std.fmt.bufPrint(output, "{{\"ok\":true}}", .{});
+                }
+                return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"exit_{d}\"}}", .{code});
+            },
+            else => return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"abnormal_exit\"}}", .{}),
+        }
     }
 
     fn setActiveCmd(context: *anyopaque, invocation: zero_native.bridge.Invocation, output: []u8) anyerror![]const u8 {
@@ -1105,6 +1244,8 @@ const petdex_command_policies = [_]zero_native.BridgeCommandPolicy{
     .{ .name = "petdex.quit", .origins = &petdex_origins },
     .{ .name = "petdex.read_runtime_state", .origins = &petdex_origins },
     .{ .name = "petdex.read_runtime_bubble", .origins = &petdex_origins },
+    .{ .name = "petdex.read_incoming_url", .origins = &petdex_origins },
+    .{ .name = "petdex.install_pet", .origins = &petdex_origins },
     .{ .name = "petdex.read_update_info", .origins = &petdex_origins },
     .{ .name = "petdex.trigger_update", .origins = &petdex_origins },
     .{ .name = "petdex.respawn_sidecar", .origins = &petdex_origins },
@@ -1267,6 +1408,100 @@ fn writeActiveSlug(io: std.Io, config_dir: []const u8, slug: []const u8) !void {
     var buf: [512]u8 = undefined;
     const json_text = try std.fmt.bufPrint(&buf, "{{\"slug\":\"{s}\"}}\n", .{slug});
     try writeFileAll(io, dir, "active.json", json_text);
+}
+
+// Read + parse the URL file (no delete — caller decides). Returns
+// the slug on success, null if the file is missing/invalid.
+fn parseIncomingUrlFile(allocator: std.mem.Allocator, io: std.Io, path: []const u8) !?[]u8 {
+    var file = std.Io.Dir.openFileAbsolute(io, path, .{}) catch return null;
+    defer file.close(io);
+    const bytes = readFileAll(io, allocator, file, 1024) catch return null;
+    return parseSlugFromUrl(allocator, bytes) catch null;
+}
+
+// Read + delete the URL written by zero-native's AppleEvent handler.
+// The file lives at ~/.petdex-desktop/runtime/incoming-url.txt and
+// gets created/overwritten every time macOS routes a `petdex://` URL
+// to the app. We delete it after reading so a stale URL from an old
+// session can't override the user's current selection.
+fn readSlugFromUrlFile(allocator: std.mem.Allocator, io: std.Io, env: *const std.process.Environ.Map) !?[]u8 {
+    const home = env.get("HOME") orelse return null;
+    const path = try std.fs.path.join(allocator, &.{ home, ".petdex-desktop", "runtime", "incoming-url.txt" });
+    defer allocator.free(path);
+    var file = std.Io.Dir.openFileAbsolute(io, path, .{}) catch return null;
+    const bytes = readFileAll(io, allocator, file, 1024) catch {
+        file.close(io);
+        return null;
+    };
+    file.close(io);
+    // Delete after reading so stale URLs from prior runs don't apply.
+    std.Io.Dir.deleteFileAbsolute(io, path) catch {};
+    return parseSlugFromUrl(allocator, bytes) catch {
+        allocator.free(bytes);
+        return null;
+    };
+}
+
+fn parseSlugFromUrl(allocator: std.mem.Allocator, raw: []u8) !?[]u8 {
+    defer allocator.free(raw);
+    const trimmed = std.mem.trim(u8, raw, " \t\r\n");
+    const prefix = "petdex://";
+    if (trimmed.len <= prefix.len) return null;
+    if (!std.mem.startsWith(u8, trimmed, prefix)) return null;
+    var slug = trimmed[prefix.len..];
+    if (std.mem.endsWith(u8, slug, "/")) slug = slug[0 .. slug.len - 1];
+    if (slug.len == 0 or slug.len > 64) return null;
+    for (slug) |ch| {
+        const ok = (ch >= 'a' and ch <= 'z') or
+            (ch >= 'A' and ch <= 'Z') or
+            (ch >= '0' and ch <= '9') or
+            ch == '-' or ch == '_';
+        if (!ok) return null;
+    }
+    return try allocator.dupe(u8, slug);
+}
+
+// Extract a pet slug from a `petdex://<slug>` URL passed as argv[1].
+// macOS does this when you `open petdex://kebo` — the system parses the
+// scheme registration in Info.plist and forwards the URL to the
+// application, either via apple-event (when already running) or as
+// argv (on cold start). We handle the cold-start path here; the
+// already-running path requires AppleEvent handling we don't have yet.
+//
+// Returns null if no URL arg is present, the scheme doesn't match, or
+// the slug fails the safe-character check (slugs are conservative —
+// alnum + hyphen + underscore so no path traversal or HTML injection
+// can sneak in via the URL).
+fn readSlugFromUrlArg(allocator: std.mem.Allocator, args: std.process.Args) !?[]u8 {
+    var iter = std.process.Args.Iterator.initAllocator(args, allocator) catch return null;
+    defer iter.deinit();
+    var idx: usize = 0;
+    while (iter.next()) |arg_z| : (idx += 1) {
+        if (idx == 0) continue; // skip exe path
+        const arg: []const u8 = arg_z;
+        const prefix = "petdex://";
+        if (arg.len <= prefix.len) continue;
+        if (!std.mem.startsWith(u8, arg, prefix)) continue;
+        var slug = arg[prefix.len..];
+        if (std.mem.endsWith(u8, slug, "/")) {
+            slug = slug[0 .. slug.len - 1];
+        }
+        if (slug.len == 0 or slug.len > 64) continue;
+        var safe = true;
+        for (slug) |ch| {
+            const ok = (ch >= 'a' and ch <= 'z') or
+                (ch >= 'A' and ch <= 'Z') or
+                (ch >= '0' and ch <= '9') or
+                ch == '-' or ch == '_';
+            if (!ok) {
+                safe = false;
+                break;
+            }
+        }
+        if (!safe) continue;
+        return try allocator.dupe(u8, slug);
+    }
+    return null;
 }
 
 // True only if the pet directory contains a readable sprite file.
@@ -1720,7 +1955,43 @@ pub fn main(init: std.process.Init) !void {
     const stored_active = try readActiveSlug(allocator, init.io, config_dir);
     defer if (stored_active) |s| allocator.free(s);
 
+    // Custom URL scheme: `open petdex://<slug>` launches the app via
+    // an AppleEvent (kAEGetURL). zero-native's appkit_host writes the
+    // URL to ~/.petdex-desktop/runtime/incoming-url.txt before the
+    // run loop pumps. We read it here + also check argv as a fallback
+    // for direct binary invocations (`./petdex-desktop petdex://kebo`).
+    const url_slug = blk: {
+        const from_file = readSlugFromUrlFile(allocator, init.io, init.environ_map) catch null;
+        if (from_file != null) break :blk from_file;
+        break :blk readSlugFromUrlArg(allocator, init.minimal.args) catch null;
+    };
+    defer if (url_slug) |s| allocator.free(s);
+    if (url_slug) |slug| {
+        var found = false;
+        for (pets.items) |p| {
+            if (std.mem.eql(u8, p.slug, slug)) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            try writeActiveSlug(init.io, config_dir, slug);
+            std.debug.print("Activated pet from URL: {s}\n", .{slug});
+        } else {
+            std.debug.print("URL slug '{s}' is not installed; ignoring.\n", .{slug});
+        }
+    }
+
+    // Re-read active slug — may have just been overwritten by the URL.
+    const final_stored = try readActiveSlug(allocator, init.io, config_dir);
+    defer if (final_stored) |s| allocator.free(s);
+
     const active_slug = blk: {
+        if (final_stored) |s| {
+            for (pets.items) |p| {
+                if (std.mem.eql(u8, p.slug, s)) break :blk s;
+            }
+        }
         if (stored_active) |s| {
             for (pets.items) |p| {
                 if (std.mem.eql(u8, p.slug, s)) break :blk s;

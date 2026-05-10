@@ -4,13 +4,8 @@ import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-// Paused — see QUEUE below. Keep the import so re-enabling is one
-// line and we catch any rename to the modal at typecheck time.
-// biome-ignore lint/correctness/noUnusedImports: scheduled to come back when /download is public
-import { DesktopAnnouncementModal as _DesktopAnnouncementModal } from "@/components/desktop-announcement-modal";
+import { DesktopAnnouncementModal } from "@/components/desktop-announcement-modal";
 import { GithubStarModal } from "@/components/github-star-modal";
-
-void _DesktopAnnouncementModal;
 
 type QueuedAnnouncement = {
   id: string;
@@ -21,27 +16,23 @@ type QueuedAnnouncement = {
 
 const HOME_PATH_RE = /^\/(?:en|es|zh)?\/?$/;
 
-// Order matters — github-star runs first (permanent CTA), then the
-// desktop launch announcement (one-shot per browser, dismissed via
-// localStorage). The collections + vibe-search announcements were
-// retired now that those features are mature.
-//
-// NOTE: the desktop announcement is paused while the desktop app
-// is in admin-only pre-launch. Restore the entry below to re-enable
-// once /download is publicly accessible.
+// Order matters: desktop-launch first (the headline news), then
+// github-star as a recurring CTA. Each is one-shot per browser via
+// localStorage. Re-bump the id (`_v2`, `_v3`) to force a re-show
+// after a major refresh of the modal content.
 const QUEUE: QueuedAnnouncement[] = [
   {
-    id: "petdex_announce_github_star_v1",
+    id: "petdex_announce_desktop_v1",
     delayMs: 1200,
+    gateMs: 600,
+    Component: DesktopAnnouncementModal,
+  },
+  {
+    id: "petdex_announce_github_star_v1",
+    delayMs: 600,
     gateMs: 600,
     Component: GithubStarModal,
   },
-  // {
-  //   id: "petdex_announce_desktop_v1",
-  //   delayMs: 0,
-  //   gateMs: 0,
-  //   Component: DesktopAnnouncementModal,
-  // },
 ];
 
 type Phase = "idle" | "showing";

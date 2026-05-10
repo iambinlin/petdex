@@ -65,12 +65,11 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
   const t = useTranslations("header");
   const common = useTranslations("common");
 
-  // Hide /download from non-admins while the desktop is in
-  // pre-launch. The page itself notFound()s for non-admins, so the
-  // link would lead nowhere; we just remove it so it isn't a
-  // visible-but-broken affordance.
+  // /download is public now (post pre-launch).
   const { user } = useUser();
-  const showDownload = isAdminClientSafe(user?.id);
+  void user;
+  const showDownload = true;
+  void isAdminClientSafe;
 
   function href(pathname: string) {
     return withLocale(pathname, currentLocale);
