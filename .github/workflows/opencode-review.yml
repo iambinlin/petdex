@@ -1,7 +1,7 @@
 name: opencode-review
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
@@ -15,11 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - run: bun install --frozen-lockfile
       - uses: anomalyco/opencode/github@latest
         env:
           GH_TOKEN: ${{ github.token }}
@@ -32,7 +29,11 @@ jobs:
             .agents/skills/code-review-excellence/SKILL.md.
 
             Workflow constraints:
-            - You are running in GitHub Actions on the PR head branch.
+            - You are running in GitHub Actions from a pull_request_target
+              workflow with repository secrets available.
+            - The local checkout is the trusted base revision, not the PR head.
+            - Do not checkout, build, install dependencies from, or execute code
+              from the PR head branch.
             - Local base branches such as main may not exist, and local git
               history may be shallow.
             - Do not spend time trying local git diff forms such as
