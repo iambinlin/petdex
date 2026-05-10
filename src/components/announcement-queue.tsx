@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
 import { useEffect, useMemo, useState } from "react";
 
+import { safeGetItem, safeSetItem } from "@/lib/utils";
+
 import { DesktopAnnouncementModal } from "@/components/desktop-announcement-modal";
 import { GithubStarModal } from "@/components/github-star-modal";
 
@@ -58,7 +60,7 @@ export function AnnouncementQueue() {
 
     for (let nextIndex = 0; nextIndex < QUEUE.length; nextIndex += 1) {
       if (!isEligible(nextIndex, pathname)) continue;
-      if (window.localStorage.getItem(QUEUE[nextIndex].id) === "1") continue;
+      if (safeGetItem(QUEUE[nextIndex].id) === "1") continue;
       setIndex(nextIndex);
       setPhase("idle");
       return;
@@ -86,7 +88,7 @@ export function AnnouncementQueue() {
   const handleClose = () => {
     if (typeof window === "undefined" || activeItem === null) return;
 
-    window.localStorage.setItem(activeItem.id, "1");
+    safeSetItem(activeItem.id, "1");
 
     const nextIndex = (() => {
       for (
@@ -95,7 +97,7 @@ export function AnnouncementQueue() {
         candidate += 1
       ) {
         if (!isEligible(candidate, pathname)) continue;
-        if (window.localStorage.getItem(QUEUE[candidate].id) === "1") continue;
+        if (safeGetItem(QUEUE[candidate].id) === "1") continue;
         return candidate;
       }
       return null;
