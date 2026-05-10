@@ -6,10 +6,18 @@ import { auth } from "@clerk/nextjs/server";
 import { desc, eq, sql as dsql } from "drizzle-orm";
 
 import { isAdmin } from "@/lib/admin";
-import { type SendResult, sendBroadcast } from "@/lib/admin/send-broadcast";
+import {
+  type Campaign,
+  type SendResult,
+  sendBroadcast,
+} from "@/lib/admin/send-broadcast";
 import { db, schema } from "@/lib/db/client";
 
 import type { Locale } from "@/i18n/config";
+
+function parseCampaign(raw: unknown): Campaign {
+  return raw === "desktop_launch" ? "desktop_launch" : "collections_drop";
+}
 
 // Loads the top featured collections by pet count. The email template
 // renders up to 10 — that limit lives here so the admin UI can preview
@@ -57,15 +65,19 @@ export async function sendTestAction(form: FormData): Promise<{
   const locale = (
     ["en", "es", "zh"].includes(localeRaw) ? localeRaw : "en"
   ) as Locale;
+  const campaign = parseCampaign(form.get("campaign"));
 
-  const collections = await loadCollections();
-  if (collections.length === 0) {
-    return { ok: false, error: "no_collections_seeded" };
+  let collections: Awaited<ReturnType<typeof loadCollections>> | undefined;
+  if (campaign === "collections_drop") {
+    collections = await loadCollections();
+    if (collections.length === 0) {
+      return { ok: false, error: "no_collections_seeded" };
+    }
   }
 
   const result = await sendBroadcast({
-    campaign: "collections_drop",
-    batchKey: `collections-drop-test-${Date.now()}`,
+    campaign,
+    batchKey: `${campaign.replace(/_/g, "-")}-test-${Date.now()}`,
     toUserIds: [userId!],
     localeFilter: locale,
     collections,
@@ -107,16 +119,20 @@ export async function sendBroadcastAction(form: FormData): Promise<{
     toUserIds = recipients.map((r) => r.userId);
   }
 
-  const collections = await loadCollections();
-  if (collections.length === 0) {
-    return { ok: false, error: "no_collections_seeded" };
+  const campaign = parseCampaign(form.get("campaign"));
+  let collections: Awaited<ReturnType<typeof loadCollections>> | undefined;
+  if (campaign === "collections_drop") {
+    collections = await loadCollections();
+    if (collections.length === 0) {
+      return { ok: false, error: "no_collections_seeded" };
+    }
   }
 
   const today = new Date().toISOString().slice(0, 10);
-  const batchKey = `collections-drop-${today}`;
+  const batchKey = `${campaign.replace(/_/g, "-")}-${today}`;
 
   const result = await sendBroadcast({
-    campaign: "collections_drop",
+    campaign,
     batchKey,
     toUserIds,
     localeFilter,

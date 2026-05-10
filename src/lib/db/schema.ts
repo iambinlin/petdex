@@ -681,7 +681,10 @@ export type AdEvent = typeof adEvents.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
 export type PetRequest = typeof petRequests.$inferSelect;
 
-export const emailCampaign = pgEnum("email_campaign", ["collections_drop"]);
+export const emailCampaign = pgEnum("email_campaign", [
+  "collections_drop",
+  "desktop_launch",
+]);
 
 export const emailSendStatus = pgEnum("email_send_status", [
   "queued",

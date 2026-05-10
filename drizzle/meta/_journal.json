@@ -92,6 +92,13 @@
       "when": 1778918400000,
       "tag": "0012_gallery_position",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778402154928,
+      "tag": "0013_email_campaign_desktop_launch",
+      "breakpoints": true
     }
   ]
 }

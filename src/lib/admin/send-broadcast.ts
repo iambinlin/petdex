@@ -5,17 +5,23 @@ import { Resend } from "resend";
 
 import { db, schema } from "@/lib/db/client";
 import { renderCollectionsDropEmail } from "@/lib/email-templates/collections-drop";
+import { renderDesktopLaunchEmail } from "@/lib/email-templates/desktop-launch";
 
 import type { Locale } from "@/i18n/config";
 
+export type Campaign = "collections_drop" | "desktop_launch";
+
 type SendOptions = {
-  campaign: "collections_drop";
+  campaign: Campaign;
   batchKey: string;
   // null = all opted-in users; otherwise restrict to these userIds (testing).
   toUserIds: string[] | null;
   // Optional locale filter — null sends to every opted-in locale.
   localeFilter: Locale | null;
-  collections: { slug: string; title: string; description: string }[];
+  // Per-campaign payload. collections_drop needs a list of collections;
+  // desktop_launch is parameterless (the template is self-contained,
+  // no per-send variables aside from the unsubscribe token).
+  collections?: { slug: string; title: string; description: string }[];
 };
 
 export type SendResult = {
@@ -65,13 +71,16 @@ export async function sendBroadcast(opts: SendOptions): Promise<SendResult> {
   };
 
   for (const r of recipients) {
-    const { subject, html, text } = renderCollectionsDropEmail(
-      r.locale as Locale,
-      {
-        collections: opts.collections,
-        unsubscribeToken: r.unsubscribeToken,
-      },
-    );
+    const rendered =
+      opts.campaign === "desktop_launch"
+        ? renderDesktopLaunchEmail(r.locale as Locale, {
+            unsubscribeToken: r.unsubscribeToken,
+          })
+        : renderCollectionsDropEmail(r.locale as Locale, {
+            collections: opts.collections ?? [],
+            unsubscribeToken: r.unsubscribeToken,
+          });
+    const { subject, html, text } = rendered;
 
     const sendId = `snd_${crypto.randomUUID().replace(/-/g, "").slice(0, 22)}`;
 

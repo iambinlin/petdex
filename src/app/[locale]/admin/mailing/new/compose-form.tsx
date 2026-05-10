@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 
 import { sendBroadcastAction, sendTestAction } from "./actions";
 
+type Campaign = "collections_drop" | "desktop_launch";
+
 type Props = {
   optedIn: number;
   byLocale: Record<string, number>;
@@ -17,6 +19,10 @@ export function ComposeForm({ optedIn, byLocale, collectionsReady }: Props) {
   const [audienceLocale, setAudienceLocale] = useState<string>("all");
   const [limit, setLimit] = useState<string>("");
   const [confirm, setConfirm] = useState<string>("");
+  const [campaign, setCampaign] = useState<Campaign>("desktop_launch");
+  const requiresCollections = campaign === "collections_drop";
+  const blockedByMissingCollections =
+    requiresCollections && !collectionsReady;
 
   const audienceCount = (() => {
     if (audienceLocale === "all") return optedIn;
@@ -64,15 +70,36 @@ export function ComposeForm({ optedIn, byLocale, collectionsReady }: Props) {
 
   return (
     <div className="space-y-6">
-      {!collectionsReady ? (
+      {blockedByMissingCollections ? (
         <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-5 text-sm text-destructive">
           No themed collections are seeded yet. Run{" "}
           <code className="font-mono">
             bun scripts/seed-themed-collections.ts
           </code>{" "}
-          before sending.
+          before sending the collections-drop campaign.
         </div>
       ) : null}
+
+      <div className="rounded-2xl border border-border-base bg-surface/76 p-6 backdrop-blur">
+        <h2 className="text-base font-semibold">Campaign</h2>
+        <p className="mt-1 text-sm text-muted-2">
+          Pick which broadcast template to send. Each campaign uses its
+          own template + batch key, so the same audience can receive
+          multiple over time.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <label className="text-xs text-muted-3">
+            <select
+              value={campaign}
+              onChange={(e) => setCampaign(e.target.value as Campaign)}
+              className="mt-1 block h-10 rounded-full border border-border-base bg-transparent px-3 text-sm"
+            >
+              <option value="desktop_launch">desktop_launch</option>
+              <option value="collections_drop">collections_drop</option>
+            </select>
+          </label>
+        </div>
+      </div>
 
       <div className="rounded-2xl border border-border-base bg-surface/76 p-6 backdrop-blur">
         <h2 className="text-base font-semibold">Test send</h2>
@@ -84,6 +111,7 @@ export function ComposeForm({ optedIn, byLocale, collectionsReady }: Props) {
           action={handleTest}
           className="mt-4 flex flex-wrap items-end gap-3"
         >
+          <input type="hidden" name="campaign" value={campaign} />
           <label className="text-xs text-muted-3">
             Locale
             <select
@@ -98,7 +126,7 @@ export function ComposeForm({ optedIn, byLocale, collectionsReady }: Props) {
           </label>
           <button
             type="submit"
-            disabled={pending || !collectionsReady}
+            disabled={pending || blockedByMissingCollections}
             className="inline-flex h-10 items-center rounded-full border border-border-base px-4 text-sm font-medium hover:bg-surface disabled:opacity-50"
           >
             {pending ? "Sending…" : "Send test to me"}
@@ -113,6 +141,7 @@ export function ComposeForm({ optedIn, byLocale, collectionsReady }: Props) {
           <code className="font-mono">SEND</code> to confirm.
         </p>
         <form action={handleSend} className="mt-4 grid gap-4 md:grid-cols-3">
+          <input type="hidden" name="campaign" value={campaign} />
           <label className="text-xs text-muted-3">
             Locale
             <select
@@ -157,7 +186,9 @@ export function ComposeForm({ optedIn, byLocale, collectionsReady }: Props) {
             </p>
             <button
               type="submit"
-              disabled={pending || !collectionsReady || confirm !== "SEND"}
+              disabled={
+                pending || blockedByMissingCollections || confirm !== "SEND"
+              }
               className="inline-flex h-10 items-center rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse hover:bg-inverse-hover disabled:opacity-50"
             >
               {pending ? "Sending…" : `Send to ${targetCount}`}
