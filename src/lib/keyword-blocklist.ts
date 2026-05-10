@@ -13,7 +13,12 @@
 // Add to either list as new evasions show up. Keep the lists deduped
 // and lowercased.
 
+// Grouped by subject so it's obvious why a token is on the list and
+// who can be removed in one edit if scope changes. Keep the latin and
+// chinese halves in sync — if a person/brand is added to one, check
+// whether the other writing system also needs an entry.
 const latinTokens: ReadonlyArray<string> = [
+  // Cai Xukun (cluster that triggered the policy on 2026-05-09)
   "ikun",
   "i-kun",
   "i kun",
@@ -24,15 +29,24 @@ const latinTokens: ReadonlyArray<string> = [
   "xukun",
   "jige",
   "ji ge",
+  // Lei Jun (Xiaomi president) + Xiaomi brand
+  "lei jun",
+  "leijun",
+  "leijunpet",
+  "xiaomi",
 ];
 
 const chinesePhrases: ReadonlyArray<string> = [
+  // Cai Xukun
   "蔡徐坤",
   "鸡哥",
   "鸡你太美",
   "坤坤",
   "小黑子",
   "ji哥",
+  // Lei Jun + Xiaomi
+  "雷军",
+  "小米",
 ];
 
 export type BlockedKeywordHit = {
