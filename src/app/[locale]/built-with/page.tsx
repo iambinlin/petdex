@@ -44,6 +44,13 @@ const PROJECT_PRIORITY: Record<string, number> = {
   pawpause: 0,
 };
 
+function safeHttpUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return value.startsWith("https://") || value.startsWith("http://")
+    ? value
+    : null;
+}
+
 export const dynamic = "force-static";
 
 export async function generateMetadata({
@@ -256,7 +263,8 @@ function ProjectCard({
   siteLabel: string;
 }) {
   const repoUrl = `https://github.com/${project.repo}`;
-  const primaryHref = project.homepage || repoUrl;
+  const homepageUrl = safeHttpUrl(project.homepage);
+  const primaryHref = homepageUrl ?? repoUrl;
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-border-base bg-surface/80 transition hover:border-border-strong">
       <Link
@@ -316,9 +324,9 @@ function ProjectCard({
             <GithubIcon className="size-3.5" />
             {project.repo}
           </a>
-          {project.homepage ? (
+          {homepageUrl ? (
             <a
-              href={project.homepage}
+              href={homepageUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-brand hover:underline"

@@ -348,17 +348,23 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             >
               {t("advertise")}
             </MobileLink>
+            <MobileLink
+              href={href("/built-with")}
+              onClick={() => setOpen(false)}
+            >
+              <span className="inline-flex items-center gap-2">
+                {t("builtWith")}
+                <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
+                  new
+                </span>
+              </span>
+            </MobileLink>
             {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
               <MobileLink
                 href={href("/community")}
                 onClick={() => setOpen(false)}
               >
-                <span className="inline-flex items-center gap-2">
-                  {t("community")}
-                  <span className="rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.12em] text-brand uppercase ring-1 ring-brand/30 dark:bg-brand-tint-dark">
-                    new
-                  </span>
-                </span>
+                {t("community")}
               </MobileLink>
             ) : null}
             <MobileLink href={href("/about")} onClick={() => setOpen(false)}>
