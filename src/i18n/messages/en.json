@@ -96,6 +96,7 @@
     "title": "Petdex",
     "tagline": "The public gallery of animated companions for <brand />. Browse {totalPets}+ open-source companions, preview their states, and install one with a single command.",
     "heroCommand": "npx petdex install boba",
+    "downloadCta": "Get Petdex Desktop",
     "submitCta": "Submit",
     "browseGallery": "Browse gallery",
     "joinDiscord": "Join the Discord",
@@ -1268,10 +1269,10 @@
   },
   "openInPetdex": {
     "eyebrow": "macOS desktop app",
-    "label": "Get Petdex Desktop",
+    "label": "Open in Petdex Desktop",
     "subtitle": "Float this pet beside your coding agent",
     "opening": "Opening Petdex...",
-    "ariaLabel": "Get Petdex Desktop and install {slug}"
+    "ariaLabel": "Open {slug} in Petdex Desktop"
   },
   "installCompact": {
     "seeGuide": "See full install guide"

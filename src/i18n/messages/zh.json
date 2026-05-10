@@ -123,6 +123,7 @@
     "tagline": "<brand /> 的公共动画伙伴图库。浏览 {totalPets}+ 个开源伙伴，预览它们的状态，并用一条命令安装。",
     "tagline__fixme": true,
     "heroCommand": "npx petdex install boba",
+    "downloadCta": "下载 Petdex Desktop",
     "submitCta": "提交",
     "submitCta__fixme": true,
     "browseGallery": "浏览图库",
@@ -1475,13 +1476,13 @@
   "openInPetdex": {
     "eyebrow": "macOS 桌面应用",
     "eyebrow__fixme": true,
-    "label": "获取 Petdex Desktop",
+    "label": "在 Petdex Desktop 中打开",
     "label__fixme": true,
     "subtitle": "让这只宠物漂浮在你的编程助手旁",
     "subtitle__fixme": true,
     "opening": "正在打开 Petdex...",
     "opening__fixme": true,
-    "ariaLabel": "获取 Petdex Desktop 并安装 {slug}",
+    "ariaLabel": "在 Petdex Desktop 中打开 {slug}",
     "ariaLabel__fixme": true
   },
   "installCompact": {

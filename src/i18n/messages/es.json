@@ -96,6 +96,7 @@
     "title": "Petdex",
     "tagline": "La galería pública de compañeros animados para <brand />. Explora más de {totalPets} compañeros open source, previsualiza sus estados e instala uno con un solo comando.",
     "heroCommand": "npx petdex install boba",
+    "downloadCta": "Descargar Petdex Desktop",
     "submitCta": "Enviar",
     "browseGallery": "Ver galería",
     "joinDiscord": "Unirse al Discord",
@@ -1268,10 +1269,10 @@
   },
   "openInPetdex": {
     "eyebrow": "App de escritorio macOS",
-    "label": "Descargar Petdex Desktop",
+    "label": "Abrir en Petdex Desktop",
     "subtitle": "Que esta mascota flote junto a tu agente",
     "opening": "Abriendo Petdex...",
-    "ariaLabel": "Descargar Petdex Desktop e instalar {slug}"
+    "ariaLabel": "Abrir {slug} en Petdex Desktop"
   },
   "installCompact": {
     "seeGuide": "Ver guia de instalacion completa"

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { getTranslations } from "next-intl/server";
+import { ArrowRight } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { getActiveFeedAds } from "@/lib/ads/queries";
 import {
@@ -45,6 +46,7 @@ export function generateStaticParams() {
 
 export default async function Home() {
   const t = await getTranslations("home");
+  const locale = await getLocale();
 
   // Hand-pick the 3 collections that show on the landing strip in a
   // specific narrative order: Pokemon (instant recognition) →
@@ -130,11 +132,20 @@ export default async function Home() {
                 brand: () => <strong>Codex</strong>,
               })}
             </p>
-            <CommandLine
-              command="npx petdex install boba"
-              source="hero"
-              className="mt-5 w-full max-w-sm"
-            />
+            <div className="mt-5 flex w-full max-w-2xl flex-col items-stretch gap-2 sm:flex-row">
+              <CommandLine
+                command="npx petdex install boba"
+                source="hero"
+                className="flex-1"
+              />
+              <Link
+                href={`/${locale}/download`}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
+              >
+                {t("downloadCta")}
+                <ArrowRight className="size-4" />
+              </Link>
+            </div>
           </div>
 
           <HeroPetParade pets={heroPets} />
