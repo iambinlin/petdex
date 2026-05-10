@@ -11,12 +11,12 @@
   },
   "metadata": {
     "root": {
-      "titleDefault": "Petdex — 适用于 Codex 的动画伙伴",
+      "titleDefault": "Petdex: 适用于 Codex 的动画伙伴",
       "titleTemplate": "%s | Petdex",
       "description": "Petdex 是面向 Codex 的公共动画伙伴图库。浏览开源伙伴，预览它们的动画，并用一条命令安装。",
       "description__fixme": true,
-      "ogTitle": "Petdex — 适用于 Codex 的动画伙伴",
-      "twitterTitle": "Petdex — 适用于 Codex 的动画伙伴",
+      "ogTitle": "Petdex: 适用于 Codex 的动画伙伴",
+      "twitterTitle": "Petdex: 适用于 Codex 的动画伙伴",
       "keywords": {
         "codexPet": "Codex 宠物",
         "codexCliPet": "Codex 宠物",
@@ -69,14 +69,14 @@
     "githubRepoAriaWithStars": "GitHub 上的 Petdex，{stars} 颗星",
     "browse": "浏览",
     "browseDesc": "发现宠物、创作者和精选合集",
-    "collectionsDesc": "精选角色集 — South Park、Pokémon 等",
+    "collectionsDesc": "精选角色集：South Park、Pokémon 等",
     "creatorsDesc": "贡献最多宠物的创作者排行榜",
     "requestsDesc": "为社区想要的宠物投票",
     "kindsDesc": "动物、角色、生物、物品",
     "vibesDesc": "Cozy、edgy、神秘、英雄等",
     "build": "创作",
     "buildDesc": "制作并发布你的像素宠物",
-    "createDesc": "用 Codex skill 孵化宠物 — 5 分钟从灵感到 sprite",
+    "createDesc": "用 Codex skill 孵化宠物，5 分钟从灵感到 sprite",
     "submitDesc": "上传文件夹，Petdex 为所有人托管",
     "docsDesc": "安装 Petdex CLI 通过 npm 发布宠物",
     "earn": "推广",
@@ -283,7 +283,7 @@
     },
     "dashboard": {
       "metadata": {
-        "title": "广告仪表盘 — Petdex",
+        "title": "广告仪表盘 | Petdex",
         "description": "查看你的 Petdex 广告系列、花费、状态和预付曝光交付情况。"
       },
       "eyebrow": "广告主仪表盘",
@@ -342,7 +342,7 @@
         "delivery": "交付进度",
         "deliveryBody": "已交付 {served} / {total} 次曝光。",
         "metadata": {
-          "title": "编辑广告系列 — Petdex",
+          "title": "编辑广告系列 | Petdex",
           "description": "更新你的 Petdex 赞助卡片素材、目标地址和跟踪字段。"
         },
         "notEditable": {
@@ -408,7 +408,7 @@
   },
   "admin": {
     "metadata": {
-      "title": "Petdex — 管理后台"
+      "title": "Petdex 管理后台"
     },
     "tabs": {
       "ariaLabel": "管理分区",
@@ -524,7 +524,7 @@
       },
       "mailto": {
         "bodyIntro": "感谢你在 Petdex 提交 {kind}",
-        "subject": "Re: 你的 Petdex 反馈 — {excerpt}"
+        "subject": "Re: 你的 Petdex 反馈：{excerpt}"
       }
     },
     "feedbackActions": {
@@ -657,7 +657,7 @@
   },
   "submit": {
     "metadata": {
-      "title": "提交宠物 — Petdex",
+      "title": "提交宠物 | Petdex",
       "description": "为 Petdex 上传并验证一个 Codex 宠物包。",
       "description__fixme": true
     },
@@ -871,7 +871,7 @@
   },
   "create": {
     "metadata": {
-      "title": "创建一只宠物 — Petdex",
+      "title": "创建一只宠物 | Petdex",
       "title__fixme": true,
       "description": "5 分钟孵化你自己的 Codex 宠物，然后把它分享到 Petdex。",
       "description__fixme": true
@@ -1037,7 +1037,7 @@
   },
   "about": {
     "metadata": {
-      "title": "关于 Petdex — 适用于 Codex 的动画伙伴",
+      "title": "关于 Petdex: 适用于 Codex 的动画伙伴",
       "title__fixme": true,
       "description": "Petdex 是一个面向 Codex 的开源动画伙伴图库。浏览目录、用一条命令安装，或提交你自己的作品。",
       "description__fixme": true,
@@ -1442,7 +1442,7 @@
       "cliSubtext__fixme": true,
       "comingSoon": "即将支持 {os}",
       "comingSoon__fixme": true,
-      "desktopOnly": "仅桌面版 — 请用 Mac 访问",
+      "desktopOnly": "仅桌面版，请用 Mac 访问",
       "desktopOnly__fixme": true
     },
     "features": {

@@ -9,11 +9,11 @@
   },
   "metadata": {
     "root": {
-      "titleDefault": "Petdex — Compañeros animados para Codex",
+      "titleDefault": "Petdex: Compañeros animados para Codex",
       "titleTemplate": "%s | Petdex",
       "description": "Petdex es la galería pública de compañeros animados para Codex. Explora compañeros open source, previsualiza sus animaciones e instala uno con un solo comando.",
-      "ogTitle": "Petdex — Compañeros animados para Codex",
-      "twitterTitle": "Petdex — Compañeros animados para Codex",
+      "ogTitle": "Petdex: Compañeros animados para Codex",
+      "twitterTitle": "Petdex: Compañeros animados para Codex",
       "keywords": {
         "codexPet": "mascota de Codex",
         "codexCliPet": "mascota de Codex",
@@ -50,14 +50,14 @@
     "githubRepoAriaWithStars": "Petdex en GitHub, {stars} estrellas",
     "browse": "Explorar",
     "browseDesc": "Descubre pets, creadores y colecciones",
-    "collectionsDesc": "Sets curados — South Park, Pokémon y más",
+    "collectionsDesc": "Sets curados: South Park, Pokémon y más",
     "creatorsDesc": "Ranking de quién está publicando más pets",
     "requestsDesc": "Vota los pets que la comunidad quiere curados",
     "kindsDesc": "Animales, personajes, criaturas, objetos",
     "vibesDesc": "Cozy, edgy, místico, heroico y más",
     "build": "Crear",
     "buildDesc": "Hacé y publicá tu pixel pet",
-    "createDesc": "Crea un pet con la skill de Codex — 5 min de idea a sprite",
+    "createDesc": "Crea un pet con la skill de Codex, 5 min de idea a sprite",
     "submitDesc": "Subí tu carpeta y Petdex lo hostea para todos",
     "docsDesc": "Instala el Petdex CLI y publicá pets por npm",
     "earn": "Crecer",
@@ -244,7 +244,7 @@
     },
     "dashboard": {
       "metadata": {
-        "title": "Panel de anuncios — Petdex",
+        "title": "Panel de anuncios | Petdex",
         "description": "Revisa tus campañas de Petdex, gasto, estado y entrega de impresiones prepagadas."
       },
       "eyebrow": "Panel de anunciantes",
@@ -303,7 +303,7 @@
         "delivery": "Entrega",
         "deliveryBody": "{served} de {total} impresiones servidas.",
         "metadata": {
-          "title": "Editar campaña de anuncios — Petdex",
+          "title": "Editar campaña de anuncios | Petdex",
           "description": "Actualiza la creatividad, el destino y los campos de tracking de tu tarjeta patrocinada en Petdex."
         },
         "notEditable": {
@@ -369,7 +369,7 @@
   },
   "admin": {
     "metadata": {
-      "title": "Petdex — Admin"
+      "title": "Petdex Admin"
     },
     "tabs": {
       "ariaLabel": "Secciones de admin",
@@ -484,7 +484,7 @@
       },
       "mailto": {
         "bodyIntro": "Gracias por el {kind} en Petdex",
-        "subject": "Re: tu feedback de Petdex — {excerpt}"
+        "subject": "Re: tu feedback de Petdex: {excerpt}"
       }
     },
     "feedbackActions": {
@@ -614,7 +614,7 @@
   },
   "submit": {
     "metadata": {
-      "title": "Enviar una mascota — Petdex",
+      "title": "Enviar una mascota | Petdex",
       "description": "Sube y valida un paquete de mascota de Codex para Petdex."
     },
     "eyebrow": "Enviar",
@@ -791,7 +791,7 @@
   },
   "create": {
     "metadata": {
-      "title": "Crea una mascota — Petdex",
+      "title": "Crea una mascota | Petdex",
       "description": "Incuba tu propia mascota de Codex en 5 minutos y luego compártela en Petdex."
     },
     "eyebrow": "Haz la tuya",
@@ -925,7 +925,7 @@
   },
   "about": {
     "metadata": {
-      "title": "Acerca de Petdex — Compañeros animados para Codex",
+      "title": "Acerca de Petdex: Compañeros animados para Codex",
       "description": "Petdex es una galería open source de compañeros animados para Codex. Recorre el catálogo, instala con un comando o envía el tuyo.",
       "ogTitle": "Acerca de Petdex",
       "ogDescription": "Una galería open source de compañeros animados para Codex."
@@ -950,7 +950,7 @@
       "pack": {
         "title": "Cómo funciona un paquete de mascota",
         "beforePetJson": "Cada mascota son dos archivos.",
-        "betweenFiles": "define la metadata — nombre, los 9 estados de animación, duraciones de frames — y",
+        "betweenFiles": "define la metadata (nombre, los 9 estados de animación, duraciones de frames) y",
         "afterSpritesheet": "guarda el pixel art en una tira horizontal. Codex los carga al iniciar y cambia de estado según lo que esté pasando en tu sesión."
       }
     },
@@ -1266,7 +1266,7 @@
       "downloadCta": "Descargar para macOS",
       "cliSubtext": "Despues corre esto para conectar tus agentes",
       "comingSoon": "Pronto en {os}",
-      "desktopOnly": "Solo escritorio — visita desde una Mac"
+      "desktopOnly": "Solo escritorio. Visita desde una Mac"
     },
     "features": {
       "eyebrow": "Que hace",
