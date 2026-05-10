@@ -338,6 +338,7 @@ function rowToSchema(
       : null,
     pendingRejectionReason:
       (row.pending_rejection_reason as string | null) ?? null,
+    galleryPosition: (row.gallery_position as number | null) ?? 0,
   };
 }
 

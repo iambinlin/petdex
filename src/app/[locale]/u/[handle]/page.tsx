@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { desc, eq } from "drizzle-orm";
+import { asc, desc, eq, sql as dsql } from "drizzle-orm";
 import { Heart, TerminalSquare, Trophy } from "lucide-react";
 
 import { isAdmin } from "@/lib/admin";
@@ -142,11 +142,18 @@ export default async function UserProfilePage({ params }: PageProps) {
 
   // Pets owned by this user. Visitors only see approved rows; the owner
   // sees everything so the profile doubles as their dashboard.
+  // Owner-defined gallery_position takes priority (1-based, lower = first).
+  // Position 0 means "owner has not reordered this one" — those fall back
+  // to approvedAt DESC so freshly approved pets show up first by default.
   const allOwnerRows = await db
     .select()
     .from(schema.submittedPets)
     .where(eq(schema.submittedPets.ownerId, ownerId))
-    .orderBy(desc(schema.submittedPets.approvedAt));
+    .orderBy(
+      dsql`CASE WHEN ${schema.submittedPets.galleryPosition} = 0 THEN 1 ELSE 0 END`,
+      asc(schema.submittedPets.galleryPosition),
+      desc(schema.submittedPets.approvedAt),
+    );
 
   const approvedRows = allOwnerRows.filter((r) => r.status === "approved");
 

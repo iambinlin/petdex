@@ -12,6 +12,7 @@ import {
   CollectionEditor,
   type EditableCollection,
 } from "@/components/collection-editor";
+import { GalleryReorderGrid } from "@/components/gallery-reorder-grid";
 import { ClaimableBanner, type Submission } from "@/components/my-pets-view";
 import { PetCard } from "@/components/pet-gallery";
 
@@ -243,30 +244,43 @@ function PetsPanel({
               </p>
             </header>
           ) : null}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {approvedPets.map((pet, index) => (
-              <PetCard
-                key={pet.slug}
-                pet={pet}
-                index={index}
-                stateCount={stateCount}
-                ownerActions={
-                  isOwner
-                    ? { submissionId: pet.id, status: "approved" }
-                    : undefined
-                }
-                pinState={
-                  isOwner && pinnedSet && maxPins != null
-                    ? {
-                        isPinned: pinnedSet.has(pet.slug),
-                        pinnedCount,
-                        maxPins,
-                      }
-                    : undefined
-                }
-              />
-            ))}
-          </div>
+          {(() => {
+            const grid = (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {approvedPets.map((pet, index) => (
+                  <PetCard
+                    key={pet.slug}
+                    pet={pet}
+                    index={index}
+                    stateCount={stateCount}
+                    ownerActions={
+                      isOwner
+                        ? { submissionId: pet.id, status: "approved" }
+                        : undefined
+                    }
+                    pinState={
+                      isOwner && pinnedSet && maxPins != null
+                        ? {
+                            isPinned: pinnedSet.has(pet.slug),
+                            pinnedCount,
+                            maxPins,
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+            );
+            // Owner with 2+ approved pets gets the "Edit order" toggle
+            // that swaps to a drag-reorder grid. Visitors and owners
+            // with 1 pet just see the regular grid.
+            if (isOwner && approvedPets.length >= 2) {
+              return (
+                <GalleryReorderGrid pets={approvedPets}>{grid}</GalleryReorderGrid>
+              );
+            }
+            return grid;
+          })()}
         </section>
       ) : null}
 

@@ -101,6 +101,11 @@ export const submittedPets = pgTable(
       withTimezone: true,
     }),
     pendingRejectionReason: text("pending_rejection_reason"),
+    // Owner-controlled order on /u/<handle>. Lower comes first. Ties
+    // (typical: every row is 0 by default) fall back to dex/created_at
+    // order from the query side. Owners reorder via dnd-kit; non-owners
+    // see whatever order the owner saved.
+    galleryPosition: integer("gallery_position").notNull().default(0),
   },
   (table) => ({
     statusIdx: index("submitted_pets_status_idx").on(table.status),
