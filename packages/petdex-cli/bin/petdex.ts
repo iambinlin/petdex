@@ -208,13 +208,13 @@ function printHelp() {
   console.log(
     [
       "",
-      `  ${pc.bold(pc.magenta("petdex"))} ${dim(VERSION)} ${dim("— Codex pet gallery CLI")}`,
+      `  ${pc.bold(pc.magenta("petdex"))} ${dim(VERSION)} ${dim("Codex pet gallery CLI")}`,
       "",
       `  ${c("Usage")}`,
       `    petdex <command> [args]`,
       "",
       `  ${c("Commands")}`,
-      `    ${pc.bold("init")}               First-run setup — wires hooks across your agents AND wakes the mascot ${pc.green("(start here)")}`,
+      `    ${pc.bold("init")}               First-run setup: wires hooks across your agents AND wakes the mascot ${pc.green("(start here)")}`,
       `    ${pc.bold("login")}              Sign in with Clerk OAuth`,
       `    ${pc.bold("logout")}             Clear stored credentials`,
       `    ${pc.bold("whoami")}             Show signed-in user`,
@@ -223,9 +223,9 @@ function printHelp() {
       `    ${pc.bold("install desktop")}    Install the petdex-desktop binary (alternative to the .dmg)`,
       `    ${pc.bold("list")}               List approved pets`,
       `    ${pc.bold("hooks install")}      Wire petdex-desktop into your coding agents`,
-      `    ${pc.bold("toggle")}             One-shot wake/sleep — flips the mascot on or off depending on current state`,
-      `    ${pc.bold("up")}                 Force-wake the mascot — enables hooks AND launches petdex-desktop`,
-      `    ${pc.bold("down")}               Force-sleep the mascot — disables hooks AND stops petdex-desktop`,
+      `    ${pc.bold("toggle")}             One-shot wake/sleep. Flips the mascot on or off depending on current state`,
+      `    ${pc.bold("up")}                 Force-wake the mascot. Enables hooks AND launches petdex-desktop`,
+      `    ${pc.bold("down")}               Force-sleep the mascot. Disables hooks AND stops petdex-desktop`,
       `    ${pc.bold("desktop")} <cmd>      Manage petdex-desktop (start | stop | status)`,
       `    ${pc.bold("update")}             Pull the latest petdex-desktop release and restart`,
       `    ${pc.bold("doctor")}             Diagnose install/runtime/agents and surface fixes`,
@@ -465,7 +465,7 @@ async function cmdList() {
   s.stop(`${data.total} pets`);
 
   const lines = data.pets.map((pet) => {
-    const tag = pet.submittedBy ? pc.dim(` — by ${pet.submittedBy}`) : "";
+    const tag = pet.submittedBy ? pc.dim(` by ${pet.submittedBy}`) : "";
     return `  ${pc.cyan(pet.slug.padEnd(26))} ${pet.displayName}${tag}`;
   });
   console.log(lines.join("\n"));
@@ -870,9 +870,9 @@ function formatSubmissionOutcome(result: SubmitOneResult): string {
     return `${slug} ${pc.green("approved")}`;
   }
   if (result.review.decision === "rejected") {
-    return `${slug} ${pc.red("rejected")}${explanation ? pc.dim(` — ${explanation}`) : ""}`;
+    return `${slug} ${pc.red("rejected")}${explanation ? pc.dim(`: ${explanation}`) : ""}`;
   }
-  return `${slug} ${pc.yellow("held for review")}${explanation ? pc.dim(` — ${explanation}`) : ""}`;
+  return `${slug} ${pc.yellow("held for review")}${explanation ? pc.dim(`: ${explanation}`) : ""}`;
 }
 
 function reviewExplanation(review: SubmissionReviewOutcome): string | null {
@@ -1318,9 +1318,9 @@ function printHooksHelp() {
       `    ${pc.bold("install")}              Wire petdex into your coding agents`,
       `    ${pc.bold("refresh")}              Re-write hook configs + slash commands for already-wired agents (non-interactive)`,
       `    ${pc.bold("uninstall")}            Remove petdex from your agent configs (--remove-token also drops the auth token)`,
-      `    ${pc.bold("toggle")}               Flip the killswitch — disable/enable hooks without restarting agents`,
+      `    ${pc.bold("toggle")}               Flip the killswitch. Disable/enable hooks without restarting agents`,
       `    ${pc.bold("on")}                   Enable hooks (clears the killswitch)`,
-      `    ${pc.bold("off")}                  Disable hooks (sets the killswitch — agent tool calls become no-ops)`,
+      `    ${pc.bold("off")}                  Disable hooks (sets the killswitch, agent tool calls become no-ops)`,
       `    ${pc.bold("status")}               Show whether hooks are currently enabled`,
       "",
       `  ${c("Examples")}`,

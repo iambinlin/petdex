@@ -27,7 +27,7 @@ import type { Agent } from "./agents.js";
 const PETDEX_INVOKE = `node "$HOME/.petdex/bin/petdex.js"`;
 
 const SLASH_COMMAND_BODY = `---
-description: Wake or sleep the petdex mascot — toggles the floating pet on/off
+description: Wake or sleep the petdex mascot. Toggles the floating pet on/off
 ---
 
 The user wants to control the petdex mascot from inside the agent. The mascot is a floating macOS window driven by hooks installed in agent settings. /petdex is a one-shot toggle that flips the entire state in a single command.
@@ -40,9 +40,9 @@ Run the matching command using the persisted petdex binary at \`$HOME/.petdex/bi
 - \`/petdex status\` → run \`${PETDEX_INVOKE} hooks status\`
 - \`/petdex doctor\` → run \`${PETDEX_INVOKE} doctor\`
 
-Show the command output verbatim to the user. Don't reinterpret, don't explain — the CLI's output is already user-facing.
+Show the command output verbatim to the user. Don't reinterpret, don't explain. The CLI's output is already user-facing.
 
-If \`$HOME/.petdex/bin/petdex.js\` doesn't exist, the user hasn't run \`petdex hooks install\` yet — tell them to run \`npx petdex@latest init\` first, then retry.
+If \`$HOME/.petdex/bin/petdex.js\` doesn't exist, the user hasn't run \`petdex hooks install\` yet. Tell them to run \`npx petdex@latest init\` first, then retry.
 
 Arguments: \`$ARGUMENTS\`
 `;

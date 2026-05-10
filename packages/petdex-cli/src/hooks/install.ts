@@ -73,7 +73,7 @@ export async function runInstall(): Promise<HooksInstallResult> {
   p.log.info(
     anyInstalled
       ? "Found these agents on your system:"
-      : "No coding agent configs detected. You can still pre-write hooks for any agent — they'll activate when you install it.",
+      : "No coding agent configs detected. You can still pre-write hooks for any agent. They'll activate when you install it.",
   );
 
   for (const { agent, installed } of detections) {

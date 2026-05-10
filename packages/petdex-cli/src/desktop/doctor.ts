@@ -216,7 +216,7 @@ function checkKillswitch(): CheckResult {
     return {
       status: "warn",
       label: "Killswitch",
-      detail: "DISABLED — agent hooks are short-circuited",
+      detail: "DISABLED. Agent hooks are short-circuited.",
       hint: "Re-enable with `petdex hooks on` or `/petdex on` from inside your agent.",
     };
   }

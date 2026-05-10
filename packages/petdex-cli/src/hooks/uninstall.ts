@@ -46,7 +46,7 @@ export async function runUninstall(
   const installed = detections.filter((d) => d.installed);
 
   if (installed.length === 0) {
-    p.outro(pc.dim("No agent configs found — nothing to uninstall."));
+    p.outro(pc.dim("No agent configs found. Nothing to uninstall."));
     return { uninstalledAgents: [] };
   }
 
