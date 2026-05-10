@@ -1377,7 +1377,7 @@
     "hero": {
       "downloadCta": "下载 macOS 版本",
       "downloadCta__fixme": true,
-      "cliSubtext": "或通过 CLI 安装",
+      "cliSubtext": "然后运行这个命令连接你的 AI 助手",
       "cliSubtext__fixme": true,
       "comingSoon": "即将支持 {os}",
       "comingSoon__fixme": true,
@@ -1414,8 +1414,10 @@
       "title": "30 秒完成设置",
       "title__fixme": true,
       "step1": {
-        "title": "安装桌面二进制文件",
-        "title__fixme": true
+        "title": "一键接入",
+        "title__fixme": true,
+        "hint": "自动检测你的 AI 助手（Claude Code、Codex、Gemini、OpenCode），写入 hooks，并唤醒宠物",
+        "hint__fixme": true
       },
       "installPet": {
         "title": "安装 {slug}",
@@ -1423,17 +1425,7 @@
         "hint": "将这只宠物添加到你的本地集合",
         "hint__fixme": true
       },
-      "step2": {
-        "title": "连接你的 AI 助手",
-        "title__fixme": true,
-        "hint": "自动配置 Claude Code、Codex、Gemini 和 OpenCode",
-        "hint__fixme": true
-      },
-      "step3": {
-        "title": "开始漂浮",
-        "title__fixme": true
-      },
-      "step4": {
+      "stayUpdated": {
         "title": "保持更新",
         "title__fixme": true,
         "hint": "拉取最新的桌面版本，并在运行时重启宠物。可随时执行。",

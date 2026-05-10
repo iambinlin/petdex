@@ -152,6 +152,21 @@ export async function startDesktop(): Promise<StartResult> {
   const out = await import("node:fs").then((fs) => fs.openSync(logFile(), "a"));
   const err = await import("node:fs").then((fs) => fs.openSync(logFile(), "a"));
 
+  // If the binary is inside an .app bundle, launch via `open -a` so
+  // macOS treats it as a proper application (Dock icon, LaunchServices
+  // registration, correct menubar title from CFBundleName, app
+  // activation policy). Spawning the bare executable directly skips
+  // all of that and the user sees an unstyled raw process.
+  //
+  // Trade-off: `open` returns immediately and doesn't give us the
+  // child's pid. We grep for it via pgrep right after launch. A few
+  // ms of delay is fine because petdex-desktop binds :7777 quickly
+  // anyway and pgrep is cheap.
+  const appBundle = findEnclosingAppBundle(bin);
+  if (appBundle) {
+    return startViaOpen(appBundle);
+  }
+
   const child = spawn(bin, [], {
     detached: true,
     stdio: ["ignore", out, err],
@@ -171,6 +186,73 @@ export async function startDesktop(): Promise<StartResult> {
   const record: PidRecord = { pid: child.pid, lstart };
   await writeFile(pidFile(), JSON.stringify(record));
   return { ok: true, pid: child.pid, alreadyRunning: false };
+}
+
+// Walks up from /…/Petdex.app/Contents/MacOS/petdex-desktop and returns
+// the .app path if found. Returns null for bare-binary installs (e.g.
+// ~/.petdex/bin/petdex-desktop).
+function findEnclosingAppBundle(binPath: string): string | null {
+  // The binary always lives at <bundle>/Contents/MacOS/<name>.
+  const macosDir = path.dirname(binPath);
+  if (path.basename(macosDir) !== "MacOS") return null;
+  const contentsDir = path.dirname(macosDir);
+  if (path.basename(contentsDir) !== "Contents") return null;
+  const bundle = path.dirname(contentsDir);
+  if (!bundle.endsWith(".app")) return null;
+  return bundle;
+}
+
+async function startViaOpen(appBundle: string): Promise<StartResult> {
+  // `open -gj` keeps Petdex from stealing focus from the user's
+  // terminal/agent. -W would wait for the app to exit, which we
+  // don't want; we want fire-and-forget. -n forces a new instance
+  // (we already verified state was stopped above, so this is just
+  // belt-and-braces).
+  const result = spawn("open", ["-gj", appBundle], {
+    stdio: "ignore",
+    detached: true,
+  });
+  result.unref();
+
+  // Poll for the child process — open returns immediately so we
+  // need to discover the pid LaunchServices spawned. Cap at 3s so
+  // a misconfigured bundle doesn't hang the CLI.
+  const deadline = Date.now() + 3_000;
+  let pid: number | null = null;
+  while (Date.now() < deadline) {
+    pid = pgrepPetdexDesktop();
+    if (pid) break;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  if (!pid) {
+    return {
+      ok: false,
+      reason: `Launched ${appBundle} but couldn't find the resulting process. Check ${logFile()}.`,
+    };
+  }
+
+  const lstart = processStartTime(pid) ?? "";
+  const record: PidRecord = { pid, lstart };
+  await writeFile(pidFile(), JSON.stringify(record));
+  return { ok: true, pid, alreadyRunning: false };
+}
+
+function pgrepPetdexDesktop(): number | null {
+  try {
+    // Match the executable name inside the bundle (Contents/MacOS/petdex-desktop).
+    // -f matches against the full command line so the path inside the bundle counts.
+    const out = execFileSync("pgrep", ["-f", "petdex-desktop"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    if (!out) return null;
+    // pgrep returns one pid per line; take the most recent (last).
+    const lines = out.split("\n").filter((l) => l.length > 0);
+    const pid = Number(lines[lines.length - 1]);
+    return Number.isFinite(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
 }
 
 export type StopResult =

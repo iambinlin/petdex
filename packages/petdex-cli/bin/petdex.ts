@@ -105,7 +105,7 @@ async function getAuth(): Promise<ClerkCliAuth> {
   return _auth;
 }
 
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -158,6 +158,9 @@ async function main() {
     case "desktop":
       await cmdDesktop(args.slice(1));
       break;
+    case "init":
+      await cmdInit();
+      break;
     case "up":
       await cmdUp();
       break;
@@ -200,12 +203,13 @@ function printHelp() {
       `    petdex <command> [args]`,
       "",
       `  ${c("Commands")}`,
+      `    ${pc.bold("init")}               First-run setup — wires hooks across your agents AND wakes the mascot ${pc.green("(start here)")}`,
       `    ${pc.bold("login")}              Sign in with Clerk OAuth`,
       `    ${pc.bold("logout")}             Clear stored credentials`,
       `    ${pc.bold("whoami")}             Show signed-in user`,
       `    ${pc.bold("submit")} <path>      Submit a pet folder, zip, or parent of pets (bulk)`,
       `    ${pc.bold("install")} <slug>     Install a pet into ~/.petdex/pets and ~/.codex/pets`,
-      `    ${pc.bold("install desktop")}    Install the petdex-desktop binary for your platform`,
+      `    ${pc.bold("install desktop")}    Install the petdex-desktop binary (alternative to the .dmg)`,
       `    ${pc.bold("list")}               List approved pets`,
       `    ${pc.bold("hooks install")}      Wire petdex-desktop into your coding agents`,
       `    ${pc.bold("toggle")}             One-shot wake/sleep — flips the mascot on or off depending on current state`,
@@ -217,15 +221,13 @@ function printHelp() {
       `    ${pc.bold("telemetry")} [on|off|status]  Manage anonymous usage telemetry`,
       "",
       `  ${c("Examples")}`,
+      `    ${dim("$")} petdex init                            ${dim("# after dragging Petdex.app from the .dmg → just run this")}`,
       `    ${dim("$")} petdex login`,
       `    ${dim("$")} petdex submit ~/.codex/pets/boba       ${dim("# single folder")}`,
-      `    ${dim("$")} petdex submit ~/Downloads/boba.zip     ${dim("# zip file")}`,
-      `    ${dim("$")} petdex submit ~/.codex/pets            ${dim("# bulk all subfolders")}`,
-      `    ${dim("$")} petdex install boba`,
-      `    ${dim("$")} petdex install desktop                 ${dim("# fetch the latest binary")}`,
-      `    ${dim("$")} petdex hooks install                   ${dim("# pick agents, write hooks")}`,
-      `    ${dim("$")} petdex desktop start                   ${dim("# launch the mascot")}`,
-      `    ${dim("$")} petdex update                          ${dim("# pull latest release")}`,
+      `    ${dim("$")} petdex install boba                    ${dim("# install a pet by slug")}`,
+      `    ${dim("$")} petdex toggle                          ${dim("# wake or sleep the mascot")}`,
+      `    ${dim("$")} petdex doctor                          ${dim("# diagnose install + agents")}`,
+      `    ${dim("$")} petdex update                          ${dim("# pull the latest release")}`,
       "",
       `  ${dim("Gallery & docs:")} ${pc.underline(PETDEX_URL)}`,
       "",
@@ -1144,6 +1146,36 @@ function cmdHooksKillswitch(sub: "toggle" | "on" | "off" | "status"): void {
     console.log(
       pc.dim(
         `  agent hooks short-circuit before any network call. Re-enable: petdex hooks on`,
+      ),
+    );
+  }
+}
+
+// One-shot first-run setup. Installs hooks across detected agents
+// (which also writes the /petdex slash command file into each agent's
+// commands dir). Does NOT auto-launch the desktop — the user wakes it
+// with /petdex from inside their agent, which is the canonical UX.
+//
+// Idempotent: re-running refreshes the hook configs and rewrites the
+// slash command files. Safe to invoke any time.
+async function cmdInit(): Promise<void> {
+  const { installedAgents } = await runHooksInstall();
+  if (installedAgents.length > 0) {
+    emit("cli_hooks_install_success", {
+      cli_version: VERSION,
+      agents: installedAgents,
+    });
+    // Final hand-off — tell the user how to actually wake the
+    // mascot. We don't spawn the desktop here because that
+    // surprises users who just wanted to wire up hooks (and the
+    // .app may not be installed yet on a fresh machine).
+    console.log("");
+    console.log(
+      `${pc.green("✓")} ${pc.bold("All set.")} Open your agent and run ${pc.cyan("/petdex")} to wake the mascot.`,
+    );
+    console.log(
+      pc.dim(
+        `  Or from a shell: ${pc.cyan("petdex up")} (force-wake) · ${pc.cyan("petdex toggle")} (smart wake/sleep)`,
       ),
     );
   }

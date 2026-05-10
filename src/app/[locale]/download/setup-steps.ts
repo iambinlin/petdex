@@ -1,21 +1,20 @@
 /**
  * Setup-step list for the /download page.
  *
- * Extracted from page.tsx so the dynamic numbering and the pending-pet
- * insertion can be unit-tested without standing up a full RSC render.
+ * Now that Petdex.app ships as a signed + notarized .dmg and the CLI
+ * resolves the binary from /Applications automatically, the install
+ * flow collapses to a single command:
  *
- * The order is the order the CLI actually wants:
- *   1. install desktop binary
- *   1.5 install <pendingPet>   (only when ?next=install/<slug>)
- *   2. hooks install
- *   3. desktop start
- *   4. update
+ *   1. (already done) Drag Petdex.app to /Applications via the .dmg
+ *   2. `npx petdex@latest init`   ← wires hooks + wakes the mascot
+ *   *. `npx petdex@latest install <slug>` (optional, when /pets/<slug>
+ *       sent the user here with ?next=install/<slug>)
+ *   *. `npx petdex@latest update` (dimmed, runs anytime)
  *
- * `installPet` slots BETWEEN binary install and hooks install on
- * purpose: petdex must already exist before `install <slug>` resolves
- * its asset path, but the new pet must be on disk before the desktop
- * boots in step 3 — otherwise the "Open in Petdex" CTA from /pets/<slug>
- * lands on a desktop that doesn't have the pet the user picked.
+ * `init` is the canonical first command. It runs `hooks install` (the
+ * agent picker wizard) and then `up` (toggles the killswitch off and
+ * launches the desktop), so there's no install-binary / wire-hooks /
+ * launch-mascot ceremony anymore.
  */
 
 export type SetupStep = {
@@ -47,7 +46,8 @@ export function buildSetupSteps(
     {
       key: "step1",
       title: t("setup.step1.title"),
-      command: "npx petdex install desktop",
+      command: "npx petdex init",
+      hint: t("setup.step1.hint"),
     },
   ];
 
@@ -60,30 +60,13 @@ export function buildSetupSteps(
     });
   }
 
-  steps.push(
-    {
-      key: "step2",
-      title: t("setup.step2.title"),
-      command: "npx petdex hooks install",
-      hint: t("setup.step2.hint"),
-    },
-    {
-      // step3 is the wake step. `petdex up` is one-shot:
-      // enables hooks + launches the desktop. Same end-state as
-      // `desktop start`, but symmetric with `down` and matches
-      // what /petdex toggles to from inside an agent.
-      key: "step3",
-      title: t("setup.step3.title"),
-      command: "npx petdex up",
-    },
-    {
-      key: "step4",
-      title: t("setup.step4.title"),
-      command: "npx petdex update",
-      hint: t("setup.step4.hint"),
-      dimmed: true,
-    },
-  );
+  steps.push({
+    key: "stayUpdated",
+    title: t("setup.stayUpdated.title"),
+    command: "npx petdex update",
+    hint: t("setup.stayUpdated.hint"),
+    dimmed: true,
+  });
 
   return steps;
 }

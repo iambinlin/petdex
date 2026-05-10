@@ -149,7 +149,7 @@ export default async function DownloadPage({
 
           <DownloadCTA
             primaryLabel={t("hero.downloadCta")}
-            cliCommand="npx petdex install desktop"
+            cliCommand="npx petdex init"
             cliSubtext={t("hero.cliSubtext")}
             comingSoonLabel={t("hero.comingSoon")}
             desktopOnlyLabel={t("hero.desktopOnly")}

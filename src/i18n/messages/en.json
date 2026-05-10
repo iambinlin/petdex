@@ -1203,7 +1203,7 @@
     "subtitle": "Your pet, floating beside every coding agent.",
     "hero": {
       "downloadCta": "Download for macOS",
-      "cliSubtext": "Or install via CLI",
+      "cliSubtext": "Then run this to wire up your agents",
       "comingSoon": "Coming to {os}",
       "desktopOnly": "Desktop-only — visit on a Mac"
     },
@@ -1227,20 +1227,14 @@
       "eyebrow": "Get started",
       "title": "Set up in 30 seconds",
       "step1": {
-        "title": "Install the desktop binary"
+        "title": "Wire it up",
+        "hint": "Picks your agents (Claude Code, Codex, Gemini, OpenCode), writes hooks, and wakes the mascot"
       },
       "installPet": {
         "title": "Install {slug}",
         "hint": "Adds this pet to your local collection"
       },
-      "step2": {
-        "title": "Wire up your agents",
-        "hint": "Configures Claude Code, Codex, Gemini, and OpenCode automatically"
-      },
-      "step3": {
-        "title": "Start floating"
-      },
-      "step4": {
+      "stayUpdated": {
         "title": "Stay updated",
         "hint": "Pulls the latest desktop release and restarts the pet if it was running. Run any time."
       }

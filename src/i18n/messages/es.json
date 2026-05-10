@@ -1203,7 +1203,7 @@
     "subtitle": "Tu mascota, flotando junto a cada agente de programacion.",
     "hero": {
       "downloadCta": "Descargar para macOS",
-      "cliSubtext": "O instala via CLI",
+      "cliSubtext": "Despues corre esto para conectar tus agentes",
       "comingSoon": "Pronto en {os}",
       "desktopOnly": "Solo escritorio — visita desde una Mac"
     },
@@ -1227,20 +1227,14 @@
       "eyebrow": "Empezar",
       "title": "Listo en 30 segundos",
       "step1": {
-        "title": "Instala el binario de escritorio"
+        "title": "Conecta todo",
+        "hint": "Detecta tus agentes (Claude Code, Codex, Gemini, OpenCode), instala los hooks y despierta la mascota"
       },
       "installPet": {
         "title": "Instala {slug}",
         "hint": "Anade esta mascota a tu coleccion local"
       },
-      "step2": {
-        "title": "Conecta tus agentes",
-        "hint": "Configura Claude Code, Codex, Gemini y OpenCode automaticamente"
-      },
-      "step3": {
-        "title": "Empieza a flotar"
-      },
-      "step4": {
+      "stayUpdated": {
         "title": "Mantente actualizado",
         "hint": "Descarga la ultima version del escritorio y reinicia la mascota si estaba corriendo. Corre cuando quieras."
       }

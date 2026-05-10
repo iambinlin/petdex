@@ -60,28 +60,32 @@ describe("parsePendingPet", () => {
 });
 
 describe("buildSetupSteps", () => {
-  test("returns 4 steps when no pet is pending", () => {
+  test("default flow is two steps: init + stay-updated", () => {
+    // The setup flow collapsed to a single user action (`npx petdex
+    // init`) plus the always-optional "stay updated" reminder.
+    // Anything that drifts from those two keys is a regression worth
+    // catching early.
     const steps = buildSetupSteps(makeT(), null);
-    expect(steps.map((s) => s.key)).toEqual([
-      "step1",
-      "step2",
-      "step3",
-      "step4",
-    ]);
-    // The CTA promise of /pets/<slug> -> /download is only broken when
-    // the install-pet step is missing AND a slug was promised. Without
-    // a slug we expect the original 4-step flow unchanged.
+    expect(steps.map((s) => s.key)).toEqual(["step1", "stayUpdated"]);
     expect(steps.find((s) => s.key === "installPet")).toBeUndefined();
   });
 
-  test("inserts the install-pet step between binary install and hooks install", () => {
+  test("step1 runs `npx petdex init` (the canonical first command)", () => {
+    const steps = buildSetupSteps(makeT(), null);
+    const init = steps.find((s) => s.key === "step1");
+    expect(init).toBeDefined();
+    if (!init) return;
+    expect(init.command).toBe("npx petdex init");
+    expect(init.title).toBe("T(setup.step1.title)");
+    expect(init.hint).toBe("T(setup.step1.hint)");
+  });
+
+  test("install-pet step inserts after init when ?next=install/<slug>", () => {
     const steps = buildSetupSteps(makeT(), "foxy");
     expect(steps.map((s) => s.key)).toEqual([
       "step1",
       "installPet",
-      "step2",
-      "step3",
-      "step4",
+      "stayUpdated",
     ]);
   });
 
@@ -98,11 +102,11 @@ describe("buildSetupSteps", () => {
     expect(installPet.hint).toBe("T(setup.installPet.hint)");
   });
 
-  test("only the last step is dimmed (it's the optional 'stay updated' step)", () => {
+  test("only the stayUpdated step is dimmed (it's the optional reminder)", () => {
     const steps = buildSetupSteps(makeT(), "foxy");
     const dimmed = steps.filter((s) => s.dimmed);
     expect(dimmed).toHaveLength(1);
-    expect(dimmed[0]?.key).toBe("step4");
+    expect(dimmed[0]?.key).toBe("stayUpdated");
   });
 
   test("each step has a stable key for React reconciliation", () => {
