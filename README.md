@@ -79,18 +79,19 @@ If you want to build on top of Petdex (a desktop client, a wearable, an SDK, a D
 
 ```text
 crafter-station/petdex
-├── src/                       Next.js 16 app (App Router, RSC, Tailwind, Drizzle)
-│   ├── app/[locale]/          Public site: gallery, /pets/<slug>, /built-with, /community, /create
-│   ├── app/api/cli/           CLI endpoints: auth, submit, dedup, manifest
-│   ├── app/api/admin/         Admin review surface
+├── src/
+│   ├── app/[locale]/          Public site: gallery, /pets/<slug>, /collections, /built-with, /community, /create, /download, /submit, /u/<handle>, ...
+│   ├── app/api/cli/           CLI endpoints: OAuth config, submit (zip → presigned R2), dedup check, register
+│   ├── app/api/manifest/      Public manifest: every approved pet with its spritesheet URL
+│   ├── app/api/admin/         Admin review surface for submissions, edits, collection requests
 │   └── lib/db/schema.ts       Drizzle schema (Postgres)
 ├── packages/
 │   ├── petdex-cli/            npm `petdex` (auth, list, install, submit, hooks, init)
 │   ├── petdex-desktop/        Zig + WebKit floating mascot for macOS
 │   └── discord-bot/           Discord.js bot for the Petdex server
-├── public/pets/               Approved pet packs served from R2
 ├── public/built-with/         Screenshots for the community page
-└── drizzle/                   SQL migrations
+├── public/brand/              Logos, OS icons, Discord icon
+└── drizzle/                   SQL migrations (Postgres schema history)
 ```
 
 **Web stack**: Next.js 16, React 19, Tailwind, Drizzle, Postgres, Redis, Clerk, R2.<br />
