@@ -53,7 +53,7 @@ function PetSpriteImpl({
         className="pet-sprite"
         style={
           {
-            "--sprite-url": `url(${src})`,
+            "--sprite-url": `url("${src.replace(/"/g, '\\"')}")`,
             "--sprite-row": animation.row,
             "--sprite-frames": animation.frames,
             "--sprite-duration": `${animation.durationMs}ms`,
