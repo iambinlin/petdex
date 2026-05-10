@@ -270,19 +270,7 @@ const CollectionCard = memo(function CollectionCard({
 }) {
   const k = collectionKind(c.slug);
   return (
-    <article
-      className="flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80"
-      // content-visibility lets the browser skip layout + paint for
-      // off-screen cards. Without it, paginating in 12 fresh cards
-      // (60 sprite WebPs decoding at once) blocks the main thread for
-      // ~200ms and the whole grid flickers white. contain-intrinsic-size
-      // reserves space so the scroll position does not jump while the
-      // browser figures out the real card height.
-      style={{
-        contentVisibility: "auto",
-        containIntrinsicSize: "auto 480px",
-      }}
-    >
+    <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80">
       <Link href={`/collections/${c.slug}`} className="block">
         <CollectionCover
           pets={c.pets}
