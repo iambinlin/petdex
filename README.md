@@ -1,6 +1,8 @@
 <div align="center">
 
-<img src="public/brand/petdex-wordmark.svg" alt="Petdex" width="320" />
+<img src="public/brand/petdex-desktop-icon.png" alt="Petdex" width="120" />
+
+<h1>Petdex</h1>
 
 <p>
   The public gallery of animated companions for Codex.
