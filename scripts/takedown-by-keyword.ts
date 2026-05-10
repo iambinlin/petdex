@@ -73,7 +73,10 @@ function buildIlikeOr(
     (p) => sql`${column} ILIKE ${`%${p.replace(/[%_]/g, (m) => `\\${m}`)}%`}`,
   );
   // drizzle's or() needs at least 2 args to avoid type narrowing weirdness.
-  return exprs.length === 1 ? (exprs[0] as never) : or(...(exprs as never));
+  // The cast to `never[]` (not `never`) preserves the array shape so the
+  // spread is iterable; or() returns `SQL | undefined` which is exactly
+  // what we want to bubble up.
+  return exprs.length === 1 ? exprs[0] : or(...(exprs as never[]));
 }
 
 async function findMatchingPets() {
