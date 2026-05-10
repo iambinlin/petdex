@@ -85,6 +85,13 @@
       "when": 1778832000000,
       "tag": "0011_telemetry_events",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778918400000,
+      "tag": "0012_gallery_position",
+      "breakpoints": true
     }
   ]
 }
