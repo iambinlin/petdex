@@ -8,7 +8,8 @@ import { Heart, TerminalSquare, Trophy } from "lucide-react";
 import { isAdmin } from "@/lib/admin";
 import { getCatchProgress, getLikedPetsForUser } from "@/lib/catch-status";
 import { canManageCreatorCollections } from "@/lib/collection-access";
-import { getOwnerCollection } from "@/lib/collections";
+import { getOwnerCollections } from "@/lib/collections";
+import { MAX_OWNER_COLLECTIONS } from "@/lib/collection-access";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { userIdForHandle } from "@/lib/handles";
@@ -209,8 +210,26 @@ export default async function UserProfilePage({ params }: PageProps) {
           metrics: { installCount: 0, zipDownloadCount: 0, likeCount: 0 },
         }))
     : [];
-  const collection = await getOwnerCollection(ownerId);
-  const likedPets = await getLikedPetsForUser(ownerId);
+  const [ownerCollectionsList, likedPets] = await Promise.all([
+    getOwnerCollections(ownerId),
+    getLikedPetsForUser(ownerId),
+  ]);
+  // Pick the first one for the legacy "collection" prop (kept around
+  // until callers fully migrate to ownerCollections). Order from
+  // getOwnerCollections is "featured first, then most recently
+  // updated", so the legacy field gets the most relevant single item.
+  const collection = ownerCollectionsList[0] ?? null;
+  const ownerCollectionsForTabs = ownerCollectionsList.map((c) => ({
+    id: c.id,
+    slug: c.slug,
+    title: c.title,
+    description: c.description ?? "",
+    externalUrl: c.externalUrl,
+    coverPetSlug: c.coverPetSlug,
+    petSlugs: c.pets.map((p) => p.slug),
+    petCount: c.petCount,
+    featured: c.featured,
+  }));
 
   // Resolve pinned slugs to full pet objects, preserving owner-chosen
   // order. Drop any that are no longer approved (would otherwise break
@@ -477,6 +496,8 @@ export default async function UserProfilePage({ params }: PageProps) {
               ? { pinnedSlugs: featuredSlugs, maxPins: MAX_PINNED_PETS }
               : null
           }
+          ownerCollections={ownerCollectionsForTabs}
+          maxOwnerCollections={MAX_OWNER_COLLECTIONS}
         />
       </section>
 

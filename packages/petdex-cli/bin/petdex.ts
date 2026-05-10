@@ -105,7 +105,7 @@ async function getAuth(): Promise<ClerkCliAuth> {
   return _auth;
 }
 
-const VERSION = "0.3.1";
+const VERSION = "0.3.3";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -116,6 +116,17 @@ main().catch((err) => {
 async function main() {
   const args = process.argv.slice(2);
   const cmd = args[0];
+
+  // Hot path: `petdex bubble <event>` runs from agent hooks on every
+  // tool call. We bypass the help/notice/telemetry pipeline so the
+  // Node startup is the only overhead — no extra fs reads, no
+  // banner logic. Anything else here would multiply across the
+  // 20-50 hooks/min an active session generates.
+  if (cmd === "bubble") {
+    const { runBubble } = await import("../src/hooks/bubble-runner");
+    await runBubble(args.slice(1));
+    return;
+  }
 
   if (!cmd || cmd === "--help" || cmd === "-h" || cmd === "help") {
     printHelp();

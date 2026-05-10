@@ -18,13 +18,23 @@ import { AGENTS, SIDECAR_URL } from "./agents";
 // and inspect the side effect (the token file we created).
 
 describe("Claude Code hook command", () => {
-  function getCommand(state: string): string {
+  // Pull the default-running PreToolUse entry — i.e. the one that
+  // doesn't have a matcher set (matchers are evaluated first; the
+  // unmatched entry is the catch-all "running" state for any tool
+  // that isn't Read/Grep/Glob). Tests that don't care about the
+  // review-vs-running split use this default.
+  function getCommand(_state: string): string {
     const agent = AGENTS.find((a) => a.id === "claude-code");
     if (!agent) throw new Error("claude-code agent missing from registry");
     const config = agent.build() as {
-      hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+      hooks: Record<
+        string,
+        Array<{ matcher?: string; hooks: Array<{ command: string }> }>
+      >;
     };
-    return config.hooks.PreToolUse[0]?.hooks[0]?.command ?? "";
+    const entries = config.hooks.PreToolUse ?? [];
+    const fallback = entries.find((e) => e.matcher == null);
+    return fallback?.hooks[0]?.command ?? "";
   }
 
   test("includes the X-Petdex-Update-Token header", () => {
@@ -107,6 +117,90 @@ describe("Claude Code hook command", () => {
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }
+  });
+
+  // ─── State mapping (added with 9-state sprite work) ───────────────
+  // These pin the contract that hooks.json emits the right state for
+  // each lifecycle event. Regressions here mean the mascot animates
+  // wrong (e.g. running on a Read tool when we want review) — silent
+  // on the CLI side, visible only in the desktop UI.
+
+  test("Claude Code PreToolUse delegates to bubble runner (no matcher split)", () => {
+    // Review-vs-running routing now lives in the bubble runner,
+    // which inspects tool_name from stdin. The Claude Code hook
+    // entry is therefore a single un-matchered command.
+    const agent = AGENTS.find((a) => a.id === "claude-code");
+    if (!agent) throw new Error("claude-code agent missing from registry");
+    const config = agent.build() as {
+      hooks: Record<
+        string,
+        Array<{ matcher?: string; hooks: Array<{ command: string }> }>
+      >;
+    };
+    const entries = config.hooks.PreToolUse ?? [];
+    expect(entries.length).toBe(1);
+    expect(entries[0]?.matcher).toBeUndefined();
+    const cmd = entries[0]?.hooks[0]?.command ?? "";
+    expect(cmd).toContain("$HOME/.petdex/bin/petdex.js");
+    expect(cmd).toContain("bubble pre claude-code");
+  });
+
+  test("Claude Code hook command falls back to curl when persisted binary missing", () => {
+    const agent = AGENTS.find((a) => a.id === "claude-code");
+    if (!agent) throw new Error("claude-code agent missing from registry");
+    const config = agent.build() as {
+      hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+    };
+    const cmd = config.hooks.PreToolUse?.[0]?.hooks[0]?.command ?? "";
+    // The else branch must include the curl fallback so users who
+    // never ran `petdex hooks install` (binary not persisted) still
+    // get sprite state updates, just without bubble text.
+    expect(cmd).toContain("else");
+    expect(cmd).toContain("curl -s -m 0.3");
+    expect(cmd).toContain(`"state":"running"`);
+    expect(cmd).toContain(`"agent_source":"claude-code"`);
+  });
+
+  test("Claude Code UserPromptSubmit emits jumping state", () => {
+    const agent = AGENTS.find((a) => a.id === "claude-code");
+    if (!agent) throw new Error("claude-code agent missing from registry");
+    const config = agent.build() as {
+      hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+    };
+    const cmd = config.hooks.UserPromptSubmit?.[0]?.hooks[0]?.command ?? "";
+    expect(cmd).toContain(`"state":"jumping"`);
+    expect(cmd).toContain(`"duration":800`);
+  });
+
+  test("Claude Code Notification emits waiting state", () => {
+    const agent = AGENTS.find((a) => a.id === "claude-code");
+    if (!agent) throw new Error("claude-code agent missing from registry");
+    const config = agent.build() as {
+      hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+    };
+    const cmd = config.hooks.Notification?.[0]?.hooks[0]?.command ?? "";
+    expect(cmd).toContain(`"state":"waiting"`);
+  });
+
+  test("Codex PermissionRequest emits waiting state", () => {
+    const agent = AGENTS.find((a) => a.id === "codex");
+    if (!agent) throw new Error("codex agent missing from registry");
+    const config = agent.build() as {
+      hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+    };
+    const cmd = config.hooks.PermissionRequest?.[0]?.hooks[0]?.command ?? "";
+    expect(cmd).toContain(`"state":"waiting"`);
+    expect(cmd).toContain(`"agent_source":"codex"`);
+  });
+
+  test("Codex UserPromptSubmit emits jumping state", () => {
+    const agent = AGENTS.find((a) => a.id === "codex");
+    if (!agent) throw new Error("codex agent missing from registry");
+    const config = agent.build() as {
+      hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+    };
+    const cmd = config.hooks.UserPromptSubmit?.[0]?.hooks[0]?.command ?? "";
+    expect(cmd).toContain(`"state":"jumping"`);
   });
 
   test("generated command is real-shell-executable and reads the token file", () => {

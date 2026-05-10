@@ -14,6 +14,10 @@ import {
 } from "@/components/collection-editor";
 import { GalleryReorderGrid } from "@/components/gallery-reorder-grid";
 import { ClaimableBanner, type Submission } from "@/components/my-pets-view";
+import {
+  OwnerCollectionsManager,
+  type OwnerCollection,
+} from "@/components/owner-collections-manager";
 import { PetCard } from "@/components/pet-gallery";
 
 // Tabs surface for /u/<handle>. Owner sees Pets (all statuses with
@@ -51,6 +55,11 @@ export type ProfileTabsProps = {
     pinnedSlugs: string[];
     maxPins: number;
   } | null;
+  // Owner-only: every collection this user owns (personal + featured).
+  // When present and isOwner, the Collections tab swaps to the multi
+  // collection manager. Visitors keep the old single-collection view.
+  ownerCollections?: OwnerCollection[];
+  maxOwnerCollections?: number;
 };
 
 type TabKey = "pets" | "liked" | "collections";
@@ -66,6 +75,8 @@ export function ProfileTabs(props: ProfileTabsProps) {
     canManageCollections,
     collectionApprovedPets,
     pinning,
+    ownerCollections,
+    maxOwnerCollections,
   } = props;
 
   // Pre-build the lookup once instead of per-card. The Set isn't worth
@@ -87,8 +98,8 @@ export function ProfileTabs(props: ProfileTabsProps) {
   );
 
   const showCollectionsTab = isOwner
-    ? Boolean(collection) || canManageCollections
-    : Boolean(collection);
+    ? Boolean(collection) || canManageCollections || (ownerCollections && ownerCollections.length > 0)
+    : Boolean(collection) || (ownerCollections && ownerCollections.length > 0);
   const showLikedTab = likedPets.length > 0;
 
   const [tab, setTab] = useState<TabKey>("pets");
@@ -176,6 +187,8 @@ export function ProfileTabs(props: ProfileTabsProps) {
           collection={collection}
           collectionApprovedPets={collectionApprovedPets}
           publicHandle={publicHandle}
+          ownerCollections={ownerCollections}
+          maxOwnerCollections={maxOwnerCollections}
         />
       ) : null}
     </div>
@@ -414,6 +427,8 @@ function CollectionsPanel({
   collection,
   collectionApprovedPets,
   publicHandle,
+  ownerCollections,
+  maxOwnerCollections,
 }: {
   isOwner: boolean;
   canManageCollections: boolean;
@@ -424,45 +439,99 @@ function CollectionsPanel({
     spritesheetUrl: string;
   }[];
   publicHandle: string;
+  ownerCollections?: OwnerCollection[];
+  maxOwnerCollections?: number;
 }) {
+  // Owner-side: multi-collection manager. Lists every collection the
+  // user owns (personal + featured) and lets them create/edit/delete
+  // the personal ones. Featured ones show as read-only chips.
   if (isOwner && canManageCollections) {
     return (
-      <CollectionEditor
+      <OwnerCollectionsManager
+        collections={ownerCollections ?? []}
         approvedPets={collectionApprovedPets}
-        initial={collection}
-        profileHandle={publicHandle}
+        maxCollections={maxOwnerCollections ?? 10}
+        publicHandle={publicHandle}
       />
     );
   }
-  if (!collection) {
+
+  // Visitor view: list every public/personal collection the creator
+  // has. If they only have one, fall back to the older single-card UI.
+  const visibleCollections = ownerCollections ?? [];
+  if (visibleCollections.length === 0 && !collection) {
     return (
       <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
-        No collection yet.
+        No collections yet.
       </div>
     );
   }
-  // Visitor view: read-only summary linking to the public collection page.
+
+  if (visibleCollections.length > 0) {
+    return (
+      <div className="space-y-3">
+        {visibleCollections.map((c) => (
+          <article
+            key={c.id}
+            className="rounded-3xl border border-border-base bg-surface/80 p-5 backdrop-blur"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              {c.featured ? (
+                <span className="inline-flex items-center rounded-full bg-brand-tint px-2 py-0.5 font-mono text-[9px] tracking-[0.18em] text-brand-deep uppercase dark:bg-brand-tint-dark dark:text-brand-light">
+                  Curated
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full border border-border-base bg-surface px-2 py-0.5 font-mono text-[9px] tracking-[0.18em] text-muted-3 uppercase">
+                  Personal
+                </span>
+              )}
+              <span className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
+                {c.petCount} pets
+              </span>
+            </div>
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
+              <Link
+                href={`/collections/${c.slug}`}
+                className="hover:underline"
+              >
+                {c.title}
+              </Link>
+            </h3>
+            {c.description ? (
+              <p className="mt-1 line-clamp-2 text-sm text-muted-2">
+                {c.description}
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </div>
+    );
+  }
+
+  // Legacy fallback: only one collection in the prop pipeline. Render
+  // the old hero card.
   return (
     <section className="rounded-3xl border border-border-base bg-surface/80 p-6 backdrop-blur md:p-8">
       <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
         Featured collection
       </p>
       <h3 className="mt-3 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-        {collection.title}
+        {collection!.title}
       </h3>
       <p className="mt-3 max-w-3xl text-base leading-7 text-muted-2">
-        {collection.description}
+        {collection!.description}
       </p>
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <Link
-          href={`/collections/${collection.slug}`}
+          href={`/collections/${collection!.slug}`}
           className="inline-flex h-10 items-center rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
         >
           View collection
         </Link>
         <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
-          {collection.petSlugs.length}{" "}
-          {collection.petSlugs.length === 1 ? "pet" : "pets"} · @{publicHandle}
+          {collection!.petSlugs.length}{" "}
+          {collection!.petSlugs.length === 1 ? "pet" : "pets"} · @
+          {publicHandle}
         </span>
       </div>
     </section>

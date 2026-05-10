@@ -174,6 +174,53 @@ export async function getOwnerCollection(
   return collection ?? null;
 }
 
+// Personal collections owned by a creator. NOT filtered by featured —
+// these are intentionally private (only surfaced on /u/<owner-handle>).
+// Featured = true on an owner collection means an admin has promoted it
+// to /collections; that's a separate concern handled by the curation
+// workflow, not the owner editor.
+export async function getOwnerCollections(
+  ownerId: string,
+  petsPerPreview = 6,
+): Promise<(PetCollectionWithPets & { petCount: number })[]> {
+  let rows: (PetCollection & { petCount: number })[];
+  try {
+    const result = await db
+      .select({
+        ...getTableColumns(schema.petCollections),
+        petCount:
+          dsql<number>`count(${schema.petCollectionItems.petSlug})`.as(
+            "pet_count",
+          ),
+      })
+      .from(schema.petCollections)
+      .leftJoin(
+        schema.petCollectionItems,
+        eq(schema.petCollectionItems.collectionId, schema.petCollections.id),
+      )
+      .where(eq(schema.petCollections.ownerId, ownerId))
+      .groupBy(schema.petCollections.id)
+      .orderBy(
+        // Curated/promoted first (admin-curated takes priority on
+        // the visitor view), then most recently edited.
+        desc(schema.petCollections.featured),
+        desc(schema.petCollections.updatedAt),
+        asc(schema.petCollections.title),
+      );
+    rows = result.map((r) => ({ ...r, petCount: Number(r.petCount) }));
+  } catch (error) {
+    if (isMissingCollectionTableError(error)) return [];
+    throw error;
+  }
+
+  const hydrated = await hydrateCollections(rows, petsPerPreview);
+  const countBySlug = new Map(rows.map((r) => [r.slug, r.petCount]));
+  return hydrated.map((c) => ({
+    ...c,
+    petCount: countBySlug.get(c.slug) ?? c.pets.length,
+  }));
+}
+
 async function hydrateCollections(
   collections: PetCollection[],
   petLimitPerCollection?: number,

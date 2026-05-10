@@ -53,6 +53,20 @@ export type HooksInstallResult = {
 export async function runInstall(): Promise<HooksInstallResult> {
   p.intro(pc.bgMagenta(pc.white(" petdex hooks install ")));
 
+  // Snapshot the running petdex binary to a known path so hooks can
+  // invoke it with an absolute path. See persist-binary.ts for why.
+  // Best-effort: a failure here only prevents bubble hooks from
+  // running, the state hooks still work via curl.
+  try {
+    const { persistRunningBinary } = await import("./persist-binary");
+    const result = await persistRunningBinary();
+    if (!result.ok && result.reason) {
+      p.log.warn(`Could not persist petdex binary (${result.reason}). Bubbles will be disabled.`);
+    }
+  } catch (err) {
+    p.log.warn(`Could not persist petdex binary (${(err as Error).message}). Bubbles will be disabled.`);
+  }
+
   const detections = await detectAgents();
   const anyInstalled = detections.some((d) => d.installed);
 

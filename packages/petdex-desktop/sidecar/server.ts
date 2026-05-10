@@ -29,11 +29,13 @@ import http from "node:http";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+import { nextRunningVariant } from "./running-variant";
 import { StateQueue } from "./state-queue";
 
 const PORT = Number(process.env.PETDEX_PORT ?? 7777);
 const RUNTIME_DIR = join(homedir(), ".petdex", "runtime");
 const STATE_PATH = join(RUNTIME_DIR, "state.json");
+const BUBBLE_PATH = join(RUNTIME_DIR, "bubble.json");
 const UPDATE_PATH = join(RUNTIME_DIR, "update.json");
 const UPDATE_LOG_PATH = join(RUNTIME_DIR, "update.log");
 const UPDATE_TOKEN_PATH = join(RUNTIME_DIR, "update-token");
@@ -253,6 +255,26 @@ function writeState(state: string, duration?: number) {
 // the queue under burst so we don't lag behind reality. See
 // state-queue.ts for the coalesce + dwell rules.
 const stateQueue = new StateQueue({ minDwellMs: 250, maxQueueSize: 50 });
+
+// Bubble: persistent text shown above the sprite. Written here, polled
+// by the WebView via the petdex.read_runtime_bubble bridge command.
+// We use a monotonic counter (same trick as state.json) so the WebView
+// can tell "new bubble" from "same bubble re-served on every poll".
+// Persistent semantics: a bubble stays visible until the next bubble
+// arrives. No timed dismissal here — that'd require a second timer
+// and would race the next /state event.
+let bubbleCounter = 0;
+function writeBubble(text: string, agentSource: string | null) {
+  bubbleCounter += 1;
+  const payload = {
+    text,
+    agent_source: agentSource,
+    updatedAt: Date.now(),
+    counter: bubbleCounter,
+  };
+  writeFileSync(BUBBLE_PATH, JSON.stringify(payload));
+}
+
 
 // Worker tick: 100ms is well under the WebView's 200ms state.json
 // poll, so the user sees changes within one polling cycle.
@@ -568,18 +590,28 @@ const server = http.createServer(async (req, res) => {
         typeof data.agent_source === "string"
           ? data.agent_source.slice(0, 64)
           : null;
+      // Sprite variation: rewrite bare "running" to alternating
+      // "running-left" / "running-right" so consecutive tool calls
+      // don't all show the same sprite frame. The hook stays simple
+      // (just sends "running"); the sidecar handles the visual
+      // variation. The toggle persists for this sidecar session.
+      // running-left / running-right sent explicitly bypass — those
+      // are intentional choices (a future hook might want a
+      // specific direction).
+      const enqueueState =
+        state === "running" ? nextRunningVariant() : state;
       // Enqueue rather than writing directly. The worker tick
       // drains in order with coalesce + min dwell so consecutive
       // identical events (running/idle/running/idle pinball under
       // heavy tool-call activity) don't visually thrash. See
       // state-queue.ts.
       const accepted = stateQueue.enqueue({
-        state,
+        state: enqueueState,
         duration,
         receivedAt: Date.now(),
       });
       log(
-        `state=${state} duration=${duration ?? "-"} ${accepted ? "queued" : "coalesced"}`,
+        `state=${enqueueState} duration=${duration ?? "-"} ${accepted ? "queued" : "coalesced"}`,
       );
       // Funnel terminal step: emit once on the first accepted state of
       // this sidecar session. Any subsequent hook hits are no-ops.
@@ -589,6 +621,60 @@ const server = http.createServer(async (req, res) => {
         state,
         duration: duration ?? null,
         queued: accepted,
+      });
+    }
+
+    if (req.method === "GET" && url.pathname === "/bubble") {
+      // The WebView reads this via the bridge (read_runtime_bubble) but
+      // we expose it on HTTP too for debugging — `curl localhost:7777/bubble`
+      // shows the latest bubble without spinning up the desktop.
+      try {
+        const { readFileSync } = await import("node:fs");
+        const text = readFileSync(BUBBLE_PATH, "utf8");
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(text);
+        return;
+      } catch {
+        return jsonResponse(res, 200, { text: "", counter: 0 });
+      }
+    }
+
+    if (req.method === "POST" && url.pathname === "/bubble") {
+      // Same security envelope as /state: token gate + rate limiter
+      // (the same bucket — bubbles and states share a budget because
+      // they're both driven by the same hook firehose).
+      const provided = req.headers[UPDATE_TOKEN_HEADER];
+      const providedStr = Array.isArray(provided) ? provided[0] : provided;
+      if (!providedStr || !constantTimeEquals(providedStr, UPDATE_TOKEN)) {
+        return jsonResponse(res, 401, { ok: false, error: "unauthorized" });
+      }
+      if (!stateRateLimiter.consume()) {
+        return jsonResponse(res, 429, { ok: false, error: "rate_limited" });
+      }
+      let body: unknown;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        return jsonResponse(res, 400, { ok: false, error: "invalid_json" });
+      }
+      const data = body as { text?: unknown; agent_source?: unknown };
+      const rawText = typeof data.text === "string" ? data.text : null;
+      if (!rawText) {
+        return jsonResponse(res, 400, { ok: false, error: "missing_text" });
+      }
+      // Cap at 200 chars — anything longer would overflow the 240px
+      // WebView and hooks shouldn't be writing essays here.
+      const text = rawText.slice(0, 200);
+      const agentSource =
+        typeof data.agent_source === "string"
+          ? data.agent_source.slice(0, 64)
+          : null;
+      writeBubble(text, agentSource);
+      log(`bubble="${text.slice(0, 60)}" source=${agentSource ?? "-"}`);
+      return jsonResponse(res, 200, {
+        ok: true,
+        text,
+        counter: bubbleCounter,
       });
     }
 

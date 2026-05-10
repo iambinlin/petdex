@@ -238,6 +238,43 @@ const html_tail =
     \\  }
     \\  setInterval(pollSidecarState, 200);
     \\
+    \\  // Bubble: tooltip-style text shown above the sprite while a tool
+    \\  // is running. Persistent semantics — the text stays until a new
+    \\  // bubble lands, just like Codex desktop does it. We poll the
+    \\  // bubble.json file via the bridge and update the DOM only when
+    \\  // the counter changes. The element is created lazily on first
+    \\  // bubble so installs without the runner persisted (no bubbles
+    \\  // ever) keep the DOM clean.
+    \\  let lastBubbleCounter = 0;
+    \\  let bubbleEl = null;
+    \\  function ensureBubble() {
+    \\    if (bubbleEl) return bubbleEl;
+    \\    bubbleEl = document.createElement('div');
+    \\    bubbleEl.id = 'pet-bubble';
+    \\    bubbleEl.style.cssText = 'position:fixed;left:50%;top:6px;transform:translateX(-50%);max-width:220px;padding:5px 9px;border-radius:9px;background:rgba(15,18,30,0.92);color:#e8eaf3;font:600 11px system-ui,-apple-system,sans-serif;line-height:1.3;box-shadow:0 2px 10px rgba(0,0,0,0.30);backdrop-filter:blur(8px);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity 180ms ease;pointer-events:none;z-index:5;';
+    \\    document.body.appendChild(bubbleEl);
+    \\    return bubbleEl;
+    \\  }
+    \\  async function pollBubble() {
+    \\    if (!(window.zero && window.zero.invoke)) return;
+    \\    try {
+    \\      const r = await window.zero.invoke('petdex.read_runtime_bubble', {});
+    \\      if (!r || typeof r.counter !== 'number') return;
+    \\      if (r.counter === lastBubbleCounter) return;
+    \\      lastBubbleCounter = r.counter;
+    \\      const text = typeof r.text === 'string' ? r.text : '';
+    \\      const el = ensureBubble();
+    \\      if (text) {
+    \\        el.textContent = text;
+    \\        el.style.opacity = '1';
+    \\      } else {
+    \\        el.style.opacity = '0';
+    \\      }
+    \\    } catch (e) {}
+    \\  }
+    \\  setInterval(pollBubble, 200);
+    \\  pollBubble();
+    \\
     \\  // Layer 1 autoupdate: read update.json (written by the sidecar's
     \\  // periodic GH releases poll) and render a notification card. A
     \\  // single click POSTs to the sidecar's /update endpoint, which
@@ -720,7 +757,7 @@ const PetdexState = struct {
     // having to re-resolve sidecar_dir or rebuild the env map.
     sidecar_dir: []u8,
     env_map: *std.process.Environ.Map,
-    bridge_handlers: [6]zero_native.BridgeHandler = undefined,
+    bridge_handlers: [7]zero_native.BridgeHandler = undefined,
 
     fn deinit(self: *PetdexState) void {
         self.allocator.free(self.config_dir);
@@ -735,6 +772,7 @@ const PetdexState = struct {
             .{ .name = "petdex.set_active", .context = self, .invoke_fn = setActiveCmd },
             .{ .name = "petdex.quit", .context = self, .invoke_fn = quitCmd },
             .{ .name = "petdex.read_runtime_state", .context = self, .invoke_fn = readRuntimeStateCmd },
+            .{ .name = "petdex.read_runtime_bubble", .context = self, .invoke_fn = readRuntimeBubbleCmd },
             .{ .name = "petdex.read_update_info", .context = self, .invoke_fn = readUpdateInfoCmd },
             .{ .name = "petdex.trigger_update", .context = self, .invoke_fn = triggerUpdateCmd },
             .{ .name = "petdex.respawn_sidecar", .context = self, .invoke_fn = respawnSidecarCmd },
@@ -771,6 +809,29 @@ const PetdexState = struct {
         const size: usize = @intCast(stat.size);
         if (size == 0 or size > output.len) {
             return std.fmt.bufPrint(output, "{{\"state\":\"idle\",\"counter\":0}}", .{});
+        }
+        const read = try file.readPositionalAll(self.io, output[0..size], 0);
+        return output[0..read];
+    }
+
+    // Mirror of readRuntimeStateCmd, but reads ~/.petdex/runtime/bubble.json
+    // (written by the sidecar's POST /bubble handler). The WebView polls
+    // this every 200ms via the bridge, alongside the state poll. A
+    // missing file is normal on first launch — we return an empty
+    // payload so the JS side just shows nothing.
+    fn readRuntimeBubbleCmd(context: *anyopaque, invocation: zero_native.bridge.Invocation, output: []u8) anyerror![]const u8 {
+        _ = invocation;
+        const self: *PetdexState = @ptrCast(@alignCast(context));
+        const path = try std.fs.path.join(self.allocator, &.{ self.config_dir, "runtime", "bubble.json" });
+        defer self.allocator.free(path);
+        var file = std.Io.Dir.openFileAbsolute(self.io, path, .{}) catch {
+            return std.fmt.bufPrint(output, "{{\"text\":\"\",\"counter\":0}}", .{});
+        };
+        defer file.close(self.io);
+        const stat = try file.stat(self.io);
+        const size: usize = @intCast(stat.size);
+        if (size == 0 or size > output.len) {
+            return std.fmt.bufPrint(output, "{{\"text\":\"\",\"counter\":0}}", .{});
         }
         const read = try file.readPositionalAll(self.io, output[0..size], 0);
         return output[0..read];
@@ -894,6 +955,7 @@ const petdex_command_policies = [_]zero_native.BridgeCommandPolicy{
     .{ .name = "petdex.set_active", .origins = &petdex_origins },
     .{ .name = "petdex.quit", .origins = &petdex_origins },
     .{ .name = "petdex.read_runtime_state", .origins = &petdex_origins },
+    .{ .name = "petdex.read_runtime_bubble", .origins = &petdex_origins },
     .{ .name = "petdex.read_update_info", .origins = &petdex_origins },
     .{ .name = "petdex.trigger_update", .origins = &petdex_origins },
     .{ .name = "petdex.respawn_sidecar", .origins = &petdex_origins },

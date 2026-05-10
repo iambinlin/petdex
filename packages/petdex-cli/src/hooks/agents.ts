@@ -28,6 +28,7 @@ export type EventKind =
   | "tool.after"
   | "session.end"
   | "session.error"
+  | "session.waiting"
   | "user.prompt";
 
 export const STATE_MAP: Record<EventKind, PetState> = {
@@ -35,6 +36,7 @@ export const STATE_MAP: Record<EventKind, PetState> = {
   "tool.after": "idle",
   "session.end": "waving",
   "session.error": "failed",
+  "session.waiting": "waiting",
   "user.prompt": "jumping",
 };
 
@@ -103,19 +105,50 @@ export const AGENTS: Agent[] = [
     slashCommandPath: path.join(HOME, ".claude", "commands", "petdex.md"),
     docsUrl: "https://docs.anthropic.com/en/docs/claude-code/hooks",
     hookEntries: [
+      { event: "UserPromptSubmit", kind: "user.prompt" },
+      // No matcher split here — the bubble runner reads tool_name from
+      // the agent's hook stdin and decides Read/Grep/Glob → review
+      // vs everything else → running, all in one place.
       { event: "PreToolUse", kind: "tool.before" },
       { event: "PostToolUse", kind: "tool.after" },
+      // Notifications fire on permission prompts and idle alerts —
+      // perfect signal for the "waiting" state.
+      { event: "Notification", kind: "session.waiting" },
       { event: "Stop", kind: "session.end" },
     ],
     build() {
       return {
         hooks: {
-          PreToolUse: [
+          UserPromptSubmit: [
             {
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("claude-code", "running"),
+                  command: bubbleHookCommand(
+                    "claude-code",
+                    "user-prompt",
+                    "jumping",
+                    800,
+                  ),
+                },
+              ],
+            },
+          ],
+          PreToolUse: [
+            // We DON'T split on matcher anymore: the bubble runner
+            // looks at tool_name from stdin and routes Read/Grep/Glob
+            // to "review" itself. One unified entry keeps the hooks
+            // file compact and removes a maintenance trap (matcher
+            // drift between agents.ts and bubble-runner.ts).
+            {
+              hooks: [
+                {
+                  type: "command",
+                  command: bubbleHookCommand(
+                    "claude-code",
+                    "pre",
+                    "running",
+                  ),
                 },
               ],
             },
@@ -125,7 +158,21 @@ export const AGENTS: Agent[] = [
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("claude-code", "idle"),
+                  command: bubbleHookCommand("claude-code", "post", "idle"),
+                },
+              ],
+            },
+          ],
+          Notification: [
+            {
+              hooks: [
+                {
+                  type: "command",
+                  command: bubbleHookCommand(
+                    "claude-code",
+                    "notification",
+                    "waiting",
+                  ),
                 },
               ],
             },
@@ -135,7 +182,12 @@ export const AGENTS: Agent[] = [
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("claude-code", "waving", 1500),
+                  command: bubbleHookCommand(
+                    "claude-code",
+                    "stop",
+                    "waving",
+                    1500,
+                  ),
                 },
               ],
             },
@@ -152,8 +204,10 @@ export const AGENTS: Agent[] = [
     slashCommandPath: path.join(HOME, ".codex", "prompts", "petdex.md"),
     docsUrl: "https://developers.openai.com/codex/hooks",
     hookEntries: [
+      { event: "UserPromptSubmit", kind: "user.prompt" },
       { event: "PreToolUse", kind: "tool.before" },
       { event: "PostToolUse", kind: "tool.after" },
+      { event: "PermissionRequest", kind: "session.waiting" },
       { event: "Stop", kind: "session.end" },
     ],
     async postInstallChecks() {
@@ -253,12 +307,27 @@ export const AGENTS: Agent[] = [
     build() {
       return {
         hooks: {
+          UserPromptSubmit: [
+            {
+              hooks: [
+                {
+                  type: "command",
+                  command: bubbleHookCommand(
+                    "codex",
+                    "user-prompt",
+                    "jumping",
+                    800,
+                  ),
+                },
+              ],
+            },
+          ],
           PreToolUse: [
             {
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("codex", "running"),
+                  command: bubbleHookCommand("codex", "pre", "running"),
                 },
               ],
             },
@@ -268,7 +337,24 @@ export const AGENTS: Agent[] = [
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("codex", "idle"),
+                  command: bubbleHookCommand("codex", "post", "idle"),
+                },
+              ],
+            },
+          ],
+          // Codex fires PermissionRequest when it needs the user to
+          // approve a sandbox-elevated action; perfect signal for
+          // the waiting-for-input state.
+          PermissionRequest: [
+            {
+              hooks: [
+                {
+                  type: "command",
+                  command: bubbleHookCommand(
+                    "codex",
+                    "notification",
+                    "waiting",
+                  ),
                 },
               ],
             },
@@ -278,7 +364,7 @@ export const AGENTS: Agent[] = [
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("codex", "waving", 1500),
+                  command: bubbleHookCommand("codex", "stop", "waving", 1500),
                 },
               ],
             },
@@ -368,6 +454,69 @@ export const AGENTS: Agent[] = [
     },
   },
 ];
+
+/**
+ * Build a hook command that prefers the persisted petdex binary
+ * (~/.petdex/bin/petdex.js, written by `petdex hooks install`).
+ *
+ * The persisted binary supports `petdex bubble <phase> <agent>` which:
+ *   - reads stdin from the agent's hook payload
+ *   - posts BOTH the sprite state AND a contextual bubble
+ *
+ * If the binary isn't there (user didn't run install yet, or persist
+ * failed), the command falls back to the simple curl that just sets
+ * the sprite state. Bubbles are silently disabled in that mode.
+ *
+ * Both branches share the killswitch + token-gate envelope of the
+ * original curlCommand, so agent UIs stay clean.
+ */
+function bubbleHookCommand(
+  agentId: Agent["id"],
+  phase: string,
+  fallbackState: PetState,
+  fallbackDuration?: number,
+): string {
+  const killswitch = `[ -f "$HOME/.petdex/runtime/hooks-disabled" ] && exit 0`;
+  const persistPath = `$HOME/.petdex/bin/petdex.js`;
+  // Persisted binary path: reads stdin via Node, posts both /state
+  // and /bubble. We stream stdin into the node process explicitly
+  // (via `cat`-style redirect) so the hook payload reaches it.
+  // 600ms timeout for the whole node invocation: cold startup runs
+  // ~80-150ms, fetch adds ~5ms x 2, leaving headroom.
+  // exec command (no `&` background): we want the bubble to land
+  // before the agent's next tool call so the WebView shows the
+  // current operation, not a stale one.
+  const persistedBranch = [
+    `if [ -x "${persistPath}" ] || [ -f "${persistPath}" ]; then`,
+    // The bubble subcommand reads stdin, so we don't need to
+    // transform anything — just invoke and let it consume.
+    `  node "${persistPath}" bubble ${phase} ${agentId} >/dev/null 2>&1 || true;`,
+    `else`,
+    `  ${curlOnlyState(agentId, fallbackState, fallbackDuration)};`,
+    `fi`,
+  ].join(" ");
+  return `${killswitch}; ${persistedBranch}`;
+}
+
+/** Emit only the curl part — used by bubbleHookCommand's fallback branch. */
+function curlOnlyState(
+  agentId: Agent["id"],
+  state: PetState,
+  duration?: number,
+): string {
+  const body =
+    duration != null
+      ? `{"state":"${state}","duration":${duration},"agent_source":"${agentId}"}`
+      : `{"state":"${state}","agent_source":"${agentId}"}`;
+  return [
+    `T="$(cat "$HOME/.petdex/runtime/update-token" 2>/dev/null)"`,
+    `[ -n "$T" ] && curl -s -m 0.3 -X POST ${SIDECAR_URL}`,
+    `-H "Content-Type: application/json"`,
+    `-H "X-Petdex-Update-Token: $T"`,
+    `--data-raw '${body}'`,
+    `>/dev/null 2>&1 || true`,
+  ].join(" ");
+}
 
 function curlCommand(
   agentId: Agent["id"],
