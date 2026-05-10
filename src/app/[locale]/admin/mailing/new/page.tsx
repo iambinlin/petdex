@@ -20,7 +20,7 @@ export default async function NewBroadcastPage() {
   const collectionsReady = Number(collectionsCount[0]?.c ?? 0) > 0;
 
   return (
-    <section className="px-5 py-6 md:px-8">
+    <section className="mx-auto w-full max-w-6xl px-5 py-6 md:px-8">
       <header className="mb-6">
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
           Admin · Mailing · New

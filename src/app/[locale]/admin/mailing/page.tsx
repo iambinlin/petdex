@@ -29,7 +29,7 @@ export default async function MailingPage({
   const subsPath = localizePath(locale, "/admin/mailing/subscribers");
 
   return (
-    <section className="px-5 py-6 md:px-8">
+    <section className="mx-auto w-full max-w-6xl px-5 py-6 md:px-8">
       <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
