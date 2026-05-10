@@ -34,6 +34,7 @@ import { PetRadar } from "@/components/pet-radar";
 import { PetSoundButton } from "@/components/pet-sound-button";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetStateViewer } from "@/components/pet-state-viewer";
+import { ReducedMotionHint } from "@/components/reduced-motion-hint";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { StaticPetSprite } from "@/components/static-pet-sprite";
@@ -487,6 +488,12 @@ export default async function PetPage({ params }: PageProps) {
       </section>
 
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-5 py-12 md:px-8 md:py-16">
+        {/* Lets users on Windows / macOS who disabled animations in OS
+            settings know the static sprite is intentional, not a bug.
+            Reported via feedback on /zh/pets/nyami where the user
+            could not see the animation in Edge + Chrome. */}
+        <ReducedMotionHint />
+
         {/* Full state viewer — sprite + state tabs lockup. Lives below
             the hero so its internal 2-column layout has the full content
             width to breathe. The hero idle preview keeps users grounded
