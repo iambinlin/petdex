@@ -23,6 +23,17 @@ import { SiteHeader } from "@/components/site-header";
 
 import { buildSetupSteps, parsePendingPet } from "./setup-steps";
 
+const SITE_URL = "https://petdex.crafter.run";
+
+// Auto-detected /download/opengraph-image is locale-prefixed
+// (/en/download/opengraph-image) and next-intl rewrites that with a
+// 307. Most social scrapers (Discord, X) do not follow OG redirects
+// and silently fall back to the parent layout's image, so unfurls
+// would show the generic Petdex card instead of the desktop hero.
+// Pin the URL to the locale-stripped path the same way per-collection
+// metadata does.
+const OG_IMAGE = `${SITE_URL}/download/opengraph-image`;
+
 // Page is admin-only during the desktop pre-launch period. We
 // keep noindex in metadata so even if the page leaks via an
 // internal share link, search engines don't surface it.
@@ -32,6 +43,19 @@ export const metadata = {
     "Download Petdex Desktop for macOS. Your pet, floating beside every coding agent.",
   alternates: buildLocaleAlternates("/download"),
   robots: { index: false, follow: false },
+  openGraph: {
+    title: "Petdex Desktop",
+    description:
+      "Your pet, floating beside every coding agent. macOS native.",
+    url: `${SITE_URL}/download`,
+    images: [{ url: OG_IMAGE, width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Petdex Desktop",
+    description: "Your pet, floating beside every coding agent.",
+    images: [OG_IMAGE],
+  },
 };
 
 // Force-dynamic so the auth check runs on every request — a
