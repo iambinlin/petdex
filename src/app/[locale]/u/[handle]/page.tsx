@@ -412,8 +412,9 @@ export default async function UserProfilePage({ params }: PageProps) {
               </div>
               {featuredPets.length === 1 ? (
                 <div className="relative">
+                  <FeaturedPin pet={featuredPets[0]} />
                   {isOwner ? (
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-4 right-4 z-40">
                       <ProfilePinButton
                         slug={featuredPets[0].slug}
                         isPinned
@@ -422,7 +423,6 @@ export default async function UserProfilePage({ params }: PageProps) {
                       />
                     </div>
                   ) : null}
-                  <FeaturedPin pet={featuredPets[0]} />
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-6">
