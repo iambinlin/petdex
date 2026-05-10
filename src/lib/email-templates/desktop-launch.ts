@@ -1,9 +1,7 @@
 import {
   buildUnsubscribeFooter,
   normalizeLocale,
-  p,
   petdexUrl,
-  wrapBroadcastEmail,
 } from "@/lib/email-templates/shared";
 
 import type { Locale } from "@/i18n/config";
@@ -11,6 +9,16 @@ import type { Locale } from "@/i18n/config";
 type Vars = {
   unsubscribeToken: string;
 };
+
+// Brand palette (matches the site's --brand OKLCH tokens, expressed as
+// hex). Inlined because mail clients don't process CSS variables and
+// many don't support OKLCH. BRAND_DEEP carries the chip text color;
+// BRAND_TINT is the body wash + icon border. The primary CTA stays
+// black on purpose — purple-on-purple was hard to scan.
+const BRAND_DEEP = "#3847f5";
+const BRAND_TINT = "#eef1ff";
+
+const ICON_URL = "https://petdex.crafter.run/brand/petdex-desktop-icon.png";
 
 export function renderDesktopLaunchEmail(
   locale: Locale,
@@ -21,98 +29,139 @@ export function renderDesktopLaunchEmail(
   const copy =
     current === "es"
       ? {
-          subject: "Petdex Desktop está listo — tu pet flota junto a tu IDE",
+          subject: "Petdex Desktop ya está aquí",
+          headline: "Tu mascota, junto a tu agente.",
           intro:
-            "La app de Petdex para macOS ya está disponible. Tu pet flota encima de Cursor, Claude Code, Codex CLI y reacciona a cada tool call que hace tu agente.",
-          highlightsTitle: "Qué hace:",
-          highlight1:
-            "Habla con bubbles ('Reading server.ts', 'Editing main.zig', 'Done.') — sin LLM, plantillas fijas, instantáneo.",
-          highlight2:
-            "9 estados sprite mapeados a hooks de cada agente: idle, running-left/right, review, waving, jumping, failed, waiting.",
-          highlight3:
-            "Click en cualquier pet de Petdex y se abre directo en la app vía petdex://. Si no lo tienes instalado, lo descarga solo.",
-          ctaPrimary: "Descargar Petdex Desktop",
-          ctaSecondary: "Ver pets",
-          footnote:
-            "macOS Apple Silicon. Windows y Linux pronto. Si te llega este correo y ya no usas Petdex, puedes desuscribirte abajo.",
+            "La app de macOS narra cada tool call de tu agente con bubbles cortos.",
+          ctaPrimary: "Descargar para macOS",
+          ctaSecondary: "Explorar mascotas",
+          tagline: "macOS Apple Silicon · Windows + Linux pronto",
         }
       : current === "zh"
         ? {
-            subject: "Petdex Desktop 上线了 — 你的宠物飘在你的 IDE 旁边",
-            intro:
-              "Petdex 的 macOS 桌面应用已经上线。宠物会浮动在 Cursor、Claude Code、Codex CLI 之上，对你 AI agent 的每次工具调用做出反应。",
-            highlightsTitle: "它能做什么：",
-            highlight1:
-              "用气泡说话（'Reading server.ts'、'Editing main.zig'、'Done.'）—— 零 LLM，全是模板，瞬时反应。",
-            highlight2:
-              "9 个 sprite 状态映射到 agent 的 hook：idle、running-left/right、review、waving、jumping、failed、waiting。",
-            highlight3:
-              "在 Petdex 上点任何一只宠物，会直接在桌面应用里打开（petdex:// 协议）。没装？自动下载。",
-            ctaPrimary: "下载 Petdex Desktop",
+            subject: "Petdex Desktop 上线了",
+            headline: "你的宠物，陪在 agent 旁。",
+            intro: "macOS 桌面应用，用短气泡叙述 agent 的每次工具调用。",
+            ctaPrimary: "下载 macOS 版",
             ctaSecondary: "浏览宠物",
-            footnote:
-              "支持 macOS Apple Silicon。Windows 和 Linux 即将推出。如果你不再使用 Petdex，可在下方退订。",
+            tagline: "macOS Apple Silicon · Windows + Linux 即将推出",
           }
         : {
-            subject: "Petdex Desktop is here — your pet, floating by your IDE",
+            subject: "Petdex Desktop is here",
+            headline: "Your pet, by your agent.",
             intro:
-              "The macOS desktop app is live. Your pet floats over Cursor, Claude Code, and Codex CLI, reacting to every tool call your agent makes.",
-            highlightsTitle: "What it does:",
-            highlight1:
-              "Speaks via bubbles ('Reading server.ts', 'Editing main.zig', 'Done.') — zero LLM, fixed templates, instant.",
-            highlight2:
-              "9 sprite states wired into agent hooks: idle, running-left/right, review, waving, jumping, failed, waiting.",
-            highlight3:
-              "Click any pet on Petdex and it opens directly in the app via petdex://. Not installed? It auto-downloads.",
-            ctaPrimary: "Download Petdex Desktop",
+              "The macOS app narrates every tool call your agent makes with short bubbles.",
+            ctaPrimary: "Download for macOS",
             ctaSecondary: "Browse pets",
-            footnote:
-              "macOS Apple Silicon. Windows + Linux coming. If you no longer use Petdex, unsubscribe below.",
+            tagline: "macOS Apple Silicon · Windows + Linux coming",
           };
+
+  // Sample bubbles — same strings the real desktop UI renders. Kept
+  // English across locales because they ARE the literal output of
+  // the agent hooks (which run in their own locale-agnostic flow).
+  const bubbleSamples = [
+    "Reading server.ts",
+    "Editing main.zig",
+    "Done.",
+  ];
+
+  const agents = ["Claude Code", "Codex CLI", "OpenCode", "Gemini CLI"];
 
   const downloadUrl = petdexUrl(current, "/download");
   const petsUrl = petdexUrl(current, "/pets");
 
   const text = [
+    copy.headline,
+    "",
     copy.intro,
     "",
-    copy.highlightsTitle,
-    `- ${copy.highlight1}`,
-    `- ${copy.highlight2}`,
-    `- ${copy.highlight3}`,
+    `Works with: ${agents.join(", ")}`,
+    "",
+    bubbleSamples.map((b) => `  • ${b}`).join("\n"),
     "",
     `${copy.ctaPrimary}: ${downloadUrl}`,
     `${copy.ctaSecondary}: ${petsUrl}`,
     "",
-    copy.footnote,
+    copy.tagline,
     buildUnsubscribeFooter(current, vars.unsubscribeToken).text,
   ].join("\n");
 
-  const highlights = `<ul style="margin:0 0 18px;padding:0 0 0 18px;color:#57534e;font-size:14px;line-height:1.6;">
-    <li style="margin-bottom:8px;">${copy.highlight1}</li>
-    <li style="margin-bottom:8px;">${copy.highlight2}</li>
-    <li style="margin-bottom:0;">${copy.highlight3}</li>
-  </ul>`;
+  // ─── HTML composition ────────────────────────────────────────────
+  // Vertically: icon → headline → 1-line intro → bubble strip → agents
+  // chips → CTAs → tagline. ~5 visual blocks, fits in a single screen
+  // height on most clients. Brand color (#5266ea) for the primary
+  // button and chip borders to stay on-system.
 
-  const ctaBlock = `<div style="margin:28px 0 16px;">
-    <a href="${downloadUrl}" style="display:inline-block;padding:12px 22px;background:#171717;color:#fafaf9;border-radius:999px;font-size:14px;font-weight:500;text-decoration:none;margin-right:8px;">${copy.ctaPrimary}</a>
-    <a href="${petsUrl}" style="display:inline-block;padding:12px 22px;background:transparent;color:#171717;border:1px solid #d6d3d1;border-radius:999px;font-size:14px;font-weight:500;text-decoration:none;">${copy.ctaSecondary}</a>
+  // Brand lockup: icon + wordmark side-by-side. Using a table-row
+  // because mail clients (Outlook especially) treat flexbox as
+  // Suggestions Only, but vertical-align on a <table> works
+  // everywhere. The wordmark is rendered as text — no font load
+  // dependency, no SVG support quirks.
+  const iconBlock = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px;border-collapse:collapse;">
+    <tr>
+      <td style="vertical-align:middle;padding:0 12px 0 0;">
+        <img src="${ICON_URL}" alt="" width="48" height="48" style="display:block;width:48px;height:48px;border-radius:12px;border:1px solid ${BRAND_TINT};box-shadow:0 4px 12px rgba(82,102,234,0.15);" />
+      </td>
+      <td style="vertical-align:middle;">
+        <span style="display:block;color:#0a0a0a;font-size:18px;font-weight:700;letter-spacing:-0.01em;line-height:1;">Petdex Desktop</span>
+      </td>
+    </tr>
+  </table>`;
+
+  const headlineBlock = `<h1 style="margin:0 0 8px;color:#0a0a0a;font-size:22px;font-weight:700;letter-spacing:-0.015em;line-height:1.25;">${copy.headline}</h1>`;
+
+  const introBlock = `<p style="margin:0 0 22px;color:#404040;font-size:14px;line-height:1.55;">${copy.intro}</p>`;
+
+  // Bubble strip — match the actual desktop UI exactly: white card,
+  // black text, 600 monospace, soft shadow. This is the "look at me"
+  // moment of the email.
+  const bubbleStrip = bubbleSamples
+    .map(
+      (text) =>
+        `<span style="display:inline-block;margin:0 6px 6px 0;padding:5px 11px;border-radius:9px;background:#ffffff;border:1px solid #e7e5e4;color:#0a0a0a;font:600 12px ui-monospace, SFMono-Regular, Menlo, monospace;box-shadow:0 1px 3px rgba(0,0,0,0.06);">${text}</span>`,
+    )
+    .join("");
+
+  const bubbleBlock = `<div style="margin:0 0 22px;">${bubbleStrip}</div>`;
+
+  // Agent chips — brand-tinted pills. Same visual weight as the
+  // bubble strip so the eye reads "this is what speaks, this is who
+  // it speaks for".
+  const agentChips = agents
+    .map(
+      (name) =>
+        `<span style="display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;background:${BRAND_TINT};color:${BRAND_DEEP};font-size:11px;font-weight:600;">${name}</span>`,
+    )
+    .join("");
+
+  const agentsBlock = `<div style="margin:0 0 28px;">${agentChips}</div>`;
+
+  const ctaBlock = `<div style="margin:0 0 22px;">
+    <a href="${downloadUrl}" style="display:inline-block;padding:12px 22px;background:#0a0a0a;color:#ffffff;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none;margin:0 8px 8px 0;">${copy.ctaPrimary} →</a>
+    <a href="${petsUrl}" style="display:inline-block;padding:12px 22px;background:transparent;color:#0a0a0a;border:1px solid #d6d3d1;border-radius:999px;font-size:13px;font-weight:500;text-decoration:none;">${copy.ctaSecondary}</a>
   </div>`;
 
-  const footnoteBlock = `<p style="margin:24px 0 0;color:#a8a29e;font-size:12px;line-height:1.5;">${copy.footnote}</p>`;
+  const taglineBlock = `<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #f5f5f4;color:#a8a29e;font-size:12px;line-height:1.5;">${copy.tagline}</p>`;
 
-  const html = wrapBroadcastEmail(
-    copy.subject,
-    [
-      p(copy.intro),
-      `<p style="margin:18px 0 8px;color:#171717;font-size:14px;font-weight:600;">${copy.highlightsTitle}</p>`,
-      highlights,
-      ctaBlock,
-      footnoteBlock,
-    ],
-    current,
-    vars.unsubscribeToken,
-  );
+  // We bypass wrapBroadcastEmail because that helper auto-prepends an
+  // <h1> with the subject line, which would double-stack with our own
+  // headline. Hand-rolling the wrapper keeps the visual hierarchy
+  // tight: icon → headline → intro → bubbles → agents → CTAs.
+  const footer = buildUnsubscribeFooter(current, vars.unsubscribeToken);
+  const html = [
+    "<!doctype html>",
+    `<html><body style="margin:0;padding:24px;background:${BRAND_TINT};color:#171717;font-family:ui-sans-serif,system-ui,sans-serif;">`,
+    `<div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e7e5e4;border-radius:16px;padding:28px;">`,
+    iconBlock,
+    headlineBlock,
+    introBlock,
+    bubbleBlock,
+    agentsBlock,
+    ctaBlock,
+    taglineBlock,
+    footer.html,
+    "</div></body></html>",
+  ].join("");
 
   return { subject: copy.subject, html, text };
 }
