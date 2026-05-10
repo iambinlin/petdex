@@ -72,3 +72,9 @@ HANDOFF.md
 # clerk configuration (can include secrets)
 /.clerk/
 .env*.local
+
+# Apple Developer credentials (App Store Connect API keys, signing certs)
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
