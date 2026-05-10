@@ -1378,7 +1378,11 @@
       "downloadCta": "下载 macOS 版本",
       "downloadCta__fixme": true,
       "cliSubtext": "或通过 CLI 安装",
-      "cliSubtext__fixme": true
+      "cliSubtext__fixme": true,
+      "comingSoon": "即将支持 {os}",
+      "comingSoon__fixme": true,
+      "desktopOnly": "仅桌面版 — 请用 Mac 访问",
+      "desktopOnly__fixme": true
     },
     "features": {
       "eyebrow": "功能介绍",

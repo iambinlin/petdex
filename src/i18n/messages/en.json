@@ -1203,7 +1203,9 @@
     "subtitle": "Your pet, floating beside every coding agent.",
     "hero": {
       "downloadCta": "Download for macOS",
-      "cliSubtext": "Or install via CLI"
+      "cliSubtext": "Or install via CLI",
+      "comingSoon": "Coming to {os}",
+      "desktopOnly": "Desktop-only — visit on a Mac"
     },
     "features": {
       "eyebrow": "What it does",

@@ -1203,7 +1203,9 @@
     "subtitle": "Tu mascota, flotando junto a cada agente de programacion.",
     "hero": {
       "downloadCta": "Descargar para macOS",
-      "cliSubtext": "O instala via CLI"
+      "cliSubtext": "O instala via CLI",
+      "comingSoon": "Pronto en {os}",
+      "desktopOnly": "Solo escritorio — visita desde una Mac"
     },
     "features": {
       "eyebrow": "Que hace",
