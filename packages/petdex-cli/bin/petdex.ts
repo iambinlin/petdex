@@ -105,7 +105,7 @@ async function getAuth(): Promise<ClerkCliAuth> {
   return _auth;
 }
 
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -1101,6 +1101,12 @@ async function cmdHooks(args: string[]) {
           cli_version: VERSION,
           agents: installedAgents,
         });
+        // Same hand-off as cmdInit prints. Tells the user the
+        // single next action without leaking sidecar internals.
+        console.log("");
+        console.log(
+          `${pc.green("✓")} ${pc.bold("All set.")} Open your agent and run ${pc.cyan("/petdex")} to wake the mascot.`,
+        );
       }
       break;
     }

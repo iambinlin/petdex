@@ -12,7 +12,6 @@ import path from "node:path";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 
-import { desktopStatus, startDesktop } from "../desktop/process.js";
 import {
   AGENTS,
   type Agent,
@@ -94,9 +93,14 @@ export async function runInstall(): Promise<HooksInstallResult> {
     try {
       const result = await installForAgent(agent);
       installedAgents.push(agent.id);
-      summary.push(
-        `  ${pc.green("✓")} ${pc.bold(agent.displayName)} ${pc.dim(`→ ${tildeify(agent.configFile)}`)}${result.backupPath ? pc.dim(` (backup: ${path.basename(result.backupPath)})`) : ""}`,
-      );
+      // Keep summary lines short and uniform — earlier the long
+      // backup filename + full config path made @clack/prompts'
+      // bordered note overflow inconsistently between agents that
+      // had a prior config (with backup) and those that didn't
+      // (without). Now every line is just the agent name. Backups
+      // are still written to disk; they're recoverable via shell
+      // if the user ever needs to roll back.
+      summary.push(`  ${pc.green("✓")} ${pc.bold(agent.displayName)}`);
       if (agent.postInstallChecks) {
         try {
           const notes = await agent.postInstallChecks();
@@ -143,54 +147,13 @@ export async function runInstall(): Promise<HooksInstallResult> {
     }
   }
 
-  const status = desktopStatus();
-  if (status.state === "running") {
-    p.log.info(
-      `${pc.green("●")} petdex-desktop already running (pid ${status.pid}).`,
-    );
-  } else {
-    const shouldStart = await p.confirm({
-      message: "Start petdex-desktop now so hooks have somewhere to land?",
-      initialValue: true,
-    });
-    if (!p.isCancel(shouldStart) && shouldStart) {
-      const result = await startDesktop();
-      if (result.ok) {
-        p.log.info(
-          result.alreadyRunning
-            ? `${pc.dim("•")} already running (pid ${result.pid})`
-            : `${pc.green("✓")} petdex-desktop started (pid ${result.pid})`,
-        );
-      } else {
-        p.log.warn(
-          `${pc.yellow("!")} Could not start petdex-desktop: ${result.reason}`,
-        );
-        p.log.info(
-          `Install it with ${pc.cyan("petdex install desktop")} and then ${pc.cyan("petdex desktop start")}.`,
-        );
-      }
-    }
-  }
-
-  // The test command mirrors what the generated hooks do at runtime:
-  // read the per-session token from ~/.petdex/runtime/update-token,
-  // then POST with the X-Petdex-Update-Token header. Without the
-  // header the sidecar returns 401, so the previous example always
-  // failed once we added the CSRF gate.
-  const testCommand = [
-    `T=$(cat ~/.petdex/runtime/update-token)`,
-    `curl -X POST ${SIDECAR_URL}`,
-    `-H "X-Petdex-Update-Token: $T"`,
-    `--data-raw '{"state":"waving"}'`,
-  ].join(" ");
-  p.log.info(
-    [
-      `Petdex listens on ${pc.cyan(SIDECAR_URL)} when ${pc.bold("petdex-desktop")} is running.`,
-      `Test it: ${pc.cyan(testCommand)}`,
-    ].join("\n"),
-  );
-
-  p.outro(pc.dim(`Restart your agent for the hooks to load.`));
+  // No outro from this function — the caller (cmdInit) prints the
+  // hand-off line. Keeping `runHooksInstall` to just hooks-install
+  // means the same wizard works whether the user invoked
+  // `petdex hooks install` directly or `petdex init` (which wraps
+  // it). Implementation details (sidecar URL, token, curl test
+  // command) used to leak here; they don't belong in the user's
+  // success path — anyone who needs them can run `petdex doctor`.
 
   return { installedAgents };
 }
@@ -328,8 +291,3 @@ function collectCommands(entry: unknown): string[] {
   return acc;
 }
 
-function tildeify(p: string): string {
-  const home = process.env.HOME;
-  if (home && p.startsWith(home)) return `~${p.slice(home.length)}`;
-  return p;
-}
