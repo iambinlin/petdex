@@ -76,25 +76,43 @@ async function findLatestDesktopRelease(): Promise<GhRelease | null> {
   return null;
 }
 
-// Pick the binary asset for a target platform. Today darwin-arm64
-// is the only one we ship; when we add darwin-x64/linux-arm64/etc
-// they'll just need to land in the release with the matching
-// `petdex-desktop-<platform>` prefix.
+// Map platform alias → asset filename matchers, in priority order.
+// First match wins. We prefer the .dmg because users expect "drag
+// to Applications" UX from a download click; the bare binary is
+// kept around for the CLI's existing install flow (`petdex install
+// desktop`) which isn't changing in this release.
+const PLATFORM_ASSET_PATTERNS: Record<string, RegExp[]> = {
+  "darwin-arm64": [
+    /^Petdex-arm64\.dmg$/, // signed + notarized DMG, drag-to-Applications UX
+    /^petdex-desktop-darwin-arm64(\.zip)?$/, // bare binary, legacy CLI flow
+  ],
+  "darwin-x64": [
+    /^Petdex-x64\.dmg$/,
+    /^petdex-desktop-darwin-x64(\.zip)?$/,
+  ],
+  "linux-x64": [/^petdex-desktop-linux-x64(\.tar\.gz)?$/],
+  "linux-arm64": [/^petdex-desktop-linux-arm64(\.tar\.gz)?$/],
+  "win32-x64": [/^petdex-desktop-win32-x64\.(exe|zip)$/],
+};
+
 function pickAssetForPlatform(
   release: GhRelease,
   platform: string,
 ): GhAsset | null {
   if (!Array.isArray(release.assets)) return null;
-  const wantedPrefix = `petdex-desktop-${platform}`;
-  return (
-    release.assets.find(
+  const patterns = PLATFORM_ASSET_PATTERNS[platform];
+  if (!patterns) return null;
+  for (const re of patterns) {
+    const hit = release.assets.find(
       (a) =>
         typeof a.name === "string" &&
-        a.name.startsWith(wantedPrefix) &&
+        re.test(a.name) &&
         typeof a.browser_download_url === "string" &&
         isTrustedUrl(a.browser_download_url),
-    ) ?? null
-  );
+    );
+    if (hit) return hit;
+  }
+  return null;
 }
 
 function releasePageUrl(release: GhRelease | null): string {

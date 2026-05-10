@@ -1007,8 +1007,36 @@ fn resolveSidecarDir(allocator: std.mem.Allocator, env_map: *std.process.Environ
     if (env_map.get("PETDEX_SIDECAR_DIR")) |override| {
         return try allocator.dupe(u8, override);
     }
+    // .app bundle: when shipped as Petdex.app the sidecar is bundled at
+    // Contents/Resources/sidecar/ so the user doesn't need a separate
+    // `petdex install desktop` step. We detect this by checking whether
+    // the executable lives at .../Contents/MacOS/<binary> — a path that
+    // can only exist inside an .app — and resolve sidecar relative to
+    // that.
+    if (try resolveBundledSidecarDir(allocator)) |bundled| return bundled;
+    // Bare-binary install path (legacy v0.1.0): the CLI installs the
+    // sidecar bundle at ~/.petdex/sidecar/server.js.
     const home = env_map.get("HOME") orelse return error.NoHome;
     return try std.fs.path.join(allocator, &.{ home, ".petdex", "sidecar" });
+}
+
+// Returns Contents/Resources/sidecar IFF the running executable is
+// inside an .app bundle. Otherwise returns null and the caller falls
+// back to the legacy ~/.petdex/sidecar path.
+fn resolveBundledSidecarDir(allocator: std.mem.Allocator) !?[]u8 {
+    var path_buf: [std.fs.max_path_bytes]u8 = undefined;
+    var size: u32 = path_buf.len;
+    // Darwin-specific. _NSGetExecutablePath fills the buffer with the
+    // path of the running executable. Returns 0 on success; -1 means
+    // size was too small (we never hit that with max_path_bytes).
+    if (std.c._NSGetExecutablePath(&path_buf, &size) != 0) return null;
+    // Find the NUL byte and slice to the actual length.
+    const exe_path = std.mem.sliceTo(@as([*:0]u8, @ptrCast(&path_buf)), 0);
+    // Look for ".app/Contents/MacOS/" anywhere in the path.
+    const needle = "/Contents/MacOS/";
+    const idx = std.mem.indexOf(u8, exe_path, needle) orelse return null;
+    const contents_root = exe_path[0 .. idx + "/Contents".len];
+    return try std.fs.path.join(allocator, &.{ contents_root, "Resources", "sidecar" });
 }
 
 fn readActiveSlug(allocator: std.mem.Allocator, io: std.Io, config_dir: []const u8) !?[]u8 {
