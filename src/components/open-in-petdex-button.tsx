@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { track } from "@vercel/analytics";
 import { ArrowRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -68,6 +69,10 @@ export function OpenInPetdexButton({ slug }: OpenInPetdexButtonProps) {
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
     // Only intercept if the user isn't doing meta/ctrl/middle-click.
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    // Track BEFORE preventDefault — the analytics call needs to fire
+    // before the URL scheme attempt blurs the page (page-blur cancels
+    // pending Vercel Analytics queue flushes on some browsers).
+    track("open_in_petdex_click", { slug, source: "pet_page" });
     e.preventDefault();
     // Schedule the fallback redirect first so that even if the deep
     // link blocks the browser somehow, the user still ends up

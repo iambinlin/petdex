@@ -16,6 +16,7 @@ import { getFeaturedPetsWithMetrics, type PetWithMetrics } from "@/lib/pets";
 import { CollectionCover } from "@/components/collection-cover";
 import { CommandLine } from "@/components/command-line";
 import { DiscordLink } from "@/components/discord-link";
+import { DownloadDesktopCTA } from "@/components/download-desktop-cta";
 import { JsonLd } from "@/components/json-ld";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
@@ -132,19 +133,20 @@ export default async function Home() {
                 brand: () => <strong>Codex</strong>,
               })}
             </p>
-            <div className="mt-5 flex w-full max-w-2xl flex-col items-stretch gap-2 sm:flex-row">
+            <div className="mt-5 flex w-full flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center">
               <CommandLine
                 command="npx petdex install boba"
                 source="hero"
-                className="flex-1"
+                className="w-full sm:w-auto"
               />
-              <Link
+              <DownloadDesktopCTA
                 href={`/${locale}/download`}
+                source="hero_primary"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
               >
                 {t("downloadCta")}
                 <ArrowRight className="size-4" />
-              </Link>
+              </DownloadDesktopCTA>
             </div>
           </div>
 
