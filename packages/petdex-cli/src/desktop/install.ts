@@ -81,11 +81,50 @@ function detectTarget(): Target {
 }
 
 export function desktopBinPath(): string {
+  // Resolution order (prefer the .app bundle when present, fall back
+  // to the CLI-installed bare binary):
+  //   1. /Applications/Petdex.app/Contents/MacOS/petdex-desktop
+  //      → user dragged Petdex.app from the DMG into Applications
+  //   2. ~/Applications/Petdex.app/Contents/MacOS/petdex-desktop
+  //      → user dropped Petdex.app into their per-user Applications dir
+  //   3. ~/.petdex/bin/petdex-desktop[.exe]
+  //      → user ran `petdex install desktop` (or never bothered with the
+  //        DMG); on Windows this is the only path
+  //
+  // Returning the first that exists lets `petdex up`, `petdex update`,
+  // and `petdex desktop start` find the binary regardless of how the
+  // user installed it. Net effect: DMG-only installs no longer need a
+  // follow-up `npx petdex install desktop` to make the CLI commands
+  // work.
   const ext = nodePlatform() === "win32" ? ".exe" : "";
+  if (nodePlatform() === "darwin") {
+    const appCandidates = [
+      "/Applications/Petdex.app/Contents/MacOS/petdex-desktop",
+      path.join(homedir(), "Applications", "Petdex.app", "Contents", "MacOS", "petdex-desktop"),
+    ];
+    for (const candidate of appCandidates) {
+      if (existsSync(candidate)) return candidate;
+    }
+  }
   return path.join(homedir(), ".petdex", "bin", `petdex-desktop${ext}`);
 }
 
 export function sidecarPath(): string {
+  // Same resolution order as desktopBinPath: prefer the .app bundle's
+  // bundled sidecar (Contents/Resources/sidecar/server.js) when present,
+  // fall back to the CLI-installed bare path. This matches what the Zig
+  // binary does at runtime (resolveSidecarDir checks Contents/Resources
+  // first when running inside an .app), so `petdex doctor` and the
+  // sidecar-status checks find the same file the desktop actually loads.
+  if (nodePlatform() === "darwin") {
+    const appCandidates = [
+      "/Applications/Petdex.app/Contents/Resources/sidecar/server.js",
+      path.join(homedir(), "Applications", "Petdex.app", "Contents", "Resources", "sidecar", "server.js"),
+    ];
+    for (const candidate of appCandidates) {
+      if (existsSync(candidate)) return candidate;
+    }
+  }
   return path.join(homedir(), ".petdex", "sidecar", "server.js");
 }
 
