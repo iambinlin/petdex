@@ -2,14 +2,16 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import { asc, desc, eq, sql as dsql } from "drizzle-orm";
+import { asc, desc, sql as dsql, eq } from "drizzle-orm";
 import { Heart, TerminalSquare, Trophy } from "lucide-react";
 
 import { isAdmin } from "@/lib/admin";
 import { getCatchProgress, getLikedPetsForUser } from "@/lib/catch-status";
-import { canManageCreatorCollections } from "@/lib/collection-access";
+import {
+  canManageCreatorCollections,
+  MAX_OWNER_COLLECTIONS,
+} from "@/lib/collection-access";
 import { getOwnerCollections } from "@/lib/collections";
-import { MAX_OWNER_COLLECTIONS } from "@/lib/collection-access";
 import { db, schema } from "@/lib/db/client";
 import { getMetricsBySlugs } from "@/lib/db/metrics";
 import { userIdForHandle } from "@/lib/handles";
@@ -33,6 +35,8 @@ import { ProfileTabs } from "@/components/profile-tabs";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
+
 export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://petdex.crafter.run";
@@ -40,7 +44,7 @@ const SITE_URL = "https://petdex.crafter.run";
 type PageProps = { params: Promise<{ handle: string; locale: string }> };
 
 export async function generateMetadata({ params }: PageProps) {
-  const { handle } = await params;
+  const { handle, locale } = await params;
   const userId = await userIdForHandle(handle);
   if (!userId) return { title: "Profile not found", robots: { index: false } };
   let displayName = `@${handle}`;
@@ -64,7 +68,10 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${displayName} on Petdex`,
     description: `Pets created by ${displayName} for Codex.`,
-    alternates: buildLocaleAlternates(`/u/${publicHandle}`),
+    alternates: buildLocaleAlternates(
+      `/u/${publicHandle}`,
+      hasLocale(locale) ? locale : undefined,
+    ),
     openGraph: {
       title: `${displayName} on Petdex`,
       description: `Animated Codex pets created by ${displayName}.`,

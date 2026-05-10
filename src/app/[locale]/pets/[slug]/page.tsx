@@ -35,6 +35,8 @@ import { SiteHeader } from "@/components/site-header";
 import { StaticPetSprite } from "@/components/static-pet-sprite";
 import { SubmittedBy } from "@/components/submitted-by";
 
+import { hasLocale } from "@/i18n/config";
+
 const SITE_URL = "https://petdex.crafter.run";
 
 type PageProps = {
@@ -59,7 +61,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const pet = await getPet(slug);
 
   if (!pet) {
@@ -76,7 +78,10 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title,
     description,
-    alternates: buildLocaleAlternates(`/pets/${pet.slug}`),
+    alternates: buildLocaleAlternates(
+      `/pets/${pet.slug}`,
+      hasLocale(locale) ? locale : undefined,
+    ),
     keywords: [
       pet.displayName,
       `${pet.displayName} Codex pet`,

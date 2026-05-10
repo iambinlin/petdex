@@ -9,18 +9,30 @@ import { GithubIcon } from "@/components/github-icon";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
-export const metadata = {
-  title: "Docs · Petdex",
-  description:
-    "How to install, distribute, and automate Codex pets with the Petdex CLI.",
-  alternates: buildLocaleAlternates("/docs"),
-  openGraph: {
-    title: "Petdex CLI · Docs",
+import { hasLocale } from "@/i18n/config";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+    title: "Docs · Petdex",
     description:
       "How to install, distribute, and automate Codex pets with the Petdex CLI.",
-    images: ["/og.png"],
-  },
-};
+    alternates: buildLocaleAlternates(
+      "/docs",
+      hasLocale(locale) ? locale : undefined,
+    ),
+    openGraph: {
+      title: "Petdex CLI · Docs",
+      description:
+        "How to install, distribute, and automate Codex pets with the Petdex CLI.",
+      images: ["/og.png"],
+    },
+  };
+}
 
 const NPM_URL = "https://www.npmjs.com/package/petdex";
 const REPO_URL = "https://github.com/crafter-station/petdex";
@@ -337,11 +349,11 @@ export default function DocsPage() {
               <code>petdex up / down / toggle</code>
             </h3>
             <p>
-              One-shot wake/sleep for the mascot. <code>up</code> enables
-              hooks AND launches the desktop. <code>down</code> disables hooks
-              AND stops the desktop. <code>toggle</code> flips between them
-              based on current state. That's what the <code>/petdex</code>{" "}
-              slash command runs from inside your agent.
+              One-shot wake/sleep for the mascot. <code>up</code> enables hooks
+              AND launches the desktop. <code>down</code> disables hooks AND
+              stops the desktop. <code>toggle</code> flips between them based on
+              current state. That's what the <code>/petdex</code> slash command
+              runs from inside your agent.
             </p>
             <CommandLine
               command="npx petdex toggle"
@@ -381,12 +393,12 @@ export default function DocsPage() {
             </h3>
             <p>
               Even with hooks installed, you can pause them without touching
-              your agent's settings. <code>petdex hooks off</code> drops a
-              flag file at <code>~/.petdex/runtime/hooks-disabled</code>;
-              every installed hook checks for it first and exits 0
-              immediately. <code>petdex hooks on</code> removes the file.
-              Useful when a sidecar has gone weird and you don't want stray
-              curls in your agent log.
+              your agent's settings. <code>petdex hooks off</code> drops a flag
+              file at <code>~/.petdex/runtime/hooks-disabled</code>; every
+              installed hook checks for it first and exits 0 immediately.{" "}
+              <code>petdex hooks on</code> removes the file. Useful when a
+              sidecar has gone weird and you don't want stray curls in your
+              agent log.
             </p>
             <CommandLine
               command="npx petdex hooks toggle"
@@ -399,11 +411,10 @@ export default function DocsPage() {
             </h3>
             <p>
               Reverses <code>hooks install</code>: removes the petdex entries
-              from each agent's config (preserving your own hooks), deletes
-              the <code>/petdex</code> slash command files, and removes the
-              OpenCode plugin. Pass <code>--remove-token</code> to also drop
-              the auth token at{" "}
-              <code>~/.petdex/runtime/update-token</code>.
+              from each agent's config (preserving your own hooks), deletes the{" "}
+              <code>/petdex</code> slash command files, and removes the OpenCode
+              plugin. Pass <code>--remove-token</code> to also drop the auth
+              token at <code>~/.petdex/runtime/update-token</code>.
             </p>
             <CommandLine
               command="npx petdex hooks uninstall"
@@ -415,11 +426,10 @@ export default function DocsPage() {
               <code>petdex doctor</code>
             </h3>
             <p>
-              Diagnostic. Verifies binary, sidecar bundle, sidecar
-              reachability, pid file format, token mode, kill-switch state,
-              hooks installed in each agent, Codex's <code>codex_hooks</code>{" "}
-              feature flag, and usable pet count. Each failed check ships an
-              actionable hint.
+              Diagnostic. Verifies binary, sidecar bundle, sidecar reachability,
+              pid file format, token mode, kill-switch state, hooks installed in
+              each agent, Codex's <code>codex_hooks</code> feature flag, and
+              usable pet count. Each failed check ships an actionable hint.
             </p>
             <CommandLine
               command="npx petdex doctor"

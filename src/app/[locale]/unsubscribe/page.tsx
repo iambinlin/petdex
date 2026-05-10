@@ -3,14 +3,25 @@ import { buildLocaleAlternates } from "@/lib/locale-routing";
 
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
 import { UnsubscribeForm } from "./unsubscribe-form";
 
-export const metadata = {
-  title: "Unsubscribe | Petdex",
-  description: "Manage your Petdex email preferences.",
-  alternates: buildLocaleAlternates("/unsubscribe"),
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+    title: "Unsubscribe | Petdex",
+    description: "Manage your Petdex email preferences.",
+    alternates: buildLocaleAlternates(
+      "/unsubscribe",
+      hasLocale(locale) ? locale : undefined,
+    ),
+    robots: { index: false, follow: false },
+  };
+}
 
 type SearchParams = Promise<{ token?: string }>;
 

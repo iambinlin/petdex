@@ -3,12 +3,24 @@ import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
-export const metadata = {
-  title: "Telemetry | Petdex",
-  description: "What petdex CLI telemetry collects and how to opt out.",
-  alternates: buildLocaleAlternates("/legal/telemetry"),
-  robots: { index: true, follow: true },
-};
+import { hasLocale } from "@/i18n/config";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+    title: "Telemetry | Petdex",
+    description: "What petdex CLI telemetry collects and how to opt out.",
+    alternates: buildLocaleAlternates(
+      "/legal/telemetry",
+      hasLocale(locale) ? locale : undefined,
+    ),
+    robots: { index: true, follow: true },
+  };
+}
 
 export default function TelemetryPrivacyPage() {
   return (
@@ -73,9 +85,8 @@ export default function TelemetryPrivacyPage() {
                     desktop_first_state_received
                   </code>{" "}
                   (the desktop sidecar emits this once per session when a hook
-                  first reaches the mascot. It lets us measure how many
-                  installs go all the way through the install, configure, and
-                  run flow).
+                  first reaches the mascot. It lets us measure how many installs
+                  go all the way through the install, configure, and run flow).
                 </td>
               </tr>
               <tr className="border-b border-border-base/50">

@@ -16,6 +16,8 @@ import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
+
 export async function generateMetadata({
   params,
 }: {
@@ -27,7 +29,10 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
-    alternates: buildLocaleAlternates("/create"),
+    alternates: buildLocaleAlternates(
+      "/create",
+      hasLocale(locale) ? locale : undefined,
+    ),
     openGraph: {
       title: t("title"),
       description: t("description"),

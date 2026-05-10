@@ -8,6 +8,8 @@ import { PET_VIBES, type PetVibe } from "@/lib/types";
 import { FacetPage } from "@/components/facet-page";
 import { JsonLd } from "@/components/json-ld";
 
+import { hasLocale } from "@/i18n/config";
+
 function curatedSort(pets: PetWithMetrics[]): PetWithMetrics[] {
   return [...pets].sort((a, b) => {
     const fa = a.featured ? 0 : 1;
@@ -33,14 +35,17 @@ function resolveVibe(slug: string): PetVibe | null {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { vibe: raw } = await params;
+  const { vibe: raw, locale } = await params;
   const vibe = resolveVibe(raw);
   if (!vibe) return { title: "Vibe not found", robots: { index: false } };
   const copy = VIBE_COPY[vibe];
   return {
     title: copy.title,
     description: copy.metaDescription,
-    alternates: buildLocaleAlternates(`/vibe/${vibe}`),
+    alternates: buildLocaleAlternates(
+      `/vibe/${vibe}`,
+      hasLocale(locale) ? locale : undefined,
+    ),
     openGraph: {
       title: copy.title,
       description: copy.metaDescription,

@@ -8,6 +8,8 @@ import { PET_KINDS, type PetKind } from "@/lib/types";
 import { FacetPage } from "@/components/facet-page";
 import { JsonLd } from "@/components/json-ld";
 
+import { hasLocale } from "@/i18n/config";
+
 const SITE_URL = "https://petdex.crafter.run";
 
 type Props = { params: Promise<{ kind: string; locale: string }> };
@@ -33,14 +35,17 @@ function curatedSort(pets: PetWithMetrics[]): PetWithMetrics[] {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { kind: raw } = await params;
+  const { kind: raw, locale } = await params;
   const kind = resolveKind(raw);
   if (!kind) return { title: "Kind not found", robots: { index: false } };
   const copy = KIND_COPY[kind];
   return {
     title: copy.title,
     description: copy.metaDescription,
-    alternates: buildLocaleAlternates(`/kind/${kind}`),
+    alternates: buildLocaleAlternates(
+      `/kind/${kind}`,
+      hasLocale(locale) ? locale : undefined,
+    ),
     openGraph: {
       title: copy.title,
       description: copy.metaDescription,

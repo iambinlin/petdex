@@ -7,6 +7,8 @@ import { JsonLd } from "@/components/json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
+
 // /collections is fully public — no auth, no cookies, no per-visitor
 // data. ISR with 5 minute revalidation lets featured-collection
 // rotations show up quickly without waking a function on every visit.
@@ -15,12 +17,20 @@ export const revalidate = 300;
 const SITE_URL = "https://petdex.crafter.run";
 const MIN_PETS = 4;
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   return {
     title: "Featured collections",
     description:
       "Browse Petdex collections by franchise, category, or theme. Search, sort, and filter to find your set.",
-    alternates: buildLocaleAlternates("/collections"),
+    alternates: buildLocaleAlternates(
+      "/collections",
+      hasLocale(locale) ? locale : undefined,
+    ),
   };
 }
 

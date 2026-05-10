@@ -12,6 +12,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 import type { Locale } from "@/i18n/config";
+import { hasLocale } from "@/i18n/config";
 
 export async function generateMetadata({
   params,
@@ -27,7 +28,10 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
-    alternates: buildLocaleAlternates("/advertise/dashboard"),
+    alternates: buildLocaleAlternates(
+      "/advertise/dashboard",
+      hasLocale(locale) ? locale : undefined,
+    ),
     robots: { index: false, follow: false },
   };
 }

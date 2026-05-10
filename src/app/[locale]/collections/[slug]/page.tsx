@@ -17,6 +17,8 @@ import { PetSprite } from "@/components/pet-sprite";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
+
 export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://petdex.crafter.run";
@@ -24,7 +26,7 @@ const SITE_URL = "https://petdex.crafter.run";
 type PageProps = { params: Promise<{ slug: string; locale: string }> };
 
 export async function generateMetadata({ params }: PageProps) {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const collection = await getCollection(slug);
   if (!collection) {
     return { title: "Collection not found", robots: { index: false } };
@@ -41,7 +43,10 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${collection.title} collection`,
     description: collection.description,
-    alternates: buildLocaleAlternates(`/collections/${collection.slug}`),
+    alternates: buildLocaleAlternates(
+      `/collections/${collection.slug}`,
+      hasLocale(locale) ? locale : undefined,
+    ),
     openGraph: {
       title: `${collection.title} on Petdex`,
       description: collection.description,

@@ -18,6 +18,7 @@ import { DownloadCTA } from "@/components/download-cta";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
 import { buildSetupSteps, parsePendingPet } from "./setup-steps";
 
 const SITE_URL = "https://petdex.crafter.run";
@@ -34,25 +35,35 @@ const OG_IMAGE = `${SITE_URL}/download/opengraph-image`;
 // Public page now (admin gate lifted on 2026-05-10 alongside the
 // petdex:// URL scheme + 9-state bubble UI launch). Index + follow
 // so the desktop landing surfaces in search.
-export const metadata = {
-  title: "Download Petdex Desktop",
-  description:
-    "Download Petdex Desktop for macOS. Your pet, floating beside every coding agent.",
-  alternates: buildLocaleAlternates("/download"),
-  openGraph: {
-    title: "Petdex Desktop",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+    title: "Download Petdex Desktop",
     description:
-      "Your pet, floating beside every coding agent. macOS native.",
-    url: `${SITE_URL}/download`,
-    images: [{ url: OG_IMAGE, width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Petdex Desktop",
-    description: "Your pet, floating beside every coding agent.",
-    images: [OG_IMAGE],
-  },
-};
+      "Download Petdex Desktop for macOS. Your pet, floating beside every coding agent.",
+    alternates: buildLocaleAlternates(
+      "/download",
+      hasLocale(locale) ? locale : undefined,
+    ),
+    openGraph: {
+      title: "Petdex Desktop",
+      description:
+        "Your pet, floating beside every coding agent. macOS native.",
+      url: `${SITE_URL}/download`,
+      images: [{ url: OG_IMAGE, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Petdex Desktop",
+      description: "Your pet, floating beside every coding agent.",
+      images: [OG_IMAGE],
+    },
+  };
+}
 
 // Force-dynamic so the latest-release fetch runs per request —
 // otherwise users see a cached release tag that drifts behind

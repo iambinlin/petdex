@@ -25,7 +25,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SubmitCTA } from "@/components/submit-cta";
 import { SurprisePetCard } from "@/components/surprise-pet-card";
 
-import { locales } from "@/i18n/config";
+import { hasLocale, locales } from "@/i18n/config";
 
 // ISR. The home page used to be force-dynamic because it pulled the
 // visitor's shuffle seed cookie and caught-slug set. Both moved to
@@ -36,9 +36,20 @@ import { locales } from "@/i18n/config";
 // surfacing without waking a function on every visit.
 export const dynamic = "force-static";
 export const revalidate = 60;
-export const metadata = {
-  alternates: buildLocaleAlternates("/"),
-};
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+    alternates: buildLocaleAlternates(
+      "/",
+      hasLocale(locale) ? locale : undefined,
+    ),
+  };
+}
 const SITE_URL = "https://petdex.crafter.run";
 
 export function generateStaticParams() {

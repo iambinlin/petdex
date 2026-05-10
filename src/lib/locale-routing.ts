@@ -33,8 +33,17 @@ export function stripLocalePrefix(pathname: string): string {
   return normalized;
 }
 
-export function buildLocaleAlternates(pathname: string) {
-  const canonical = withLocale(pathname, defaultLocale);
+// Per-locale canonical: if currentLocale is provided, the canonical URL
+// for the page is the locale-prefixed version (e.g. /es/about). Without
+// currentLocale, falls back to the default English path so the helper
+// stays backwards-compatible with callers that haven't been updated yet.
+// x-default is always pinned to the default locale per Google's hreflang
+// guidance. It must not vary with the current page.
+export function buildLocaleAlternates(
+  pathname: string,
+  currentLocale?: Locale,
+) {
+  const canonical = withLocale(pathname, currentLocale ?? defaultLocale);
 
   return {
     canonical,
@@ -42,7 +51,7 @@ export function buildLocaleAlternates(pathname: string) {
       [HREFLANG_BY_LOCALE.en]: withLocale(pathname, "en"),
       [HREFLANG_BY_LOCALE.es]: withLocale(pathname, "es"),
       [HREFLANG_BY_LOCALE.zh]: withLocale(pathname, "zh"),
-      "x-default": canonical,
+      "x-default": withLocale(pathname, defaultLocale),
     },
   };
 }

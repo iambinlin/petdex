@@ -17,6 +17,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 import type { Locale } from "@/i18n/config";
+import { hasLocale } from "@/i18n/config";
 
 const SITE_URL = "https://petdex.crafter.run";
 const PACKAGE_IDS = Object.keys(AD_PACKAGES) as Array<keyof typeof AD_PACKAGES>;
@@ -32,7 +33,10 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
-    alternates: buildLocaleAlternates("/advertise"),
+    alternates: buildLocaleAlternates(
+      "/advertise",
+      hasLocale(locale) ? locale : undefined,
+    ),
     openGraph: {
       title: t("title"),
       description: t("description"),

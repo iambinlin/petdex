@@ -9,6 +9,8 @@ import { PetSubmitForm } from "@/components/pet-submit-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
+
 export async function generateMetadata({
   params,
 }: {
@@ -20,7 +22,10 @@ export async function generateMetadata({
   return {
     title: t("title"),
     description: t("description"),
-    alternates: buildLocaleAlternates("/submit"),
+    alternates: buildLocaleAlternates(
+      "/submit",
+      hasLocale(locale) ? locale : undefined,
+    ),
   };
 }
 

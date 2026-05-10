@@ -15,10 +15,17 @@ import { JsonLd } from "@/components/json-ld";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
+import { hasLocale } from "@/i18n/config";
+
 export const dynamic = "force-static";
 const SITE_URL = "https://petdex.crafter.run";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   if (!process.env.NEXT_PUBLIC_DISCORD_INVITE_URL) {
     return {
       title: "Not found",
@@ -29,7 +36,10 @@ export async function generateMetadata() {
     title: "Petdex Community on Discord",
     description:
       "Join creators, collectors, and the Petdex team in our Discord — featured creator spotlights, work-in-progress feedback, and weekly builds.",
-    alternates: buildLocaleAlternates("/community"),
+    alternates: buildLocaleAlternates(
+      "/community",
+      hasLocale(locale) ? locale : undefined,
+    ),
   };
 }
 

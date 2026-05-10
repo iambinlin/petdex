@@ -12,6 +12,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 import builtWithData from "@/data/built-with.json";
+import { hasLocale } from "@/i18n/config";
 
 const SITE_URL = "https://petdex.crafter.run";
 const SUBMIT_ISSUE_URL =
@@ -66,7 +67,10 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: buildLocaleAlternates("/built-with"),
+    alternates: buildLocaleAlternates(
+      "/built-with",
+      hasLocale(locale) ? locale : undefined,
+    ),
     openGraph: {
       title,
       description,

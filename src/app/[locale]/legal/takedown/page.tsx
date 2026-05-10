@@ -4,12 +4,24 @@ import { GithubIcon } from "@/components/github-icon";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
-export const metadata = {
-  title: "Takedown | Petdex",
-  description: "How to report a pet that infringes your rights.",
-  alternates: buildLocaleAlternates("/legal/takedown"),
-  robots: { index: true, follow: true },
-};
+import { hasLocale } from "@/i18n/config";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return {
+    title: "Takedown | Petdex",
+    description: "How to report a pet that infringes your rights.",
+    alternates: buildLocaleAlternates(
+      "/legal/takedown",
+      hasLocale(locale) ? locale : undefined,
+    ),
+    robots: { index: true, follow: true },
+  };
+}
 
 const REPO = "crafter-station/petdex";
 
