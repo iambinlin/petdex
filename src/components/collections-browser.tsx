@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ExternalLink, Search } from "lucide-react";
 
@@ -122,6 +122,22 @@ export function CollectionsBrowser({
     return () => obs.disconnect();
   }, [hasMore]);
 
+  // Stable handlers so the kind-filter chips and search input do not
+  // hand fresh function refs to their children on every paginator
+  // re-render. setQuery/setKind/setSort are already stable identity
+  // from useState; we just close over them.
+  const handleQueryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value),
+    [],
+  );
+  const handleSortChange = useCallback((v: SortKey | null) => {
+    if (v) setSort(v);
+  }, []);
+  const handleKindClick = useCallback(
+    (value: "all" | CollectionKind) => setKind(value),
+    [],
+  );
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
@@ -133,16 +149,13 @@ export function CollectionsBrowser({
             <InputGroupInput
               type="search"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={handleQueryChange}
               placeholder="Try 'pokemon' or 'cozy cat' or 'developer'"
               aria-label="Search collections"
               className="text-sm placeholder:text-muted-3"
             />
           </InputGroup>
-          <Select
-            value={sort}
-            onValueChange={(v) => setSort(v as SortKey)}
-          >
+          <Select value={sort} onValueChange={handleSortChange}>
             <SelectTrigger
               aria-label="Sort collections"
               className="w-full shrink-0 sm:w-auto sm:min-w-[180px]"
@@ -166,29 +179,18 @@ export function CollectionsBrowser({
             const c = counts[f.value] ?? 0;
             const active = kind === f.value;
             return (
-              <button
+              <KindChip
                 key={f.value}
-                type="button"
-                onClick={() => setKind(f.value)}
-                className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
-                  active
-                    ? "border-brand bg-brand text-on-inverse"
-                    : "border-border-base bg-transparent text-muted-2 hover:border-border-strong hover:text-foreground"
-                }`}
-              >
-                {f.label}
-                <span
-                  className={`rounded-full px-1.5 text-[10px] font-mono tracking-wider ${
-                    active ? "bg-on-inverse/15" : "bg-surface text-muted-3"
-                  }`}
-                >
-                  {c}
-                </span>
-              </button>
+                value={f.value}
+                label={f.label}
+                count={c}
+                active={active}
+                onClick={handleKindClick}
+              />
             );
           })}
           <span className="ml-auto text-xs text-muted-3">
-            Showing {visible.length} of {collections.length}
+            Showing {visibleSlice.length} of {visible.length}
           </span>
         </div>
       </div>
@@ -201,61 +203,7 @@ export function CollectionsBrowser({
         <div className="grid auto-rows-fr gap-5 md:grid-cols-2 lg:grid-cols-3">
           {visibleSlice.map((c) => {
             const owner = c.ownerId ? credits[c.ownerId] : null;
-            const k = collectionKind(c.slug);
-            return (
-              <article
-                key={c.slug}
-                className="flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80"
-              >
-                <Link href={`/collections/${c.slug}`} className="block">
-                  <CollectionCover
-                    pets={c.pets}
-                    coverSlug={c.coverPetSlug}
-                    max={5}
-                    scale={0.55}
-                  />
-                </Link>
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center rounded-full bg-brand-tint px-2 py-0.5 font-mono text-[9px] tracking-[0.18em] text-brand-deep uppercase dark:bg-brand-tint-dark dark:text-brand-light">
-                          {KIND_LABEL[k]}
-                        </span>
-                        <span className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-                          {c.petCount} pets
-                        </span>
-                      </div>
-                      <h2 className="mt-2 text-xl font-semibold tracking-tight">
-                        <Link href={`/collections/${c.slug}`}>{c.title}</Link>
-                      </h2>
-                    </div>
-                    {c.externalUrl ? (
-                      <Link
-                        href={c.externalUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border-base bg-surface px-2.5 text-[11px] font-medium text-muted-2 transition hover:border-border-strong"
-                      >
-                        <ExternalLink className="size-3" />
-                        Site
-                      </Link>
-                    ) : null}
-                  </div>
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-2">
-                    {c.description}
-                  </p>
-                  {owner ? (
-                    <Link
-                      href={`/u/${owner.handle}`}
-                      className="mt-auto inline-flex pt-3 text-xs font-medium text-brand hover:underline"
-                    >
-                      by {owner.name}
-                    </Link>
-                  ) : null}
-                </div>
-              </article>
-            );
+            return <CollectionCard key={c.slug} collection={c} owner={owner} />;
           })}
         </div>
       )}
@@ -276,3 +224,100 @@ export function CollectionsBrowser({
     </div>
   );
 }
+
+const KindChip = memo(function KindChip({
+  value,
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  value: "all" | CollectionKind;
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: (value: "all" | CollectionKind) => void;
+}) {
+  const handleClick = useCallback(() => onClick(value), [onClick, value]);
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
+        active
+          ? "border-brand bg-brand text-on-inverse"
+          : "border-border-base bg-transparent text-muted-2 hover:border-border-strong hover:text-foreground"
+      }`}
+    >
+      {label}
+      <span
+        className={`rounded-full px-1.5 text-[10px] font-mono tracking-wider ${
+          active ? "bg-on-inverse/15" : "bg-surface text-muted-3"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+});
+
+const CollectionCard = memo(function CollectionCard({
+  collection: c,
+  owner,
+}: {
+  collection: CollectionItem;
+  owner: OwnerCredit | null;
+}) {
+  const k = collectionKind(c.slug);
+  return (
+    <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80">
+      <Link href={`/collections/${c.slug}`} className="block">
+        <CollectionCover
+          pets={c.pets}
+          coverSlug={c.coverPetSlug}
+          max={5}
+          scale={0.55}
+        />
+      </Link>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full bg-brand-tint px-2 py-0.5 font-mono text-[9px] tracking-[0.18em] text-brand-deep uppercase dark:bg-brand-tint-dark dark:text-brand-light">
+                {KIND_LABEL[k]}
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
+                {c.petCount} pets
+              </span>
+            </div>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight">
+              <Link href={`/collections/${c.slug}`}>{c.title}</Link>
+            </h2>
+          </div>
+          {c.externalUrl ? (
+            <Link
+              href={c.externalUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border-base bg-surface px-2.5 text-[11px] font-medium text-muted-2 transition hover:border-border-strong"
+            >
+              <ExternalLink className="size-3" />
+              Site
+            </Link>
+          ) : null}
+        </div>
+        <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-2">
+          {c.description}
+        </p>
+        {owner ? (
+          <Link
+            href={`/u/${owner.handle}`}
+            className="mt-auto inline-flex pt-3 text-xs font-medium text-brand hover:underline"
+          >
+            by {owner.name}
+          </Link>
+        ) : null}
+      </div>
+    </article>
+  );
+});
