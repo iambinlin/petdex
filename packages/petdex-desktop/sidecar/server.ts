@@ -416,6 +416,24 @@ function writeUpdateInfo(info: UpdateInfo) {
   } catch (err) {
     log(`update.json write failed: ${(err as Error).message}`);
   }
+  // Mirror update failures onto the mascot sprite. Hunter 2026-05-11:
+  // "cada state error que triggeree el status de mascot failed". Bounded
+  // duration (3s) so the failed pose doesn't stick — the state queue
+  // auto-reverts to idle after the duration expires. We do this here
+  // rather than at every writeUpdateInfo callsite to avoid drift: if
+  // a future code path also lands on status=error, the mascot will
+  // reflect it without anyone having to remember.
+  if (info.status === "error") {
+    try {
+      stateQueue.enqueue({
+        state: "failed",
+        duration: 3000,
+        receivedAt: Date.now(),
+      });
+    } catch (err) {
+      log(`mascot failed-state enqueue failed: ${(err as Error).message}`);
+    }
+  }
 }
 
 async function fetchLatestDesktopTag(): Promise<string | null> {
@@ -501,17 +519,93 @@ let currentUpdateChild: ReturnType<typeof spawn> | null = null;
 // from re-triggering shutdown after we already initiated one.
 let handoffRequested = false;
 
+// Resolve `npx` (or any executable) with a fallback search through
+// common install locations. The sidecar inherits PATH from the zig
+// parent, but on a Finder-launched .app that PATH may be the minimal
+// launchctl one (/usr/bin:/bin:/usr/sbin:/sbin) — node version
+// managers and homebrew aren't on it. Without this, spawn("npx") hits
+// ENOENT and the WebView's "Update" click silently fails (Hunter
+// 2026-05-11). We probe the same dirs the zig finder uses for node,
+// since npx ships in the same bin/ as node for every manager.
+function findExecutable(name: string): string | null {
+  const { existsSync } = require("node:fs") as typeof import("node:fs");
+  const path = require("node:path") as typeof import("node:path");
+  const home = process.env.HOME ?? "";
+  const candidates: string[] = [];
+  for (const dir of (process.env.PATH ?? "").split(":")) {
+    if (dir) candidates.push(path.join(dir, name));
+  }
+  candidates.push(`/opt/homebrew/bin/${name}`, `/usr/local/bin/${name}`, `/usr/bin/${name}`);
+  if (home) {
+    candidates.push(
+      path.join(home, ".volta", "bin", name),
+      path.join(home, ".fnm", "aliases", "default", "bin", name),
+      path.join(home, ".asdf", "shims", name),
+      path.join(home, ".n", "bin", name),
+      path.join(home, ".local", "bin", name),
+    );
+    // nvm: pick highest-versioned dir that has the binary.
+    const nvmRoot = path.join(home, ".nvm", "versions", "node");
+    if (existsSync(nvmRoot)) {
+      try {
+        const { readdirSync } = require("node:fs") as typeof import("node:fs");
+        const versions = readdirSync(nvmRoot)
+          .filter((v: string) => v.startsWith("v"))
+          .sort();
+        for (const v of versions.reverse()) {
+          candidates.push(path.join(nvmRoot, v, "bin", name));
+        }
+      } catch {
+        // ignore — just skip nvm
+      }
+    }
+  }
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
 function spawnUpdate(): void {
   // npx so the host machine can pin its own petdex-cli version. The
   // child runs detached + ignored-stdin so the sidecar exits cleanly
   // if it gets SIGTERM mid-update; we keep stdout/stderr piped to
   // log progress.
-  const child = spawn("npx", ["-y", "petdex@latest", "update", "--silent"], {
+  const npxPath = findExecutable("npx");
+  if (!npxPath) {
+    log("spawnUpdate: npx not found in PATH or known locations");
+    writeUpdateInfo({
+      ...readUpdateInfo(),
+      status: "error",
+      message: "npx not found. Install Node.js from nodejs.org or run `brew install node`.",
+      checkedAt: Date.now(),
+    });
+    return;
+  }
+  const child = spawn(npxPath, ["-y", "petdex@latest", "update", "--silent"], {
     detached: true,
     stdio: ["ignore", "pipe", "pipe"],
     env: process.env,
   });
   currentUpdateChild = child;
+  // ENOENT on spawn surfaces via 'error', not 'exit'. Without this
+  // listener, an absent npx leaves update.json stuck on "running"
+  // forever and the WebView's spinner never stops. (Hunter screenshot
+  // 2026-05-11: bubble said "Could not spawn npx: spawn npx ENOENT"
+  // but update.json was never updated.)
+  child.on("error", (err: NodeJS.ErrnoException) => {
+    currentUpdateChild = null;
+    log(`spawnUpdate: child error ${err.code ?? "?"} ${err.message}`);
+    writeUpdateInfo({
+      ...readUpdateInfo(),
+      status: "error",
+      message:
+        err.code === "ENOENT"
+          ? "Could not run npx. Install Node.js or run: npx petdex@latest update from a terminal."
+          : `Update spawn failed: ${err.message}`,
+      checkedAt: Date.now(),
+    });
+  });
   child.stdout?.on("data", (chunk: Buffer) => {
     logUpdate(chunk.toString("utf8").trimEnd());
   });
@@ -542,17 +636,6 @@ function spawnUpdate(): void {
       });
       logUpdate(`exit ${code}`);
     }
-  });
-  child.on("error", (err) => {
-    currentUpdateChild = null;
-    const info = readUpdateInfo();
-    writeUpdateInfo({
-      ...info,
-      status: "error",
-      message: `Could not spawn npx: ${err.message}`,
-      checkedAt: Date.now(),
-    });
-    logUpdate(`spawn error: ${err.message}`);
   });
   // Note: deliberately NOT calling child.unref() here. The whole
   // point of tracking currentUpdateChild is to keep the sidecar
