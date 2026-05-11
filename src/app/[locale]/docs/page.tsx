@@ -131,7 +131,7 @@ export default function DocsPage() {
 
           <Section id="install" title="Install">
             <p>
-              The CLI runs on Node 18+ (or Bun). Pick the workflow that fits
+              The CLI runs on Node 20+ (or Bun). Pick the workflow that fits
               you. Both are equivalent in capability and persistence.
             </p>
 
