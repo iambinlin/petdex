@@ -16,7 +16,7 @@ npx petdex --help
 npm install -g petdex
 ```
 
-Requires Node.js 18+ (also runs on Bun).
+Requires Node.js 20+ (also runs on Bun).
 
 ## Quick start
 
@@ -121,7 +121,7 @@ install path is just `fetch a JSON manifest, write two files to
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | Hangs at `Need to install the following packages: petdex@x` | `npx`'s own confirmation prompt, not a hang. Press `y` or auto-confirm | `npx -y petdex install <slug>` |
-| `npm ERR! engine Unsupported engine` | Node < 18 | Upgrade Node to 18+ (`nvm install 20` is the easiest path) |
+| `npm ERR! engine Unsupported engine` | Node < 20 | Upgrade Node to 20+ (`nvm install 20` is the easiest path) |
 | `manifest fetch 5xx` / network timeout | Slow connection or corporate/national firewall blocking `petdex.crafter.run` | Set a proxy: `HTTPS_PROXY=http://your.proxy:port npx petdex install <slug>` |
 | `EACCES: permission denied … ~/.codex/pets/` | Pets dir owned by another user | `sudo chown -R "$USER" ~/.codex` or remove the dir and retry |
 | Windows: `'sh' is not recognized` | CLI version older than 0.1.1 piped through `curl … \| sh` | Upgrade: `npm i -g petdex@latest` or `npx petdex@latest install <slug>` |
