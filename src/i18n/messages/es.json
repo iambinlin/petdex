@@ -370,6 +370,7 @@
   "feedback": {
     "trigger": "Comentarios",
     "title": "Enviar comentarios",
+    "backToTop": "Volver arriba",
     "close": "Cerrar",
     "send": "Enviar",
     "sending": "Enviando…",

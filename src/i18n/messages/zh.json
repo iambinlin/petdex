@@ -410,6 +410,7 @@
   "feedback": {
     "trigger": "反馈",
     "title": "发送反馈",
+    "backToTop": "回到顶部",
     "close": "关闭",
     "send": "发送",
     "sending": "发送中…",

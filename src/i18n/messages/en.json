@@ -370,6 +370,7 @@
   "feedback": {
     "trigger": "Feedback",
     "title": "Send feedback",
+    "backToTop": "Back to top",
     "close": "Close",
     "send": "Send",
     "sending": "Sending…",

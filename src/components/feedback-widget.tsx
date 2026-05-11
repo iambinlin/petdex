@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  ArrowUp,
   Bug,
   Check,
   Heart,
@@ -34,6 +35,7 @@ export function FeedbackWidget() {
     | { tag: "error"; reason: string }
   >({ tag: "idle" });
   const [bottomOffset, setBottomOffset] = useState<number | null>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -128,6 +130,36 @@ export function FeedbackWidget() {
       document.removeEventListener("mousedown", onClick);
     };
   }, [open]);
+
+  // Show the back-to-top action only once the user has scrolled past one
+  // viewport. rAF-throttled so scroll handlers stay cheap on long pages.
+  useEffect(() => {
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      setShowBackToTop(window.scrollY > window.innerHeight);
+    };
+    const onScroll = () => {
+      if (frame !== 0) return;
+      frame = window.requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame !== 0) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  const onBackToTopClick = useCallback(() => {
+    if (Date.now() < suppressClickUntilRef.current) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+  }, []);
 
   // Auto-close 1.6s after success so the user sees the confirmation tick.
   useEffect(() => {
@@ -360,16 +392,34 @@ export function FeedbackWidget() {
           )}
         </div>
       ) : (
-        <button
-          type="button"
-          aria-label={t("title")}
-          onClick={onTriggerClick}
-          onPointerDown={onTriggerPointerDown}
-          className="group inline-flex touch-none select-none items-center gap-2 rounded-full border border-border-base bg-surface px-4 py-2.5 text-sm font-medium text-muted-2 shadow-lg shadow-blue-950/10 transition hover:border-border-strong hover:text-foreground hover:shadow-xl active:cursor-grabbing"
-        >
-          <MessageCircle className="size-4 text-brand" />
-          <span>{t("trigger")}</span>
-        </button>
+        <div className="flex flex-col items-end gap-1.5">
+          {showBackToTop ? (
+            <button
+              type="button"
+              aria-label={t("backToTop")}
+              onClick={onBackToTopClick}
+              onPointerDown={onTriggerPointerDown}
+              className="group/back peer relative inline-flex h-11 w-11 touch-none select-none items-center justify-center rounded-full border border-border-base bg-surface text-muted-2 shadow-lg shadow-blue-950/10 transition hover:border-border-strong hover:text-foreground hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+            >
+              <ArrowUp className="size-4 text-brand" />
+              <span className="pointer-events-none absolute right-[calc(100%+0.5rem)] hidden whitespace-nowrap rounded-md border border-border-base bg-surface px-2 py-1 text-xs font-medium text-foreground shadow-md group-hover/back:block group-focus-visible/back:block">
+                {t("backToTop")}
+              </span>
+            </button>
+          ) : null}
+          <button
+            type="button"
+            aria-label={t("trigger")}
+            onClick={onTriggerClick}
+            onPointerDown={onTriggerPointerDown}
+            className="group/feedback relative inline-flex h-11 w-11 touch-none select-none items-center justify-center rounded-full border border-border-base bg-surface text-muted-2 shadow-lg shadow-blue-950/10 transition hover:border-border-strong hover:text-foreground hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+          >
+            <MessageCircle className="size-4 text-brand" />
+            <span className="pointer-events-none absolute right-[calc(100%+0.5rem)] hidden whitespace-nowrap rounded-md border border-border-base bg-surface px-2 py-1 text-xs font-medium text-foreground shadow-md group-hover/feedback:block group-focus-visible/feedback:block">
+              {t("trigger")}
+            </span>
+          </button>
+        </div>
       )}
     </div>
   );
