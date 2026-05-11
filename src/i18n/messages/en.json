@@ -1302,6 +1302,23 @@
   "petActions": {
     "moreActions": "More actions for {name}",
     "share": "Share",
+    "reportTakedown": "Report",
+    "reportTakedownAria": "Report {name} for takedown",
+    "takedownDialog": {
+      "eyebrow": "Legal · Takedown",
+      "title": "Report a pet",
+      "body": "Petdex hosts user-submitted fan-art pixel pets. We don't claim rights to the underlying IP of any character a community member chose to interpret. If you're a rights holder or authorized representative and want a pet removed, the fastest path is a GitHub issue.",
+      "howItWorks": "How it works",
+      "step1": "Open a takedown request with the button below.",
+      "step2": "Tell us which pet and your relationship to the IP.",
+      "step3": "We review manually. Typical response under 48 hours. Filings stay public on GitHub for transparency.",
+      "step4": "Approved takedowns remove the pet from the gallery and installer endpoints.",
+      "nonIp": "Non-IP issues such as broken sprites or wrong descriptions should use a regular issue instead.",
+      "prefillLabel": "This request will prefill:",
+      "confirmation": "By submitting to Petdex you confirm you have rights to the artwork or are creating fan content. Petdex acts on good-faith takedown requests.",
+      "cancel": "Cancel",
+      "openRequest": "Open takedown request"
+    },
     "closeMenu": "Close menu",
     "openInCodex": "Open in Codex",
     "openInCodexHint": "Codex Desktop runs the install",
