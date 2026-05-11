@@ -95,6 +95,7 @@
     "topCreators": "Creadores",
     "takedown": "Retiro de contenido",
     "advertise": "Anunciarse",
+    "brand": "Marca",
     "github": "GitHub",
     "discord": "Discord",
     "sponsor": "Patrocinar",
@@ -951,6 +952,89 @@
     "card": {
       "screenshotAlt": "Screenshot de {name}",
       "site": "Sitio"
+    }
+  },
+  "brand": {
+    "metadata": {
+      "title": "Kit de marca de Petdex",
+      "description": "Descarga logos, íconos, tokens de color y notas de uso de Petdex para prensa, proyectos y posts de la comunidad.",
+      "ogTitle": "Kit de marca de Petdex"
+    },
+    "eyebrow": "Kit de marca",
+    "hero": {
+      "title": "Usa Petdex de forma clara y consistente.",
+      "body": "Descarga las marcas oficiales para posts de lanzamiento, integraciones de apps, proyectos de la comunidad y documentación que mencione Petdex.",
+      "primaryCtaSvg": "Descargar SVG",
+      "primaryCtaPng": "PNG",
+      "secondaryCta": "Ver en GitHub",
+      "iconAlt": "Ícono de la app de escritorio Petdex"
+    },
+    "assets": {
+      "eyebrow": "Descargas",
+      "title": "Archivos de logo listos para usar",
+      "body": "Usa assets SVG para web e impresión. Usa el ícono PNG cuando necesites la marca del producto de escritorio o una vista previa social cuadrada.",
+      "formats": {
+        "svg": "SVG",
+        "png": "PNG"
+      },
+      "modes": {
+        "light": "Modo claro",
+        "dark": "Modo oscuro"
+      },
+      "items": {
+        "mark": {
+          "title": "Marca de Petdex",
+          "description": "El símbolo principal para layouts compactos, avatares, favicons y badges.",
+          "alt": "Marca de Petdex"
+        },
+        "wordmark": {
+          "title": "Wordmark claro de Petdex",
+          "description": "Úsalo sobre fondos claros o neutros cálidos cuando el nombre deba leerse sin contexto alrededor.",
+          "alt": "Wordmark de Petdex"
+        },
+        "wordmarkDark": {
+          "title": "Wordmark oscuro de Petdex",
+          "description": "Úsalo sobre fondos oscuros, screenshots y gráficos de lanzamiento donde el wordmark negro pierde contraste.",
+          "alt": "Wordmark de Petdex para fondos oscuros"
+        },
+        "desktopIcon": {
+          "title": "Ícono de escritorio",
+          "description": "Ícono redondeado para referencias de Petdex Desktop, tarjetas de prensa y gráficos de lanzamiento.",
+          "alt": "Ícono de escritorio de Petdex"
+        }
+      }
+    },
+    "usage": {
+      "eyebrow": "Uso",
+      "title": "Mantén reconocible a la mascota",
+      "do": {
+        "title": "Haz",
+        "item1": "Deja suficiente espacio libre alrededor de la marca.",
+        "item2": "Usa los archivos originales sin redibujar las formas.",
+        "item3": "Acompaña Petdex con atribución clara cuando muestres mascotas de la comunidad."
+      },
+      "dont": {
+        "title": "No hagas",
+        "item1": "No estires, rotes, deformes ni recolorees el logo de forma arbitraria.",
+        "item2": "No pongas la marca sobre fondos de bajo contraste o visualmente ruidosos.",
+        "item3": "No uses la marca Petdex para sugerir aprobación oficial de productos no relacionados."
+      }
+    },
+    "system": {
+      "eyebrow": "Sistema de diseño",
+      "title": "Colores y tipografía",
+      "body": "Petdex usa superficies frías de app, acentos púrpura-azules y la familia Geist para sentirse como una herramienta útil con un poco de energía de criatura.",
+      "colors": {
+        "brand": "Marca",
+        "brandDeep": "Marca profunda",
+        "brandLight": "Marca clara",
+        "bgApp": "Fondo de app",
+        "brandTint": "Tinte de marca",
+        "ink": "Tinta"
+      },
+      "type": {
+        "title": "Tipografía"
+      }
     }
   },
   "about": {
