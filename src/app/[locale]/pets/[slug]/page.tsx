@@ -22,7 +22,10 @@ import { JsonLd } from "@/components/json-ld";
 import { LikeButton } from "@/components/like-button";
 import { OpenInPetdexButton } from "@/components/open-in-petdex-button";
 import { OwnerPetControls } from "@/components/owner-pet-controls";
-import { PetActionMenu } from "@/components/pet-action-menu";
+import {
+  PetActionMenu,
+  PetTakedownReportButton,
+} from "@/components/pet-action-menu";
 import { PetFloater } from "@/components/pet-floater";
 import { PetKeyboardNav } from "@/components/pet-keyboard-nav";
 import { PetRadar } from "@/components/pet-radar";
@@ -422,6 +425,9 @@ export default async function PetPage({ params }: PageProps) {
                     description: pet.description,
                   }}
                   variant="detail"
+                />
+                <PetTakedownReportButton
+                  pet={{ slug: pet.slug, displayName: pet.displayName }}
                 />
                 <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
                   {metrics.installCount} installs · {metrics.zipDownloadCount}{" "}

@@ -1302,6 +1302,23 @@
   "petActions": {
     "moreActions": "Más acciones para {name}",
     "share": "Compartir",
+    "reportTakedown": "Reportar",
+    "reportTakedownAria": "Reportar {name} para retirada",
+    "takedownDialog": {
+      "eyebrow": "Legal · Retirada",
+      "title": "Reportar una mascota",
+      "body": "Petdex aloja mascotas pixel art de fan art enviadas por usuarios. No reclamamos derechos sobre la IP subyacente de ningún personaje que un miembro de la comunidad haya elegido interpretar. Si eres titular de derechos o representante autorizado y quieres retirar una mascota, la vía más rápida es un issue de GitHub.",
+      "howItWorks": "Cómo funciona",
+      "step1": "Abre una solicitud de retirada con el botón de abajo.",
+      "step2": "Indica qué mascota es y cuál es tu relación con la IP.",
+      "step3": "Revisamos manualmente. La respuesta típica llega en menos de 48 horas. Las solicitudes quedan públicas en GitHub por transparencia.",
+      "step4": "Las retiradas aprobadas eliminan la mascota de la galería y de los endpoints de instalación.",
+      "nonIp": "Para problemas que no sean de IP, como sprites rotos o descripciones incorrectas, abre un issue normal.",
+      "prefillLabel": "Esta solicitud incluirá:",
+      "confirmation": "Al enviar contenido a Petdex confirmas que tienes derechos sobre la obra o que estás creando contenido de fan art. Petdex actúa ante solicitudes de retirada hechas de buena fe.",
+      "cancel": "Cancelar",
+      "openRequest": "Abrir solicitud de retirada"
+    },
     "closeMenu": "Cerrar menú",
     "openInCodex": "Abrir en Codex",
     "openInCodexHint": "Codex Desktop ejecuta el install",
