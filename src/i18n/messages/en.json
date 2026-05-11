@@ -1305,6 +1305,8 @@
     "closeMenu": "Close menu",
     "openInCodex": "Open in Codex",
     "openInCodexHint": "Codex Desktop runs the install",
+    "themeMyCodex": "Theme my Codex",
+    "themeMyCodexHint": "Repaint Codex Desktop with this pet's palette",
     "copiedInstall": "Copied install",
     "copyInstall": "Copy install",
     "copiedLink": "Copied link",

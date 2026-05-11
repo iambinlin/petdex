@@ -1512,6 +1512,8 @@
     "closeMenu": "关闭菜单",
     "openInCodex": "在 Codex 中打开",
     "openInCodexHint": "由 Codex Desktop 执行安装",
+    "themeMyCodex": "用此宠物配色 Codex",
+    "themeMyCodexHint": "用这只宠物的色彩重绘 Codex Desktop",
     "copiedInstall": "已复制安装命令",
     "copiedInstall__fixme": true,
     "copyInstall": "复制安装命令",
