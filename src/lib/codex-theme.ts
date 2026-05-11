@@ -143,15 +143,23 @@ function makeBlock(accent: string, mode: "light" | "dark"): CodexThemeBlock {
   };
 }
 
+// HOTFIX: Codex Settings keeps the "Create theme" button disabled when
+// codeThemeId is light-plus / dark-plus / most of the other names that
+// look like the registry. Empirically only "one" lets the button enable.
+// Hardcoding both variants to "one" until we map which ids actually
+// pass the live validator versus the stale set we extracted from the
+// asar.
+const CODEX_THEME_ID = "one";
+
 export function buildCodexTheme(dominantColor: string): CodexTheme {
   return {
     light: {
-      codeThemeId: "light-plus",
+      codeThemeId: CODEX_THEME_ID,
       theme: makeBlock(dominantColor, "light"),
       variant: "light",
     },
     dark: {
-      codeThemeId: "dark-plus",
+      codeThemeId: CODEX_THEME_ID,
       theme: makeBlock(dominantColor, "dark"),
       variant: "dark",
     },

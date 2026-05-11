@@ -35,7 +35,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
-const REPO_ROOT = path.resolve(import.meta.dir, "..");
+const REPO_ROOT = path.resolve(
+  path.dirname(new URL(import.meta.url).pathname),
+  "..",
+);
 const DESKTOP_DIR = path.join(REPO_ROOT, "packages", "petdex-desktop");
 const SIDECAR_DIR = path.join(DESKTOP_DIR, "sidecar");
 
