@@ -213,29 +213,30 @@ export default async function Home({
   );
 }
 
-function FeaturedCollections({
+async function FeaturedCollections({
   collections,
 }: {
   collections: PetCollectionWithPets[];
 }) {
   if (collections.length === 0) return null;
+  const t = await getTranslations("home.featuredCollections");
 
   return (
     <section className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-5 pt-12 md:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
-            Featured collections
+            {t("eyebrow")}
           </p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-            Original IP sets worth collecting
+            {t("title")}
           </h2>
         </div>
         <Link
           href="/collections"
           className="inline-flex h-10 items-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
         >
-          View all
+          {t("viewAll")}
         </Link>
       </div>
       <div className="grid auto-rows-fr gap-4 md:grid-cols-3">

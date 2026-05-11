@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { track } from "@vercel/analytics";
+import { useTranslations } from "next-intl";
 import {
   Check,
   CheckCircle2,
@@ -130,6 +131,7 @@ export function PetGallery({
   caughtSlugs,
   ads = [],
 }: PetGalleryProps) {
+  const t = useTranslations("gallery");
   const [query, setQuery] = useState("");
   const trimmedQuery = query.trim();
   const [activeKinds, setActiveKinds] = useState<Set<PetKind>>(new Set());
@@ -309,17 +311,15 @@ export function PetGallery({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-xs tracking-[0.18em] text-brand-light uppercase">
-            Gallery · {totalPets} pets
+            {t("eyebrow", { totalPets })}
           </p>
           <h2 className="mt-1.5 text-3xl font-medium tracking-tight text-black md:text-4xl dark:text-stone-100">
-            Pick a companion
+            {t("title")}
           </h2>
         </div>
         {filtersActive ? (
           <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.18em] text-stone-500 uppercase">
-            <span>
-              {total} match{total === 1 ? "" : "es"}
-            </span>
+            <span>{t("matches", { count: total })}</span>
             <button
               type="button"
               onClick={() => {
@@ -328,7 +328,7 @@ export function PetGallery({
               }}
               className="rounded-full border border-border-base bg-surface px-2.5 py-1 text-muted-2 transition hover:border-border-strong hover:text-black dark:hover:text-stone-100"
             >
-              Clear all
+              {t("clearAll")}
             </button>
           </div>
         ) : null}
@@ -347,8 +347,8 @@ export function PetGallery({
             <InputGroupInput
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Try 'cozy night programmer' or 'fierce dragon'"
-              aria-label="Search pets"
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchAria")}
               className="text-sm placeholder:text-muted-3"
             />
             {query.length > 0 ? (
@@ -356,7 +356,7 @@ export function PetGallery({
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  aria-label="Clear search"
+                  aria-label={t("clearSearchAria")}
                   className="grid size-6 place-items-center rounded-full text-muted-4 transition hover:bg-surface-muted hover:text-foreground"
                 >
                   <X className="size-3.5" />

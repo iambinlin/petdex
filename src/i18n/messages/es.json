@@ -123,7 +123,24 @@
       "spriteAlt": "{name} como mascota sorpresa"
     },
     "jsonLdDescription": "Galería pública de compañeros animados para Codex. Instala uno con un solo comando.",
-    "jsonLdFeaturedPets": "Mascotas destacadas de Codex"
+    "jsonLdFeaturedPets": "Mascotas destacadas de Codex",
+    "featuredCollections": {
+      "eyebrow": "Colecciones destacadas",
+      "title": "Sets de IPs originales para coleccionar",
+      "viewAll": "Ver todas"
+    }
+  },
+  "gallery": {
+    "eyebrow": "Galería · {totalPets} mascotas",
+    "title": "Elige una compañera",
+    "searchPlaceholder": "Prueba 'programador noctámbulo' o 'dragón feroz'",
+    "searchAria": "Buscar mascotas",
+    "clearSearchAria": "Limpiar búsqueda",
+    "clearAll": "Limpiar todo",
+    "matches": "{count, plural, =1 {1 coincidencia} other {# coincidencias}}"
+  },
+  "suggestCollection": {
+    "cta": "Sugerir para una colección"
   },
   "advertise": {
     "metadata": {
@@ -1260,6 +1277,10 @@
       "popularity": "POPULARIDAD",
       "loved": "QUERIDA",
       "freshness": "FRESCURA"
+    },
+    "variants": {
+      "title": "Variantes de este personaje",
+      "description": "Otras mascotas aprobadas con sprites muy parecidos."
     }
   },
   "collectionDetail": {

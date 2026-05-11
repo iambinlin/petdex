@@ -123,7 +123,24 @@
       "spriteAlt": "{name} surprise pet"
     },
     "jsonLdDescription": "Public gallery of animated companions for Codex. Install one with a single command.",
-    "jsonLdFeaturedPets": "Featured Codex pets"
+    "jsonLdFeaturedPets": "Featured Codex pets",
+    "featuredCollections": {
+      "eyebrow": "Featured collections",
+      "title": "Original IP sets worth collecting",
+      "viewAll": "View all"
+    }
+  },
+  "gallery": {
+    "eyebrow": "Gallery · {totalPets} pets",
+    "title": "Pick a companion",
+    "searchPlaceholder": "Try 'cozy night programmer' or 'fierce dragon'",
+    "searchAria": "Search pets",
+    "clearSearchAria": "Clear search",
+    "clearAll": "Clear all",
+    "matches": "{count, plural, =1 {1 match} other {# matches}}"
+  },
+  "suggestCollection": {
+    "cta": "Suggest for a collection"
   },
   "advertise": {
     "metadata": {
@@ -1260,6 +1277,10 @@
       "popularity": "POPULARITY",
       "loved": "LOVED",
       "freshness": "FRESHNESS"
+    },
+    "variants": {
+      "title": "Variants of this character",
+      "description": "Other approved pets with closely matching sprite shapes."
     }
   },
   "collectionDetail": {

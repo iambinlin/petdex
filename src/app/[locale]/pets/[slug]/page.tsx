@@ -553,10 +553,10 @@ export default async function PetPage({ params }: PageProps) {
             <section className="rounded-2xl border border-border-base bg-surface/76 p-5 shadow-sm shadow-blue-950/5 backdrop-blur">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Sparkles className="size-4" />
-                Variants of this character
+                {tPet("variants.title")}
               </div>
               <p className="mt-2 text-sm text-muted-2">
-                Other approved pets with closely matching sprite shapes.
+                {tPet("variants.description")}
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {variants.map((variant) => (

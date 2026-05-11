@@ -8,6 +8,7 @@
 import { useState, useTransition } from "react";
 
 import { Layers, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Collection = { slug: string; title: string };
 
@@ -28,6 +29,7 @@ export function SuggestCollectionButton({
   candidateCollections,
   alreadyRequested,
 }: SuggestCollectionButtonProps) {
+  const t = useTranslations("suggestCollection");
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -74,7 +76,7 @@ export function SuggestCollectionButton({
           className="inline-flex h-9 w-fit items-center gap-1.5 rounded-full border border-border-base bg-surface px-3 text-xs font-medium text-muted-2 transition hover:border-border-strong hover:text-foreground"
         >
           <Layers className="size-3.5" />
-          Suggest for a collection
+          {t("cta")}
         </button>
       ) : (
         <div className="flex flex-col gap-3 rounded-2xl border border-border-base bg-surface/80 p-4">
