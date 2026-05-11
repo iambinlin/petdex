@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { ArrowRight } from "lucide-react";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { getActiveFeedAds } from "@/lib/ads/queries";
 import {
@@ -56,9 +56,14 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
-export default async function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations("home");
-  const locale = await getLocale();
 
   // Hand-pick the 3 collections that show on the landing strip in a
   // specific narrative order: Pokemon (instant recognition) →
