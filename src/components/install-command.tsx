@@ -126,6 +126,7 @@ export function InstallCommand({ slug, displayName }: InstallCommandProps) {
         command={command}
         source={`pet-detail-${slug}-${tab}-${platform}`}
         className="mt-2 w-full"
+        codexPrompt={tab === "cli" ? cliCmd : undefined}
       />
 
       {platform === "macos" ? (

@@ -1491,7 +1491,8 @@
     }
   },
   "commandLine": {
-    "copyAria": "复制命令"
+    "copyAria": "复制命令",
+    "openInCodexAria": "在 Codex 中打开"
   },
   "profileShare": {
     "share": "分享",
@@ -1509,6 +1510,8 @@
     "moreActions__fixme": true,
     "share": "分享",
     "closeMenu": "关闭菜单",
+    "openInCodex": "在 Codex 中打开",
+    "openInCodexHint": "由 Codex Desktop 执行安装",
     "copiedInstall": "已复制安装命令",
     "copiedInstall__fixme": true,
     "copyInstall": "复制安装命令",

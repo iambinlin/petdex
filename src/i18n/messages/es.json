@@ -1285,7 +1285,8 @@
     }
   },
   "commandLine": {
-    "copyAria": "Copiar comando"
+    "copyAria": "Copiar comando",
+    "openInCodexAria": "Abrir en Codex"
   },
   "profileShare": {
     "share": "Compartir",
@@ -1302,6 +1303,8 @@
     "moreActions": "Más acciones para {name}",
     "share": "Compartir",
     "closeMenu": "Cerrar menú",
+    "openInCodex": "Abrir en Codex",
+    "openInCodexHint": "Codex Desktop ejecuta el install",
     "copiedInstall": "Instalación copiada",
     "copyInstall": "Copiar instalación",
     "copiedLink": "Enlace copiado",

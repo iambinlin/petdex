@@ -6,6 +6,8 @@ import { track } from "@vercel/analytics";
 import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { CodexLogo } from "@/components/codex-logo";
+
 type CommandLineProps = {
   command: string;
   /** Lighter prefix prepended without being copied (eg. "$ "). Visual only. */
@@ -13,6 +15,13 @@ type CommandLineProps = {
   /** Tracking event payload key. */
   source?: string;
   className?: string;
+  /**
+   * If provided, render a Codex deep-link button next to the copy
+   * affordance. The seed prompt is wrapped as
+   * `Install this Petdex pet by running: <command>` so Codex Desktop
+   * runs the install without the user needing a terminal.
+   */
+  codexPrompt?: string;
 };
 
 /**
@@ -98,6 +107,7 @@ export function CommandLine({
   prefix = "$ ",
   source,
   className = "",
+  codexPrompt,
 }: CommandLineProps) {
   const t = useTranslations("commandLine");
   const [copied, setCopied] = useState(false);
@@ -119,6 +129,50 @@ export function CommandLine({
     } catch {
       /* ignore */
     }
+  }
+
+  // The whole row is the click target for copy. We split into div + inner
+  // controls only when a Codex link is present so the second action is its
+  // own anchor (button-in-button is invalid HTML and also defeats the copy).
+  if (codexPrompt) {
+    return (
+      <div
+        style={{
+          fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
+        }}
+        className={`group inline-flex items-center gap-2 rounded-xl border border-border-base bg-surface/80 px-3 py-2 text-left text-[12px] text-foreground backdrop-blur transition hover:border-brand-light/40 hover:bg-surface ${className}`}
+      >
+        <button
+          type="button"
+          onClick={() => void handleCopy()}
+          aria-label={t("copyAria")}
+          className="flex flex-1 items-center gap-2 truncate text-left"
+        >
+          <span className="select-none text-brand">{prefix}</span>
+          <span className="flex-1 truncate">{tokenize(command)}</span>
+          <span className="grid size-6 shrink-0 place-items-center rounded-md text-muted-3 transition group-hover:bg-brand-tint group-hover:text-brand-deep">
+            {copied ? (
+              <Check className="size-3.5 text-brand-deep" />
+            ) : (
+              <Copy className="size-3.5" />
+            )}
+          </span>
+        </button>
+        <a
+          href={`codex://new?prompt=${encodeURIComponent(`Install this Petdex pet by running: ${pinToLatest(command)}`)}`}
+          aria-label={t("openInCodexAria")}
+          onClick={() =>
+            track("command_line_codex_clicked", {
+              command: command.slice(0, 80),
+              source: source ?? "unknown",
+            })
+          }
+          className="grid size-6 shrink-0 place-items-center rounded-md text-muted-3 transition hover:bg-brand-tint"
+        >
+          <CodexLogo className="size-3.5" />
+        </a>
+      </div>
+    );
   }
 
   return (

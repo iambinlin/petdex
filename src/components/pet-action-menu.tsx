@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { CodexLogo } from "@/components/codex-logo";
+
 const SITE_URL = "https://petdex.crafter.run";
 
 export type PetActionMenuPet = {
@@ -321,6 +323,21 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
           </div>
 
           <ul className="py-1">
+            <li>
+              <a
+                href={`codex://new?prompt=${encodeURIComponent(`Install this Petdex pet by running: ${installCmd}`)}`}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
+              >
+                <CodexLogo className="size-4" />
+                <span className="flex flex-col">
+                  <span>{t("openInCodex")}</span>
+                  <span className="font-mono text-[10px] tracking-tight text-muted-4">
+                    {t("openInCodexHint")}
+                  </span>
+                </span>
+              </a>
+            </li>
             <MenuItem
               icon={
                 copied === "install" ? (
