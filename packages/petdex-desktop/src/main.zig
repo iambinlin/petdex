@@ -16,6 +16,19 @@ const MENU_H: u32 = 420;
 const MAX_PET_BYTES: usize = 16 * 1024 * 1024;
 const MAX_ACTIVE_BYTES: usize = 4 * 1024;
 
+const AgentAsset = struct {
+    name: []const u8,
+    bytes: []const u8,
+};
+
+const agent_assets = [_]AgentAsset{
+    .{ .name = "claude-code.svg", .bytes = @embedFile("assets/agents/claude-code.svg") },
+    .{ .name = "codex.svg", .bytes = @embedFile("assets/agents/codex.svg") },
+    .{ .name = "gemini.svg", .bytes = @embedFile("assets/agents/gemini.svg") },
+    .{ .name = "opencode.svg", .bytes = @embedFile("assets/agents/opencode.svg") },
+    .{ .name = "fallback.svg", .bytes = @embedFile("assets/agents/fallback.svg") },
+};
+
 const html_head =
     \\<!doctype html>
     \\<html>
@@ -267,6 +280,17 @@ const html_tail =
     \\  // ever) keep the DOM clean.
     \\  let lastBubbleCounter = 0;
     \\  let bubbleEl = null;
+    \\  let bubbleAvatarEl = null;
+    \\  let bubbleTextEl = null;
+    \\  const AGENT_AVATARS = {
+    \\    'claude-code': 'agents/claude-code.svg',
+    \\    'codex': 'agents/codex.svg',
+    \\    'gemini': 'agents/gemini.svg',
+    \\    'opencode': 'agents/opencode.svg',
+    \\  };
+    \\  function agentAvatarSrc(source) {
+    \\    return AGENT_AVATARS[source] || 'agents/fallback.svg';
+    \\  }
     \\  function ensureBubble() {
     \\    if (bubbleEl) return bubbleEl;
     \\    bubbleEl = document.createElement('div');
@@ -294,9 +318,24 @@ const html_tail =
     \\    // an unwrapped text run, which beats max-width. Default
     \\    // (auto width) plus inline-block lets the bubble shrink
     \\    // to short text yet still respect max-width on long ones.
-    \\    bubbleEl.style.cssText = 'position:fixed;padding:4px 9px;border-radius:9px;background:#ffffff;color:#111;font:600 11px system-ui,-apple-system,sans-serif;line-height:1.2;box-shadow:0 2px 6px rgba(0,0,0,0.30);text-align:center;white-space:normal;word-break:break-word;overflow-wrap:anywhere;max-width:170px;display:inline-block;opacity:0;transition:opacity 180ms ease;pointer-events:none;z-index:5;';
+    \\    bubbleEl.style.cssText = 'position:fixed;padding:4px 8px;border-radius:10px;background:#ffffff;color:#111;font:600 11px system-ui,-apple-system,sans-serif;line-height:1.2;box-shadow:0 2px 6px rgba(0,0,0,0.30);text-align:left;white-space:normal;max-width:190px;display:flex;align-items:center;gap:6px;opacity:0;transition:opacity 180ms ease;pointer-events:none;z-index:5;';
+    \\    bubbleAvatarEl = document.createElement('img');
+    \\    bubbleAvatarEl.alt = 'Agent avatar';
+    \\    bubbleAvatarEl.decoding = 'async';
+    \\    bubbleAvatarEl.style.cssText = 'width:20px;height:20px;flex:0 0 auto;object-fit:cover;display:block;';
+    \\    bubbleTextEl = document.createElement('span');
+    \\    bubbleTextEl.style.cssText = 'display:block;min-width:0;word-break:break-word;overflow-wrap:anywhere;';
+    \\    bubbleEl.appendChild(bubbleAvatarEl);
+    \\    bubbleEl.appendChild(bubbleTextEl);
     \\    document.body.appendChild(bubbleEl);
     \\    return bubbleEl;
+    \\  }
+    \\  function setBubbleContent(text, agentSource) {
+    \\    ensureBubble();
+    \\    const source = typeof agentSource === 'string' ? agentSource : '';
+    \\    bubbleAvatarEl.src = agentAvatarSrc(source);
+    \\    bubbleAvatarEl.alt = source ? source + ' avatar' : 'Agent avatar';
+    \\    bubbleTextEl.textContent = text;
     \\  }
     \\  function positionBubbleNearPet(el) {
     \\    // Anchor the bubble ABOVE the pet. The picker menu opens to
@@ -368,7 +407,7 @@ const html_tail =
     \\        // Same bubble — but it may have been hidden while the
     \\        // picker was open. Re-show it now that we're back to
     \\        // the compact single-pet view.
-    \\        if (bubbleEl && bubbleEl.style.opacity === '0' && bubbleEl.textContent) {
+    \\        if (bubbleEl && bubbleEl.style.opacity === '0' && bubbleTextEl && bubbleTextEl.textContent) {
     \\          positionBubbleNearPet(bubbleEl);
     \\          bubbleEl.style.opacity = '1';
     \\        }
@@ -387,7 +426,7 @@ const html_tail =
     \\        if (stageEl && stageEl.style.top !== '34px') {
     \\          stageEl.style.top = '34px';
     \\        }
-    \\        el.textContent = text;
+    \\        setBubbleContent(text, r.agent_source);
     \\        positionBubbleNearPet(el);
     \\        el.style.opacity = '1';
     \\      } else {
@@ -418,7 +457,7 @@ const html_tail =
     \\  let incomingUrlPolling = false;
     \\  function showLocalBubble(text) {
     \\    const el = ensureBubble();
-    \\    el.textContent = text;
+    \\    setBubbleContent(text, null);
     \\    positionBubbleNearPet(el);
     \\    el.style.opacity = '1';
     \\  }
@@ -1895,6 +1934,15 @@ fn prepareAssetRoot(
     try writeFileAll(io, root_dir, sprite_name, sprite_bytes);
     if (!std.mem.eql(u8, sprite_ext, "webp")) {
         try writeFileAll(io, root_dir, "spritesheet.webp", sprite_bytes);
+    }
+
+    const agents_dir_path = try std.fs.path.join(allocator, &.{ root, "agents" });
+    defer allocator.free(agents_dir_path);
+    try ensurePrivateDir(allocator, io, agents_dir_path);
+    var agents_dir = try std.Io.Dir.openDirAbsolute(io, agents_dir_path, .{});
+    defer agents_dir.close(io);
+    for (agent_assets) |asset| {
+        try writeFileAll(io, agents_dir, asset.name, asset.bytes);
     }
 
     return root;
