@@ -399,7 +399,10 @@ export default async function PetPage({ params }: PageProps) {
                   full install guide. The verbose tabs/instructions
                   live under the state viewer so they don't crowd the
                   hero — anyone who needs them is already scrolling. */}
-              <InstallCommandCompact slug={pet.slug} />
+              <InstallCommandCompact
+                slug={pet.slug}
+                displayName={pet.displayName}
+              />
 
               {/* Quick actions row + stats. */}
               <div className="flex flex-wrap items-center gap-3 pt-1">

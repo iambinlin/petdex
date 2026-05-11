@@ -23,7 +23,6 @@ import {
 import { useTranslations } from "next-intl";
 
 import { CodexLogo } from "@/components/codex-logo";
-import { CodexThemeDialog } from "@/components/codex-theme-dialog";
 
 const SITE_URL = "https://petdex.crafter.run";
 
@@ -54,7 +53,6 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
   const t = useTranslations("petActions");
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
   const [copied, setCopied] = useState<"install" | "link" | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -340,26 +338,6 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
                 </span>
               </a>
             </li>
-            <li>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setOpen(false);
-                  setThemeOpen(true);
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
-              >
-                <CodexLogo className="size-4" />
-                <span className="flex flex-col">
-                  <span>{t("themeMyCodex")}</span>
-                  <span className="font-mono text-[10px] tracking-tight text-muted-4">
-                    {t("themeMyCodexHint")}
-                  </span>
-                </span>
-              </button>
-            </li>
             <MenuItem
               icon={
                 copied === "install" ? (
@@ -501,12 +479,6 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
           ) : null}
         </div>
       ) : null}
-      <CodexThemeDialog
-        open={themeOpen}
-        onOpenChange={setThemeOpen}
-        petSlug={pet.slug}
-        petDisplayName={pet.displayName}
-      />
     </div>
   );
 }

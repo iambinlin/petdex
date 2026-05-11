@@ -1305,8 +1305,6 @@
     "closeMenu": "Cerrar menú",
     "openInCodex": "Abrir en Codex",
     "openInCodexHint": "Codex Desktop ejecuta el install",
-    "themeMyCodex": "Tematizar mi Codex",
-    "themeMyCodexHint": "Repinta Codex Desktop con la paleta de esta mascota",
     "copiedInstall": "Instalación copiada",
     "copyInstall": "Copiar instalación",
     "copiedLink": "Enlace copiado",
@@ -1469,7 +1467,9 @@
     "ariaLabel": "Abrir {slug} en Petdex Desktop"
   },
   "installCompact": {
-    "seeGuide": "Ver guia de instalacion completa"
+    "seeGuide": "Ver guia de instalacion completa",
+    "themeCodexLabel": "Tematizar mi Codex",
+    "themeCodexHint": "Repintar Codex Desktop"
   },
   "desktopAnnouncement": {
     "eyebrow": "Nuevo · App de escritorio",
