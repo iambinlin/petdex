@@ -22,8 +22,11 @@ type ThemeResponse = {
     light: { theme: { surface: string; ink: string; accent: string } };
     dark: { theme: { surface: string; ink: string; accent: string } };
   };
-  clipboard: string;
+  clipboardLight: string;
+  clipboardDark: string;
 };
+
+type CopiedTarget = "light" | "dark" | null;
 
 type Props = {
   open: boolean;
@@ -41,7 +44,7 @@ export function CodexThemeDialog({
   const [data, setData] = useState<ThemeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<CopiedTarget>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -78,14 +81,15 @@ export function CodexThemeDialog({
     };
   }, [open, petSlug]);
 
-  async function copyClipboard() {
+  async function copyVariant(target: "light" | "dark") {
     if (!data) return;
+    const value = target === "light" ? data.clipboardLight : data.clipboardDark;
     try {
-      await navigator.clipboard.writeText(data.clipboard);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      await navigator.clipboard.writeText(value);
+      setCopied(target);
+      window.setTimeout(() => setCopied(null), 1800);
     } catch {
-      setError("Clipboard write blocked. Select the text below and copy manually.");
+      setError("Clipboard write blocked. Try again or copy from devtools.");
     }
   }
 
@@ -115,45 +119,31 @@ export function CodexThemeDialog({
         ) : data ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <ThemePreview
+              <ThemeColumn
                 label="Light"
                 surface={data.theme.light.theme.surface}
                 ink={data.theme.light.theme.ink}
                 accent={data.theme.light.theme.accent}
+                copied={copied === "light"}
+                onCopy={() => copyVariant("light")}
               />
-              <ThemePreview
+              <ThemeColumn
                 label="Dark"
                 surface={data.theme.dark.theme.surface}
                 ink={data.theme.dark.theme.ink}
                 accent={data.theme.dark.theme.accent}
+                copied={copied === "dark"}
+                onCopy={() => copyVariant("dark")}
               />
             </div>
 
-            <button
-              type="button"
-              onClick={copyClipboard}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
-            >
-              {copied ? (
-                <>
-                  <Check className="size-4" />
-                  Copied to clipboard
-                </>
-              ) : (
-                <>
-                  <Copy className="size-4" />
-                  Copy theme JSON
-                </>
-              )}
-            </button>
-
             <ol className="list-decimal space-y-1 pl-5 text-xs text-muted-2">
-              <li>Open Codex Desktop.</li>
+              <li>Codex Desktop → Settings → Appearance.</li>
               <li>
-                Settings → Appearance → Custom theme → paste in the Light and
-                Dark fields.
+                Click <span className="font-medium">Import</span> on Light
+                theme, paste, repeat for Dark theme.
               </li>
-              <li>The whole UI repaints from {data.dominantColor}.</li>
+              <li>Both repaint from {data.dominantColor}.</li>
             </ol>
           </div>
         ) : null}
@@ -162,43 +152,66 @@ export function CodexThemeDialog({
   );
 }
 
-function ThemePreview({
+function ThemeColumn({
   label,
   surface,
   ink,
   accent,
+  copied,
+  onCopy,
 }: {
   label: string;
   surface: string;
   ink: string;
   accent: string;
+  copied: boolean;
+  onCopy: () => void;
 }) {
   return (
-    <div
-      className="overflow-hidden rounded-2xl border border-border-base"
-      style={{ background: surface }}
-    >
-      <div className="flex items-center justify-between px-3 pt-3 pb-2">
-        <span
-          className="font-mono text-[10px] tracking-[0.18em] uppercase opacity-70"
-          style={{ color: ink }}
-        >
-          {label}
-        </span>
-        <span
-          aria-hidden
-          className="size-3 rounded-full"
-          style={{ background: accent }}
-        />
+    <div className="flex flex-col gap-2">
+      <div
+        className="overflow-hidden rounded-2xl border border-border-base"
+        style={{ background: surface }}
+      >
+        <div className="flex items-center justify-between px-3 pt-3 pb-2">
+          <span
+            className="font-mono text-[10px] tracking-[0.18em] uppercase opacity-70"
+            style={{ color: ink }}
+          >
+            {label}
+          </span>
+          <span
+            aria-hidden
+            className="size-3 rounded-full"
+            style={{ background: accent }}
+          />
+        </div>
+        <div className="px-3 pb-3">
+          <p className="text-sm font-medium" style={{ color: ink }}>
+            Aa
+          </p>
+          <p className="text-xs opacity-70" style={{ color: ink }}>
+            const x = 1
+          </p>
+        </div>
       </div>
-      <div className="px-3 pb-3">
-        <p className="text-sm font-medium" style={{ color: ink }}>
-          Aa
-        </p>
-        <p className="text-xs opacity-70" style={{ color: ink }}>
-          const x = 1
-        </p>
-      </div>
+      <button
+        type="button"
+        onClick={onCopy}
+        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-inverse px-3 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
+      >
+        {copied ? (
+          <>
+            <Check className="size-3.5" />
+            Copied
+          </>
+        ) : (
+          <>
+            <Copy className="size-3.5" />
+            Copy {label}
+          </>
+        )}
+      </button>
     </div>
   );
 }

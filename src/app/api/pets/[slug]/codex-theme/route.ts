@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 import { db, schema } from "@/lib/db/client";
 
-import { buildCodexTheme, serializeCodexTheme } from "@/lib/codex-theme";
+import { buildCodexTheme, serializeCodexThemeVariant } from "@/lib/codex-theme";
 
 export const runtime = "nodejs";
 
@@ -37,7 +37,6 @@ export async function GET(_req: Request, { params }: Params) {
   }
 
   const theme = buildCodexTheme(pet.dominantColor);
-  const clipboard = serializeCodexTheme(theme);
 
   return NextResponse.json(
     {
@@ -45,7 +44,10 @@ export async function GET(_req: Request, { params }: Params) {
       displayName: pet.displayName,
       dominantColor: pet.dominantColor,
       theme,
-      clipboard,
+      // Codex Settings has two separate Import boxes; each variant goes
+      // in its own paste, so we ship them as standalone strings.
+      clipboardLight: serializeCodexThemeVariant(theme.light),
+      clipboardDark: serializeCodexThemeVariant(theme.dark),
     },
     {
       headers: {

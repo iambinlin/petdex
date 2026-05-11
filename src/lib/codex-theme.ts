@@ -121,17 +121,13 @@ export function buildCodexTheme(dominantColor: string): CodexTheme {
   };
 }
 
-// Codex's Settings paste box accepts a string of the shape
-// `codex-theme-v1:<json>` per variant. For the user's clipboard we
-// expose the full bundle of both variants in the same JSON shape
-// the in-app exporter would emit.
-export function serializeCodexTheme(theme: CodexTheme): string {
-  return JSON.stringify(
-    {
-      light: `codex-theme-v1:${JSON.stringify(theme.light)}`,
-      dark: `codex-theme-v1:${JSON.stringify(theme.dark)}`,
-    },
-    null,
-    2,
-  );
+// Codex Settings has two separate Import boxes (Light theme + Dark
+// theme), each accepting a single `codex-theme-v1:<json>` string. We
+// expose the two variants as standalone strings rather than a combined
+// JSON so each can be copied and pasted directly without the user
+// hand-extracting one half.
+export function serializeCodexThemeVariant(
+  variant: CodexThemeVariant,
+): string {
+  return `codex-theme-v1:${JSON.stringify(variant)}`;
 }
