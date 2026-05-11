@@ -204,6 +204,38 @@ function buildSidecar(): void {
   }
 }
 
+function preflightDetachDmgVolumes(): void {
+  // hdiutil create fails with "Resource busy" when there's already a
+  // /Volumes/Petdex* mount (from a previous build that didn't unmount
+  // cleanly, or the user double-clicking the DMG to test the .app).
+  // Hunter hit this on the v0.1.10 build: leftover "/Volumes/Petdex 1"
+  // and "/Volumes/Petdex 10" from manual DMG opens blocked the new
+  // build. Detach anything matching the Petdex volume pattern before
+  // we touch hdiutil.
+  step("Detach lingering Petdex DMG mounts");
+  const r = spawnSync("mount", [], { encoding: "utf8" });
+  if (r.status !== 0) {
+    console.log("  ! could not list mounts, skipping (mount exit " + r.status + ")");
+    return;
+  }
+  const mountPoints = (r.stdout || "")
+    .split("\n")
+    .map((line) => {
+      // mount output: /dev/diskNsM on /Volumes/Petdex 1 (hfs, ...)
+      const m = line.match(/ on (\/Volumes\/Petdex[^()]*?) \(/);
+      return m ? m[1].trim() : null;
+    })
+    .filter((p): p is string => !!p);
+  if (mountPoints.length === 0) {
+    console.log("  ✓ no lingering Petdex mounts");
+    return;
+  }
+  for (const mp of mountPoints) {
+    console.log(`  • detaching ${mp}`);
+    spawnSync("hdiutil", ["detach", "-quiet", mp], { encoding: "utf8" });
+  }
+}
+
 function buildRelease(env: Record<string, string>): void {
   step("Build, sign, notarize for arm64 + x64 (this takes 5-10 min)");
   run("bash", [path.join("scripts", "build-release.sh")], {
@@ -313,6 +345,7 @@ async function main() {
 
   buildSidecar();
   if (!args.skipBuild) {
+    preflightDetachDmgVolumes();
     buildRelease(env);
   } else {
     console.log("\n--skip-build: skipping zig build + notarize");
