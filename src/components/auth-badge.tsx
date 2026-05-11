@@ -40,6 +40,7 @@ import { hasLocale, type Locale } from "@/i18n/config";
 
 export function AuthBadge({ compact = false }: { compact?: boolean }) {
   const { isLoaded, isSignedIn } = useAuth();
+  const t = useTranslations("header");
 
   return (
     <div className="flex items-center gap-2">
@@ -66,7 +67,7 @@ export function AuthBadge({ compact = false }: { compact?: boolean }) {
               compact ? "h-9 text-xs" : "h-11 text-sm",
             )}
           >
-            Sign in
+            {t("signIn")}
           </Button>
         </SignInButton>
       )}
@@ -141,7 +142,7 @@ function UserDropdown({ compact = false }: { compact?: boolean }) {
         render={
           <button
             type="button"
-            aria-label="Open user menu"
+            aria-label={t("openUserMenu")}
             className={cn(
               "group/avatar relative grid place-items-center overflow-hidden rounded-full ring-1 ring-foreground/10 transition-[width,height] duration-200 hover:ring-foreground/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-popup-open:ring-foreground/30",
               compact ? "size-9" : "size-11",
@@ -188,11 +189,11 @@ function UserDropdown({ compact = false }: { compact?: boolean }) {
         <DropdownMenuGroup>
           <DropdownMenuItem render={<Link href={`/u/${handle}`} />}>
             <IdentificationCardIcon weight="duotone" className="size-4" />
-            My profile
+            {t("myProfile")}
           </DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/my-feedback" />}>
             <ChatCircleDotsIcon weight="duotone" className="size-4" />
-            My feedback
+            {t("myFeedback")}
             {unread > 0 ? (
               <span className="ml-auto rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[9px] font-semibold text-brand dark:bg-brand-tint-dark">
                 {unread > 9 ? "9+" : unread}
@@ -202,7 +203,7 @@ function UserDropdown({ compact = false }: { compact?: boolean }) {
           {showAdmin ? (
             <DropdownMenuItem render={<Link href="/admin" />}>
               <ShieldCheckIcon weight="duotone" className="size-4" />
-              Admin
+              {t("admin")}
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuGroup>
@@ -253,11 +254,11 @@ function UserDropdown({ compact = false }: { compact?: boolean }) {
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => openUserProfile()}>
             <GearSixIcon weight="duotone" className="size-4" />
-            Manage account
+            {t("manageAccount")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => signOut({ redirectUrl: "/" })}>
             <SignOutIcon weight="duotone" className="size-4" />
-            Sign out
+            {t("signOut")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

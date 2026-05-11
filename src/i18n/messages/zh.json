@@ -93,7 +93,14 @@
     "promote": "推广",
     "download": "下载",
     "downloadDesc": "macOS 桌面应用 - 让宠物在每个 AI 助手旁边",
-    "downloadDesc__fixme": true
+    "downloadDesc__fixme": true,
+    "signIn": "登录",
+    "openUserMenu": "打开用户菜单",
+    "myProfile": "我的资料",
+    "myFeedback": "我的反馈",
+    "admin": "管理",
+    "manageAccount": "管理账户",
+    "signOut": "退出登录"
   },
   "theme": {
     "toggle": "切换主题",

@@ -73,7 +73,14 @@
     "make": "Crear",
     "promote": "Promover",
     "download": "Descargar",
-    "downloadDesc": "App de escritorio para macOS - tu mascota junto a cada agente"
+    "downloadDesc": "App de escritorio para macOS - tu mascota junto a cada agente",
+    "signIn": "Iniciar sesión",
+    "openUserMenu": "Abrir menú de usuario",
+    "myProfile": "Mi perfil",
+    "myFeedback": "Mi feedback",
+    "admin": "Admin",
+    "manageAccount": "Gestionar cuenta",
+    "signOut": "Cerrar sesión"
   },
   "theme": {
     "toggle": "Cambiar tema",
