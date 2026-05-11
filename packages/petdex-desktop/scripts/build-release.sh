@@ -82,7 +82,15 @@ EOF
   local STAGE=/tmp/petdex-dmg-stage-$label
   rm -rf $STAGE
   mkdir -p $STAGE
-  cp -R "$APP" $STAGE/
+  # ditto, not cp -R. The stapled ticket lives in extended attributes
+  # (com.apple.cs.CodeDirectoryHash and friends) that plain `cp -R`
+  # silently drops. Without ditto the .app inside the DMG arrives
+  # un-stapled and macOS Gatekeeper greets the user with "Petdex is
+  # damaged" the first time they double-click without internet — even
+  # though the same .app on disk validates fine because the stapler
+  # ticket is still present in the source. Hunter hit this on
+  # 2026-05-11 with v0.1.7.
+  ditto "$APP" "$STAGE/$APP"
   ln -s /Applications $STAGE/Applications
   rm -f "$outname"
   hdiutil create -volname "Petdex" -srcfolder $STAGE -ov -format UDZO -fs HFS+ "$outname"

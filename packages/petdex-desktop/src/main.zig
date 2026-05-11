@@ -1030,10 +1030,45 @@ fn spawnSidecar(allocator: std.mem.Allocator, io: std.Io, sidecar_dir: []const u
 }
 
 fn findExecutableOnPath(allocator: std.mem.Allocator, io: std.Io, env_map: *std.process.Environ.Map, name: []const u8) ![]u8 {
-    const path = env_map.get("PATH") orelse return error.NoPath;
-    var iter = std.mem.splitScalar(u8, path, ':');
-    while (iter.next()) |dir| {
-        if (dir.len == 0) continue;
+    // Pass 1: $PATH as inherited from the parent. Works when the binary
+    // is launched from a shell (Ghostty, Terminal). Also works when a
+    // shell login session set launchctl PATH at login (rare on stock
+    // macOS).
+    if (env_map.get("PATH")) |path| {
+        var iter = std.mem.splitScalar(u8, path, ':');
+        while (iter.next()) |dir| {
+            if (dir.len == 0) continue;
+            const candidate = try std.fs.path.join(allocator, &.{ dir, name });
+            var file = std.Io.Dir.openFileAbsolute(io, candidate, .{}) catch {
+                allocator.free(candidate);
+                continue;
+            };
+            file.close(io);
+            return candidate;
+        }
+    }
+
+    // Pass 2: Finder/launchctl launches inherit a minimal PATH
+    // (/usr/bin:/bin:/usr/sbin:/sbin) that almost never includes
+    // homebrew or version managers. Hunter hit this 2026-05-11: the
+    // .app launched from /Applications/ via Finder couldn't find his
+    // nvm-installed node, the sidecar never started, and the WebView
+    // sat there silently with no hooks reaching it. Fall back to the
+    // common install locations explicitly. Order matters: most-likely-
+    // current-default first.
+    const home = env_map.get("HOME") orelse "";
+    var explicit_buf: [16][]const u8 = undefined;
+    var explicit_len: usize = 0;
+    const candidates = [_][]const u8{
+        "/opt/homebrew/bin",   // Apple Silicon homebrew (default since 2020)
+        "/usr/local/bin",      // Intel homebrew, official Node installer
+        "/usr/bin",            // system, unlikely to have node but cheap to check
+    };
+    for (candidates) |dir| {
+        explicit_buf[explicit_len] = dir;
+        explicit_len += 1;
+    }
+    for (explicit_buf[0..explicit_len]) |dir| {
         const candidate = try std.fs.path.join(allocator, &.{ dir, name });
         var file = std.Io.Dir.openFileAbsolute(io, candidate, .{}) catch {
             allocator.free(candidate);
@@ -1042,6 +1077,65 @@ fn findExecutableOnPath(allocator: std.mem.Allocator, io: std.Io, env_map: *std.
         file.close(io);
         return candidate;
     }
+
+    // Pass 3: Node version managers stash node under per-version dirs
+    // that don't sit on PATH unless the user shimmed them. Probe the
+    // popular ones. We can't enumerate nvm versions cheaply from zig
+    // (would need a glob), so we check the "default alias" symlinks
+    // each manager exposes.
+    if (home.len > 0 and std.mem.eql(u8, name, "node")) {
+        const manager_paths = [_][]const u8{
+            ".volta/bin/node",                // volta
+            ".fnm/aliases/default/bin/node",  // fnm with default alias
+            ".asdf/shims/node",               // asdf
+            ".n/bin/node",                    // tj/n
+            ".local/bin/node",                // user-local install
+        };
+        for (manager_paths) |rel| {
+            const candidate = try std.fs.path.join(allocator, &.{ home, rel });
+            var file = std.Io.Dir.openFileAbsolute(io, candidate, .{}) catch {
+                allocator.free(candidate);
+                continue;
+            };
+            file.close(io);
+            return candidate;
+        }
+        // nvm: walk ~/.nvm/versions/node/* and pick the highest one.
+        // Cheaper than parsing the alias file and tolerates a missing
+        // 'default' alias. We pick lexicographically last, which works
+        // for sane v20+ semver dirs (v20.10.0 < v22.14.0).
+        const nvm_root = try std.fs.path.join(allocator, &.{ home, ".nvm", "versions", "node" });
+        defer allocator.free(nvm_root);
+        if (std.Io.Dir.openDirAbsolute(io, nvm_root, .{ .iterate = true })) |dir_h| {
+            var dir_handle = dir_h;
+            defer dir_handle.close(io);
+            var best: ?[]u8 = null;
+            errdefer if (best) |b| allocator.free(b);
+            var it = dir_handle.iterate();
+            while (try it.next(io)) |entry| {
+                if (entry.kind != .directory) continue;
+                if (best) |b| {
+                    if (std.mem.lessThan(u8, b, entry.name)) {
+                        allocator.free(b);
+                        best = try allocator.dupe(u8, entry.name);
+                    }
+                } else {
+                    best = try allocator.dupe(u8, entry.name);
+                }
+            }
+            if (best) |b| {
+                defer allocator.free(b);
+                const candidate = try std.fs.path.join(allocator, &.{ nvm_root, b, "bin", "node" });
+                var file = std.Io.Dir.openFileAbsolute(io, candidate, .{}) catch {
+                    allocator.free(candidate);
+                    return error.ExecutableNotFound;
+                };
+                file.close(io);
+                return candidate;
+            }
+        } else |_| {}
+    }
+
     return error.ExecutableNotFound;
 }
 
