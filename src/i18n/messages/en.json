@@ -73,7 +73,14 @@
     "make": "Make",
     "promote": "Promote",
     "download": "Download",
-    "downloadDesc": "macOS desktop app - your pet beside every agent"
+    "downloadDesc": "macOS desktop app - your pet beside every agent",
+    "signIn": "Sign in",
+    "openUserMenu": "Open user menu",
+    "myProfile": "My profile",
+    "myFeedback": "My feedback",
+    "admin": "Admin",
+    "manageAccount": "Manage account",
+    "signOut": "Sign out"
   },
   "theme": {
     "toggle": "Toggle theme",

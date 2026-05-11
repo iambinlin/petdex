@@ -405,7 +405,7 @@ export const AGENTS: Agent[] = [
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("gemini", "running"),
+                  command: bubbleHookCommand("gemini", "pre", "running"),
                 },
               ],
             },
@@ -415,7 +415,7 @@ export const AGENTS: Agent[] = [
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("gemini", "idle"),
+                  command: bubbleHookCommand("gemini", "post", "idle"),
                 },
               ],
             },
@@ -425,7 +425,7 @@ export const AGENTS: Agent[] = [
               hooks: [
                 {
                   type: "command",
-                  command: curlCommand("gemini", "waving", 1500),
+                  command: bubbleHookCommand("gemini", "stop", "waving", 1500),
                 },
               ],
             },
