@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -8,6 +9,7 @@ import pc from "picocolors";
 
 import { ClerkCliAuth } from "../src/cli-auth/index.js";
 import {
+  desktopBinPath,
   isTrustedAssetUrl,
   runInstallDesktop,
 } from "../src/desktop/install.js";
@@ -105,7 +107,7 @@ async function getAuth(): Promise<ClerkCliAuth> {
   return _auth;
 }
 
-const VERSION = "0.3.6";
+const VERSION = "0.3.9";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -1254,34 +1256,119 @@ function cmdHooksKillswitch(sub: "toggle" | "on" | "off" | "status"): void {
   }
 }
 
-// One-shot first-run setup. Installs hooks across detected agents
-// (which also writes the /petdex slash command file into each agent's
-// commands dir). Does NOT auto-launch the desktop — the user wakes it
-// with /petdex from inside their agent, which is the canonical UX.
+// One-shot first-run setup. The petdex.crafter.run/download landing
+// tells users to drag the DMG into Applications and then run this,
+// so init has to be idempotent across both layouts:
 //
-// Idempotent: re-running refreshes the hook configs and rewrites the
-// slash command files. Safe to invoke any time.
+//   1. .app already installed (DMG path)  → skip install, just wire
+//      hooks + persist the CLI snapshot + auto-start the mascot.
+//   2. Bare binary already installed      → same as above, no install.
+//   3. Nothing installed                  → run runInstallDesktop
+//      (downloads bare binary + sidecar to ~/.petdex/) so init still
+//      works for users who skipped the DMG.
+//
+// Then in all paths: install hooks across detected agents, persist
+// petdex.js snapshot to ~/.petdex/bin/, and start the desktop. Hunter
+// 2026-05-11: previous init only wired hooks, leaving DMG users
+// staring at instructions to "open your agent and run /petdex" with
+// no mascot ever appearing because nobody had launched the desktop.
 async function cmdInit(): Promise<void> {
+  // Detect what's already on disk. desktopBinPath() returns the .app
+  // path when present (any of /Applications/Petdex.app or
+  // ~/Applications/Petdex.app), otherwise the bare ~/.petdex/bin/
+  // path. existsSync on the result tells us if the user has anything
+  // installed at all.
+  const binPath = desktopBinPath();
+  const desktopInstalled = existsSync(binPath);
+
+  if (!desktopInstalled) {
+    console.log(
+      pc.dim(
+        `${pc.yellow("!")} No desktop binary found. Installing the bare binary at ${pc.cyan("~/.petdex/bin/")}...`,
+      ),
+    );
+    console.log(
+      pc.dim(
+        `  (For the proper macOS app icon, download the DMG from ${pc.cyan("https://petdex.crafter.run/download")} instead.)`,
+      ),
+    );
+    console.log("");
+    try {
+      await runInstallDesktop();
+    } catch (err) {
+      console.error(
+        `${pc.red("✗")} Could not install desktop: ${(err as Error).message}`,
+      );
+      console.error(
+        pc.dim(
+          `  You can still proceed by downloading the DMG: ${pc.cyan("https://petdex.crafter.run/download")}`,
+        ),
+      );
+      // Hooks install is still useful even if desktop didn't land,
+      // so we don't bail. The user can drop the .app in later.
+    }
+  } else {
+    const isAppBundle = binPath.includes("/Petdex.app/Contents/MacOS/");
+    console.log(
+      `${pc.green("●")} Desktop already installed at ${pc.cyan(tildeify(binPath))}${isAppBundle ? pc.dim(" (DMG)") : pc.dim(" (bare)")}`,
+    );
+  }
+
   const { installedAgents } = await runHooksInstall();
   if (installedAgents.length > 0) {
     emit("cli_hooks_install_success", {
       cli_version: VERSION,
       agents: installedAgents,
     });
-    // Final hand-off — tell the user how to actually wake the
-    // mascot. We don't spawn the desktop here because that
-    // surprises users who just wanted to wire up hooks (and the
-    // .app may not be installed yet on a fresh machine).
-    console.log("");
-    console.log(
-      `${pc.green("✓")} ${pc.bold("All set.")} Open your agent and run ${pc.cyan("/petdex")} to wake the mascot.`,
-    );
-    console.log(
-      pc.dim(
-        `  Or from a shell: ${pc.cyan("petdex up")} (force-wake) · ${pc.cyan("petdex toggle")} (smart wake/sleep)`,
-      ),
-    );
   }
+
+  // Auto-start the mascot. Skipping this used to leave the user with
+  // a working hook chain but no visible mascot — they'd run /petdex
+  // inside their agent expecting motion, see nothing, and assume
+  // setup failed. Idempotent via desktopStatus check.
+  const status = desktopStatus();
+  if (status.state === "running") {
+    console.log(
+      `${pc.green("●")} Desktop already running (pid ${status.pid})`,
+    );
+  } else {
+    const result = await startDesktop();
+    if (result.ok) {
+      console.log(
+        result.alreadyRunning
+          ? `${pc.dim("•")} Desktop already running (pid ${result.pid})`
+          : `${pc.green("✓")} Desktop started (pid ${result.pid})`,
+      );
+    } else {
+      // Don't fail init — startup failure usually means the user
+      // hasn't opened the .app for the first time yet (macOS Gatekeeper
+      // wants the manual "Open" before subsequent launches go through).
+      console.log(
+        `${pc.yellow("!")} Could not start desktop: ${result.reason}`,
+      );
+      console.log(
+        pc.dim(
+          `  Open ${pc.cyan("/Applications/Petdex.app")} once manually, then re-run ${pc.cyan("petdex up")}.`,
+        ),
+      );
+    }
+  }
+
+  console.log("");
+  console.log(
+    `${pc.green("✓")} ${pc.bold("All set.")} Open your agent and run ${pc.cyan("/petdex")} to wake the mascot.`,
+  );
+  console.log(
+    pc.dim(
+      `  Or from a shell: ${pc.cyan("petdex up")} (force-wake) · ${pc.cyan("petdex toggle")} (smart wake/sleep)`,
+    ),
+  );
+}
+
+function tildeify(p: string): string {
+  const home = process.env.HOME;
+  if (home && p.startsWith(home)) return `~${p.slice(home.length)}`;
+  return p;
 }
 
 // Wake-up: clears the killswitch AND ensures the desktop is running.

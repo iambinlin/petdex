@@ -26,9 +26,12 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 
 import {
+  appBundleRootFor,
   commitDesktopAssets,
+  desktopBinPath,
   fetchLatestRelease,
   stageDesktopAssets,
+  updateAppBundleFromDmg,
 } from "./install.js";
 import {
   desktopStatus,
@@ -178,6 +181,65 @@ export async function runUpdate(args: string[] = []): Promise<void> {
     return;
   }
 
+  // Branch on install layout. If the desktop binary on disk lives
+  // inside a .app bundle (DMG install dragged to /Applications), we
+  // can't rename a single mach-o into Contents/MacOS/ — that would
+  // invalidate the codesign envelope and Gatekeeper would refuse to
+  // launch the next time. Instead, we download the release DMG,
+  // mount it, and ditto the whole .app over the existing one,
+  // preserving signature and stapler ticket. Bare-binary installs
+  // (~/.petdex/bin/) keep using the rename flow because there's no
+  // bundle to coordinate.
+  const binPath = desktopBinPath();
+  const appBundleRoot = appBundleRootFor(binPath);
+
+  const wasRunning = desktopStatus().state === "running";
+
+  if (appBundleRoot) {
+    // App-bundle path. Download + mount + ditto. We stop the desktop
+    // first because writing into a running .app's Contents/ races
+    // with the in-flight executable load on macOS — the new bytes
+    // may or may not be picked up depending on dyld timing.
+    if (wasRunning) {
+      info(
+        silent
+          ? "Stopping running petdex-desktop"
+          : `${pc.dim("•")} Stopping running petdex-desktop`,
+      );
+      await stopDesktop();
+    }
+    const dl = makeSpinner();
+    dl.start(`Downloading ${release.tag_name} DMG`);
+    let result: Awaited<ReturnType<typeof updateAppBundleFromDmg>>;
+    try {
+      result = await updateAppBundleFromDmg(release, appBundleRoot);
+    } catch (err) {
+      dl.stop(silent ? "failed" : pc.red("failed"));
+      throw err;
+    }
+    dl.stop(
+      silent
+        ? `Replaced ${appBundleRoot} (${formatBytes(result.dmgAsset.size)})`
+        : `${pc.green("✓")} Replaced ${pc.bold(appBundleRoot)} (${formatBytes(result.dmgAsset.size)})`,
+    );
+    // Skip the bare-binary phases below; jump straight to the version
+    // file write + restart logic by setting a sentinel staged value.
+    await writeFile(VERSION_FILE, `${release.tag_name}\n`);
+    await runHookRefresh(info, warn, silent);
+    const note = installed
+      ? `${installed}  →  ${release.tag_name}`
+      : release.tag_name;
+    outro(
+      silent
+        ? `${note} (relaunch Petdex from /Applications to use it)`
+        : `${pc.green("✓")} ${note}\n${pc.dim("  Relaunch Petdex from /Applications to use it.")}`,
+    );
+    return;
+  }
+
+  // Bare-binary path: ~/.petdex/bin/petdex-desktop. The original
+  // download-stage-rename flow.
+  //
   // Phase 1: download into .tmp staging files. NOTHING has been
   // renamed into place yet — the running desktop binary on disk is
   // untouched. Safe to bail at any point.
@@ -202,7 +264,6 @@ export async function runUpdate(args: string[] = []): Promise<void> {
   // before stopDesktop() ever ran. Stopping here also bounds the
   // mascot-offline window to (rename + restart), not (download +
   // rename + restart).
-  const wasRunning = desktopStatus().state === "running";
   if (wasRunning) {
     info(
       silent
@@ -292,12 +353,26 @@ export async function runUpdate(args: string[] = []): Promise<void> {
     }
   }
 
-  // Auto-refresh hook configs for every wired agent. The new desktop
-  // binary likely ships changes to the slash command body or hook
-  // templates (matchers, agent_source naming, bubble runner subcommand);
-  // forcing the user to re-run `petdex hooks install` would be silly.
-  // Refresh is non-interactive and idempotent — safe to run on every
-  // update, even on no-op upgrades.
+  await runHookRefresh(info, warn, silent);
+
+  const note = installed
+    ? `${installed}  →  ${release.tag_name}`
+    : release.tag_name;
+  outro(silent ? note : `${pc.green("✓")} ${note}`);
+}
+
+// Auto-refresh hook configs for every wired agent. The new desktop
+// binary likely ships changes to the slash command body or hook
+// templates (matchers, agent_source naming, bubble runner subcommand);
+// forcing the user to re-run `petdex hooks install` would be silly.
+// Refresh is non-interactive and idempotent — safe to run on every
+// update, even on no-op upgrades. Extracted so the app-bundle update
+// path and the bare-binary update path both share it.
+async function runHookRefresh(
+  info: (msg: string) => void,
+  warn: (msg: string) => void,
+  silent: boolean,
+): Promise<void> {
   try {
     const { runRefresh } = await import("../hooks/refresh");
     const result = await runRefresh();
@@ -311,11 +386,6 @@ export async function runUpdate(args: string[] = []): Promise<void> {
   } catch (err) {
     warn(`Hook refresh failed: ${(err as Error).message}`);
   }
-
-  const note = installed
-    ? `${installed}  →  ${release.tag_name}`
-    : release.tag_name;
-  outro(silent ? note : `${pc.green("✓")} ${note}`);
 }
 
 function formatBytes(bytes: number): string {

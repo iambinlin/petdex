@@ -189,6 +189,29 @@ export function findSidecarAsset(release: Release): ReleaseAsset | null {
   return release.assets.find((a) => a.name === SIDECAR_ASSET_NAME) ?? null;
 }
 
+// macOS DMG asset for a given arch. Used by the app-bundle update path
+// when the binary on disk lives inside /Applications/Petdex.app — we
+// can't rename a single mach-o into a signed .app without breaking the
+// signature, so we re-ditto the whole .app from a freshly mounted DMG.
+export function findDmgAsset(
+  release: Release,
+  archLabel: string,
+): ReleaseAsset | null {
+  const wanted = `Petdex-${archLabel}.dmg`;
+  return release.assets.find((a) => a.name === wanted) ?? null;
+}
+
+// Returns the .app bundle root if `binPath` lives inside an .app
+// (.../Petdex.app/Contents/MacOS/petdex-desktop), otherwise null. The
+// CLI uses this to switch between bare-binary update flow and the
+// DMG-aware app-bundle update flow.
+export function appBundleRootFor(binPath: string): string | null {
+  const marker = "/Contents/MacOS/";
+  const idx = binPath.indexOf(marker);
+  if (idx === -1) return null;
+  return binPath.slice(0, idx);
+}
+
 export type StagedFile = { tmpPath: string; destPath: string };
 
 /**
@@ -404,6 +427,132 @@ export async function downloadDesktopAssets(release: Release): Promise<{
   const result = await stageDesktopAssets(release);
   await commitDesktopAssets(result);
   return { binAsset: result.binAsset, sidecarAsset: result.sidecarAsset };
+}
+
+export type AppBundleUpdateResult = {
+  appBundleRoot: string;
+  dmgAsset: ReleaseAsset;
+};
+
+/**
+ * Replace a /Applications/Petdex.app (or ~/Applications/...) install
+ * by downloading the release DMG, mounting it, and dittoing the .app
+ * over the existing one. Preserves Apple's stapler ticket and the
+ * codesign envelope (cp -R or rename would break the signature).
+ *
+ * Idempotent: rerunning over an up-to-date install does the same
+ * download/mount/copy and leaves identical bytes on disk.
+ *
+ * Caller responsibility: stop the running desktop process BEFORE
+ * calling this. macOS lets you write over a running .app's Contents/
+ * but the running process keeps using the old in-memory copy until
+ * it restarts, and the swap can race the in-flight execution if the
+ * binary is mid-load. update.ts handles that orchestration.
+ */
+export async function updateAppBundleFromDmg(
+  release: Release,
+  appBundleRoot: string,
+): Promise<AppBundleUpdateResult> {
+  const target = detectTarget();
+  const dmgAsset = findDmgAsset(release, target.archLabel);
+  if (!dmgAsset) {
+    throw new Error(
+      `No DMG asset (Petdex-${target.archLabel}.dmg) in ${release.tag_name}. App-bundle update requires a DMG; falling back is not safe.`,
+    );
+  }
+
+  // Stage the DMG in /tmp so a half-finished download doesn't clobber
+  // the user's downloads folder. Random suffix avoids races between
+  // concurrent updates (unlikely but cheap).
+  const { join } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const dmgPath = join(
+    tmpdir(),
+    `petdex-${randomBytes(8).toString("hex")}-${dmgAsset.name}`,
+  );
+
+  const downloaded = await stageDownload(dmgAsset.browser_download_url, dmgPath);
+  // stageDownload returns { tmpPath, destPath } where destPath is what
+  // we passed in. We want the actual file we just wrote — that's the
+  // .tmp suffixed one. Rename to drop the suffix so hdiutil sees a
+  // clean .dmg path (cosmetic but helpful in logs).
+  const { rename: renameFile } = await import("node:fs/promises");
+  await renameFile(downloaded.tmpPath, dmgPath);
+
+  const { spawnSync } = await import("node:child_process");
+  // Mount nobrowse so Finder doesn't pop a window while we work.
+  // -quiet keeps stdout clean for the caller's spinner.
+  const mount = spawnSync("hdiutil", ["attach", "-nobrowse", "-quiet", dmgPath], {
+    encoding: "utf8",
+  });
+  if (mount.status !== 0) {
+    throw new Error(
+      `hdiutil attach failed (exit ${mount.status}): ${mount.stderr || mount.stdout || "no output"}`,
+    );
+  }
+  // hdiutil prints the mount point on stdout; parse it out so we
+  // unmount the right volume even if the user has multiple Petdex
+  // DMGs mounted (e.g. testing scenarios).
+  const mountPoint = parseHdiutilMount(mount.stdout) ?? "/Volumes/Petdex";
+
+  try {
+    const sourceApp = `${mountPoint}/Petdex.app`;
+    const { existsSync: exists } = await import("node:fs");
+    if (!exists(sourceApp)) {
+      throw new Error(
+        `mounted DMG at ${mountPoint} does not contain Petdex.app — is the release shape unchanged?`,
+      );
+    }
+    // ditto preserves xattrs (the stapler ticket) AND replaces the
+    // destination atomically as far as the user is concerned. We
+    // don't rm -rf first because ditto handles overwrites correctly,
+    // and rm-then-ditto would leave a window where the .app is
+    // missing — Spotlight, the Dock, and Launch Services all freak
+    // out if Petdex.app vanishes mid-update.
+    const ditto = spawnSync("ditto", [sourceApp, appBundleRoot], {
+      encoding: "utf8",
+    });
+    if (ditto.status !== 0) {
+      throw new Error(
+        `ditto failed (exit ${ditto.status}): ${ditto.stderr || ditto.stdout || "no output"}`,
+      );
+    }
+    // Strip quarantine on the freshly-written .app. macOS adds it to
+    // anything dittoed from a mounted DMG even though the source had
+    // no quarantine xattr; without this the user gets the "Petdex is
+    // damaged" Gatekeeper dialog the next time they double-click.
+    spawnSync("xattr", ["-dr", "com.apple.quarantine", appBundleRoot], {
+      encoding: "utf8",
+    });
+  } finally {
+    // Always unmount, even on ditto failure — leaving phantom volumes
+    // around is the kind of thing that bites you 6 weeks later.
+    spawnSync("hdiutil", ["detach", "-quiet", mountPoint], { encoding: "utf8" });
+    // Remove the staged DMG. Best-effort: a leaked /tmp file isn't a
+    // crisis but there's no reason to litter.
+    try {
+      await rm(dmgPath, { force: true });
+    } catch {
+      // ignore
+    }
+  }
+
+  return { appBundleRoot, dmgAsset };
+}
+
+function parseHdiutilMount(stdout: string): string | null {
+  // hdiutil attach's plain output is column-aligned with the mount
+  // point in the last column. We grep for /Volumes/ and take the
+  // longest match to be safe against weird volume names with spaces.
+  const lines = stdout.split("\n");
+  let best: string | null = null;
+  for (const line of lines) {
+    const idx = line.indexOf("/Volumes/");
+    if (idx === -1) continue;
+    const candidate = line.slice(idx).trim();
+    if (!best || candidate.length > best.length) best = candidate;
+  }
+  return best;
 }
 
 export type RunInstallDesktopResult = {
