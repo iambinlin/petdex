@@ -2,11 +2,17 @@
 
 import { ArrowRight, Clock } from "lucide-react";
 
-import { type Platform, usePlatform } from "@/lib/use-platform";
+import {
+  type MacArch,
+  type Platform,
+  useMacArch,
+  usePlatform,
+} from "@/lib/use-platform";
 
 import { CommandLine } from "@/components/command-line";
 
-const MACOS_DOWNLOAD_URL = "/api/desktop/latest-release?asset=darwin-arm64";
+const MACOS_ARM64_URL = "/api/desktop/latest-release?asset=darwin-arm64";
+const MACOS_X64_URL = "/api/desktop/latest-release?asset=darwin-x64";
 
 /**
  * The hero-row "Download for macOS" + CLI install CTA, rendered
@@ -42,12 +48,14 @@ export function DownloadCTA({
   desktopOnlyLabel: string;
 }) {
   const platform = usePlatform();
+  const arch = useMacArch();
 
   return (
     <div className="mt-10 flex w-full flex-col items-center gap-3">
       <div className="flex w-full flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
         <PrimaryButton
           platform={platform}
+          arch={arch}
           primaryLabel={primaryLabel}
           comingSoonLabel={comingSoonLabel}
           desktopOnlyLabel={desktopOnlyLabel}
@@ -65,11 +73,13 @@ export function DownloadCTA({
 
 function PrimaryButton({
   platform,
+  arch,
   primaryLabel,
   comingSoonLabel,
   desktopOnlyLabel,
 }: {
   platform: Platform;
+  arch: MacArch;
   primaryLabel: string;
   comingSoonLabel: string;
   desktopOnlyLabel: string;
@@ -87,13 +97,24 @@ function PrimaryButton({
   }
 
   if (platform === "macos") {
+    // Apple Silicon (arm64) gets the M-series DMG. Intel users get
+    // the x86_64 DMG. If we couldn't detect arch (Safari without
+    // WebGL hints) we fall back to arm64 — most macOS users are on
+    // Apple Silicon as of 2026, and Rosetta lets the arm64 binary
+    // run on Intel anyway (slower, but it launches).
+    const href = arch === "intel" ? MACOS_X64_URL : MACOS_ARM64_URL;
+    const labelSuffix =
+      arch === "intel" ? " (Intel)" : arch === "arm64" ? " (Apple Silicon)" : "";
     return (
       <a
-        href={MACOS_DOWNLOAD_URL}
+        href={href}
         rel="noreferrer"
         className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
       >
         {primaryLabel}
+        {labelSuffix ? (
+          <span className="ml-1 text-xs opacity-75">{labelSuffix}</span>
+        ) : null}
         <ArrowRight className="size-4" />
       </a>
     );

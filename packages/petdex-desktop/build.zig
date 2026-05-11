@@ -144,8 +144,39 @@ fn externalModule(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std
     });
 }
 
+// Detect the active macOS SDK path so cross-target builds
+// (-Dtarget=x86_64-macos when the host is arm64-macos) can still
+// resolve Apple frameworks. Zig only auto-injects the host SDK
+// when target matches host; once a cross-target is set, it goes
+// looking in /usr/local etc and finds nothing. We shell out to
+// xcrun like clang does. Cached at first call.
+var sdk_path_cache: ?[]const u8 = null;
+fn macosSdkPath(b: *std.Build) ?[]const u8 {
+    if (sdk_path_cache) |p| return p;
+    // b.run handles spawning, stdio collection, and trimming. Returns
+    // a slice owned by the build's arena, which outlives this call.
+    const stdout = b.run(&.{ "xcrun", "--sdk", "macosx", "--show-sdk-path" });
+    const trimmed = std.mem.trim(u8, stdout, " \t\r\n");
+    if (trimmed.len == 0) return null;
+    sdk_path_cache = trimmed;
+    return trimmed;
+}
+
 fn linkPlatform(b: *std.Build, app_mod: *std.Build.Module, exe: *std.Build.Step.Compile, platform: PlatformOption, web_engine: WebEngineOption, zero_native_path: []const u8, cef_dir: []const u8, cef_auto_install: bool) void {
     if (platform == .macos) {
+        // Add the macOS SDK framework directories explicitly. This is
+        // a no-op when target == host (Zig already injects them), but
+        // it's the only thing that makes -Dtarget=x86_64-macos work
+        // on an Apple-Silicon host. Same trick works for any other
+        // macOS cross-target combination (intel host → arm64 target).
+        if (macosSdkPath(b)) |sdk| {
+            const fw = b.fmt("{s}/System/Library/Frameworks", .{sdk});
+            const include = b.fmt("{s}/usr/include", .{sdk});
+            const lib_dir = b.fmt("{s}/usr/lib", .{sdk});
+            app_mod.addSystemFrameworkPath(.{ .cwd_relative = fw });
+            app_mod.addSystemIncludePath(.{ .cwd_relative = include });
+            app_mod.addLibraryPath(.{ .cwd_relative = lib_dir });
+        }
         switch (web_engine) {
             .system => {
                 app_mod.addCSourceFile(.{ .file = zeroNativePath(b, zero_native_path, "src/platform/macos/appkit_host.m"), .flags = &.{ "-fobjc-arc", "-ObjC" } });
