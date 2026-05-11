@@ -431,7 +431,7 @@ function NewDot() {
 
 function NavGrid({ items }: { items: NavItem[] }) {
   return (
-    <ul className="grid w-[360px] auto-rows-min gap-1 p-2">
+    <ul className="grid w-[min(400px,calc(100vw-2rem))] auto-rows-min gap-1 p-2">
       {items.map((item) => {
         const Icon = item.icon;
         return (
