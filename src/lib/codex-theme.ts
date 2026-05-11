@@ -6,6 +6,43 @@
 //
 // Schema reverse-engineered from /Applications/Codex.app/Contents/
 // Resources/app.asar (webview/assets/gpu-tearing-debug-settings).
+//
+// codeThemeId notes
+// -----------------
+// Codex resolves codeThemeId via a dynamic import map; only ids that
+// match a chunk in webview/assets/<id>-<hash>.js are accepted. Pass
+// anything else and the Settings 'Create theme' button stays disabled.
+// Below is the full list extracted from the bundle (Codex 1.x). Keep
+// in sync if Codex ships new themes.
+
+export const CODEX_LIGHT_THEME_IDS = [
+  "light-plus",
+  "github-light-default",
+  "catppuccin-latte",
+  "everforest-light",
+  "gruvbox-light-medium",
+  "solarized-light",
+  "one-light",
+  "rose-pine-dawn",
+] as const;
+
+export const CODEX_DARK_THEME_IDS = [
+  "dark-plus",
+  "github-dark-default",
+  "catppuccin-mocha",
+  "everforest-dark",
+  "gruvbox-dark-medium",
+  "solarized-dark",
+  "one-dark-pro",
+  "rose-pine-moon",
+  "ayu-dark",
+  "material-theme-darker",
+  "night-owl",
+  "tokyo-night",
+] as const;
+
+export type CodexLightThemeId = (typeof CODEX_LIGHT_THEME_IDS)[number];
+export type CodexDarkThemeId = (typeof CODEX_DARK_THEME_IDS)[number];
 
 export type CodexThemeBlock = {
   accent: string;
