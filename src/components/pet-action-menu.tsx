@@ -25,6 +25,13 @@ import { useTranslations } from "next-intl";
 
 import { CodexLogo } from "@/components/codex-logo";
 import { GithubIcon } from "@/components/github-icon";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const SITE_URL = "https://petdex.crafter.run";
 const TAKEDOWN_ISSUE_URL =
@@ -72,17 +79,8 @@ export function PetTakedownReportButton({
   const [reportOpen, setReportOpen] = useState(false);
   const href = buildPetTakedownIssueUrl(pet);
 
-  useEffect(() => {
-    if (!reportOpen) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setReportOpen(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [reportOpen]);
-
   return (
-    <>
+    <Dialog open={reportOpen} onOpenChange={setReportOpen}>
       <button
         type="button"
         aria-label={t("reportTakedownAria", { name: pet.displayName })}
@@ -96,94 +94,87 @@ export function PetTakedownReportButton({
         {t("reportTakedown")}
       </button>
 
-      {reportOpen ? (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/35 p-4 backdrop-blur-sm sm:p-6 dark:bg-black/55">
-          <button
-            type="button"
-            aria-label={t("closeMenu")}
-            onClick={() => setReportOpen(false)}
-            className="absolute inset-0 cursor-default"
-            tabIndex={-1}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={t("takedownDialog.title")}
-            className="relative z-10 flex max-h-[min(88dvh,44rem)] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-2xl border border-border-base bg-popover p-4 text-popover-foreground shadow-2xl shadow-blue-950/20 outline-none sm:max-w-xl sm:gap-5 sm:p-5 lg:max-w-2xl"
-          >
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-[min(88dvh,44rem)] flex-col gap-4 overflow-y-auto rounded-2xl border border-border-base bg-popover p-4 text-popover-foreground shadow-2xl shadow-blue-950/20 sm:max-w-xl sm:gap-5 sm:p-5 lg:max-w-2xl"
+      >
+        <DialogClose
+          render={
             <button
               type="button"
               aria-label={t("closeMenu")}
-              onClick={() => setReportOpen(false)}
               className="absolute top-3 right-3 grid size-8 place-items-center rounded-full text-muted-3 transition hover:bg-surface-muted hover:text-foreground"
             >
               <CloseIcon className="size-4" />
             </button>
+          }
+        />
 
-            <header className="flex flex-col gap-3 pr-8">
-              <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
-                {t("takedownDialog.eyebrow")}
-              </p>
-              <h2 className="text-2xl leading-none font-semibold tracking-tight text-foreground sm:text-3xl">
-                {t("takedownDialog.title")}
-              </h2>
-              <p className="text-sm leading-6 text-muted-2">
-                {t("takedownDialog.body")}
-              </p>
-            </header>
+        <header className="flex flex-col gap-3 pr-8">
+          <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
+            {t("takedownDialog.eyebrow")}
+          </p>
+          <DialogTitle className="text-2xl leading-none font-semibold tracking-tight text-foreground sm:text-3xl">
+            {t("takedownDialog.title")}
+          </DialogTitle>
+          <DialogDescription className="text-sm leading-6 text-muted-2">
+            {t("takedownDialog.body")}
+          </DialogDescription>
+        </header>
 
-            <section className="space-y-3 rounded-2xl border border-border-base bg-surface/76 p-4">
-              <h3 className="text-base font-semibold text-foreground">
-                {t("takedownDialog.howItWorks")}
-              </h3>
-              <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-2">
-                <li>{t("takedownDialog.step1")}</li>
-                <li>{t("takedownDialog.step2")}</li>
-                <li>{t("takedownDialog.step3")}</li>
-                <li>{t("takedownDialog.step4")}</li>
-              </ol>
-              <p className="pt-1 text-xs leading-5 text-muted-3">
-                {t("takedownDialog.nonIp")}
-              </p>
-            </section>
+        <section className="space-y-3 rounded-2xl border border-border-base bg-surface/76 p-4">
+          <h3 className="text-base font-semibold text-foreground">
+            {t("takedownDialog.howItWorks")}
+          </h3>
+          <ol className="list-decimal space-y-2 pl-5 text-sm leading-6 text-muted-2">
+            <li>{t("takedownDialog.step1")}</li>
+            <li>{t("takedownDialog.step2")}</li>
+            <li>{t("takedownDialog.step3")}</li>
+            <li>{t("takedownDialog.step4")}</li>
+          </ol>
+          <p className="pt-1 text-xs leading-5 text-muted-3">
+            {t("takedownDialog.nonIp")}
+          </p>
+        </section>
 
-            <div className="rounded-xl bg-surface-muted px-3 py-2 text-xs text-muted-2">
-              <span className="font-medium text-foreground">
-                {t("takedownDialog.prefillLabel")}
-              </span>{" "}
-              <span className="font-mono">{pet.slug}</span>
-            </div>
+        <div className="rounded-xl bg-surface-muted px-3 py-2 text-xs text-muted-2">
+          <span className="font-medium text-foreground">
+            {t("takedownDialog.prefillLabel")}
+          </span>{" "}
+          <span className="font-mono">{pet.slug}</span>
+        </div>
 
-            <p className="border-t border-border-base pt-4 text-xs leading-5 text-muted-3">
-              {t("takedownDialog.confirmation")}
-            </p>
+        <p className="border-t border-border-base pt-4 text-xs leading-5 text-muted-3">
+          {t("takedownDialog.confirmation")}
+        </p>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <DialogClose
+            render={
               <button
                 type="button"
-                onClick={() => setReportOpen(false)}
                 className="inline-flex h-10 w-full items-center justify-center rounded-full px-4 text-sm font-medium text-muted-2 transition hover:bg-surface-muted hover:text-foreground sm:w-auto"
               >
                 {t("takedownDialog.cancel")}
               </button>
-              <a
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => {
-                  track("pet_takedown_report_confirmed", { slug: pet.slug });
-                  setReportOpen(false);
-                }}
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover sm:w-auto"
-              >
-                <GithubIcon className="size-4" />
-                {t("takedownDialog.openRequest")}
-              </a>
-            </div>
-          </div>
+            }
+          />
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => {
+              track("pet_takedown_report_confirmed", { slug: pet.slug });
+              setReportOpen(false);
+            }}
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-inverse px-4 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover sm:w-auto"
+          >
+            <GithubIcon className="size-4" />
+            {t("takedownDialog.openRequest")}
+          </a>
         </div>
-      ) : null}
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
 
