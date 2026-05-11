@@ -1017,11 +1017,13 @@
     "system": {
       "eyebrow": "Sistema de diseño",
       "title": "Colores y tipografía",
-      "body": "Petdex usa superficies cálidas, acentos verdes y la familia Geist para sentirse como una herramienta útil con un poco de energía de criatura.",
+      "body": "Petdex usa superficies frías de app, acentos púrpura-azules y la familia Geist para sentirse como una herramienta útil con un poco de energía de criatura.",
       "colors": {
         "brand": "Marca",
+        "brandDeep": "Marca profunda",
         "brandLight": "Marca clara",
-        "surface": "Superficie",
+        "bgApp": "Fondo de app",
+        "brandTint": "Tinte de marca",
         "ink": "Tinta"
       },
       "type": {

@@ -1017,11 +1017,13 @@
     "system": {
       "eyebrow": "Design system",
       "title": "Colors and type",
-      "body": "Petdex uses warm surfaces, green brand accents, and Geist type to feel like a useful tool with a tiny bit of creature energy.",
+      "body": "Petdex uses cool app surfaces, purple-blue brand accents, and Geist type to feel like a useful tool with a tiny bit of creature energy.",
       "colors": {
         "brand": "Brand",
+        "brandDeep": "Brand deep",
         "brandLight": "Brand light",
-        "surface": "Surface",
+        "bgApp": "App background",
+        "brandTint": "Brand tint",
         "ink": "Ink"
       },
       "type": {

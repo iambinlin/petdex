@@ -12,7 +12,7 @@ import { hasLocale } from "@/i18n/config";
 
 const SITE_URL = "https://petdex.crafter.run";
 const PREVIEW_BACKGROUND = {
-  light: "bg-[#fbf7ef]",
+  light: "bg-[#f7f8ff]",
   dark: "bg-[#12141f]",
 } as const;
 
@@ -53,10 +53,12 @@ const ASSETS = [
 ] as const;
 
 const COLORS = [
-  { key: "brand", value: "#3D7C54", className: "bg-brand" },
-  { key: "brandLight", value: "#7BAE7F", className: "bg-brand-light" },
-  { key: "surface", value: "#FFF7ED", className: "bg-surface" },
-  { key: "ink", value: "#1D1A16", className: "bg-foreground" },
+  { key: "brand", value: "#5266EA", className: "bg-brand" },
+  { key: "brandDeep", value: "#3847F5", className: "bg-brand-deep" },
+  { key: "brandLight", value: "#6478F6", className: "bg-brand-light" },
+  { key: "bgApp", value: "#F7F8FF", className: "bg-[#f7f8ff]" },
+  { key: "brandTint", value: "#EEF1FF", className: "bg-brand-tint" },
+  { key: "ink", value: "#1A1D2E", className: "bg-[#1a1d2e]" },
 ] as const;
 
 export const revalidate = 3600;
