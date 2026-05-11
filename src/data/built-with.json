@@ -1,7 +1,7 @@
 {
   "$schema": "./built-with.schema.json",
   "version": 1,
-  "lastUpdated": "2026-05-10",
+  "lastUpdated": "2026-05-11",
   "categories": {
     "desktop-companion": {
       "label": "Desktop companions",
@@ -262,6 +262,24 @@
         "url": "https://github.com/Zzzslog/Petdex_Zaizai"
       },
       "screenshot": "/built-with/petdex-zaizai.png"
+    },
+    {
+      "slug": "nom",
+      "name": "nom",
+      "tagline": "Shimeji-style desktop pet that eats the AI tokens you burn through Claude Code and Codex CLI. Auto-loads any pet installed via npx petdex install.",
+      "category": "desktop-companion",
+      "repo": "dylan-labs/nom-pet",
+      "homepage": "https://github.com/dylan-labs/nom-pet/releases/latest",
+      "stars": 1,
+      "language": "TypeScript",
+      "platforms": ["macOS", "Windows"],
+      "addedAt": "2026-05-11",
+      "evidence": {
+        "type": "readme",
+        "quote": "Skin support: install any petdex pack with npx petdex install <slug>, then right-click 选择宠物 to switch on the fly.",
+        "url": "https://github.com/dylan-labs/nom-pet#use-a-custom-pet-skin"
+      },
+      "screenshot": "/built-with/nom.png"
     }
   ]
 }
