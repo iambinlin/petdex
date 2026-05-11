@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ArrowRight, Sparkles, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type DesktopAnnouncementModalProps = {
   onClose: () => void;
@@ -13,6 +14,7 @@ type DesktopAnnouncementModalProps = {
 export function DesktopAnnouncementModal({
   onClose,
 }: DesktopAnnouncementModalProps) {
+  const t = useTranslations("desktopAnnouncement");
   const [closing, setClosing] = useState(false);
 
   function close(_reason: "dismiss" | "cta_download" | "cta_docs" = "dismiss") {
@@ -70,19 +72,17 @@ export function DesktopAnnouncementModal({
               <Sparkles className="size-3" />
             </span>
             <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
-              New · Desktop App
+              {t("eyebrow")}
             </p>
           </div>
           <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Petdex now floats beside your coding agent
+            {t("title")}
           </h2>
           <p className="text-sm leading-6 text-muted-2">
-            Drop a pet on your screen that reacts to every Claude, Codex,
-            Gemini, or OpenCode tool call. Frameless, always on top, drags with
-            momentum.
+            {t("description")}
           </p>
           <p className="text-sm leading-6 text-muted-2">
-            macOS today. Linux and Windows soon.
+            {t("platforms")}
           </p>
 
           <div className="flex items-center gap-2 pt-1">
@@ -91,7 +91,7 @@ export function DesktopAnnouncementModal({
               onClick={() => close("cta_download")}
               className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
-              Download
+              {t("downloadCta")}
               <ArrowRight className="size-4" />
             </Link>
             <Link
@@ -99,7 +99,7 @@ export function DesktopAnnouncementModal({
               onClick={() => close("cta_docs")}
               className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
             >
-              See how it works
+              {t("seeHowCta")}
             </Link>
           </div>
         </div>

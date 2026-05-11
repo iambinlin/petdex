@@ -18,6 +18,8 @@ import {
 import { petStates } from "@/lib/pet-states";
 import type { PetWithMetrics } from "@/lib/pets";
 
+import { useTranslations } from "next-intl";
+
 import {
   CollectionEditor,
   type EditableCollection,
@@ -75,6 +77,7 @@ export function MyPetsView({
   collection: EditableCollection;
   profile: ProfileData;
 }) {
+  const t = useTranslations("myPets");
   const [tab, setTab] = useState<Tab>("all");
 
   const counts = useMemo(() => {
@@ -123,10 +126,10 @@ export function MyPetsView({
       ) : null}
       <header>
         <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-          Dashboard
+          {t("eyebrow")}
         </p>
         <h1 className="mt-2 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-          {counts.all === 1 ? "1 submission" : `${counts.all} submissions`}
+          {t("submissionCount", { count: counts.all })}
         </h1>
         <p className="mt-3 max-w-xl text-base leading-7 text-muted-2">
           Approved submissions go live on your{" "}
@@ -152,14 +155,14 @@ export function MyPetsView({
         <TabButton
           active={tab === "all"}
           onClick={() => setTab("all")}
-          label="All"
+          label={t("tabs.all")}
           count={counts.all}
         />
         {counts.pending > 0 ? (
           <TabButton
             active={tab === "pending"}
             onClick={() => setTab("pending")}
-            label="Pending"
+            label={t("tabs.pending")}
             count={counts.pending}
             tone="amber"
           />
@@ -168,7 +171,7 @@ export function MyPetsView({
           <TabButton
             active={tab === "approved"}
             onClick={() => setTab("approved")}
-            label="Approved"
+            label={t("tabs.approved")}
             count={counts.approved}
             tone="emerald"
           />
@@ -177,7 +180,7 @@ export function MyPetsView({
           <TabButton
             active={tab === "rejected"}
             onClick={() => setTab("rejected")}
-            label="Rejected"
+            label={t("tabs.rejected")}
             count={counts.rejected}
             tone="rose"
           />
@@ -187,13 +190,13 @@ export function MyPetsView({
           className="ml-auto inline-flex h-9 items-center gap-2 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
         >
           <Plus className="size-3.5" />
-          Submit another
+          {t("submitAnother")}
         </Link>
       </div>
 
       {filtered.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border-base bg-surface/70 p-10 text-center text-sm text-muted-2">
-          No submissions in this state.
+          {t("emptyState")}
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">

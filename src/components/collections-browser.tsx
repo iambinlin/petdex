@@ -4,6 +4,7 @@ import Link from "next/link";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ExternalLink, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import {
   type CollectionKind,
@@ -61,6 +62,7 @@ export function CollectionsBrowser({
   collections: CollectionItem[];
   credits: Record<string, OwnerCredit>;
 }) {
+  const t = useTranslations("collectionsBrowser");
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<"all" | CollectionKind>("all");
   const [sort, setSort] = useState<SortKey>("size");
@@ -151,13 +153,13 @@ export function CollectionsBrowser({
               value={query}
               onChange={handleQueryChange}
               placeholder="Try 'pokemon' or 'cozy cat' or 'developer'"
-              aria-label="Search collections"
+              aria-label={t("searchAria")}
               className="text-sm placeholder:text-muted-3"
             />
           </InputGroup>
           <Select value={sort} onValueChange={handleSortChange}>
             <SelectTrigger
-              aria-label="Sort collections"
+              aria-label={t("sortAria")}
               className="w-full shrink-0 sm:w-auto sm:min-w-[180px]"
             >
               <span className="text-muted-3">Sort:</span>

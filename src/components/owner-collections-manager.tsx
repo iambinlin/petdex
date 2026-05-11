@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Loader2, Lock, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type ApprovedPet = {
   slug: string;
@@ -37,6 +38,7 @@ export function OwnerCollectionsManager({
   maxCollections,
   publicHandle: _publicHandle,
 }: Props) {
+  const t = useTranslations("ownerCollections");
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -48,10 +50,10 @@ export function OwnerCollectionsManager({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="font-mono text-[11px] tracking-[0.22em] text-brand uppercase">
-            My collections
+            {t("title")}
           </p>
           <p className="mt-1 text-sm text-muted-3">
-            Personal collections are private to your profile.{" "}
+            {t("description")}{" "}
             {personalCount}/{maxCollections} used.
           </p>
         </div>
@@ -121,6 +123,7 @@ function CollectionCard({
   collection: OwnerCollection;
   onEdit: () => void;
 }) {
+  const t = useTranslations("ownerCollections");
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [, startTransition] = useTransition();
@@ -187,7 +190,7 @@ function CollectionCard({
           <button
             type="button"
             onClick={onEdit}
-            aria-label="Edit collection"
+            aria-label={t("editAria")}
             className="inline-flex size-8 items-center justify-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:border-border-strong hover:text-foreground"
           >
             <Pencil className="size-3.5" />
@@ -196,7 +199,7 @@ function CollectionCard({
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            aria-label="Delete collection"
+            aria-label={t("deleteAria")}
             className="inline-flex size-8 items-center justify-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:border-destructive/40 hover:text-destructive disabled:opacity-50"
           >
             {deleting ? (
@@ -224,6 +227,7 @@ function CollectionForm({
   onCancel: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations("ownerCollections");
   const router = useRouter();
   const [title, setTitle] = useState(collection?.title ?? "");
   const [description, setDescription] = useState(collection?.description ?? "");
@@ -298,7 +302,7 @@ function CollectionForm({
           type="button"
           onClick={onCancel}
           className="inline-flex size-7 items-center justify-center rounded-full border border-border-base bg-surface text-muted-2 transition hover:border-border-strong hover:text-foreground"
-          aria-label="Cancel"
+          aria-label={t("cancelAria")}
         >
           <X className="size-3.5" />
         </button>
@@ -315,7 +319,7 @@ function CollectionForm({
           required
           minLength={2}
           maxLength={80}
-          placeholder="South Park crew"
+          placeholder={t("namePlaceholder")}
           className="mt-1 h-10 w-full rounded-full border border-border-base bg-surface px-4 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </label>
@@ -339,7 +343,7 @@ function CollectionForm({
 
       <fieldset>
         <legend className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-          Pets ({selected.size} of {approvedPets.length} selected)
+          {t("petsSelected", { selected: selected.size, total: approvedPets.length })}
         </legend>
         <div className="mt-2 grid max-h-72 grid-cols-2 gap-2 overflow-y-auto rounded-2xl border border-border-base bg-surface p-2 sm:grid-cols-3 md:grid-cols-4">
           {approvedPets.map((pet) => {

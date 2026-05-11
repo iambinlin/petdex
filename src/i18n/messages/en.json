@@ -137,10 +137,16 @@
     "searchAria": "Search pets",
     "clearSearchAria": "Clear search",
     "clearAll": "Clear all",
-    "matches": "{count, plural, =1 {1 match} other {# matches}}"
+    "matches": "{count, plural, =1 {1 match} other {# matches}}",
+    "sortAria": "Sort pets",
+    "filtersTitle": "Filters",
+    "caughtTitle": "Caught",
+    "featuredTitle": "Featured"
   },
   "suggestCollection": {
-    "cta": "Suggest for a collection"
+    "cta": "Suggest for a collection",
+    "closeAria": "Close",
+    "notePlaceholder": "Optional: tell admins why this pet fits the collection"
   },
   "advertise": {
     "metadata": {
@@ -1053,7 +1059,17 @@
         "cancel": "Cancel",
         "submit": "Submit edit for review"
       }
-    }
+    },
+    "eyebrow": "Dashboard",
+    "submissionCount": "{count, plural, =0 {no submissions} =1 {1 submission} other {# submissions}}",
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "submitAnother": "Submit another",
+    "emptyState": "No submissions in this state."
   },
   "myFeedback": {
     "metadata": {
@@ -1364,5 +1380,58 @@
   },
   "installCompact": {
     "seeGuide": "See full install guide"
+  },
+  "desktopAnnouncement": {
+    "eyebrow": "New · Desktop App",
+    "title": "Petdex now floats beside your coding agent",
+    "description": "Drop a pet on your screen that reacts to every Claude, Codex, Gemini, or OpenCode tool call. Frameless, always on top, drags with momentum.",
+    "platforms": "macOS today. Linux and Windows soon.",
+    "downloadCta": "Download",
+    "seeHowCta": "See how it works"
+  },
+  "githubStar": {
+    "eyebrow": "Open source · Petdex",
+    "title": "Help Petdex grow. Star us on GitHub",
+    "description": "Petdex is fully open source. Every star helps more pet creators find the project, and gives us cover to keep shipping freely (sounds, leaderboard, the upcoming web pet studio).",
+    "note": "Takes ten seconds. No account required if you already have GitHub.",
+    "starCta": "Star on GitHub",
+    "laterCta": "Later"
+  },
+  "profileAnnouncement": {
+    "dismissAria": "Dismiss",
+    "closeAria": "Close"
+  },
+  "collectionsBrowser": {
+    "searchAria": "Search collections",
+    "sortAria": "Sort collections"
+  },
+  "galleryReorder": {
+    "dragInstruction": "Drag any pet to reorder. Changes save when you click Done."
+  },
+  "pinnedReorder": {
+    "reorderLabel": "Could not save order",
+    "saveError": "Could not save order: {error}"
+  },
+  "ownerCollections": {
+    "title": "My collections",
+    "description": "Personal collections are private to your profile.",
+    "editAria": "Edit collection",
+    "deleteAria": "Delete collection",
+    "cancelAria": "Cancel",
+    "namePlaceholder": "South Park crew",
+    "petsSelected": "Pets ({selected} of {total} selected)"
+  },
+  "collectionEditor": {
+    "selectPetsFirst": "Select pets first"
+  },
+  "onboarding": {
+    "skip": "Skip tour"
+  },
+  "adminReview": {
+    "namePlaceholder": "Pet display name",
+    "descriptionPlaceholder": "Description",
+    "editAria": "Edit pet",
+    "evidenceAssets": "Assets",
+    "evidencePolicy": "Policy"
   }
 }

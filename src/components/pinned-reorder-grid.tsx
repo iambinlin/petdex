@@ -26,6 +26,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, GripVertical, RefreshCcw } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { PetWithMetrics } from "@/lib/pets";
 import { MAX_PINNED_PETS } from "@/lib/profiles";
@@ -66,6 +67,7 @@ export function PinnedReorderGrid({
   pets,
   petStateCount,
 }: PinnedReorderGridProps) {
+  const t = useTranslations("pinnedReorder");
   const orderRef = useRef<PetWithMetrics[]>(pets);
   const [order, setOrder] = useState<PetWithMetrics[]>(pets);
   const [savedSlugs, setSavedSlugs] = useState<string[]>(
@@ -200,7 +202,7 @@ export function PinnedReorderGrid({
       : saveState === "saved"
         ? "Order updated"
         : saveState === "error"
-          ? "Could not save order"
+          ? t("reorderLabel")
           : null;
 
   return (
@@ -230,7 +232,7 @@ export function PinnedReorderGrid({
 
       {error ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-          <p>Could not save order: {error}</p>
+          <p>{t("saveError", { error })}</p>
           <div className="flex items-center gap-2">
             <button
               type="button"

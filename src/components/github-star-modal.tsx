@@ -3,12 +3,14 @@
 import { useState } from "react";
 
 import { ArrowRight, Star, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type GithubStarModalProps = {
   onClose: () => void;
 };
 
 export function GithubStarModal({ onClose }: GithubStarModalProps) {
+  const t = useTranslations("githubStar");
   const [closing, setClosing] = useState(false);
 
   // Engagement is captured downstream via cta_star clicks; the
@@ -69,22 +71,17 @@ export function GithubStarModal({ onClose }: GithubStarModalProps) {
               <Star className="size-3 fill-current" />
             </span>
             <p className="font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
-              Open source · Petdex
+              {t("eyebrow")}
             </p>
           </div>
           <h2 className="text-xl font-semibold tracking-tight text-foreground">
-            Help Petdex grow. Star us on GitHub
+            {t("title")}
           </h2>
           <p className="text-sm leading-6 text-muted-2">
-            Petdex is fully open source. Every star helps more pet creators find
-            the project, and gives us cover to keep shipping freely (sounds,
-            leaderboard, the upcoming web pet studio…).
+            {t("description")}
           </p>
           <p className="text-sm leading-6 text-muted-2">
-            Takes ten seconds.{" "}
-            <strong className="text-foreground">
-              No account required if you already have GitHub.
-            </strong>
+            {t("note")}
           </p>
 
           <div className="flex items-center gap-2 pt-1">
@@ -96,7 +93,7 @@ export function GithubStarModal({ onClose }: GithubStarModalProps) {
               className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-full bg-inverse px-5 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover"
             >
               <Star className="size-4 fill-current" />
-              Star on GitHub
+              {t("starCta")}
               <ArrowRight className="size-4" />
             </a>
             <button
@@ -104,7 +101,7 @@ export function GithubStarModal({ onClose }: GithubStarModalProps) {
               onClick={() => close("later")}
               className="inline-flex h-10 items-center justify-center rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
             >
-              Later
+              {t("laterCta")}
             </button>
           </div>
         </div>

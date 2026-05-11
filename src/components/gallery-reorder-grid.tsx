@@ -26,6 +26,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, GripVertical, Loader2, Pencil, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { PetWithMetrics } from "@/lib/pets";
 
@@ -51,6 +52,7 @@ function move<T>(items: T[], from: number, to: number): T[] {
 }
 
 export function GalleryReorderGrid({ pets, children }: Props) {
+  const t = useTranslations("galleryReorder");
   const [editing, setEditing] = useState(false);
   const [order, setOrder] = useState<PetWithMetrics[]>(pets);
   const orderRef = useRef<PetWithMetrics[]>(pets);
@@ -158,7 +160,7 @@ export function GalleryReorderGrid({ pets, children }: Props) {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-brand/30 bg-brand-tint/60 px-3 py-2 dark:bg-brand-tint-dark/60">
         <p className="text-xs text-muted-2">
-          Drag any pet to reorder. Changes save when you click <strong>Done</strong>.
+          {t("dragInstruction")}
         </p>
         <div className="flex items-center gap-2">
           {error ? (

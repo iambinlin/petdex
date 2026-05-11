@@ -373,7 +373,7 @@ export function PetGallery({
             }}
           >
             <SelectTrigger
-              aria-label="Sort pets"
+              aria-label={t("sortAria")}
               className="w-full shrink-0 sm:w-auto sm:min-w-[180px]"
             >
               <span className="text-muted-3">Sort:</span>
@@ -403,7 +403,7 @@ export function PetGallery({
                   variant="petdex-pill"
                   className="h-10 flex-1 px-4 text-sm font-medium text-foreground"
                 >
-                  Filters
+                  {t("filtersTitle")}
                   {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
                 </Button>
               }
@@ -413,7 +413,7 @@ export function PetGallery({
               className="max-h-[75dvh] overflow-y-auto"
             >
               <SheetHeader>
-                <SheetTitle>Filters</SheetTitle>
+                <SheetTitle>{t("filtersTitle")}</SheetTitle>
               </SheetHeader>
               <div className="space-y-5 px-4 pb-6">
                 <FilterGroup label="Type">
@@ -820,6 +820,7 @@ function PetCardImpl({
   statusOverlay,
   pinState,
 }: PetCardProps) {
+  const t = useTranslations("gallery");
   const dexLabel =
     dexNumber != null
       ? dexNumber < 1000
@@ -866,7 +867,7 @@ function PetCardImpl({
               No. {dexLabel}
             </span>
             {caught ? (
-              <span title="Caught" className="text-emerald-600">
+              <span title={t("caughtTitle")} className="text-emerald-600">
                 <CheckCircle2 className="size-4 fill-current" />
               </span>
             ) : null}
@@ -894,7 +895,7 @@ function PetCardImpl({
               <span className="truncate">{pet.displayName}</span>
               {pet.featured ? (
                 <span
-                  title="Featured"
+                  title={t("featuredTitle")}
                   className="font-mono text-[10px] text-brand"
                 >
                   ★

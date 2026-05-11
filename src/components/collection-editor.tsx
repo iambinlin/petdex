@@ -10,6 +10,7 @@ import {
   Save,
   Sparkles,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type PetOption = {
   slug: string;
@@ -35,6 +36,7 @@ export function CollectionEditor({
   initial: EditableCollection;
   profileHandle: string;
 }) {
+  const t = useTranslations("collectionEditor");
   const fallbackTitle = `${profileHandle}'s collection`;
   const [title, setTitle] = useState(initial?.title ?? fallbackTitle);
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -205,7 +207,7 @@ export function CollectionEditor({
             className="mt-1 h-10 w-full rounded-xl border border-border-base bg-surface px-2 text-xs text-foreground outline-none disabled:opacity-50"
           >
             {selectedPets.length === 0 ? (
-              <option value="">Select pets first</option>
+              <option value="">{t("selectPetsFirst")}</option>
             ) : null}
             {selectedPets.map((pet) => (
               <option key={pet.slug} value={pet.slug}>

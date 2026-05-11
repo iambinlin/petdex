@@ -91,7 +91,7 @@ export function SuggestCollectionButton({
                 setTarget(null);
                 setError(null);
               }}
-              aria-label="Close"
+              aria-label={t("closeAria")}
               className="grid size-7 place-items-center rounded-full text-muted-3 transition hover:bg-surface hover:text-foreground"
             >
               <X className="size-3.5" />
@@ -127,7 +127,7 @@ export function SuggestCollectionButton({
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value.slice(0, 500))}
-              placeholder="Optional: tell admins why this pet fits the collection"
+              placeholder={t("notePlaceholder")}
               rows={2}
               className="w-full rounded-2xl border border-border-base bg-surface p-3 text-sm text-foreground placeholder:text-muted-3 focus:border-border-strong focus:outline-none"
             />

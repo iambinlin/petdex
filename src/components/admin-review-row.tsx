@@ -16,6 +16,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { SubmissionReview, SubmittedPet } from "@/lib/db/schema";
 import { petStates } from "@/lib/pet-states";
@@ -86,6 +87,7 @@ export function AdminReviewRow({
   stateCount,
   ownerHandle,
 }: AdminReviewRowProps) {
+  const t = useTranslations("adminReview");
   const [status, setStatus] = useState(pet.status);
   const [displayName, setDisplayName] = useState(pet.displayName);
   const [description, setDescription] = useState(pet.description);
@@ -276,7 +278,7 @@ export function AdminReviewRow({
             <input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Pet display name"
+              placeholder={t("namePlaceholder")}
               maxLength={60}
               className="w-full rounded-lg border border-border-base bg-surface px-3 py-1.5 text-base font-semibold text-foreground outline-none focus:border-border-strong"
             />
@@ -290,7 +292,7 @@ export function AdminReviewRow({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description"
+              placeholder={t("descriptionPlaceholder")}
               rows={2}
               maxLength={280}
               className="w-full rounded-lg border border-border-base bg-surface px-3 py-1.5 text-sm text-muted-2 outline-none focus:border-border-strong"
@@ -315,7 +317,7 @@ export function AdminReviewRow({
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                aria-label="Edit pet"
+                aria-label={t("editAria")}
                 className="inline-flex items-center gap-1 rounded-full border border-border-base bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-muted-2 uppercase transition hover:border-border-strong hover:text-foreground"
               >
                 <Pencil className="size-3" />
@@ -565,6 +567,7 @@ function AutomationBadge({ review }: { review: SubmissionReview | null }) {
 }
 
 function AutomationEvidence({ review }: { review: SubmissionReview | null }) {
+  const t = useTranslations("adminReview");
   if (!review) return null;
 
   const checks = review.checks as ReviewChecks;
@@ -591,18 +594,18 @@ function AutomationEvidence({ review }: { review: SubmissionReview | null }) {
           </p>
         ) : null}
         {checks.assets?.reasons?.length ? (
-          <EvidenceGroup title="Assets" items={checks.assets.reasons} />
+          <EvidenceGroup title={t("evidenceAssets")} items={checks.assets.reasons} />
         ) : null}
         {checks.policy?.flags?.length ? (
           <EvidenceGroup
-            title="Policy"
+            title={t("evidencePolicy")}
             items={checks.policy.flags.map(
               (flag) =>
                 `${flag.category} (${Math.round(flag.confidence * 100)}%): ${flag.evidence}`,
             )}
           />
         ) : checks.policy?.reasons?.length ? (
-          <EvidenceGroup title="Policy" items={checks.policy.reasons} />
+          <EvidenceGroup title={t("evidencePolicy")} items={checks.policy.reasons} />
         ) : null}
         {duplicateMatches.length > 0 ? (
           <DuplicateEvidenceGroup matches={duplicateMatches} />

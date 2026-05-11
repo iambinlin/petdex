@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Sparkles, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Step = {
   /** CSS selector pointing at the element to highlight. The first match wins. */
@@ -55,6 +56,7 @@ type OnboardingTourProps = {
 };
 
 export function OnboardingTour({ onClose }: OnboardingTourProps) {
+  const t = useTranslations("onboarding");
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
   const [steps, setSteps] = useState<Step[]>(ALL_STEPS);
@@ -235,7 +237,7 @@ export function OnboardingTour({ onClose }: OnboardingTourProps) {
           </div>
           <button
             type="button"
-            aria-label="Skip tour"
+            aria-label={t("skip")}
             onClick={close}
             className="grid size-7 place-items-center rounded-full text-muted-4 transition hover:bg-surface-muted hover:text-foreground"
           >
@@ -256,7 +258,7 @@ export function OnboardingTour({ onClose }: OnboardingTourProps) {
             onClick={close}
             className="text-xs font-medium text-muted-3 transition hover:text-stone-800 dark:hover:text-stone-200"
           >
-            Skip
+            {t("skip")}
           </button>
           <div className="flex items-center gap-2">
             {step > 0 ? (

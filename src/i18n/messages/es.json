@@ -137,10 +137,16 @@
     "searchAria": "Buscar mascotas",
     "clearSearchAria": "Limpiar búsqueda",
     "clearAll": "Limpiar todo",
-    "matches": "{count, plural, =1 {1 coincidencia} other {# coincidencias}}"
+    "matches": "{count, plural, =1 {1 coincidencia} other {# coincidencias}}",
+    "sortAria": "Ordenar mascotas",
+    "filtersTitle": "Filtros",
+    "caughtTitle": "Capturada",
+    "featuredTitle": "Destacada"
   },
   "suggestCollection": {
-    "cta": "Sugerir para una colección"
+    "cta": "Sugerir para una colección",
+    "closeAria": "Cerrar",
+    "notePlaceholder": "Opcional: indica a los admins por qué esta mascota encaja en la colección"
   },
   "advertise": {
     "metadata": {
@@ -1053,7 +1059,17 @@
         "cancel": "Cancelar",
         "submit": "Enviar edición para revisión"
       }
-    }
+    },
+    "eyebrow": "Dashboard",
+    "submissionCount": "{count, plural, =0 {sin envíos} =1 {1 envío} other {# envíos}}",
+    "tabs": {
+      "all": "Todas",
+      "pending": "Pendientes",
+      "approved": "Aprobadas",
+      "rejected": "Rechazadas"
+    },
+    "submitAnother": "Enviar otra",
+    "emptyState": "Sin envíos en este estado."
   },
   "myFeedback": {
     "metadata": {
@@ -1364,5 +1380,58 @@
   },
   "installCompact": {
     "seeGuide": "Ver guia de instalacion completa"
+  },
+  "desktopAnnouncement": {
+    "eyebrow": "Nuevo · App de escritorio",
+    "title": "Petdex ahora flota junto a tu agente de código",
+    "description": "Pon una mascota en tu pantalla que reacciona a cada tool call de Claude, Codex, Gemini u OpenCode. Sin marco, siempre encima, arrastra con momentum.",
+    "platforms": "macOS hoy. Linux y Windows pronto.",
+    "downloadCta": "Descargar",
+    "seeHowCta": "Ver cómo funciona"
+  },
+  "githubStar": {
+    "eyebrow": "Open source · Petdex",
+    "title": "Ayuda a Petdex a crecer. Dale una estrella en GitHub",
+    "description": "Petdex es completamente open source. Cada estrella ayuda a más creadores a encontrar el proyecto y nos da impulso para seguir publicando libremente (sonidos, leaderboard, el futuro web pet studio).",
+    "note": "Toma diez segundos. No necesitas cuenta si ya tienes GitHub.",
+    "starCta": "Dar estrella en GitHub",
+    "laterCta": "Después"
+  },
+  "profileAnnouncement": {
+    "dismissAria": "Descartar",
+    "closeAria": "Cerrar"
+  },
+  "collectionsBrowser": {
+    "searchAria": "Buscar colecciones",
+    "sortAria": "Ordenar colecciones"
+  },
+  "galleryReorder": {
+    "dragInstruction": "Arrastra cualquier mascota para reordenar. Los cambios se guardan al hacer clic en Listo."
+  },
+  "pinnedReorder": {
+    "reorderLabel": "No se pudo guardar el orden",
+    "saveError": "No se pudo guardar el orden: {error}"
+  },
+  "ownerCollections": {
+    "title": "Mis colecciones",
+    "description": "Las colecciones personales son privadas en tu perfil.",
+    "editAria": "Editar colección",
+    "deleteAria": "Eliminar colección",
+    "cancelAria": "Cancelar",
+    "namePlaceholder": "Pandilla de South Park",
+    "petsSelected": "Mascotas ({selected} de {total} seleccionadas)"
+  },
+  "collectionEditor": {
+    "selectPetsFirst": "Selecciona mascotas primero"
+  },
+  "onboarding": {
+    "skip": "Saltar tour"
+  },
+  "adminReview": {
+    "namePlaceholder": "Nombre de la mascota",
+    "descriptionPlaceholder": "Descripción",
+    "editAria": "Editar mascota",
+    "evidenceAssets": "Archivos",
+    "evidencePolicy": "Política"
   }
 }

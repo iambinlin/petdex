@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { useUser } from "@clerk/nextjs";
 import { ArrowRight, Sparkles, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { safeGetItem, safeSetItem } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const STORAGE_KEY = "petdex_announce_profile_v1";
 // search announcement: we wait until both prior modals have been
 // dismissed so first-time visitors see them in order.
 export function ProfileAnnouncementModal() {
+  const t = useTranslations("profileAnnouncement");
   const { user, isLoaded, isSignedIn } = useUser();
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -66,7 +68,7 @@ export function ProfileAnnouncementModal() {
     >
       <button
         type="button"
-        aria-label="Dismiss"
+        aria-label={t("dismissAria")}
         onClick={() => close("dismiss")}
         className={`absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity duration-200 ${
           closing ? "opacity-0" : "opacity-100"
@@ -105,7 +107,7 @@ export function ProfileAnnouncementModal() {
           <button
             type="button"
             onClick={() => close("dismiss")}
-            aria-label="Close"
+            aria-label={t("closeAria")}
             className="absolute top-3 right-3 grid size-8 place-items-center rounded-full bg-surface/90 text-muted-2 shadow-sm transition hover:bg-white hover:text-foreground dark:hover:bg-stone-800"
           >
             <X className="size-4" />
