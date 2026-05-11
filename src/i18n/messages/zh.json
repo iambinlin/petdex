@@ -120,6 +120,8 @@
     "takedown__fixme": true,
     "advertise": "投放广告",
     "advertise__fixme": true,
+    "brand": "品牌",
+    "brand__fixme": true,
     "github": "GitHub",
     "discord": "Discord",
     "sponsor": "赞助",
@@ -1057,6 +1059,132 @@
     "card": {
       "screenshotAlt": "{name} 截图",
       "site": "网站"
+    }
+  },
+  "brand": {
+    "metadata": {
+      "title": "Petdex 品牌工具包",
+      "title__fixme": true,
+      "description": "下载 Petdex 的 logo、图标、颜色 token 和使用说明，可用于媒体、项目和社区帖子。",
+      "description__fixme": true,
+      "ogTitle": "Petdex 品牌工具包",
+      "ogTitle__fixme": true
+    },
+    "eyebrow": "品牌工具包",
+    "eyebrow__fixme": true,
+    "hero": {
+      "title": "清晰、一致地使用 Petdex。",
+      "title__fixme": true,
+      "body": "下载官方品牌素材，用于发布帖、应用集成、社区项目以及提到 Petdex 的文档。",
+      "body__fixme": true,
+      "primaryCtaSvg": "下载 SVG",
+      "primaryCtaSvg__fixme": true,
+      "primaryCtaPng": "PNG",
+      "primaryCtaPng__fixme": true,
+      "secondaryCta": "在 GitHub 查看",
+      "secondaryCta__fixme": true,
+      "iconAlt": "Petdex 桌面应用图标",
+      "iconAlt__fixme": true
+    },
+    "assets": {
+      "eyebrow": "下载",
+      "eyebrow__fixme": true,
+      "title": "可直接使用的 logo 文件",
+      "title__fixme": true,
+      "body": "网页和印刷场景请使用 SVG 素材。需要桌面产品标志或方形社交预览时，请使用 PNG 应用图标。",
+      "body__fixme": true,
+      "formats": {
+        "svg": "SVG",
+        "png": "PNG"
+      },
+      "modes": {
+        "light": "浅色模式",
+        "light__fixme": true,
+        "dark": "深色模式",
+        "dark__fixme": true
+      },
+      "items": {
+        "mark": {
+          "title": "Petdex 标志",
+          "title__fixme": true,
+          "description": "适合紧凑布局、头像、favicon 和徽章的主要符号。",
+          "description__fixme": true,
+          "alt": "Petdex 标志",
+          "alt__fixme": true
+        },
+        "wordmark": {
+          "title": "Petdex 浅色字标",
+          "title__fixme": true,
+          "description": "在浅色或暖中性背景上使用，适合需要名称独立可读的场景。",
+          "description__fixme": true,
+          "alt": "Petdex 字标",
+          "alt__fixme": true
+        },
+        "wordmarkDark": {
+          "title": "Petdex 深色字标",
+          "title__fixme": true,
+          "description": "在深色背景、截图和发布图中使用，避免黑色字标对比度不足。",
+          "description__fixme": true,
+          "alt": "用于深色背景的 Petdex 字标",
+          "alt__fixme": true
+        },
+        "desktopIcon": {
+          "title": "桌面图标",
+          "title__fixme": true,
+          "description": "用于 Petdex Desktop 说明、媒体卡片和发布图形的圆角应用图标。",
+          "description__fixme": true,
+          "alt": "Petdex 桌面图标",
+          "alt__fixme": true
+        }
+      }
+    },
+    "usage": {
+      "eyebrow": "使用方式",
+      "eyebrow__fixme": true,
+      "title": "让这只宠物保持可识别",
+      "title__fixme": true,
+      "do": {
+        "title": "推荐",
+        "title__fixme": true,
+        "item1": "在标志周围保留足够留白。",
+        "item1__fixme": true,
+        "item2": "使用原始文件，不要重新绘制形状。",
+        "item2__fixme": true,
+        "item3": "展示社区宠物时，请为 Petdex 提供清晰署名。",
+        "item3__fixme": true
+      },
+      "dont": {
+        "title": "避免",
+        "title__fixme": true,
+        "item1": "不要随意拉伸、旋转、倾斜或重新上色 logo。",
+        "item1__fixme": true,
+        "item2": "不要把标志放在低对比度或视觉噪声很强的背景上。",
+        "item2__fixme": true,
+        "item3": "不要用 Petdex 品牌暗示对无关产品的官方认可。",
+        "item3__fixme": true
+      }
+    },
+    "system": {
+      "eyebrow": "设计系统",
+      "eyebrow__fixme": true,
+      "title": "颜色和字体",
+      "title__fixme": true,
+      "body": "Petdex 使用温暖的界面底色、绿色品牌强调色和 Geist 字体，让它像一个实用工具，同时带一点小生物的能量。",
+      "body__fixme": true,
+      "colors": {
+        "brand": "品牌色",
+        "brand__fixme": true,
+        "brandLight": "浅品牌色",
+        "brandLight__fixme": true,
+        "surface": "界面底色",
+        "surface__fixme": true,
+        "ink": "墨色",
+        "ink__fixme": true
+      },
+      "type": {
+        "title": "字体",
+        "title__fixme": true
+      }
     }
   },
   "about": {
