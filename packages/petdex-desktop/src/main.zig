@@ -474,23 +474,50 @@ const html_tail =
     \\    try {
     \\      const r = await window.zero.invoke('petdex.install_pet', { slug });
     \\      if (r && r.ok) {
-    \\        try {
-    \\          await window.zero.invoke('petdex.set_active', { slug });
-    \\          location.reload();
-    \\          return;
-    \\        } catch (e) {
-    \\          showLocalBubble('Install ok but activation failed');
-    \\          return;
+    \\        // Install succeeded. Try activate; one retry after 500ms
+    \\        // covers the race where set_active runs before the freshly
+    \\        // written sprite has hit the disk's directory entry — the
+    \\        // CLI returns after fs.write() resolves, but the sidecar's
+    \\        // pets-root scan can still miss it for a few hundred ms on
+    \\        // some filesystems (APFS volumes under heavy IO).
+    \\        for (let attempt = 0; attempt < 2; attempt++) {
+    \\          try {
+    \\            await window.zero.invoke('petdex.set_active', { slug });
+    \\            location.reload();
+    \\            return;
+    \\          } catch (e) {
+    \\            if (attempt === 0) {
+    \\              await new Promise(r => setTimeout(r, 500));
+    \\              continue;
+    \\            }
+    \\            // Both attempts failed. The sprite is on disk but the
+    \\            // desktop's pets_roots cache was built at startup and
+    \\            // doesn't see the new dir. Tell the user how to recover.
+    \\            showLocalBubble('Installed. Restart Petdex to use ' + slug);
+    \\            return;
+    \\          }
     \\        }
+    \\        return;
     \\      }
-    \\      // install_pet returned ok:false — error code is in r.error
+    \\      // install_pet returned ok:false — error code is in r.error.
+    \\      // Map the CLI's exit codes to specific guidance instead of
+    \\      // the previous one-size "Install failed" that left users
+    \\      // (Hunter, 2026-05-11) with no actionable next step.
     \\      const err = (r && r.error) || 'unknown';
     \\      if (err === 'cli_not_persisted') {
-    \\        showLocalBubble('Run `petdex init` first');
+    \\        showLocalBubble('Run: npx petdex@latest init');
+    \\      } else if (err === 'no_home') {
+    \\        showLocalBubble('No HOME env. Run: npx petdex@latest install ' + slug);
+    \\      } else if (err === 'abnormal_exit') {
+    \\        showLocalBubble('petdex install crashed. Try terminal: npx petdex@latest install ' + slug);
     \\      } else if (err.indexOf('exit_') === 0) {
-    \\        showLocalBubble(slug + ' not found');
+    \\        // Most common: slug not in manifest, or network error during
+    \\        // download. exit_1 covers both (the CLI doesn't differentiate
+    \\        // today). Direct the user to the terminal where stderr will
+    \\        // tell them which.
+    \\        showLocalBubble('Install failed (' + err + '). Try: npx petdex@latest install ' + slug);
     \\      } else {
-    \\        showLocalBubble('Install failed');
+    \\        showLocalBubble('Install failed: ' + err);
     \\      }
     \\    } catch (e) {
     \\      showLocalBubble('Install crashed');
@@ -547,9 +574,29 @@ const html_tail =
     \\    updateCard.addEventListener('click', async () => {
     \\      if (!(window.zero && window.zero.invoke)) return;
     \\      try {
-    \\        await window.zero.invoke('petdex.trigger_update', {});
+    \\        const r = await window.zero.invoke('petdex.trigger_update', {});
+    \\        // r is JSON-encoded: ok:true means curl POST returned 2xx.
+    \\        // ok:false carries an `error` field — most commonly
+    \\        // curl_exit_7 (sidecar dead). The previous handler swallowed
+    \\        // every failure and rendered "Updating..." while nothing
+    \\        // was happening, leaving the user wondering why their pet
+    \\        // never restarted. Now we surface the situation with an
+    \\        // actionable terminal command.
+    \\        if (r && r.ok === false) {
+    \\          const code = (r.error || '');
+    \\          if (code.indexOf('curl_exit_') === 0 || code === 'no_token' || code === 'token_read' || code === 'empty_token') {
+    \\            renderUpdate({ status: 'error', message: 'Sidecar offline. Run: npx petdex@latest update' });
+    \\            return;
+    \\          }
+    \\          renderUpdate({ status: 'error', message: 'Update failed (' + code + '). Run: npx petdex@latest update' });
+    \\          return;
+    \\        }
     \\        renderUpdate({ status: 'running', message: 'Updating...' });
-    \\      } catch (e) {}
+    \\      } catch (e) {
+    \\        // Bridge crash. The invoke layer itself blew up — fall back
+    \\        // to terminal instructions rather than a silent dead button.
+    \\        renderUpdate({ status: 'error', message: 'Update failed. Run: npx petdex@latest update' });
+    \\      }
     \\    });
     \\    document.body.appendChild(updateCard);
     \\    return updateCard;
@@ -1252,8 +1299,11 @@ const PetdexState = struct {
         defer self.allocator.free(header_arg);
 
         // Spawn `curl -fsS -X POST -H "..." http://127.0.0.1:7777/update`
-        // detached. curl ships with macOS and most Linux distros, so this
-        // beats pulling in a Zig HTTP client for one fire-and-forget POST.
+        // and wait for its exit code. We used to detach this and return
+        // ok:true unconditionally, which masked sidecar-down failures
+        // (Hunter 2026-05-11: clicked update card, nothing happened, no
+        // way to tell why). The POST body is empty and the sidecar
+        // returns 202 within milliseconds — synchronous wait is fine.
         const argv = &[_][]const u8{
             "curl",
             "-fsS",
@@ -1265,15 +1315,28 @@ const PetdexState = struct {
             header_arg,
             "http://127.0.0.1:7777/update",
         };
-        _ = std.process.spawn(self.io, .{
+        var child = std.process.spawn(self.io, .{
             .argv = argv,
             .stdin = .ignore,
             .stdout = .ignore,
             .stderr = .ignore,
         }) catch |err| {
-            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"{s}\"}}", .{@errorName(err)});
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"spawn_{s}\"}}", .{@errorName(err)});
         };
-        return std.fmt.bufPrint(output, "{{\"ok\":true}}", .{});
+        const term = child.wait(self.io) catch |err| {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"wait_{s}\"}}", .{@errorName(err)});
+        };
+        switch (term) {
+            .exited => |code| {
+                if (code == 0) {
+                    return std.fmt.bufPrint(output, "{{\"ok\":true}}", .{});
+                }
+                // curl exit 7 = could not connect (sidecar dead). Surface
+                // the code so the WebView can render an actionable error.
+                return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"curl_exit_{d}\"}}", .{code});
+            },
+            else => return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"curl_abnormal_exit\"}}", .{}),
+        }
     }
 };
 

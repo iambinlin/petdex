@@ -294,6 +294,39 @@ try {
   writeBubble("", null);
 } catch {}
 
+// Reset stale update.json on boot. The previous sidecar may have died
+// before its periodic check fired again, leaving update.json pinned at
+// "available, latest=desktop-vOLD". A fresh sidecar attached to a
+// freshly updated binary would otherwise read that stale row and the
+// WebView would beg the user to install a version they already have.
+// Hunter hit exactly this on 2026-05-11: ~/.petdex/version said v0.1.6,
+// update.json said latest=v0.1.5 from a check 5 hours earlier.
+//
+// Strategy: if the persisted `current` doesn't match the on-disk
+// VERSION_FILE (or current is null while the version file exists),
+// wipe to idle. The next checkForUpdate (30s after launch) will
+// repopulate with truth. We never delete the file outright so the
+// WebView's first read still gets a coherent JSON.
+try {
+  const persisted = readUpdateInfo();
+  const installed = readCurrentVersion();
+  const stale =
+    persisted.status === "available" &&
+    (persisted.current !== installed || installed === null);
+  if (stale) {
+    writeUpdateInfo({
+      available: false,
+      current: installed,
+      latest: null,
+      status: "idle",
+      checkedAt: 0,
+    });
+    log(
+      `cleared stale update.json: persisted.current=${persisted.current ?? "?"} installed=${installed ?? "?"}`,
+    );
+  }
+} catch {}
+
 function jsonResponse(res: http.ServerResponse, status: number, body: unknown) {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
@@ -533,6 +566,23 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "GET" && url.pathname === "/health") {
       return jsonResponse(res, 200, { ok: true, port: PORT });
+    }
+
+    // Identity endpoint used by the EADDRINUSE-recovery path. When a
+    // fresh sidecar boots and finds :7777 occupied, it probes /whoami
+    // on the incumbent. If the incumbent reports a parentPid that is
+    // no longer alive (orphan from a crashed desktop the parent
+    // watchdog couldn't catch — e.g. a hard kill), the new sidecar
+    // SIGTERMs it and retries listen. No auth required: pid + parent
+    // are not secrets, and we want this to work even if the incumbent
+    // is wedged enough that token reads would fail.
+    if (req.method === "GET" && url.pathname === "/whoami") {
+      const parent = Number(process.env.PETDEX_PARENT_PID);
+      return jsonResponse(res, 200, {
+        ok: true,
+        pid: process.pid,
+        parentPid: Number.isFinite(parent) && parent > 0 ? parent : null,
+      });
     }
 
     if (req.method === "GET" && url.pathname === "/state") {
@@ -778,22 +828,157 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
+// Cap recovery attempts. One retry is enough for the orphan-eviction
+// case (we kill, wait, listen). Two attempts is the safety belt for a
+// race where another sidecar boots between our SIGTERM and our retry —
+// at that point we should yield, not loop. The fresh boot will already
+// own :7777.
+const LISTEN_MAX_ATTEMPTS = 2;
+let listenAttempts = 0;
+
+function attemptListen(): void {
+  listenAttempts += 1;
+  server.listen(PORT, "127.0.0.1");
+}
+
+server.on("listening", () => {
   // Persist the token only after we've successfully bound the port.
-  // If a stale sidecar already owns :7777 the listen will fail and
-  // server.on('error') exits below — at which point the on-disk
-  // token still belongs to whoever was running first, which is the
-  // process actually serving requests.
+  // If a stale sidecar already owns :7777 the listen fails and
+  // server.on('error') runs the recovery flow — at which point the
+  // on-disk token still belongs to whoever serves requests.
   persistUpdateToken();
   log(`petdex sidecar listening on http://127.0.0.1:${PORT}`);
 });
 
-server.on("error", (err) => {
-  // EADDRINUSE means another sidecar is already bound. Don't touch
-  // the token file — the live process needs its existing one.
-  log(`server.error: ${err.message}`);
-  process.exit(1);
+server.on("error", (err: NodeJS.ErrnoException) => {
+  // Anything other than EADDRINUSE is unrecoverable — bail loudly.
+  if (err.code !== "EADDRINUSE") {
+    log(`server.error: ${err.message}`);
+    process.exit(1);
+    return;
+  }
+  void recoverFromAddrInUse(err);
 });
+
+// EADDRINUSE recovery. The sidecar is supposed to die when its parent
+// desktop dies (parent watchdog polls process.kill(parent, 0) every 2s
+// and exits on ESRCH). That fails when:
+//   1. The parent was killed with SIGKILL or crashed before the
+//      watchdog could fire — the sidecar is mid-tick.
+//   2. The user launched the .app manually (different parent), then
+//      ran `petdex desktop start` (different parent), and one sidecar
+//      survived the other's cleanup.
+//   3. A previous sidecar entered an unrelated bad state and refuses
+//      to exit on parent-gone.
+//
+// The fresh sidecar can't tell the difference from "another live
+// desktop is using :7777 (legit, yield)" without asking. We probe
+// /whoami: if the incumbent's parentPid is alive, yield (something
+// real owns this slot). If the parentPid is dead, the incumbent is
+// an orphan — SIGTERM it, wait for the port to free, retry listen.
+async function recoverFromAddrInUse(err: NodeJS.ErrnoException): Promise<void> {
+  if (listenAttempts >= LISTEN_MAX_ATTEMPTS) {
+    log(`server.error: ${err.message}; gave up after ${listenAttempts} attempts`);
+    process.exit(1);
+    return;
+  }
+
+  // Probe the incumbent. We don't trust /whoami to be present (an
+  // older sidecar predates this endpoint) — a 404 means we can't
+  // verify orphan-ness, so we yield rather than blindly killing.
+  let incumbent: { pid?: number; parentPid?: number | null } | null = null;
+  try {
+    const res = await fetch(`http://127.0.0.1:${PORT}/whoami`, {
+      signal: AbortSignal.timeout(1000),
+    });
+    if (res.ok) {
+      incumbent = (await res.json()) as typeof incumbent;
+    }
+  } catch {
+    // Probe failed entirely — the port is held by something that
+    // isn't a responsive sidecar. Could be a wedged Node process; we
+    // can't safely kill it without identifying it. Yield.
+    log(`server.error: ${err.message}; /whoami probe failed, yielding`);
+    process.exit(1);
+    return;
+  }
+
+  if (!incumbent || typeof incumbent.pid !== "number") {
+    log(`server.error: ${err.message}; /whoami had no pid, yielding`);
+    process.exit(1);
+    return;
+  }
+
+  // Incumbent is a sidecar. Decide whether its parent desktop is
+  // alive. process.kill(pid, 0) throws ESRCH if the pid is gone, EPERM
+  // if it exists but we can't signal (still alive). Treat EPERM as
+  // alive: we'd rather yield to a sibling user's desktop than kill it.
+  const parent = incumbent.parentPid;
+  let parentAlive = true;
+  if (typeof parent === "number" && parent > 0) {
+    try {
+      process.kill(parent, 0);
+    } catch (probeErr) {
+      const code = (probeErr as NodeJS.ErrnoException).code;
+      parentAlive = code !== "ESRCH";
+    }
+  } else {
+    // Sidecar with no parent recorded — can't verify orphan, yield.
+    log(
+      `server.error: ${err.message}; incumbent pid=${incumbent.pid} has no parentPid, yielding`,
+    );
+    process.exit(1);
+    return;
+  }
+
+  if (parentAlive) {
+    log(
+      `server.error: ${err.message}; incumbent pid=${incumbent.pid} parent=${parent} is alive, yielding`,
+    );
+    process.exit(1);
+    return;
+  }
+
+  // Orphan confirmed. SIGTERM it, wait for :7777 to free, retry listen.
+  log(
+    `server.error: ${err.message}; killing orphan sidecar pid=${incumbent.pid} (parent=${parent} dead)`,
+  );
+  try {
+    process.kill(incumbent.pid, "SIGTERM");
+  } catch (killErr) {
+    log(`failed to SIGTERM orphan: ${(killErr as Error).message}`);
+    process.exit(1);
+    return;
+  }
+
+  const freed = await waitForPortFree(PORT, 5000);
+  if (!freed) {
+    log(`port :${PORT} still busy 5s after killing orphan, giving up`);
+    process.exit(1);
+    return;
+  }
+
+  log(`orphan evicted, retrying listen (attempt ${listenAttempts + 1})`);
+  attemptListen();
+}
+
+async function waitForPortFree(port: number, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const free = await new Promise<boolean>((resolve) => {
+      const probe = http
+        .createServer()
+        .once("error", () => resolve(false))
+        .once("listening", () => probe.close(() => resolve(true)));
+      probe.listen(port, "127.0.0.1");
+    });
+    if (free) return true;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return false;
+}
+
+attemptListen();
 
 // Hard cap on how long we'll wait for the updater child to finish
 // before the sidecar gives up and exits anyway. npm install + a
