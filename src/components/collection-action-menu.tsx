@@ -9,10 +9,11 @@ import {
   Layers,
   Link2,
   MoreHorizontal,
-  Sparkles,
   Terminal,
   X as CloseIcon,
 } from "lucide-react";
+
+import { CodexLogo } from "@/components/codex-logo";
 
 const SITE_URL = "https://petdex.crafter.run";
 // Cap on the install command length. Beyond this we truncate with a
@@ -147,7 +148,7 @@ export function CollectionActionMenu({ collection }: Props) {
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
                 >
-                  <Sparkles className="size-4 text-brand" />
+                  <CodexLogo className="size-4" />
                   <span className="flex flex-col">
                     <span>Open in Codex</span>
                     <span className="font-mono text-[10px] tracking-tight text-muted-4">
