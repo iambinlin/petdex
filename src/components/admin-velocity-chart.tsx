@@ -1,109 +1,80 @@
-// Tiny inline SVG bar chart for submission velocity. We avoid pulling
-// a chart library into the admin bundle — this is a single 24-hour
-// view of three counts per bucket. The y-scale is fitted to the
-// max(approved + pending + rejected) across the window so the chart
-// doesn't overflow even on big spikes.
+"use client";
+
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import type { SubmissionVelocityPoint } from "@/lib/admin-insights";
+
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 type Props = {
   data: SubmissionVelocityPoint[];
 };
 
-const COLORS = {
-  approved: "var(--chip-success-fg)",
-  pending: "var(--chip-warning-fg)",
-  rejected: "var(--chip-danger-fg)",
-};
+const chartConfig = {
+  approved: { label: "Approved", color: "var(--chip-success-fg)" },
+  pending: { label: "Pending", color: "var(--chip-warning-fg)" },
+  rejected: { label: "Rejected", color: "var(--chip-danger-fg)" },
+} satisfies ChartConfig;
 
 export function AdminVelocityChart({ data }: Props) {
-  const maxStack = data.reduce(
+  const peak = data.reduce(
     (acc, point) =>
       Math.max(acc, point.approved + point.pending + point.rejected),
     0,
   );
-  if (data.length === 0 || maxStack === 0) {
+  if (data.length === 0 || peak === 0) {
     return (
       <p className="text-sm text-muted-3">
         No submissions in the last 24 hours.
       </p>
     );
   }
-  const yScale = 1 / maxStack; // unit = bar height fraction
-  const barWidthPct = 100 / data.length;
+
+  const series = data.map((point) => ({
+    ...point,
+    hour: new Date(point.bucket).toLocaleTimeString([], {
+      hour: "numeric",
+      hour12: false,
+    }),
+  }));
 
   return (
     <div className="space-y-3">
-      <div className="relative h-32 w-full">
-        <svg
-          role="img"
-          aria-label="Submissions per hour, last 24 hours"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          className="size-full"
-        >
-          <title>Submissions per hour, last 24 hours</title>
-          {data.map((point, i) => {
-            const x = i * barWidthPct;
-            const approvedH = point.approved * yScale * 100;
-            const pendingH = point.pending * yScale * 100;
-            const rejectedH = point.rejected * yScale * 100;
-            const barW = barWidthPct * 0.78;
-            const xCenter = x + (barWidthPct - barW) / 2;
-            // Stack from bottom: approved → pending → rejected.
-            const yApproved = 100 - approvedH;
-            const yPending = yApproved - pendingH;
-            const yRejected = yPending - rejectedH;
-            return (
-              <g key={point.bucket}>
-                <rect
-                  x={xCenter}
-                  y={yApproved}
-                  width={barW}
-                  height={approvedH}
-                  fill={COLORS.approved}
-                  opacity={0.8}
-                />
-                <rect
-                  x={xCenter}
-                  y={yPending}
-                  width={barW}
-                  height={pendingH}
-                  fill={COLORS.pending}
-                  opacity={0.8}
-                />
-                <rect
-                  x={xCenter}
-                  y={yRejected}
-                  width={barW}
-                  height={rejectedH}
-                  fill={COLORS.rejected}
-                  opacity={0.8}
-                />
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-      <div className="flex items-center gap-4 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-        <Legend color={COLORS.approved} label="Approved" />
-        <Legend color={COLORS.pending} label="Pending" />
-        <Legend color={COLORS.rejected} label="Rejected" />
-        <span className="ml-auto">Last 24h • peak {maxStack}/h</span>
-      </div>
+      <ChartContainer config={chartConfig} className="h-40 w-full">
+        <BarChart accessibilityLayer data={series} margin={{ left: 0, right: 0, top: 4 }}>
+          <CartesianGrid vertical={false} strokeOpacity={0.2} />
+          <XAxis
+            dataKey="hour"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={6}
+            interval={Math.max(0, Math.floor(series.length / 6) - 1)}
+            className="text-[10px]"
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            allowDecimals={false}
+            width={24}
+            className="text-[10px]"
+          />
+          <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+          <Bar dataKey="approved" stackId="a" fill="var(--color-approved)" />
+          <Bar dataKey="pending" stackId="a" fill="var(--color-pending)" />
+          <Bar dataKey="rejected" stackId="a" fill="var(--color-rejected)" />
+          <ChartLegend content={<ChartLegendContent />} />
+        </BarChart>
+      </ChartContainer>
+      <p className="text-right font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
+        Last 24h · peak {peak}/h
+      </p>
     </div>
-  );
-}
-
-function Legend({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span
-        aria-hidden
-        className="inline-block size-2.5 rounded-sm"
-        style={{ backgroundColor: color }}
-      />
-      {label}
-    </span>
   );
 }
