@@ -171,7 +171,12 @@ describe("fetchLatestRelease", () => {
       prerelease: false,
     }));
     const page2 = [
-      { tag_name: "desktop-v0.1.4", assets: [], draft: false, prerelease: false },
+      {
+        tag_name: "desktop-v0.1.4",
+        assets: [],
+        draft: false,
+        prerelease: false,
+      },
     ];
     globalThis.fetch = (async (url: string | URL) => {
       const u = url.toString();
@@ -222,9 +227,7 @@ describe("fetchLatestRelease", () => {
       return new Response(JSON.stringify(fullPage), { status: 200 });
     }) as typeof fetch;
 
-    await expect(fetchLatestRelease({ maxPages: 3 })).rejects.toThrow(
-      /3 page/,
-    );
+    await expect(fetchLatestRelease({ maxPages: 3 })).rejects.toThrow(/3 page/);
     expect(calls.length).toBe(3);
   });
 
@@ -320,7 +323,9 @@ describe("fetchLatestRelease", () => {
     mockStatus = 403;
     // Re-stub since mockStatus changed after beforeEach
     globalThis.fetch = (async () =>
-      new Response(JSON.stringify({}), { status: 403 })) as typeof fetch;
+      new Response(JSON.stringify({}), {
+        status: 403,
+      })) as unknown as typeof fetch;
     await expect(fetchLatestRelease()).rejects.toThrow(/403/);
   });
 });
@@ -337,8 +342,7 @@ describe("fetchLatestRelease", () => {
 //   - happy path → files land in both ~/.petdex/pets and ~/.codex/pets
 //   - partial download failure → rollback removes orphan directories
 
-const TRUSTED_HOST =
-  "https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev";
+const TRUSTED_HOST = "https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev";
 
 describe("installStarterPet", () => {
   const realHome = process.env.HOME;
@@ -577,9 +581,9 @@ describe("installStarterPet", () => {
     // intact.
     expect(manifestCalls).toBe(1);
     expect(existsSync(join(petsDir(), "boba", "user-custom.txt"))).toBe(true);
-    expect(readFileSync(join(petsDir(), "boba", "user-custom.txt"), "utf8")).toBe(
-      "DO NOT TOUCH",
-    );
+    expect(
+      readFileSync(join(petsDir(), "boba", "user-custom.txt"), "utf8"),
+    ).toBe("DO NOT TOUCH");
   });
 
   test("falls through to a different manifest pet when boba's slug dir is taken", async () => {
@@ -805,9 +809,9 @@ describe("isTrustedAssetUrl", () => {
   });
 
   test("rejects an unknown host even on https", () => {
-    expect(
-      isTrustedAssetUrl("https://attacker.example.com/pet.json"),
-    ).toBe(false);
+    expect(isTrustedAssetUrl("https://attacker.example.com/pet.json")).toBe(
+      false,
+    );
   });
 
   test("rejects javascript: / data: / file: pseudo-URLs", () => {

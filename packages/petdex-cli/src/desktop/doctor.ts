@@ -94,11 +94,16 @@ async function checkSidecarReachable(): Promise<CheckResult> {
         hint: "Restart: `petdex desktop stop && petdex desktop start`",
       };
     }
-    const body = (await res.json().catch(() => null)) as
-      | { ok?: boolean; port?: number }
-      | null;
+    const body = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      port?: number;
+    } | null;
     if (body?.ok && body?.port === 7777) {
-      return { status: "ok", label: "Sidecar reachable", detail: ":7777 healthy" };
+      return {
+        status: "ok",
+        label: "Sidecar reachable",
+        detail: ":7777 healthy",
+      };
     }
     return {
       status: "warn",
@@ -405,7 +410,7 @@ export async function runDoctor(): Promise<void> {
   // here. We only fall to the catch when lsof itself isn't on PATH.
   let lsofOut: string | null = null;
   try {
-    lsofOut = execSync("lsof -nP -i:7777 2>/dev/null || true", {
+    lsofOut = execSync("lsof -nP -iTCP:7777 -sTCP:LISTEN 2>/dev/null || true", {
       encoding: "utf8",
     }).trim();
   } catch {
@@ -429,7 +434,8 @@ export async function runDoctor(): Promise<void> {
     printResult({
       status: dataLines === 1 ? "ok" : "warn",
       label: ":7777 listener",
-      detail: dataLines === 1 ? "1 process bound" : `${dataLines} processes bound`,
+      detail:
+        dataLines === 1 ? "1 process bound" : `${dataLines} processes bound`,
       hint:
         dataLines > 1
           ? "Multiple sidecars contending for the same port. Stop both and start fresh."

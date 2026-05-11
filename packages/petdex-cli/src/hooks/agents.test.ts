@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { AGENTS, SIDECAR_URL } from "./agents";
+import { AGENTS, resolveOpenCodeConfigDir, SIDECAR_URL } from "./agents";
 
 // These tests pin the contract that bit us in production once: the
 // generated shell command must survive JSON.stringify (the agent
@@ -77,7 +77,9 @@ describe("Claude Code hook command", () => {
     const cmd = getCommand("running");
     // Killswitch is the FIRST statement so a disabled state has
     // zero filesystem cost beyond the test -f.
-    expect(cmd).toMatch(/^\[ -f "\$HOME\/\.petdex\/runtime\/hooks-disabled" \]/);
+    expect(cmd).toMatch(
+      /^\[ -f "\$HOME\/\.petdex\/runtime\/hooks-disabled" \]/,
+    );
     expect(cmd).toContain("&& exit 0");
     // And it MUST exit 0 — a non-zero hook stains the agent UI.
     expect(cmd).not.toContain("&& exit 1");
@@ -234,5 +236,107 @@ describe("Claude Code hook command", () => {
     } finally {
       rmSync(fakeHome, { recursive: true, force: true });
     }
+  });
+});
+
+describe("OpenCode hook plugin", () => {
+  function getPluginSource(): string {
+    const agent = AGENTS.find((a) => a.id === "opencode");
+    if (!agent) throw new Error("opencode agent missing from registry");
+    return agent.build() as string;
+  }
+
+  test("posts bubbles in addition to state updates", () => {
+    const source = getPluginSource();
+    expect(source).toContain("const SIDECAR_URL");
+    expect(source).toContain("const SIDECAR_BUBBLE_URL");
+    expect(source).toContain("/bubble");
+    expect(source).toContain("postJson(SIDECAR_URL");
+    expect(source).toContain("postJson(SIDECAR_BUBBLE_URL");
+    expect(source).toContain(`{ text, agent_source: "opencode" }`);
+  });
+
+  test("uses OpenCode v1 default file plugin shape", () => {
+    const source = getPluginSource();
+    expect(source).toContain("const hooks = {");
+    expect(source).toContain(`id: "petdex"`);
+    expect(source).toContain("server: async () => hooks");
+    expect(source).toContain("export default PetdexPlugin");
+    expect(source).toContain("export { PetdexPlugin }");
+  });
+
+  test("uses OpenCode tool hook payloads to format messages", () => {
+    const source = getPluginSource();
+    expect(source).toContain(
+      `"tool.execute.before": async (input, output) => notify({`,
+    );
+    expect(source).toContain(
+      `text: formatTool(input.tool, output.args, "running")`,
+    );
+    expect(source).toContain(`"tool.execute.after": async (input) => notify({`);
+    expect(source).toContain(
+      `text: formatTool(input.tool, input.args, "done")`,
+    );
+  });
+
+  test("keeps hook safeguards and latency bound", () => {
+    const source = getPluginSource();
+    expect(source).toContain("KILLSWITCH_PATH");
+    expect(source).toContain("existsSync(KILLSWITCH_PATH)");
+    expect(source).toContain("X-Petdex-Update-Token");
+    expect(source).toContain("AbortSignal.timeout(300)");
+  });
+
+  test("formats common OpenCode tool messages", () => {
+    const source = getPluginSource();
+    expect(source).toContain(`command.split(/\\s+/)`);
+    expect(source).toContain(`"Searched \\"" + clip(pattern, 28) + "\\""`);
+    expect(source).toContain(`fieldFrom(toolInput, "filePath")`);
+    expect(source).toContain(`return past ? "Ran command" : "Running command"`);
+    expect(source).toContain(
+      `return past ? "Subagent done" : "Spawning subagent"`,
+    );
+    expect(source).toContain(
+      `return past ? "Called " + name : "Calling " + name`,
+    );
+  });
+
+  test("emits bubble text for session idle and error events", () => {
+    const source = getPluginSource();
+    expect(source).toContain(
+      `notify({ state: "waving", duration: 1500, text: "Done." })`,
+    );
+    expect(source).toContain(
+      `notify({ state: "failed", duration: 2500, text: "OpenCode hit an error." })`,
+    );
+  });
+});
+
+describe("OpenCode config path resolution", () => {
+  test("prefers OPENCODE_CONFIG_DIR", () => {
+    expect(
+      resolveOpenCodeConfigDir(
+        {
+          OPENCODE_CONFIG_DIR: "/tmp/opencode-explicit",
+          XDG_CONFIG_HOME: "/tmp/xdg",
+        },
+        "/home/example",
+      ),
+    ).toBe("/tmp/opencode-explicit");
+  });
+
+  test("uses XDG_CONFIG_HOME when OPENCODE_CONFIG_DIR is unset", () => {
+    expect(
+      resolveOpenCodeConfigDir(
+        { XDG_CONFIG_HOME: "/tmp/xdg" },
+        "/home/example",
+      ),
+    ).toBe("/tmp/xdg/opencode");
+  });
+
+  test("falls back to ~/.config/opencode", () => {
+    expect(resolveOpenCodeConfigDir({}, "/home/example")).toBe(
+      "/home/example/.config/opencode",
+    );
   });
 });
