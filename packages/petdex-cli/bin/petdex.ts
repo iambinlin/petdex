@@ -219,7 +219,7 @@ function printHelp() {
       `    ${pc.bold("logout")}             Clear stored credentials`,
       `    ${pc.bold("whoami")}             Show signed-in user`,
       `    ${pc.bold("submit")} <path>      Submit a pet folder, zip, or parent of pets (bulk)`,
-      `    ${pc.bold("install")} <slug>     Install a pet into ~/.petdex/pets and ~/.codex/pets`,
+      `    ${pc.bold("install")} <slug...>  Install one or more pets into ~/.petdex/pets and ~/.codex/pets`,
       `    ${pc.bold("install desktop")}    Install the petdex-desktop binary (alternative to the .dmg)`,
       `    ${pc.bold("list")}               List approved pets`,
       `    ${pc.bold("hooks install")}      Wire petdex-desktop into your coding agents`,
@@ -236,6 +236,7 @@ function printHelp() {
       `    ${dim("$")} petdex login`,
       `    ${dim("$")} petdex submit ~/.codex/pets/boba       ${dim("# single folder")}`,
       `    ${dim("$")} petdex install boba                    ${dim("# install a pet by slug")}`,
+      `    ${dim("$")} petdex install boba doraemon mochi     ${dim("# install several at once")}`,
       `    ${dim("$")} petdex toggle                          ${dim("# wake or sleep the mascot")}`,
       `    ${dim("$")} petdex doctor                          ${dim("# diagnose install + agents")}`,
       `    ${dim("$")} petdex update                          ${dim("# pull the latest release")}`,
@@ -295,106 +296,51 @@ async function cmdWhoami() {
   }
 }
 
-async function cmdInstall(args: string[]) {
-  const slug = args[0];
-  if (!slug) {
-    p.cancel(`Usage: ${pc.cyan("petdex install <slug|desktop>")}`);
-    process.exit(1);
-  }
-  if (slug === "desktop") {
-    const { tag } = await runInstallDesktop();
-    emit("cli_install_desktop_success", {
-      cli_version: VERSION,
-      os: process.platform,
-      arch: process.arch,
-      // Strip the `desktop-v` prefix from the release tag (e.g.
-      // `desktop-v0.1.4` -> `0.1.4`) so it matches the telemetry
-      // endpoint's semver-only validator. Without this the value
-      // gets dropped server-side and the version adoption chart
-      // stays empty.
-      binary_version: tag.replace(/^desktop-v/, ""),
-    });
-    return;
-  }
+type ManifestPet = {
+  slug: string;
+  displayName: string;
+  spritesheetUrl: string;
+  petJsonUrl: string;
+};
 
-  // Cross-platform install implemented in Node. Earlier versions piped a
-  // POSIX shell script through `sh`, which crashed on Windows where there is
-  // no `sh` (#10 from kayotimoteo). Now we just resolve the asset URLs from
-  // /api/manifest and write the files ourselves — same end result, works
-  // identically on macOS, Linux, and Windows.
-  const s = p.spinner();
-  s.start(`Resolving ${slug}`);
+async function fetchManifest(): Promise<ManifestPet[]> {
+  const res = await fetch(`${PETDEX_URL}/api/manifest`);
+  if (!res.ok) throw new Error(`manifest fetch ${res.status}`);
+  const data = (await res.json()) as { pets: ManifestPet[] };
+  return data.pets;
+}
 
-  let pet: {
-    slug: string;
-    displayName: string;
-    spritesheetUrl: string;
-    petJsonUrl: string;
-  };
-  try {
-    const manifestRes = await fetch(`${PETDEX_URL}/api/manifest`);
-    if (!manifestRes.ok) {
-      s.stop(pc.red("failed"));
-      throw new Error(`manifest fetch ${manifestRes.status}`);
-    }
-    const data = (await manifestRes.json()) as {
-      pets: Array<{
-        slug: string;
-        displayName: string;
-        spritesheetUrl: string;
-        petJsonUrl: string;
-      }>;
-    };
-    const found = data.pets.find((p) => p.slug === slug);
-    if (!found) {
-      s.stop(pc.red("not found"));
-      p.cancel(
-        `No pet with slug ${pc.bold(slug)}. Try ${pc.cyan("petdex list")} to see what's available.`,
-      );
-      process.exit(1);
-    }
-    // Belt-and-braces: server-side validation already enforces the
-    // host allowlist on submission, but a legacy/compromised approved
-    // row could still slip a non-allowlisted URL into /api/manifest
-    // (the route returns raw DB columns). Refuse to download bytes
-    // from anything outside the trusted asset origins instead of
-    // writing them into the user's HOME.
-    if (
-      !isTrustedAssetUrl(found.spritesheetUrl) ||
-      !isTrustedAssetUrl(found.petJsonUrl)
-    ) {
-      s.stop(pc.red("untrusted asset host"));
-      p.cancel(
-        `Refusing to install ${pc.bold(slug)}: asset URLs are outside the petdex host allowlist. This row may need to be re-uploaded by an admin.`,
-      );
-      process.exit(1);
-    }
-    pet = found;
-  } catch (err) {
-    s.stop(pc.red("failed"));
-    throw err;
+async function installOne(pet: ManifestPet): Promise<void> {
+  const slug = pet.slug;
+  // Belt-and-braces: server-side validation already enforces the host
+  // allowlist on submission, but a legacy/compromised approved row
+  // could still slip a non-allowlisted URL into /api/manifest. Refuse
+  // to download bytes from anything outside the trusted asset origins.
+  if (
+    !isTrustedAssetUrl(pet.spritesheetUrl) ||
+    !isTrustedAssetUrl(pet.petJsonUrl)
+  ) {
+    throw new Error(
+      `untrusted asset host for ${slug} (admin needs to re-upload)`,
+    );
   }
 
-  // Multi-target install: write to ~/.petdex/pets/ AND ~/.codex/pets/ so
-  // both Petdex Desktop and Codex Desktop can see the pet immediately.
-  // Petdex Desktop reads from either dir via resolvePetsDir().
+  // Multi-target: ~/.petdex/pets and ~/.codex/pets so both Petdex
+  // Desktop and Codex Desktop see the pet immediately.
   const petdexDir = path.join(homedir(), ".petdex", "pets", slug);
   const codexDir = path.join(homedir(), ".codex", "pets", slug);
-  s.message(`Downloading ${slug}`);
-
   await Promise.all([
     mkdir(petdexDir, { recursive: true }),
     mkdir(codexDir, { recursive: true }),
   ]);
 
   const ext = pet.spritesheetUrl.endsWith(".png") ? "png" : "webp";
-  // Download once, write to both targets to save bandwidth.
   // Validate response status before reading the body so a 404/500
   // doesn't silently land HTML inside pet.json or spritesheet.*.
   const fetchOrThrow = async (url: string): Promise<ArrayBuffer> => {
     const res = await fetch(url);
     if (!res.ok) {
-      throw new Error(`download ${url} → ${res.status} ${res.statusText}`);
+      throw new Error(`download ${url} -> ${res.status} ${res.statusText}`);
     }
     return res.arrayBuffer();
   };
@@ -419,21 +365,125 @@ async function cmdInstall(args: string[]) {
   void fetch(`${PETDEX_URL}/install/${slug}`, { method: "GET" }).catch(
     () => {},
   );
+}
 
-  s.stop(`Installed ${pc.cyan(pet.displayName)}`);
+async function cmdInstall(args: string[]) {
+  const first = args[0];
+  if (!first) {
+    p.cancel(
+      `Usage: ${pc.cyan("petdex install <slug> [slug...]")} or ${pc.cyan("petdex install desktop")}`,
+    );
+    process.exit(1);
+  }
+  if (first === "desktop") {
+    const { tag } = await runInstallDesktop();
+    emit("cli_install_desktop_success", {
+      cli_version: VERSION,
+      os: process.platform,
+      arch: process.arch,
+      // Strip `desktop-v` so the value matches the telemetry endpoint's
+      // semver-only validator (without this the version adoption chart
+      // stays empty).
+      binary_version: tag.replace(/^desktop-v/, ""),
+    });
+    return;
+  }
 
-  p.note(
-    [
-      `Paths:`,
-      `  ${pc.dim(`~/.petdex/pets/${slug}`)} (Petdex Desktop)`,
-      `  ${pc.dim(`~/.codex/pets/${slug}`)} (Codex Desktop)`,
-      "",
-      "Activate in Petdex Desktop: right-click the mascot.",
-      "Activate in Codex Desktop:",
-      `  ${pc.cyan("Settings → Appearance → Pets")} → select ${pc.bold(pet.displayName)}`,
-    ].join("\n"),
-    "Next steps",
-  );
+  // Dedupe slugs so a user pasting a long list with a repeat does not
+  // pay double bandwidth or get a confusing "installed twice" log line.
+  const slugs = Array.from(new Set(args));
+
+  const s = p.spinner();
+  s.start(slugs.length === 1 ? `Resolving ${slugs[0]}` : `Resolving ${slugs.length} pets`);
+
+  let manifest: ManifestPet[];
+  try {
+    manifest = await fetchManifest();
+  } catch (err) {
+    s.stop(pc.red("manifest failed"));
+    throw err;
+  }
+
+  const found: ManifestPet[] = [];
+  const missing: string[] = [];
+  for (const slug of slugs) {
+    const hit = manifest.find((m) => m.slug === slug);
+    if (hit) found.push(hit);
+    else missing.push(slug);
+  }
+
+  if (found.length === 0) {
+    s.stop(pc.red("none found"));
+    p.cancel(
+      `No pets matched. Try ${pc.cyan("petdex list")} to see what's available.`,
+    );
+    process.exit(1);
+  }
+
+  // Cross-platform install implemented in Node. Earlier versions piped a
+  // POSIX shell script through `sh`, which crashed on Windows where there
+  // is no `sh` (#10 from kayotimoteo). We resolve asset URLs from
+  // /api/manifest and write files ourselves so it works identically on
+  // macOS, Linux, and Windows.
+  const installed: string[] = [];
+  const failed: Array<{ slug: string; reason: string }> = [];
+  for (let i = 0; i < found.length; i++) {
+    const pet = found[i];
+    s.message(
+      found.length === 1
+        ? `Downloading ${pet.slug}`
+        : `Downloading ${pet.slug} (${i + 1}/${found.length})`,
+    );
+    try {
+      await installOne(pet);
+      installed.push(pet.displayName);
+    } catch (err) {
+      failed.push({
+        slug: pet.slug,
+        reason: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  if (installed.length === found.length) {
+    s.stop(
+      installed.length === 1
+        ? `Installed ${pc.cyan(installed[0])}`
+        : `Installed ${pc.cyan(installed.length)} pets`,
+    );
+  } else if (installed.length > 0) {
+    s.stop(
+      `Installed ${pc.cyan(installed.length)} of ${found.length} (${pc.red(`${failed.length} failed`)})`,
+    );
+  } else {
+    s.stop(pc.red("all failed"));
+  }
+
+  const lines: string[] = [];
+  if (installed.length > 0) {
+    lines.push("Paths:");
+    lines.push(`  ${pc.dim("~/.petdex/pets/")} (Petdex Desktop)`);
+    lines.push(`  ${pc.dim("~/.codex/pets/")} (Codex Desktop)`);
+    lines.push("");
+    lines.push("Activate in Petdex Desktop: right-click the mascot.");
+    lines.push("Activate in Codex Desktop:");
+    lines.push(`  ${pc.cyan("Settings -> Appearance -> Pets")}`);
+  }
+  if (missing.length > 0) {
+    if (lines.length > 0) lines.push("");
+    lines.push(pc.yellow(`Skipped (slug not found):`));
+    for (const slug of missing) lines.push(`  ${slug}`);
+  }
+  if (failed.length > 0) {
+    if (lines.length > 0) lines.push("");
+    lines.push(pc.red(`Failed:`));
+    for (const f of failed) lines.push(`  ${f.slug}: ${f.reason}`);
+  }
+  if (lines.length > 0) p.note(lines.join("\n"), "Next steps");
+
+  if (failed.length > 0 && installed.length === 0) {
+    process.exit(1);
+  }
 }
 
 async function download(url: string, dest: string): Promise<void> {

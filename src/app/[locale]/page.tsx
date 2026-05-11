@@ -13,6 +13,7 @@ import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { searchPets } from "@/lib/pet-search";
 import { getFeaturedPetsWithMetrics, type PetWithMetrics } from "@/lib/pets";
 
+import { CollectionActionMenu } from "@/components/collection-action-menu";
 import { CollectionCover } from "@/components/collection-cover";
 import { CommandLine } from "@/components/command-line";
 import { DiscordLink } from "@/components/discord-link";
@@ -242,31 +243,45 @@ async function FeaturedCollections({
       <div className="grid auto-rows-fr gap-4 md:grid-cols-3">
         {collections.map((collection) => {
           return (
-            <Link
+            <article
               key={collection.slug}
-              href={`/collections/${collection.slug}`}
-              className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10"
+              className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10 has-[[aria-expanded=true]]:z-30"
             >
-              <CollectionCover
-                pets={collection.pets}
-                coverSlug={collection.coverPetSlug}
-                max={5}
-                scale={0.5}
-              />
-              <div className="flex flex-1 flex-col p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">
-                    {collection.title}
-                  </h3>
-                  <span className="shrink-0 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-                    {collection.pets.length} pets
-                  </span>
+              <Link
+                href={`/collections/${collection.slug}`}
+                className="block"
+              >
+                <CollectionCover
+                  pets={collection.pets}
+                  coverSlug={collection.coverPetSlug}
+                  max={5}
+                  scale={0.5}
+                />
+                <div className="flex flex-1 flex-col p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">
+                      {collection.title}
+                    </h3>
+                    <span className="shrink-0 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
+                      {collection.pets.length} pets
+                    </span>
+                  </div>
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-2">
+                    {collection.description}
+                  </p>
                 </div>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-2">
-                  {collection.description}
-                </p>
+              </Link>
+              <div className="absolute top-3 right-3 z-20">
+                <CollectionActionMenu
+                  collection={{
+                    slug: collection.slug,
+                    title: collection.title,
+                    petCount: collection.pets.length,
+                    pets: collection.pets.map((p) => ({ slug: p.slug })),
+                  }}
+                />
               </div>
-            </Link>
+            </article>
           );
         })}
       </div>

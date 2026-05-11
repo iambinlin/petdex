@@ -14,6 +14,7 @@ import {
 import type { OwnerCredit } from "@/lib/owner-credit";
 import type { PetWithMetrics } from "@/lib/pets";
 
+import { CollectionActionMenu } from "@/components/collection-action-menu";
 import { CollectionCover } from "@/components/collection-cover";
 import {
   InputGroup,
@@ -272,7 +273,7 @@ const CollectionCard = memo(function CollectionCard({
 }) {
   const k = collectionKind(c.slug);
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80">
+    <article className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 has-[[aria-expanded=true]]:z-30">
       <Link href={`/collections/${c.slug}`} className="block">
         <CollectionCover
           pets={c.pets}
@@ -281,6 +282,16 @@ const CollectionCard = memo(function CollectionCard({
           scale={0.55}
         />
       </Link>
+      <div className="absolute top-3 right-3 z-20">
+        <CollectionActionMenu
+          collection={{
+            slug: c.slug,
+            title: c.title,
+            petCount: c.petCount,
+            pets: c.pets.map((p) => ({ slug: p.slug })),
+          }}
+        />
+      </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
