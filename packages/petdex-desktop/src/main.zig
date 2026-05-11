@@ -308,11 +308,13 @@ const html_tail =
     \\    // don't get clipped with an ellipsis. We cap at max-width
     \\    // so it wraps to a 2-3 line tooltip rather than expanding
     \\    // sideways forever and overlapping the picker menu.
-    \\    // overflow-wrap:anywhere forces breaks at any character —
-    \\    // critical for our content (mcp__custom__foo, snake_case
-    \\    // tool names, paths with no spaces). word-break:break-word
-    \\    // alone leaves these unbroken and the bubble clips. The
-    \\    // pair (word-break + overflow-wrap) covers every browser.
+    \\    // overflow-wrap:break-word breaks long unbreakable runs only when
+    \\    // they would overflow — gentler than `anywhere`, which breaks
+    \\    // mid-word for any line that happens to be longer than the box,
+    \\    // producing orphan single-letter lines like "AskUserQuestio\n n"
+    \\    // (Hunter screenshot 2026-05-11). break-word + word-break:keep-all
+    \\    // leaves CamelCase and snake_case alone when they fit, breaks them
+    \\    // at character boundaries only when they don't.
     \\    // No width:max-content — that lets the bubble grow past
     \\    // max-width because max-content is the intrinsic width of
     \\    // an unwrapped text run, which beats max-width. Default
@@ -324,7 +326,7 @@ const html_tail =
     \\    bubbleAvatarEl.decoding = 'async';
     \\    bubbleAvatarEl.style.cssText = 'width:20px;height:20px;flex:0 0 auto;object-fit:cover;display:block;';
     \\    bubbleTextEl = document.createElement('span');
-    \\    bubbleTextEl.style.cssText = 'display:block;min-width:0;word-break:break-word;overflow-wrap:anywhere;';
+    \\    bubbleTextEl.style.cssText = 'display:block;min-width:0;word-break:keep-all;overflow-wrap:break-word;';
     \\    bubbleEl.appendChild(bubbleAvatarEl);
     \\    bubbleEl.appendChild(bubbleTextEl);
     \\    document.body.appendChild(bubbleEl);
@@ -504,10 +506,21 @@ const html_tail =
     \\      // the previous one-size "Install failed" that left users
     \\      // (Hunter, 2026-05-11) with no actionable next step.
     \\      const err = (r && r.error) || 'unknown';
+    \\      // Reflect the failure on the mascot sprite so the user sees
+    \\      // the dejected face in addition to reading the bubble. The
+    \\      // sidecar's state queue auto-reverts to idle after duration
+    \\      // expires, so we don't need cleanup logic here.
+    \\      try { window.zero.invoke('petdex.set_mascot_state', { state: 'failed' }); } catch (_) {}
     \\      if (err === 'cli_not_persisted') {
     \\        showLocalBubble('Run: npx petdex@latest init');
     \\      } else if (err === 'no_home') {
     \\        showLocalBubble('No HOME env. Run: npx petdex@latest install ' + slug);
+    \\      } else if (err === 'node_not_found') {
+    \\        // Sidecar's PATH-aware lookup also failed — node isn't on
+    \\        // PATH AND not in any of the version-manager default
+    \\        // locations we probe. User needs to install node or fix
+    \\        // their PATH.
+    \\        showLocalBubble('Node.js not found. Install from nodejs.org or via brew install node.');
     \\      } else if (err === 'abnormal_exit') {
     \\        showLocalBubble('petdex install crashed. Try terminal: npx petdex@latest install ' + slug);
     \\      } else if (err.indexOf('exit_') === 0) {
@@ -516,10 +529,16 @@ const html_tail =
     \\        // today). Direct the user to the terminal where stderr will
     \\        // tell them which.
     \\        showLocalBubble('Install failed (' + err + '). Try: npx petdex@latest install ' + slug);
+    \\      } else if (err.indexOf('spawn_') === 0) {
+    \\        // spawn_FileNotFound used to leak through as a bare
+    \\        // FileNotFound from std.process.spawn. Now we prefix with
+    \\        // spawn_ so the mapping is unambiguous.
+    \\        showLocalBubble('Install spawn failed (' + err + '). Try: npx petdex@latest install ' + slug);
     \\      } else {
     \\        showLocalBubble('Install failed: ' + err);
     \\      }
     \\    } catch (e) {
+    \\      try { window.zero.invoke('petdex.set_mascot_state', { state: 'failed' }); } catch (_) {}
     \\      showLocalBubble('Install crashed');
     \\    }
     \\  }
@@ -1155,7 +1174,7 @@ const PetdexState = struct {
     // having to re-resolve sidecar_dir or rebuild the env map.
     sidecar_dir: []u8,
     env_map: *std.process.Environ.Map,
-    bridge_handlers: [9]zero_native.BridgeHandler = undefined,
+    bridge_handlers: [10]zero_native.BridgeHandler = undefined,
 
     fn deinit(self: *PetdexState) void {
         self.allocator.free(self.config_dir);
@@ -1176,6 +1195,7 @@ const PetdexState = struct {
             .{ .name = "petdex.read_update_info", .context = self, .invoke_fn = readUpdateInfoCmd },
             .{ .name = "petdex.trigger_update", .context = self, .invoke_fn = triggerUpdateCmd },
             .{ .name = "petdex.respawn_sidecar", .context = self, .invoke_fn = respawnSidecarCmd },
+            .{ .name = "petdex.set_mascot_state", .context = self, .invoke_fn = setMascotStateCmd },
         };
         return .{
             .policy = .{ .enabled = true, .commands = &petdex_command_policies },
@@ -1282,14 +1302,24 @@ const PetdexState = struct {
             return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"cli_not_persisted\"}}", .{});
         };
 
-        const argv = &[_][]const u8{ "node", cli_path, "install", slug };
+        // Resolve node via the same PATH-aware lookup the sidecar uses.
+        // launchctl PATH on Finder-launched .apps is /usr/bin:/bin:/usr/sbin:/sbin
+        // — no nvm, no homebrew, no node. Plain `node` in argv would
+        // resolve to FileNotFound and the user would see "Install failed:
+        // FileNotFound" (Hunter 2026-05-11) with no idea what to do.
+        const node_path = findExecutableOnPath(self.allocator, self.io, self.env_map, "node") catch {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"node_not_found\"}}", .{});
+        };
+        defer self.allocator.free(node_path);
+
+        const argv = &[_][]const u8{ node_path, cli_path, "install", slug };
         var child = std.process.spawn(self.io, .{
             .argv = argv,
             .stdin = .ignore,
             .stdout = .ignore,
             .stderr = .ignore,
         }) catch |err| {
-            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"{s}\"}}", .{@errorName(err)});
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"spawn_{s}\"}}", .{@errorName(err)});
         };
         const term = child.wait(self.io) catch |err| {
             return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"{s}\"}}", .{@errorName(err)});
@@ -1432,6 +1462,88 @@ const PetdexState = struct {
             else => return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"curl_abnormal_exit\"}}", .{}),
         }
     }
+
+    // Forward a {state, duration} payload to the sidecar so the
+    // mascot sprite reflects WebView-side events (install fails, etc.).
+    // Without this, all mascot state changes flow through external
+    // hooks (claude-code, opencode posting to /state); WebView-internal
+    // failures had no way to drive the sprite. Hunter 2026-05-11:
+    // "deepling install failed but mascot kept smiling".
+    //
+    // Same auth pattern as triggerUpdateCmd: read the per-session token
+    // and forward it as a header so a drive-by website can't bypass.
+    fn setMascotStateCmd(context: *anyopaque, invocation: zero_native.bridge.Invocation, output: []u8) anyerror![]const u8 {
+        const self: *PetdexState = @ptrCast(@alignCast(context));
+        const state = jsonStringField(invocation.request.payload, "state") orelse return error.MissingState;
+
+        const token_path = try std.fs.path.join(self.allocator, &.{ self.config_dir, "runtime", "update-token" });
+        defer self.allocator.free(token_path);
+        var token_file = std.Io.Dir.openFileAbsolute(self.io, token_path, .{}) catch {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"no_token\"}}", .{});
+        };
+        defer token_file.close(self.io);
+        var token_buf: [128]u8 = undefined;
+        const token_read = token_file.readPositionalAll(self.io, &token_buf, 0) catch {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"token_read\"}}", .{});
+        };
+        const token = std.mem.trim(u8, token_buf[0..token_read], " \t\r\n");
+        if (token.len == 0) {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"empty_token\"}}", .{});
+        }
+
+        const header_arg = try std.fmt.allocPrint(
+            self.allocator,
+            "X-Petdex-Update-Token: {s}",
+            .{token},
+        );
+        defer self.allocator.free(header_arg);
+
+        // Build {"state":"<state>","duration":3000} body. Duration
+        // bounded so an install-failure sprite doesn't pin the mascot
+        // forever — the next idle tick reverts it.
+        const body = try std.fmt.allocPrint(
+            self.allocator,
+            "{{\"state\":\"{s}\",\"duration\":3000}}",
+            .{state},
+        );
+        defer self.allocator.free(body);
+
+        const argv = &[_][]const u8{
+            "curl",
+            "-fsS",
+            "-m",
+            "3",
+            "-X",
+            "POST",
+            "-H",
+            header_arg,
+            "-H",
+            "Content-Type: application/json",
+            "-d",
+            body,
+            "http://127.0.0.1:7777/state",
+        };
+        var child = std.process.spawn(self.io, .{
+            .argv = argv,
+            .stdin = .ignore,
+            .stdout = .ignore,
+            .stderr = .ignore,
+        }) catch |err| {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"spawn_{s}\"}}", .{@errorName(err)});
+        };
+        const term = child.wait(self.io) catch |err| {
+            return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"wait_{s}\"}}", .{@errorName(err)});
+        };
+        switch (term) {
+            .exited => |code| {
+                if (code == 0) {
+                    return std.fmt.bufPrint(output, "{{\"ok\":true}}", .{});
+                }
+                return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"curl_exit_{d}\"}}", .{code});
+            },
+            else => return std.fmt.bufPrint(output, "{{\"ok\":false,\"error\":\"curl_abnormal_exit\"}}", .{}),
+        }
+    }
 };
 
 const petdex_origins = [_][]const u8{ "zero://app", "zero://inline" };
@@ -1445,6 +1557,7 @@ const petdex_command_policies = [_]zero_native.BridgeCommandPolicy{
     .{ .name = "petdex.read_update_info", .origins = &petdex_origins },
     .{ .name = "petdex.trigger_update", .origins = &petdex_origins },
     .{ .name = "petdex.respawn_sidecar", .origins = &petdex_origins },
+    .{ .name = "petdex.set_mascot_state", .origins = &petdex_origins },
 };
 
 fn jsonStringField(payload: []const u8, key: []const u8) ?[]const u8 {
