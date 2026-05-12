@@ -52,7 +52,8 @@ export type TelemetryEvent =
   | "cli_desktop_start_success"
   | "cli_update_applied"
   | "cli_init_started"
-  | "cli_up_invoked";
+  | "cli_up_invoked"
+  | "cli_edit_invoked";
 
 export type TelemetryPayload = {
   cli_version?: string;

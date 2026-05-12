@@ -15,6 +15,7 @@ const VALID_EVENTS = new Set([
   "cli_update_applied",
   "cli_init_started",
   "cli_up_invoked",
+  "cli_edit_invoked",
 ]);
 
 const VALID_OS = new Set(["darwin", "linux", "win32"]);

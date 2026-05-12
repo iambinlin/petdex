@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 
 import { db, schema } from "@/lib/db/client";
+import { decideAutoAccept } from "@/lib/edit-policy";
 import {
   BLOCKED_KEYWORD_REASON,
   containsBlockedKeyword,
 } from "@/lib/keyword-blocklist";
+import { createNotification } from "@/lib/notifications";
 import { editRatelimit } from "@/lib/ratelimit";
 import { requireSameOrigin } from "@/lib/same-origin";
+import { refreshSimilarityFor } from "@/lib/similarity";
+import { isAllowedAssetUrl } from "@/lib/url-allowlist";
+import { containsUrl, URL_BLOCKED_REASON } from "@/lib/url-blocklist";
 
 export const runtime = "nodejs";
 
@@ -19,10 +24,16 @@ type PatchBody = {
   displayName?: string;
   description?: string;
   tags?: string[];
+  spritesheetUrl?: string;
+  spritesheetWidth?: number;
+  spritesheetHeight?: number;
+  petJsonUrl?: string;
+  zipUrl?: string;
 };
 
 const TAG_RE = /^[a-z0-9][a-z0-9-]{0,30}$/;
 const MAX_TAGS = 8;
+const DESC_MAX = 280;
 
 function normalizeTags(input: unknown): string[] | null {
   if (!Array.isArray(input)) return null;
@@ -72,9 +83,6 @@ export async function PATCH(
   if (!row) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
-  // Only approved pets can be edited via this flow. Pending pets edit
-  // their own record directly when admin approves; rejected pets need
-  // a fresh /submit. Withdrawn pets are gone.
   if (row.status !== "approved") {
     return NextResponse.json(
       { error: "only_approved_editable" },
@@ -103,12 +111,22 @@ export async function PATCH(
     pendingTags: string[] | null;
     pendingSubmittedAt: Date;
     pendingRejectionReason: null;
+    pendingSpritesheetUrl: string | null;
+    pendingPetJsonUrl: string | null;
+    pendingZipUrl: string | null;
+    pendingSpritesheetWidth: number | null;
+    pendingSpritesheetHeight: number | null;
   } = {
     pendingDisplayName: null,
     pendingDescription: null,
     pendingTags: null,
     pendingSubmittedAt: new Date(),
     pendingRejectionReason: null,
+    pendingSpritesheetUrl: null,
+    pendingPetJsonUrl: null,
+    pendingZipUrl: null,
+    pendingSpritesheetWidth: null,
+    pendingSpritesheetHeight: null,
   };
 
   if (typeof body.displayName === "string") {
@@ -122,10 +140,19 @@ export async function PATCH(
     if (v !== row.displayName) patch.pendingDisplayName = v;
   }
   if (typeof body.description === "string") {
-    const v = body.description.trim().slice(0, 280);
+    const v = body.description.trim();
     if (v.length < 10) {
       return NextResponse.json(
         { error: "description_too_short" },
+        { status: 400 },
+      );
+    }
+    if (v.length > DESC_MAX) {
+      return NextResponse.json(
+        {
+          error: "description_too_long",
+          message: `Description must be ${DESC_MAX} characters or fewer (got ${v.length}).`,
+        },
         { status: 400 },
       );
     }
@@ -139,6 +166,70 @@ export async function PATCH(
     }
     const currentTags = (row.tags as string[]) ?? [];
     if (!sameArray(tags, currentTags)) patch.pendingTags = tags;
+  }
+
+  if (typeof body.spritesheetUrl === "string") {
+    if (!isAllowedAssetUrl(body.spritesheetUrl)) {
+      return NextResponse.json(
+        { error: "invalid_asset_url", field: "spritesheetUrl" },
+        { status: 400 },
+      );
+    }
+    if (body.spritesheetUrl !== row.spritesheetUrl) {
+      patch.pendingSpritesheetUrl = body.spritesheetUrl;
+      patch.pendingSpritesheetWidth =
+        typeof body.spritesheetWidth === "number"
+          ? body.spritesheetWidth
+          : null;
+      patch.pendingSpritesheetHeight =
+        typeof body.spritesheetHeight === "number"
+          ? body.spritesheetHeight
+          : null;
+    }
+  }
+
+  if (typeof body.petJsonUrl === "string") {
+    if (!isAllowedAssetUrl(body.petJsonUrl)) {
+      return NextResponse.json(
+        { error: "invalid_asset_url", field: "petJsonUrl" },
+        { status: 400 },
+      );
+    }
+    if (body.petJsonUrl !== row.petJsonUrl) {
+      patch.pendingPetJsonUrl = body.petJsonUrl;
+    }
+  }
+
+  if (typeof body.zipUrl === "string") {
+    if (!isAllowedAssetUrl(body.zipUrl)) {
+      return NextResponse.json(
+        { error: "invalid_asset_url", field: "zipUrl" },
+        { status: 400 },
+      );
+    }
+    if (body.zipUrl !== row.zipUrl) {
+      patch.pendingZipUrl = body.zipUrl;
+    }
+  }
+
+  // URL filter on free-text fields.
+  const urlHit = containsUrl(
+    ["displayName", patch.pendingDisplayName],
+    ["description", patch.pendingDescription],
+    ...((patch.pendingTags ?? []).map((t) => ["tag", t]) as Array<
+      [string, string]
+    >),
+  );
+  if (urlHit) {
+    return NextResponse.json(
+      {
+        error: "url_in_field",
+        field: urlHit.field,
+        pattern: urlHit.pattern,
+        message: URL_BLOCKED_REASON,
+      },
+      { status: 422 },
+    );
   }
 
   if (
@@ -157,9 +248,94 @@ export async function PATCH(
   const noOp =
     patch.pendingDisplayName === null &&
     patch.pendingDescription === null &&
-    patch.pendingTags === null;
+    patch.pendingTags === null &&
+    patch.pendingSpritesheetUrl === null &&
+    patch.pendingPetJsonUrl === null &&
+    patch.pendingZipUrl === null;
   if (noOp) {
     return NextResponse.json({ error: "nothing_changed" }, { status: 400 });
+  }
+
+  // Asset edits always queue to admin — skip auto-accept policy.
+  const hasAssetEdit =
+    patch.pendingSpritesheetUrl !== null ||
+    patch.pendingPetJsonUrl !== null ||
+    patch.pendingZipUrl !== null;
+
+  if (!hasAssetEdit) {
+    // Count auto-approved edits in last 24h.
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentRows = await db
+      .select({ editCount: sql<number>`count(*)` })
+      .from(schema.submittedPets)
+      .where(
+        and(
+          eq(schema.submittedPets.id, id),
+          gte(schema.submittedPets.lastEditAt, since),
+        ),
+      );
+    const editCountLast24h = Number(recentRows[0]?.editCount ?? 0);
+
+    const decision = await decideAutoAccept({
+      currentDisplayName: row.displayName,
+      currentDescription: row.description,
+      currentTags: (row.tags as string[]) ?? [],
+      currentSpritesheetUrl: row.spritesheetUrl,
+      currentPetJsonUrl: row.petJsonUrl,
+      currentZipUrl: row.zipUrl,
+      currentApprovedAt: row.approvedAt ?? null,
+
+      pendingDisplayName: patch.pendingDisplayName,
+      pendingDescription: patch.pendingDescription,
+      pendingTags: patch.pendingTags,
+      pendingSpritesheetUrl: null,
+      pendingPetJsonUrl: null,
+      pendingZipUrl: null,
+
+      editCountLast24h,
+    });
+
+    if (decision.autoAccept) {
+      const liveUpdate: Record<string, unknown> = {
+        pendingDisplayName: null,
+        pendingDescription: null,
+        pendingTags: null,
+        pendingSubmittedAt: null,
+        pendingRejectionReason: null,
+        pendingAutoApprovedAt: new Date(),
+        editCount: (row.editCount ?? 0) + 1,
+        lastEditAt: new Date(),
+      };
+      if (patch.pendingDisplayName !== null) {
+        liveUpdate.displayName = patch.pendingDisplayName;
+      }
+      if (patch.pendingDescription !== null) {
+        liveUpdate.description = patch.pendingDescription;
+      }
+      if (patch.pendingTags !== null) {
+        liveUpdate.tags = patch.pendingTags;
+      }
+
+      await db
+        .update(schema.submittedPets)
+        .set(liveUpdate)
+        .where(eq(schema.submittedPets.id, id));
+
+      void refreshSimilarityFor(id).catch(() => {});
+
+      void createNotification({
+        userId: row.ownerId,
+        kind: "edit_approved",
+        payload: {
+          petSlug: row.slug,
+          petName: patch.pendingDisplayName ?? row.displayName,
+          auto: true,
+        },
+        href: `/pets/${row.slug}`,
+      }).catch(() => {});
+
+      return NextResponse.json({ status: "auto_approved" });
+    }
   }
 
   const [updated] = await db
@@ -169,7 +345,7 @@ export async function PATCH(
     .returning();
 
   return NextResponse.json({
-    ok: true,
+    status: "queued",
     pending: {
       displayName: updated.pendingDisplayName,
       description: updated.pendingDescription,
@@ -212,6 +388,11 @@ export async function DELETE(
       pendingTags: null,
       pendingSubmittedAt: null,
       pendingRejectionReason: null,
+      pendingSpritesheetUrl: null,
+      pendingPetJsonUrl: null,
+      pendingZipUrl: null,
+      pendingSpritesheetWidth: null,
+      pendingSpritesheetHeight: null,
     })
     .where(eq(schema.submittedPets.id, id));
 
