@@ -40,6 +40,8 @@ const UPDATE_PATH = join(RUNTIME_DIR, "update.json");
 const UPDATE_LOG_PATH = join(RUNTIME_DIR, "update.log");
 const UPDATE_TOKEN_PATH = join(RUNTIME_DIR, "update-token");
 const VERSION_FILE = join(homedir(), ".petdex", "version");
+const INIT_STATUS_PATH = join(RUNTIME_DIR, "init-status.json");
+const PERSISTED_BINARY_PATH = join(homedir(), ".petdex", "bin", "petdex.js");
 const LOG_PATH = join(RUNTIME_DIR, "sidecar.log");
 const MAX_BODY_BYTES = 64 * 1024;
 // Listing the last N releases instead of `/releases/latest` because
@@ -275,7 +277,6 @@ function writeBubble(text: string, agentSource: string | null) {
   writeFileSync(BUBBLE_PATH, JSON.stringify(payload));
 }
 
-
 // Worker tick: 100ms is well under the WebView's 200ms state.json
 // poll, so the user sees changes within one polling cycle.
 setInterval(() => {
@@ -326,6 +327,8 @@ try {
     );
   }
 } catch {}
+
+writeInitStatus();
 
 function jsonResponse(res: http.ServerResponse, status: number, body: unknown) {
   const payload = JSON.stringify(body);
@@ -436,6 +439,22 @@ function writeUpdateInfo(info: UpdateInfo) {
   }
 }
 
+function writeInitStatus(): void {
+  const hooksInstalled = existsSync(PERSISTED_BINARY_PATH);
+  try {
+    writeFileSync(
+      INIT_STATUS_PATH,
+      JSON.stringify({
+        needsInit: !hooksInstalled,
+        reason: hooksInstalled ? null : "no_hooks_installed",
+        checkedAt: Date.now(),
+      }),
+    );
+  } catch (err) {
+    log(`init-status.json write failed: ${(err as Error).message}`);
+  }
+}
+
 async function fetchLatestDesktopTag(): Promise<string | null> {
   for (let page = 1; page <= RELEASES_MAX_PAGES; page++) {
     const url = `${RELEASES_API_BASE}?per_page=${RELEASES_PAGE_SIZE}&page=${page}`;
@@ -493,6 +512,7 @@ async function checkForUpdate(): Promise<void> {
     checkedAt: Date.now(),
   };
   writeUpdateInfo(next);
+  writeInitStatus();
   log(
     `update check: current=${current ?? "?"} latest=${latest ?? "?"} available=${available}`,
   );
@@ -535,7 +555,11 @@ function findExecutable(name: string): string | null {
   for (const dir of (process.env.PATH ?? "").split(":")) {
     if (dir) candidates.push(path.join(dir, name));
   }
-  candidates.push(`/opt/homebrew/bin/${name}`, `/usr/local/bin/${name}`, `/usr/bin/${name}`);
+  candidates.push(
+    `/opt/homebrew/bin/${name}`,
+    `/usr/local/bin/${name}`,
+    `/usr/bin/${name}`,
+  );
   if (home) {
     candidates.push(
       path.join(home, ".volta", "bin", name),
@@ -577,7 +601,8 @@ function spawnUpdate(): void {
     writeUpdateInfo({
       ...readUpdateInfo(),
       status: "error",
-      message: "npx not found. Install Node.js from nodejs.org or run `brew install node`.",
+      message:
+        "npx not found. Install Node.js from nodejs.org or run `brew install node`.",
       checkedAt: Date.now(),
     });
     return;
@@ -740,8 +765,7 @@ const server = http.createServer(async (req, res) => {
       // running-left / running-right sent explicitly bypass — those
       // are intentional choices (a future hook might want a
       // specific direction).
-      const enqueueState =
-        state === "running" ? nextRunningVariant() : state;
+      const enqueueState = state === "running" ? nextRunningVariant() : state;
       // Enqueue rather than writing directly. The worker tick
       // drains in order with coalesce + min dwell so consecutive
       // identical events (running/idle/running/idle pinball under
@@ -755,6 +779,7 @@ const server = http.createServer(async (req, res) => {
       log(
         `state=${enqueueState} duration=${duration ?? "-"} ${accepted ? "queued" : "coalesced"}`,
       );
+      writeInitStatus();
       // Funnel terminal step: emit once on the first accepted state of
       // this sidecar session. Any subsequent hook hits are no-ops.
       emitFirstStateReceived(state, agentSource);
@@ -812,6 +837,7 @@ const server = http.createServer(async (req, res) => {
           ? data.agent_source.slice(0, 64)
           : null;
       writeBubble(text, agentSource);
+      writeInitStatus();
       log(`bubble="${text.slice(0, 60)}" source=${agentSource ?? "-"}`);
       return jsonResponse(res, 200, {
         ok: true,
@@ -823,6 +849,28 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/update") {
       // The WebView poll endpoint. Cheap reads, no body validation.
       return jsonResponse(res, 200, readUpdateInfo());
+    }
+
+    if (req.method === "GET" && url.pathname === "/init-status") {
+      if (!existsSync(INIT_STATUS_PATH)) {
+        return jsonResponse(res, 404, {
+          needsInit: true,
+          reason: "no_hooks_installed",
+          checkedAt: 0,
+        });
+      }
+      try {
+        const raw = readFileSync(INIT_STATUS_PATH, "utf8");
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(raw);
+        return;
+      } catch {
+        return jsonResponse(res, 200, {
+          needsInit: false,
+          reason: null,
+          checkedAt: 0,
+        });
+      }
     }
 
     if (req.method === "POST" && url.pathname === "/update/handoff") {
@@ -961,7 +1009,9 @@ server.on("error", (err: NodeJS.ErrnoException) => {
 // an orphan — SIGTERM it, wait for the port to free, retry listen.
 async function recoverFromAddrInUse(err: NodeJS.ErrnoException): Promise<void> {
   if (listenAttempts >= LISTEN_MAX_ATTEMPTS) {
-    log(`server.error: ${err.message}; gave up after ${listenAttempts} attempts`);
+    log(
+      `server.error: ${err.message}; gave up after ${listenAttempts} attempts`,
+    );
     process.exit(1);
     return;
   }
@@ -1045,7 +1095,10 @@ async function recoverFromAddrInUse(err: NodeJS.ErrnoException): Promise<void> {
   attemptListen();
 }
 
-async function waitForPortFree(port: number, timeoutMs: number): Promise<boolean> {
+async function waitForPortFree(
+  port: number,
+  timeoutMs: number,
+): Promise<boolean> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const free = await new Promise<boolean>((resolve) => {

@@ -48,12 +48,7 @@ export type QueueOptions = {
 const DEFAULTS: Required<QueueOptions> = {
   minDwellMs: 250,
   maxQueueSize: 50,
-  durationStates: new Set([
-    "waving",
-    "failed",
-    "review",
-    "jumping",
-  ]),
+  durationStates: new Set(["waving", "failed", "review", "jumping"]),
 };
 
 export type DisplayedState = {
