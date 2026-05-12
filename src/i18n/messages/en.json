@@ -1540,5 +1540,24 @@
     "editAria": "Edit pet",
     "evidenceAssets": "Assets",
     "evidencePolicy": "Policy"
+  },
+  "collaboratorWechatQr": {
+    "panelTitle": "WeChat Group QR Manager",
+    "currentQr": "Current QR",
+    "expiresIn": "Expires in {days} days",
+    "expired": "Expired",
+    "uploadCta": "Upload new QR",
+    "dropZoneHint": "Drop JPG / PNG here, max 200KB",
+    "validating": "Validating with AI...",
+    "validationFailed": "Validation failed",
+    "uploadSuccess": "Upload successful!",
+    "history": "Upload history",
+    "historyEmpty": "No uploads yet",
+    "statusActive": "Active",
+    "statusReplaced": "Replaced",
+    "statusRejected": "Rejected",
+    "uploadedBy": "Uploaded by",
+    "rotateNow": "Rotate now",
+    "viewOnPublic": "View on public page"
   }
 }

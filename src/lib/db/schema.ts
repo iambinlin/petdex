@@ -810,3 +810,28 @@ export const telemetryEvents = pgTable(
 
 export type TelemetryEvent = typeof telemetryEvents.$inferSelect;
 export type NewTelemetryEvent = typeof telemetryEvents.$inferInsert;
+
+export const wechatQrUploads = pgTable(
+  "wechat_qr_uploads",
+  {
+    id: serial("id").primaryKey(),
+    uploadedBy: text("uploaded_by").notNull(),
+    blobUrl: text("blob_url").notNull(),
+    historyKey: text("history_key").notNull(),
+    validationResult: jsonb("validation_result").notNull(),
+    status: text("status").notNull().default("active"),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => ({
+    statusIdx: index("wechat_qr_uploads_status_idx").on(
+      table.status,
+      table.uploadedAt,
+    ),
+  }),
+);
+
+export type WechatQrUpload = typeof wechatQrUploads.$inferSelect;
+export type NewWechatQrUpload = typeof wechatQrUploads.$inferInsert;

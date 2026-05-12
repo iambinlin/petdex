@@ -1800,5 +1800,24 @@
     "editAria": "编辑宠物",
     "evidenceAssets": "素材",
     "evidencePolicy": "政策"
+  },
+  "collaboratorWechatQr": {
+    "panelTitle": "微信群二维码管理",
+    "currentQr": "当前二维码",
+    "expiresIn": "{days}天后过期",
+    "expired": "已过期",
+    "uploadCta": "上传新二维码",
+    "dropZoneHint": "拖拽 JPG / PNG 图片，最大 200KB",
+    "validating": "AI 验证中...",
+    "validationFailed": "验证失败",
+    "uploadSuccess": "上传成功！",
+    "history": "历史记录",
+    "historyEmpty": "还没有上传记录",
+    "statusActive": "当前",
+    "statusReplaced": "已替换",
+    "statusRejected": "已拒绝",
+    "uploadedBy": "上传者",
+    "rotateNow": "立即更新",
+    "viewOnPublic": "在公共页面查看"
   }
 }
