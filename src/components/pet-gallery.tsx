@@ -39,6 +39,7 @@ import { PetActionMenu } from "@/components/pet-action-menu";
 import { PetCardFooter } from "@/components/pet-card-footer";
 import { PetSprite } from "@/components/pet-sprite";
 import { ProfilePinButton } from "@/components/profile-pin-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   InputGroup,
@@ -844,29 +845,42 @@ function PetCardImpl({
   const batchLabel = pet.approvedAt
     ? formatBatchLabel(getBatchKey(new Date(pet.approvedAt)))
     : null;
-  const accentStyle =
-    !pet.featured && pet.dominantColor
-      ? ({ "--pet-accent": pet.dominantColor } as CSSProperties)
-      : undefined;
+  // Every card with a dominantColor gets the same accent treatment.
+  // Featured cards keep the same look + add a brand badge in the corner
+  // (similar to HOT/NEW). Drop the special-case styling — featured no
+  // longer hijacks the stripe/tint with brand color.
+  const accentStyle = pet.dominantColor
+    ? ({ "--pet-accent": pet.dominantColor } as CSSProperties)
+    : undefined;
 
+  // Catalog-card / ID-badge aesthetic: neutral border on all sides, a single
+  // 3px accent stripe along the top tinted with --pet-accent (or brand-light
+  // for featured pets). Replaces the previous full-perimeter colored ring,
+  // which competed visually with the sprite + the colored chip badges.
+  // The has-[] selector still lifts this card above siblings while a
+  // dropdown is open — each card has its own stacking context (backdrop
+  // filter + hover translate), so an internal z-index can't escape it.
   return (
-    // The has-[] selector lifts this card above its row siblings while
-    // the action menu is open. Without it the dropdown gets clipped by
-    // the next card down: each card has its own stacking context (from
-    // backdrop-blur + the hover translate), so a z-index inside the
-    // dropdown can never climb above a later sibling's context. The
-    // PetActionMenu trigger button toggles aria-expanded, which is the
-    // signal we hook here.
     <article
+      data-slot="card"
       style={accentStyle}
-      className={`group relative flex h-full flex-col rounded-3xl border bg-surface/76 backdrop-blur transition has-[[aria-expanded=true]]:z-30 hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 ${
-        pet.featured
-          ? "border-brand-light/45 shadow-[0_0_0_1px_rgba(100,120,246,0.18),0_18px_45px_-22px_rgba(82,102,234,0.5)]"
-          : pet.dominantColor
-            ? "border-black/10 shadow-sm shadow-blue-950/5 ring-1 ring-[color:var(--pet-accent)]/30 hover:ring-[color:var(--pet-accent)]/60"
-            : "border-black/10 shadow-sm shadow-blue-950/5"
-      } dark:hover:bg-stone-800`}
+      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-black/10 bg-surface/76 shadow-sm shadow-blue-950/5 backdrop-blur transition has-[[aria-expanded=true]]:z-30 hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 dark:border-white/10 dark:hover:bg-stone-800"
     >
+      {/* Inset accent tab — short bar floating inside the card near the top,
+          centered horizontally, like the colored tab on a tab folder or a
+          file divider. Same treatment for featured & non-featured; the
+          featured badge in the top-right does the special-case signaling. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute top-3 left-1/2 h-[3px] w-24 -translate-x-1/2 rounded-full transition-opacity ${
+          pet.dominantColor ? "opacity-80 group-hover:opacity-100" : "opacity-0"
+        }`}
+        style={
+          pet.dominantColor
+            ? { backgroundColor: "var(--pet-accent)" }
+            : undefined
+        }
+      />
       <Link
         href={href}
         aria-label={`Open ${pet.displayName}`}
@@ -885,19 +899,42 @@ function PetCardImpl({
           </div>
         </div>
 
-        <div className="pet-sprite-stage relative flex items-center justify-center overflow-hidden px-5 py-6">
+        <div
+          className="pet-sprite-stage relative flex items-center justify-center overflow-hidden px-5 py-6"
+          style={
+            pet.dominantColor
+              ? {
+                  // Soft radial tint of the pet's accent behind the sprite —
+                  // catalog-card vibe, like a colored insert behind a photo.
+                  // Kept low-opacity so light/dark modes both stay legible.
+                  backgroundImage:
+                    "radial-gradient(ellipse at center, color-mix(in oklab, var(--pet-accent) 22%, transparent) 0%, transparent 75%)",
+                }
+              : undefined
+          }
+        >
           <PetSprite
             src={pet.spritesheetPath}
             cycleStates
             scale={0.7}
             label={`${pet.displayName} animated`}
           />
+          {/* Featured badge — universal across locales since 'featured' is
+              product status, not localization. Sits top-right. The zh-only
+              HOT/NEW/etc badges below take top-left to avoid collision. */}
+          {pet.featured ? (
+            <PetBadge variant="featured" position="top-right" />
+          ) : null}
           {locale === "zh"
             ? getDeterministicBadges(pet.slug, installCount).map((badge) => (
                 <PetBadge
                   key={`${badge.variant}-${badge.position}`}
                   variant={badge.variant}
-                  position={badge.position}
+                  position={
+                    pet.featured && badge.position === "top-right"
+                      ? "top-left"
+                      : badge.position
+                  }
                 />
               ))
             : null}
@@ -935,9 +972,12 @@ function PetCardImpl({
             {pet.description}
           </p>
           {batchLabel ? (
-            <span className="inline-flex w-fit items-center rounded-full border border-black/[0.08] bg-black/[0.03] px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-muted-2 uppercase dark:border-white/[0.1] dark:bg-white/[0.04]">
+            <Badge
+              variant="outline"
+              className="w-fit rounded-full border-black/[0.08] bg-black/[0.03] font-mono text-[10px] tracking-[0.12em] text-muted-2 uppercase dark:border-white/[0.1] dark:bg-white/[0.04]"
+            >
               {batchLabel}
-            </span>
+            </Badge>
           ) : null}
           {pet.vibes.length > 0 ? (
             <div className="mt-1 flex flex-wrap gap-1.5">
@@ -952,13 +992,14 @@ function PetCardImpl({
             </div>
           ) : null}
           {isDiscovered ? (
-            <span
-              className="inline-flex w-fit items-center gap-1 rounded-full bg-chip-warning-bg px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] text-chip-warning-fg uppercase ring-1 ring-chip-warning-fg/20"
+            <Badge
+              variant="outline"
+              className="w-fit gap-1 rounded-full border-transparent bg-chip-warning-bg font-mono text-[10px] tracking-[0.12em] text-chip-warning-fg uppercase ring-1 ring-chip-warning-fg/20"
               title="Added on behalf of the original author. Not yet claimed."
             >
               <Sparkles className="size-3" />
               Discovered
-            </span>
+            </Badge>
           ) : null}
 
           {pet.submittedBy ? (
@@ -995,15 +1036,15 @@ function PetCardImpl({
           row so it reads alongside the No. label without competing
           with the action menu in the top-right. */}
       {statusOverlay ? (
-        <span
-          className={`pointer-events-none absolute top-3 left-3 z-20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.15em] uppercase ring-1 ${
+        <Badge
+          className={`pointer-events-none absolute top-3 left-3 z-20 gap-1 rounded-full border-transparent font-mono text-[10px] tracking-[0.15em] uppercase ring-1 ${
             statusOverlay.tone === "danger"
               ? "bg-chip-danger-bg text-chip-danger-fg ring-chip-danger-fg/20"
               : "bg-chip-warning-bg text-chip-warning-fg ring-chip-warning-fg/20"
           }`}
         >
           {statusOverlay.label}
-        </span>
+        </Badge>
       ) : null}
 
       {/* Pin overlay — owner-only on their own /u/[handle]. Sits to the
