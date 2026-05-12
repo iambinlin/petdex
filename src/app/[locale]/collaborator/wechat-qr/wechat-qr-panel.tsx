@@ -20,7 +20,10 @@ import {
 
 import { uploadWechatQrAction } from "./actions";
 
-const LIVE_QR_URL = process.env.NEXT_PUBLIC_WECHAT_GROUP_QR_URL ?? "";
+// Use the local proxy route instead of the raw Aliyun URL — Henry's
+// bucket ACL is private so the public Aliyun URL 403s; /api/wechat-qr
+// reads with the RAM user's GetObject scope and serves with edge cache.
+const LIVE_QR_URL = "/api/wechat-qr";
 
 function useCountdown(expiresAt: Date | null) {
   const [msLeft, setMsLeft] = useState<number>(
