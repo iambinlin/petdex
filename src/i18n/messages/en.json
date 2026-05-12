@@ -1513,6 +1513,21 @@
     "searchAria": "Search collections",
     "sortAria": "Sort collections"
   },
+  "profile": {
+    "creatorBadge": "Petdex creator",
+    "creatorOfPetdex": "Creator of Petdex",
+    "yourAlbum": "YOUR ALBUM: {caught}/{total} ({pct}%)",
+    "editProfile": "Edit profile",
+    "petsTab": "Pets",
+    "likedTab": "Liked",
+    "collectionsTab": "Collections",
+    "submitPet": "Submit pet",
+    "approvedSection": "Approved ({count})",
+    "editOrder": "Edit order",
+    "joined": "joined {date}",
+    "installs": "{count} installs",
+    "petsCount": "{count, plural, =1 {1 pet} other {# pets}}"
+  },
   "galleryReorder": {
     "dragInstruction": "Drag any pet to reorder. Changes save when you click Done."
   },

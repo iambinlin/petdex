@@ -1773,6 +1773,21 @@
     "searchAria": "搜索合集",
     "sortAria": "排序合集"
   },
+  "profile": {
+    "creatorBadge": "Petdex 创作者",
+    "creatorOfPetdex": "Petdex 创作者",
+    "yourAlbum": "你的图鉴：{caught}/{total}（{pct}%）",
+    "editProfile": "编辑资料",
+    "petsTab": "宠物",
+    "likedTab": "收藏",
+    "collectionsTab": "合集",
+    "submitPet": "提交宠物",
+    "approvedSection": "已通过（{count}）",
+    "editOrder": "编辑顺序",
+    "joined": "加入于 {date}",
+    "installs": "{count} 安装数",
+    "petsCount": "{count} 个宠物"
+  },
   "galleryReorder": {
     "dragInstruction": "拖动宠物以重新排序。点击「完成」后保存更改。"
   },

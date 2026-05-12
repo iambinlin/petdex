@@ -53,6 +53,7 @@ function move<T>(items: T[], from: number, to: number): T[] {
 
 export function GalleryReorderGrid({ pets, children }: Props) {
   const t = useTranslations("galleryReorder");
+  const tProfile = useTranslations("profile");
   const [editing, setEditing] = useState(false);
   const [order, setOrder] = useState<PetWithMetrics[]>(pets);
   const orderRef = useRef<PetWithMetrics[]>(pets);
@@ -148,7 +149,7 @@ export function GalleryReorderGrid({ pets, children }: Props) {
             className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border-base bg-surface/70 px-3 text-xs font-medium text-muted-2 transition hover:border-border-strong hover:text-foreground"
           >
             <Pencil className="size-3" />
-            Edit order
+            {tProfile("editOrder")}
           </button>
         </div>
         {children}

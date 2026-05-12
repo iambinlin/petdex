@@ -1513,6 +1513,21 @@
     "searchAria": "Buscar colecciones",
     "sortAria": "Ordenar colecciones"
   },
+  "profile": {
+    "creatorBadge": "Creador Petdex",
+    "creatorOfPetdex": "Creador de Petdex",
+    "yourAlbum": "TU ÁLBUM: {caught}/{total} ({pct}%)",
+    "editProfile": "Editar perfil",
+    "petsTab": "Mascotas",
+    "likedTab": "Favoritos",
+    "collectionsTab": "Colecciones",
+    "submitPet": "Enviar mascota",
+    "approvedSection": "Aprobadas ({count})",
+    "editOrder": "Editar orden",
+    "joined": "se unió {date}",
+    "installs": "{count} instalaciones",
+    "petsCount": "{count, plural, =1 {1 mascota} other {# mascotas}}"
+  },
   "galleryReorder": {
     "dragInstruction": "Arrastra cualquier mascota para reordenar. Los cambios se guardan al hacer clic en Listo."
   },
