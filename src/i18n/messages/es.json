@@ -1600,5 +1600,20 @@
     "uploadedBy": "Subido por",
     "rotateNow": "Rotar ahora",
     "viewOnPublic": "Ver en página pública"
+  },
+  "collectionActionMenu": {
+    "moreActions": "Más acciones para {title}",
+    "closeMenu": "Cerrar menú",
+    "openInCodex": "Abrir en Codex",
+    "openInCodexDesc": "Codex Desktop ejecuta la instalación",
+    "copyInstallAll": "Copiar instalar todo",
+    "copiedInstall": "Comando copiado",
+    "copyCollectionLink": "Copiar enlace de la colección",
+    "copiedLink": "Enlace copiado",
+    "shareToX": "Compartir en X",
+    "viewCollection": "Ver colección",
+    "installHint": "{count, plural, =1 {1 mascota} other {# mascotas}}",
+    "installHintTruncated": "{shown} de {total} mascotas · pega el resto manual",
+    "shareXText": "Colección {title} de mascotas en Petdex - instala con una línea"
   }
 }

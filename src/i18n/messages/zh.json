@@ -1860,5 +1860,20 @@
     "uploadedBy": "上传者",
     "rotateNow": "立即更新",
     "viewOnPublic": "在公共页面查看"
+  },
+  "collectionActionMenu": {
+    "moreActions": "{title} 的更多操作",
+    "closeMenu": "关闭菜单",
+    "openInCodex": "在 Codex 中打开",
+    "openInCodexDesc": "由 Codex Desktop 执行安装",
+    "copyInstallAll": "复制全部安装命令",
+    "copiedInstall": "已复制安装命令",
+    "copyCollectionLink": "复制合集链接",
+    "copiedLink": "已复制链接",
+    "shareToX": "分享到 X",
+    "viewCollection": "查看合集",
+    "installHint": "{count} 个宠物",
+    "installHintTruncated": "{shown} / {total} 个宠物 · 手动粘贴剩余",
+    "shareXText": "Petdex 上的 {title} 合集 - 一行命令安装"
   }
 }

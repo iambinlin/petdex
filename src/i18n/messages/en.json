@@ -1600,5 +1600,20 @@
     "uploadedBy": "Uploaded by",
     "rotateNow": "Rotate now",
     "viewOnPublic": "View on public page"
+  },
+  "collectionActionMenu": {
+    "moreActions": "More actions for {title}",
+    "closeMenu": "Close menu",
+    "openInCodex": "Open in Codex",
+    "openInCodexDesc": "Codex Desktop runs the install",
+    "copyInstallAll": "Copy install all",
+    "copiedInstall": "Copied install command",
+    "copyCollectionLink": "Copy collection link",
+    "copiedLink": "Copied link",
+    "shareToX": "Share to X",
+    "viewCollection": "View collection",
+    "installHint": "{count, plural, =1 {1 pet} other {# pets}}",
+    "installHintTruncated": "{shown} of {total} pets · paste rest manually",
+    "shareXText": "{title} pet collection on Petdex - install with one line"
   }
 }
