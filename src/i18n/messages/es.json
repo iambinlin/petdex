@@ -1540,15 +1540,5 @@
     "editAria": "Editar mascota",
     "evidenceAssets": "Archivos",
     "evidencePolicy": "Política"
-  },
-  "zhChrome": {
-    "promoNewDrop": "NEW DROP",
-    "promoLimited": "LIMITED",
-    "promoFallback": "Welcome to Petdex",
-    "actionInstall": "Instalar",
-    "actionShare": "Compartir",
-    "actionCommunity": "Comunidad",
-    "copiedInstall": "Copied!",
-    "copiedLink": "Link copied!"
   }
 }
