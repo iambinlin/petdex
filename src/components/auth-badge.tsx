@@ -92,11 +92,11 @@ function UserDropdown({ compact = false }: { compact?: boolean }) {
   const { user, isLoaded } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const showAdmin = isAdminClientSafe(user?.id);
-  // Collaborator entry surfaces only the surfaces the user can actually
-  // touch (currently /collaborator/wechat-qr for Henry + admins). Admins
-  // already see Admin which links to the full dashboard, so the
-  // collaborator item is a shortcut for non-admin collaborators.
-  const showCollaborator = canEditWeChatQrClientSafe(user?.id) && !showAdmin;
+  // Collaborator entry surfaces tools the user can actually edit
+  // (currently /collaborator/wechat-qr for Henry + admins). We show it
+  // for admins too — they get both Admin (full dashboard) and the
+  // Collaborator shortcut so they don't have to navigate through admin.
+  const showCollaborator = canEditWeChatQrClientSafe(user?.id);
   const unread = useHeaderState().state.feedback.count;
   const t = useTranslations("header");
   const locale = useLocale();
