@@ -27,6 +27,12 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SubmitCTA } from "@/components/submit-cta";
 import { SurprisePetCard } from "@/components/surprise-pet-card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from "@/components/ui/card";
 
 import { hasLocale, locales } from "@/i18n/config";
 
@@ -259,9 +265,9 @@ async function FeaturedCollections({
       >
         {collections.map((collection) => {
           return (
-            <article
+            <Card
               key={collection.slug}
-              className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10 has-[[aria-expanded=true]]:z-30"
+              className="group relative flex h-full flex-col gap-0 overflow-hidden rounded-3xl border border-border-base bg-surface/80 py-0 ring-0 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10 has-[[aria-expanded=true]]:z-30"
             >
               <Link href={`/collections/${collection.slug}`} className="block">
                 <CollectionCover
@@ -270,19 +276,19 @@ async function FeaturedCollections({
                   max={5}
                   scale={0.5}
                 />
-                <div className="flex flex-1 flex-col p-5">
+                <CardContent className="flex flex-1 flex-col p-5">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">
+                    <CardTitle className="truncate text-lg font-semibold tracking-tight text-foreground">
                       {collection.title}
-                    </h3>
+                    </CardTitle>
                     <span className="shrink-0 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
                       {t("petsCount", { count: collection.pets.length })}
                     </span>
                   </div>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-2">
+                  <CardDescription className="mt-2 line-clamp-2 text-sm leading-6 text-muted-2">
                     {collection.description}
-                  </p>
-                </div>
+                  </CardDescription>
+                </CardContent>
               </Link>
               <div className="absolute top-3 right-3 z-20">
                 <CollectionActionMenu
@@ -294,7 +300,7 @@ async function FeaturedCollections({
                   }}
                 />
               </div>
-            </article>
+            </Card>
           );
         })}
       </div>
