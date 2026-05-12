@@ -3,6 +3,7 @@ import {
   findBlockedKeyword,
 } from "@/lib/keyword-blocklist";
 import { isAllowedAssetUrl } from "@/lib/url-allowlist";
+import { containsUrl, URL_BLOCKED_REASON } from "@/lib/url-blocklist";
 
 export type SubmissionInput = {
   zipUrl: string;
@@ -85,6 +86,21 @@ export function validateSubmission(
       };
     }
   }
+  // URL filter — reject any URL embedded in free-text fields.
+  const urlHit = containsUrl(
+    ["displayName", body.displayName],
+    ["description", body.description],
+  );
+  if (urlHit) {
+    return {
+      ok: false,
+      status: 422,
+      error: "url_in_field",
+      field: urlHit.field,
+      message: URL_BLOCKED_REASON,
+    };
+  }
+
   // Keyword blocklist — runs after structural validation so a blocked
   // submission gets the same shape as other 400s. Hit returns 422 to
   // distinguish moderation rejects from bad input in logs.

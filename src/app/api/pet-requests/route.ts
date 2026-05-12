@@ -17,6 +17,7 @@ import { embedQuery } from "@/lib/query-embed";
 import { R2_PUBLIC_BASE } from "@/lib/r2";
 import { petRequestRatelimit } from "@/lib/ratelimit";
 import { requireSameOrigin } from "@/lib/same-origin";
+import { containsUrl, URL_BLOCKED_REASON } from "@/lib/url-blocklist";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -212,6 +213,18 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json(
       { error: "query_length", message: "Use 4-200 characters." },
       { status: 400 },
+    );
+  }
+
+  const queryUrlHit = containsUrl(["query", query]);
+  if (queryUrlHit) {
+    return NextResponse.json(
+      {
+        error: "url_in_field",
+        field: queryUrlHit.field,
+        message: URL_BLOCKED_REASON,
+      },
+      { status: 422 },
     );
   }
 
