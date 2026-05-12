@@ -9,6 +9,8 @@ import { useLocale } from "next-intl";
 
 import { formatLocalizedNumber } from "@/lib/format-number";
 
+import { Button } from "@/components/ui/button";
+
 type LikeButtonProps = {
   slug: string;
   initialCount: number;
@@ -80,7 +82,6 @@ export function LikeButton({ slug, initialCount }: LikeButtonProps) {
     }
     if (pending || likeStateLoading) return;
 
-    // Optimistic update
     const nextLiked = !liked;
     const mutationVersion = mutationVersionRef.current + 1;
     mutationVersionRef.current = mutationVersion;
@@ -104,7 +105,6 @@ export function LikeButton({ slug, initialCount }: LikeButtonProps) {
         }
       } catch {
         if (mutationVersionRef.current !== mutationVersion) return;
-        // Revert
         setLiked(!nextLiked);
         setCount((c) => Math.max(0, c + (nextLiked ? -1 : 1)));
       }
@@ -114,13 +114,13 @@ export function LikeButton({ slug, initialCount }: LikeButtonProps) {
   const disabled = pending || !isLoaded || (isSignedIn && likeStateLoading);
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="outline"
       onClick={handleClick}
       aria-pressed={liked}
       aria-busy={disabled || undefined}
       disabled={disabled}
-      className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium transition disabled:opacity-60 ${
+      className={`h-10 gap-2 rounded-full border px-4 text-sm font-medium transition disabled:opacity-60 ${
         liked
           ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
           : "border-black/10 bg-surface text-muted-2 hover:border-rose-300 hover:text-rose-700"
@@ -132,6 +132,6 @@ export function LikeButton({ slug, initialCount }: LikeButtonProps) {
       <span className="font-mono text-xs tracking-[0.08em]">
         {formatLocalizedNumber(count, locale)}
       </span>
-    </button>
+    </Button>
   );
 }

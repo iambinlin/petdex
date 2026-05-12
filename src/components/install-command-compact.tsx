@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { CodexLogo } from "@/components/codex-logo";
 import { CodexThemeDialog } from "@/components/codex-theme-dialog";
 import { CommandLine } from "@/components/command-line";
+import { Button } from "@/components/ui/button";
 
 type InstallCommandCompactProps = {
   slug: string;
@@ -41,10 +42,10 @@ export function InstallCommandCompact({
           source="pet-hero-compact"
           className="!h-12 w-full !rounded-2xl !px-4 !text-[13px]"
         />
-        <button
-          type="button"
+        <Button
+          variant="outline"
           onClick={() => setThemeOpen(true)}
-          className="group/theme inline-flex h-12 max-w-full items-center gap-2 overflow-hidden rounded-2xl border border-border-base bg-surface/80 px-3 text-left text-[12px] text-foreground backdrop-blur transition hover:border-brand-light/40 hover:bg-surface md:px-4"
+          className="group/theme h-12 max-w-full gap-2 overflow-hidden rounded-2xl border-border-base bg-surface/80 px-3 text-left text-[12px] text-foreground backdrop-blur hover:border-brand-light/40 hover:bg-surface md:px-4"
         >
           <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-surface ring-1 ring-border-base/40">
             <CodexLogo className="size-4" />
@@ -58,7 +59,7 @@ export function InstallCommandCompact({
             </span>
           </span>
           <Palette className="size-3.5 shrink-0 text-muted-3 transition group-hover/theme:text-brand" />
-        </button>
+        </Button>
       </div>
       <Link
         href={`/${locale}/docs#install`}

@@ -9,8 +9,10 @@ import { Download, Heart, Loader2, Share2, TerminalSquare } from "lucide-react";
 import { useLocale } from "next-intl";
 
 import { formatLocalizedNumber } from "@/lib/format-number";
+import { cn } from "@/lib/utils";
 
 import { PetSoundButton } from "@/components/pet-sound-button";
+import { Button } from "@/components/ui/button";
 
 // Inline footer bar at the bottom of each gallery card. Surfaces the
 // four most-used actions (like, install, download, share) without
@@ -140,10 +142,17 @@ function PetCardFooterImpl({
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.05] px-2 py-2 dark:border-white/[0.05]">
       <div className="flex min-w-0 flex-wrap items-center gap-0.5">
-        <FooterBtn
+        <Button
+          variant="ghost"
           onClick={toggleLike}
-          active={liked}
-          label={`${liked ? "Unlike" : "Like"} ${displayName}`}
+          aria-label={`${liked ? "Unlike" : "Like"} ${displayName}`}
+          title={`${liked ? "Unlike" : "Like"} ${displayName}`}
+          className={cn(
+            "h-8 gap-1 rounded-full px-2",
+            liked
+              ? "bg-stone-100 text-stone-900 dark:text-stone-100"
+              : "text-stone-500 hover:bg-surface-muted hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100",
+          )}
         >
           <Heart
             className={`size-3.5 ${liked ? "fill-rose-500 text-rose-500" : ""}`}
@@ -157,12 +166,19 @@ function PetCardFooterImpl({
               {formattedLikeCount}
             </span>
           ) : null}
-        </FooterBtn>
+        </Button>
 
-        <FooterBtn
+        <Button
+          variant="ghost"
           onClick={copyInstall}
-          active={copied}
-          label={`Copy install for ${displayName}`}
+          aria-label={`Copy install for ${displayName}`}
+          title={`Copy install for ${displayName}`}
+          className={cn(
+            "h-8 gap-1 rounded-full px-2",
+            copied
+              ? "bg-stone-100 text-stone-900 dark:text-stone-100"
+              : "text-stone-500 hover:bg-surface-muted hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100",
+          )}
         >
           <TerminalSquare className="size-3.5" />
           {installCount > 0 ? (
@@ -170,21 +186,33 @@ function PetCardFooterImpl({
               {formattedInstallCount}
             </span>
           ) : null}
-        </FooterBtn>
+        </Button>
 
         {zipUrl ? (
-          <FooterBtn onClick={download} label={`Download ${displayName}`}>
+          <Button
+            variant="ghost"
+            onClick={download}
+            aria-label={`Download ${displayName}`}
+            title={`Download ${displayName}`}
+            className="h-8 gap-1 rounded-full px-2 text-stone-500 hover:bg-surface-muted hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+          >
             <Download className="size-3.5" />
-          </FooterBtn>
+          </Button>
         ) : null}
 
         {soundUrl ? (
           <PetSoundButton soundUrl={soundUrl} displayName={displayName} />
         ) : null}
 
-        <FooterBtn onClick={share} label={`Share ${displayName}`}>
+        <Button
+          variant="ghost"
+          onClick={share}
+          aria-label={`Share ${displayName}`}
+          title={`Share ${displayName}`}
+          className="h-8 gap-1 rounded-full px-2 text-stone-500 hover:bg-surface-muted hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
+        >
           <Share2 className="size-3.5" />
-        </FooterBtn>
+        </Button>
       </div>
 
       {busy ? <Loader2 className="size-3.5 animate-spin text-muted-4" /> : null}
@@ -193,31 +221,3 @@ function PetCardFooterImpl({
 }
 
 export const PetCardFooter = memo(PetCardFooterImpl);
-
-const FooterBtn = memo(function FooterBtn({
-  children,
-  onClick,
-  active,
-  label,
-}: {
-  children: React.ReactNode;
-  onClick: (e: React.MouseEvent) => void;
-  active?: boolean;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={`inline-flex h-8 items-center gap-1 rounded-full px-2 transition ${
-        active
-          ? "bg-stone-100 text-stone-900 dark:text-stone-100"
-          : "text-stone-500 hover:bg-surface-muted hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100"
-      }`}
-    >
-      {children}
-    </button>
-  );
-});
