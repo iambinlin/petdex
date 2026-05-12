@@ -99,6 +99,7 @@
     "myProfile": "我的资料",
     "myFeedback": "我的反馈",
     "admin": "管理",
+    "collaborator": "协作者",
     "manageAccount": "管理账户",
     "signOut": "退出登录"
   },
@@ -1538,7 +1539,6 @@
     "shareToLinkedIn": "分享到 LinkedIn",
     "more": "更多…",
     "downloadZip": "下载 ZIP",
-    "manageWeChatQr": "管理微信群二维码",
     "removeFromPetdex": "从 Petdex 删除",
     "removing": "删除中…",
     "withdrawSubmission": "撤回提交",

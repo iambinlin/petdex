@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { useUser } from "@clerk/nextjs";
 import { track } from "@vercel/analytics";
 import {
   Check,
@@ -18,14 +17,11 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
-  QrCode,
   Terminal,
   Trash2,
   XCircle,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
-
-import { canEditWeChatQrClientSafe } from "@/lib/admin";
+import { useTranslations } from "next-intl";
 
 import { CodexLogo } from "@/components/codex-logo";
 import { GithubIcon } from "@/components/github-icon";
@@ -191,10 +187,7 @@ export function PetTakedownReportButton({
 
 export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
   const t = useTranslations("petActions");
-  const locale = useLocale();
   const router = useRouter();
-  const { user } = useUser();
-  const canManageWeChatQr = canEditWeChatQrClientSafe(user?.id);
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<"install" | "link" | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -529,22 +522,6 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
                 >
                   <Download className="size-4" />
                   <span className="flex-1">{t("downloadZip")}</span>
-                </DropdownMenuItem>
-              </>
-            ) : null}
-
-            {canManageWeChatQr ? (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  render={
-                    // biome-ignore lint/a11y/useAnchorContent: content is provided via DropdownMenuItem children (Base UI render prop pattern)
-                    <a href={`/${locale}/collaborator/wechat-qr`} />
-                  }
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-2"
-                >
-                  <QrCode className="size-4" />
-                  <span className="flex-1">{t("manageWeChatQr")}</span>
                 </DropdownMenuItem>
               </>
             ) : null}

@@ -79,6 +79,7 @@
     "myProfile": "Mi perfil",
     "myFeedback": "Mi feedback",
     "admin": "Admin",
+    "collaborator": "Colaborador",
     "manageAccount": "Gestionar cuenta",
     "signOut": "Cerrar sesión"
   },
@@ -1330,7 +1331,6 @@
     "shareToLinkedIn": "Compartir en LinkedIn",
     "more": "Más…",
     "downloadZip": "Descargar ZIP",
-    "manageWeChatQr": "Gestionar QR de WeChat",
     "removeFromPetdex": "Eliminar de Petdex",
     "removing": "Eliminando…",
     "withdrawSubmission": "Retirar envío",
