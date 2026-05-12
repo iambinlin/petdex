@@ -35,10 +35,22 @@ export function isAdminClientSafe(userId: string | null | undefined): boolean {
 }
 
 const HENRY_USER_ID = process.env.HENRY_USER_ID;
+// Client-safe mirror — used by UI components to show / hide the
+// 'Manage WeChat QR' menu entry. Same authoritative check on the server.
+const PUBLIC_HENRY_USER_ID = process.env.NEXT_PUBLIC_HENRY_USER_ID;
 
 export function canEditWeChatQr(userId: string | null | undefined): boolean {
   if (!userId) return false;
   if (isAdmin(userId)) return true;
   if (HENRY_USER_ID && userId === HENRY_USER_ID) return true;
+  return false;
+}
+
+export function canEditWeChatQrClientSafe(
+  userId: string | null | undefined,
+): boolean {
+  if (!userId) return false;
+  if (isAdminClientSafe(userId)) return true;
+  if (PUBLIC_HENRY_USER_ID && userId === PUBLIC_HENRY_USER_ID) return true;
   return false;
 }
