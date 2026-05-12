@@ -8,6 +8,7 @@ import JSZip from "jszip";
 import pc from "picocolors";
 
 import { ClerkCliAuth } from "../src/cli-auth/index.js";
+import { runDoctor } from "../src/desktop/doctor.js";
 import {
   desktopBinPath,
   isTrustedAssetUrl,
@@ -21,7 +22,6 @@ import {
   startDesktop,
   stopDesktop,
 } from "../src/desktop/process.js";
-import { runDoctor } from "../src/desktop/doctor.js";
 import { runUpdate } from "../src/desktop/update.js";
 import { runInstall as runHooksInstall } from "../src/hooks/install.js";
 import {
@@ -107,7 +107,7 @@ async function getAuth(): Promise<ClerkCliAuth> {
   return _auth;
 }
 
-const VERSION = "0.3.9";
+const VERSION = "0.4.0";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -184,7 +184,7 @@ async function main() {
       await cmdToggle();
       break;
     case "update":
-      await runUpdate(args.slice(1));
+      await runUpdate(args.slice(1), VERSION);
       break;
     case "doctor":
       await runDoctor();
@@ -396,7 +396,11 @@ async function cmdInstall(args: string[]) {
   const slugs = Array.from(new Set(args));
 
   const s = p.spinner();
-  s.start(slugs.length === 1 ? `Resolving ${slugs[0]}` : `Resolving ${slugs.length} pets`);
+  s.start(
+    slugs.length === 1
+      ? `Resolving ${slugs[0]}`
+      : `Resolving ${slugs.length} pets`,
+  );
 
   let manifest: ManifestPet[];
   try {
@@ -1273,6 +1277,12 @@ function cmdHooksKillswitch(sub: "toggle" | "on" | "off" | "status"): void {
 // staring at instructions to "open your agent and run /petdex" with
 // no mascot ever appearing because nobody had launched the desktop.
 async function cmdInit(): Promise<void> {
+  emit("cli_init_started", {
+    cli_version: VERSION,
+    os: process.platform,
+    arch: process.arch,
+  });
+
   // Detect what's already on disk. desktopBinPath() returns the .app
   // path when present (any of /Applications/Petdex.app or
   // ~/Applications/Petdex.app), otherwise the bare ~/.petdex/bin/
@@ -1315,12 +1325,6 @@ async function cmdInit(): Promise<void> {
   }
 
   const { installedAgents } = await runHooksInstall();
-  if (installedAgents.length > 0) {
-    emit("cli_hooks_install_success", {
-      cli_version: VERSION,
-      agents: installedAgents,
-    });
-  }
 
   // Auto-start the mascot. Skipping this used to leave the user with
   // a working hook chain but no visible mascot — they'd run /petdex
@@ -1328,12 +1332,13 @@ async function cmdInit(): Promise<void> {
   // setup failed. Idempotent via desktopStatus check.
   const status = desktopStatus();
   if (status.state === "running") {
-    console.log(
-      `${pc.green("●")} Desktop already running (pid ${status.pid})`,
-    );
+    console.log(`${pc.green("●")} Desktop already running (pid ${status.pid})`);
   } else {
     const result = await startDesktop();
     if (result.ok) {
+      if (!result.alreadyRunning) {
+        emit("cli_desktop_start_success", { cli_version: VERSION });
+      }
       console.log(
         result.alreadyRunning
           ? `${pc.dim("•")} Desktop already running (pid ${result.pid})`
@@ -1376,19 +1381,22 @@ function tildeify(p: string): string {
 // command is idempotent — safe to call when desktop is already up,
 // or when hooks were already enabled.
 async function cmdUp(): Promise<void> {
+  emit("cli_up_invoked", { cli_version: VERSION });
+
   setKillswitchState("on");
   console.log(`${pc.green("●")} Hooks ${pc.bold("ENABLED")}`);
 
   const status = desktopStatus();
   if (status.state === "running") {
-    console.log(
-      `${pc.green("●")} Desktop already running (pid ${status.pid})`,
-    );
+    console.log(`${pc.green("●")} Desktop already running (pid ${status.pid})`);
     return;
   }
   // Either stopped or stale — startDesktop handles both.
   const result = await startDesktop();
   if (result.ok) {
+    if (!result.alreadyRunning) {
+      emit("cli_desktop_start_success", { cli_version: VERSION });
+    }
     console.log(
       result.alreadyRunning
         ? `${pc.dim("•")} Desktop already running (pid ${result.pid})`
