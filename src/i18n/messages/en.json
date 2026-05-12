@@ -1132,9 +1132,9 @@
       "withdraw": "Withdraw",
       "rejected": "Edit rejected",
       "tryAgain": "Try again",
-      "open": "Edit name & description",
-      "modalTitle": "Edit pet metadata",
-      "modalBody": "Goes back through admin review. Sprites and zip can't be changed here. Those need a fresh /submit so the dedup + scan pipeline runs again.",
+      "open": "Edit pet",
+      "modalTitle": "Edit pet",
+      "modalBody": "Text changes may auto-approve if they pass all criteria. Asset swaps always go to manual review.",
       "fields": {
         "displayName": "Display name",
         "description": "Description",
@@ -1145,7 +1145,17 @@
       "actions": {
         "cancel": "Cancel",
         "submit": "Submit edit for review"
-      }
+      },
+      "spritesheetLabel": "Spritesheet",
+      "spritesheetHelp": "Replaces the current sprite. Goes to manual review.",
+      "metaLabel": "Metadata (pet.json)",
+      "metaHelp": "Replaces the current metadata. Goes to manual review.",
+      "fileTooBig": "File exceeds 2 MB",
+      "invalidImage": "Invalid image file",
+      "invalidJson": "Invalid JSON file",
+      "autoApproved": "Edit applied",
+      "queuedForReview": "Edit submitted for review",
+      "uploading": "Uploading..."
     },
     "eyebrow": "Dashboard",
     "submissionCount": "{count, plural, =0 {no submissions} =1 {1 submission} other {# submissions}}",

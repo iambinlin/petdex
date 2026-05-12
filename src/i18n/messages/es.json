@@ -1132,9 +1132,9 @@
       "withdraw": "Retirar",
       "rejected": "Edición rechazada",
       "tryAgain": "Intentar de nuevo",
-      "open": "Editar nombre y descripción",
-      "modalTitle": "Editar metadatos de la mascota",
-      "modalBody": "Esto vuelve a pasar por revisión de admin. Aquí no se pueden cambiar los sprites ni el zip: para eso hace falta un /submit nuevo para que corra otra vez la deduplicación y el escaneo.",
+      "open": "Editar mascota",
+      "modalTitle": "Editar mascota",
+      "modalBody": "Los cambios de texto pueden autoaprobarse si cumplen todos los criterios. Los cambios de assets siempre van a revision manual.",
       "fields": {
         "displayName": "Nombre visible",
         "description": "Descripción",
@@ -1145,7 +1145,17 @@
       "actions": {
         "cancel": "Cancelar",
         "submit": "Enviar edición para revisión"
-      }
+      },
+      "spritesheetLabel": "Spritesheet",
+      "spritesheetHelp": "Reemplaza el sprite actual. Va a revision manual.",
+      "metaLabel": "Metadatos (pet.json)",
+      "metaHelp": "Reemplaza los metadatos actuales. Va a revision manual.",
+      "fileTooBig": "El archivo supera los 2 MB",
+      "invalidImage": "Archivo de imagen no valido",
+      "invalidJson": "Archivo JSON no valido",
+      "autoApproved": "Edicion aplicada",
+      "queuedForReview": "Edicion enviada para revision",
+      "uploading": "Subiendo..."
     },
     "eyebrow": "Dashboard",
     "submissionCount": "{count, plural, =0 {sin envíos} =1 {1 envío} other {# envíos}}",

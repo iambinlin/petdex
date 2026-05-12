@@ -1303,10 +1303,10 @@
       "withdraw": "撤回",
       "rejected": "编辑被拒绝",
       "tryAgain": "再试一次",
-      "open": "编辑名称和描述",
+      "open": "编辑宠物",
       "open__fixme": true,
-      "modalTitle": "编辑宠物元数据",
-      "modalBody": "这会重新进入管理员审核。这里不能修改 sprites 或 zip；那类变更需要重新 /submit，才能再次运行去重和扫描流程。",
+      "modalTitle": "编辑宠物",
+      "modalBody": "文字修改如符合所有标准可自动批准。精灵图与元数据变更须人工审核。",
       "modalBody__fixme": true,
       "fields": {
         "displayName": "显示名称",
@@ -1319,7 +1319,17 @@
       "actions": {
         "cancel": "取消",
         "submit": "提交编辑以供审核"
-      }
+      },
+      "spritesheetLabel": "精灵图 Spritesheet",
+      "spritesheetHelp": "替换当前精灵图。需要人工审核。",
+      "metaLabel": "元数据 pet.json",
+      "metaHelp": "替换当前元数据。需要人工审核。",
+      "fileTooBig": "文件超过 2 MB",
+      "invalidImage": "无效的图片文件",
+      "invalidJson": "无效的 JSON 文件",
+      "autoApproved": "编辑已应用",
+      "queuedForReview": "编辑已提交，等待审核",
+      "uploading": "上传中..."
     },
     "eyebrow": "仪表盘",
     "submissionCount": "{count, plural, =0 {暂无提交} =1 {1 份提交} other {# 份提交}}",
