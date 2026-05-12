@@ -1540,5 +1540,29 @@
     "editAria": "Editar mascota",
     "evidenceAssets": "Archivos",
     "evidencePolicy": "Política"
+  },
+  "sticker": {
+    "ctaWeChat": "Guardar para WeChat",
+    "ctaGeneric": "Guardar para WhatsApp",
+    "ctaShort": "Guardar sticker",
+    "hintWeChat": "WebP animado · WeChat, WhatsApp, Discord",
+    "hintGeneric": "WebP animado · WeChat, WhatsApp, Discord",
+    "recommendedTag": "Mejor",
+    "downloadAnimated": "Descargar animado (WebP)",
+    "downloadAnimatedDesc": "240×240 en loop · ideal para WeChat y Discord",
+    "downloadGif": "Descargar GIF",
+    "downloadGifDesc": "240×240 animado · mejor para WhatsApp Desktop / Slack",
+    "downloadPack": "Pack de WhatsApp (9 stickers)",
+    "downloadPackDesc": "Pack animado completo · 9 estados · zip",
+    "downloadPng": "Descargar PNG estático",
+    "downloadPngDesc": "240×240 primer frame",
+    "copyImage": "Copiar imagen al portapapeles",
+    "copyImageDesc": "Pega directo en cualquier chat",
+    "preview": "Previsualizar",
+    "previewDesc": "Abrir en otra pestaña",
+    "howToWeChat": "WeChat: mantén presionada → Añadir a favoritos",
+    "howToWhatsApp": "WhatsApp: importa el zip con Sticker Maker",
+    "desktopNote": "WhatsApp Desktop muestra solo el primer frame · en celular se anima",
+    "errorGeneric": "Algo salió mal, intenta de nuevo"
   }
 }

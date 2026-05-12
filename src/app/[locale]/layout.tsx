@@ -50,6 +50,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const t = await getTranslations({ locale, namespace: "metadata.root" });
 
+  // og:image points to /api/og which streams og.png by default and
+  // og-wechat.png (1:1) when the crawler UA contains MicroMessenger.
+  // Doing the UA check inside that route keeps this layout fully
+  // statically renderable and preserves ISR for the whole [locale] tree.
   return {
     title: {
       default: t("titleDefault"),
@@ -73,7 +77,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: SITE_URL,
       siteName: "Petdex",
       type: "website",
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Petdex" }],
+      images: [
+        { url: `${SITE_URL}/api/og`, width: 1200, height: 630, alt: "Petdex" },
+      ],
     },
     twitter: {
       card: "summary_large_image",
