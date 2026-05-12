@@ -19,12 +19,6 @@ import { CollectionCover } from "@/components/collection-cover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
@@ -98,7 +92,24 @@ export function CollectionsBrowser({
       );
     });
     list = [...list];
+
+    // Hand-picked slugs that should always lead the list, mirroring
+    // the home page Featured Collections strip. Anything in this set
+    // outranks the user-selected sort; collections outside this set
+    // fall through to the requested sort.
+    const PRIORITY_SLUGS = [
+      "franchise-pokemon",
+      "franchise-league-of-legends",
+      "franchise-jojos-bizarre-adventure",
+    ];
+    const priorityIndex = new Map(PRIORITY_SLUGS.map((s, i) => [s, i]));
+
     list.sort((a, b) => {
+      const ai = priorityIndex.get(a.slug);
+      const bi = priorityIndex.get(b.slug);
+      if (ai !== undefined && bi !== undefined) return ai - bi;
+      if (ai !== undefined) return -1;
+      if (bi !== undefined) return 1;
       if (sort === "size") return b.petCount - a.petCount;
       return a.title.localeCompare(b.title);
     });
@@ -288,7 +299,14 @@ const CollectionCard = memo(function CollectionCard({
     | "categorySub"
     | "other";
   return (
-    <Card className="relative h-full rounded-3xl bg-surface/80 border-border-base gap-0 py-0 ring-0 has-[[aria-expanded=true]]:z-30">
+    // Same surface treatment as PetCard: neutral border, bg-surface/76,
+    // backdrop-blur, small shadow, hover lifts + goes white/stone.
+    // The has-[[aria-expanded=true]]:z-30 selector is preserved so the
+    // CollectionActionMenu dropdown escapes stacking context siblings.
+    <article
+      data-slot="card"
+      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-black/10 bg-surface/76 shadow-sm shadow-blue-950/5 backdrop-blur transition has-[[aria-expanded=true]]:z-30 hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 dark:border-white/10 dark:hover:bg-stone-800"
+    >
       <Link href={`/collections/${c.slug}`} className="block">
         <CollectionCover
           pets={c.pets}
@@ -307,7 +325,7 @@ const CollectionCard = memo(function CollectionCard({
           }}
         />
       </div>
-      <CardContent className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col gap-2 border-t border-black/[0.06] px-5 pt-4 pb-5 dark:border-white/[0.06]">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -318,9 +336,9 @@ const CollectionCard = memo(function CollectionCard({
                 {t("card.petCount", { count: c.petCount })}
               </span>
             </div>
-            <CardTitle className="mt-2 text-xl font-semibold tracking-tight">
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
               <Link href={`/collections/${c.slug}`}>{c.title}</Link>
-            </CardTitle>
+            </h3>
           </div>
           {c.externalUrl ? (
             <Button
@@ -336,18 +354,20 @@ const CollectionCard = memo(function CollectionCard({
             </Button>
           ) : null}
         </div>
-        <CardDescription className="mt-2 line-clamp-3 text-sm leading-6">
+        <p className="line-clamp-2 text-sm leading-6 text-muted-2">
           {c.description}
-        </CardDescription>
+        </p>
         {owner ? (
-          <Link
-            href={`/u/${owner.handle}`}
-            className="mt-auto inline-flex pt-3 text-xs font-medium text-brand hover:underline"
-          >
-            {t("card.byOwner", { name: owner.name })}
-          </Link>
+          <div className="mt-auto border-t border-black/[0.05] pt-2 dark:border-white/[0.05]">
+            <Link
+              href={`/u/${owner.handle}`}
+              className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase hover:text-foreground"
+            >
+              {t("card.byOwner", { name: owner.name })}
+            </Link>
+          </div>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   );
 });
