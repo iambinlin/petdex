@@ -1564,5 +1564,24 @@
     "howToWhatsApp": "WhatsApp: importa el zip con Sticker Maker",
     "desktopNote": "WhatsApp Desktop muestra solo el primer frame · en celular se anima",
     "errorGeneric": "Algo salió mal, intenta de nuevo"
+  },
+  "collaboratorWechatQr": {
+    "panelTitle": "Gestión de QR de WeChat",
+    "currentQr": "QR actual",
+    "expiresIn": "Expira en {days} días",
+    "expired": "Expirado",
+    "uploadCta": "Subir nuevo QR",
+    "dropZoneHint": "Arrastra JPG / PNG aquí, máx 200KB",
+    "validating": "Validando con IA...",
+    "validationFailed": "Validación fallida",
+    "uploadSuccess": "¡Subida exitosa!",
+    "history": "Historial de subidas",
+    "historyEmpty": "Sin subidas aún",
+    "statusActive": "Activo",
+    "statusReplaced": "Reemplazado",
+    "statusRejected": "Rechazado",
+    "uploadedBy": "Subido por",
+    "rotateNow": "Rotar ahora",
+    "viewOnPublic": "Ver en página pública"
   }
 }

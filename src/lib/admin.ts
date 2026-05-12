@@ -33,3 +33,12 @@ export function isAdminClientSafe(userId: string | null | undefined): boolean {
   if (!userId) return false;
   return getPublicAdminUserIds().has(userId);
 }
+
+const HENRY_USER_ID = process.env.HENRY_USER_ID;
+
+export function canEditWeChatQr(userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  if (isAdmin(userId)) return true;
+  if (HENRY_USER_ID && userId === HENRY_USER_ID) return true;
+  return false;
+}

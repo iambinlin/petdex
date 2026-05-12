@@ -1824,5 +1824,24 @@
     "howToWhatsApp": "WhatsApp：用 Sticker Maker 应用导入 zip 包",
     "desktopNote": "WhatsApp 桌面版只显示首帧 · 手机端正常播放动画",
     "errorGeneric": "出错了，请重试"
+  },
+  "collaboratorWechatQr": {
+    "panelTitle": "微信群二维码管理",
+    "currentQr": "当前二维码",
+    "expiresIn": "{days}天后过期",
+    "expired": "已过期",
+    "uploadCta": "上传新二维码",
+    "dropZoneHint": "拖拽 JPG / PNG 图片，最大 200KB",
+    "validating": "AI 验证中...",
+    "validationFailed": "验证失败",
+    "uploadSuccess": "上传成功！",
+    "history": "历史记录",
+    "historyEmpty": "还没有上传记录",
+    "statusActive": "当前",
+    "statusReplaced": "已替换",
+    "statusRejected": "已拒绝",
+    "uploadedBy": "上传者",
+    "rotateNow": "立即更新",
+    "viewOnPublic": "在公共页面查看"
   }
 }

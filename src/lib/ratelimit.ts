@@ -180,3 +180,9 @@ export const telemetryRatelimit = createRatelimit({
   limiter: Ratelimit.slidingWindow(60, "1 m"),
   prefix: "petdex:telemetry",
 });
+
+export const wechatQrUploadRatelimit = createRatelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "1 h"),
+  prefix: "petdex:wechat-qr-upload",
+});
