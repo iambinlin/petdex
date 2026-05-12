@@ -56,7 +56,13 @@ const KIND_FILTER_KEYS: KindFilterValue[] = [
 
 const SORT_KEYS: SortKey[] = ["size", "title"];
 
-const PAGE_SIZE = 12;
+// First-paint window covers the average screen above the fold. The
+// previous PAGE_SIZE=12 forced the IntersectionObserver to wake up
+// three times before the user even scrolled (each wake mounts a fresh
+// batch of CollectionCard + CollectionCover + 6 PetSprite instances,
+// which racked up ~500 mounts in idle and dropped FPS to 3-30 during
+// scroll). 24 covers the common viewport without needing a tick.
+const PAGE_SIZE = 24;
 
 export function CollectionsBrowser({
   collections,
@@ -132,11 +138,23 @@ export function CollectionsBrowser({
     if (!hasMore) return;
     const el = sentinelRef.current;
     if (!el) return;
+    // Throttle: ignore re-intersections within 400ms of the last tick.
+    // Without this, the observer fires once when mounted (sentinel is
+    // already inside the rootMargin window), pageCount goes 1 -> 2,
+    // re-renders the grid, the sentinel moves down, still inside the
+    // window, fires again, repeats until hasMore goes false. Result is
+    // a cascade of mounts in idle. The throttle lets the scroll position
+    // settle before we accept the next intersection.
+    let lastTick = 0;
     const obs = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) setPageCount((p) => p + 1);
+        if (!entries[0]?.isIntersecting) return;
+        const now = Date.now();
+        if (now - lastTick < 400) return;
+        lastTick = now;
+        setPageCount((p) => p + 1);
       },
-      { rootMargin: "600px" },
+      { rootMargin: "200px" },
     );
     obs.observe(el);
     return () => obs.disconnect();

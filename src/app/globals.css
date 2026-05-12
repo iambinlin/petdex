@@ -365,6 +365,16 @@ input {
     rgb(238 241 255 / 0.55) 55%,
     transparent 80%
   );
+  /* Pause sprite animation cost when the stage is offscreen. Browsers
+     skip rendering and layout for elements with content-visibility: auto
+     until they enter the viewport, which stops the @keyframes
+     `steps()` animation on .pet-sprite from advancing while the card is
+     out of view. contain-intrinsic-size reserves layout space so the
+     scroll position does not jump as cards enter/leave the viewport.
+     Safari supports this from 18; older browsers fall back to always
+     animating (no visible regression). */
+  content-visibility: auto;
+  contain-intrinsic-size: 280px 220px;
 }
 
 .dark .pet-sprite-stage {
