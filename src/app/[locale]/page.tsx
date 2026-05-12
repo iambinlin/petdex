@@ -276,7 +276,7 @@ async function FeaturedCollections({
                       {collection.title}
                     </h3>
                     <span className="shrink-0 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-                      {collection.pets.length} pets
+                      {t("petsCount", { count: collection.pets.length })}
                     </span>
                   </div>
                   <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-2">

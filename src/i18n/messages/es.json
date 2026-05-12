@@ -129,7 +129,8 @@
     "featuredCollections": {
       "eyebrow": "Colecciones destacadas",
       "title": "Colecciones destacadas para instalar",
-      "viewAll": "Ver todas"
+      "viewAll": "Ver todas",
+      "petsCount": "{count, plural, =1 {1 mascota} other {# mascotas}}"
     }
   },
   "gallery": {
