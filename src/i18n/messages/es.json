@@ -1510,9 +1510,48 @@
     "dismissAria": "Descartar",
     "closeAria": "Cerrar"
   },
+  "collectionsPage": {
+    "metadata": {
+      "title": "Colecciones destacadas",
+      "description": "Explora colecciones de Petdex por franquicia, categoría o temática. Busca, ordena y filtra para encontrar tu set."
+    },
+    "hero": {
+      "eyebrow": "Colecciones destacadas",
+      "title": "Encuentra tu set, instala en una línea",
+      "description": "{count, plural, =1 {1 colección} other {# colecciones}} del catálogo Petdex. Explora por franquicia, categoría o temática."
+    }
+  },
   "collectionsBrowser": {
     "searchAria": "Buscar colecciones",
-    "sortAria": "Ordenar colecciones"
+    "sortAria": "Ordenar colecciones",
+    "filters": {
+      "all": "Todas",
+      "franchise": "Franquicias",
+      "category": "Categorías",
+      "categorySub": "Temáticas",
+      "other": "Curadas"
+    },
+    "sort": {
+      "size": "Más grandes",
+      "title": "A → Z"
+    },
+    "sortPrefix": "Orden:",
+    "searchPlaceholder": "Prueba 'pokemon' o 'gato acogedor' o 'developer'",
+    "showingCount": "Mostrando {visible} de {total}",
+    "empty": "Ninguna colección coincide con esos filtros.",
+    "loadingMore": "Cargando más...",
+    "endOfResults": "Fin de resultados · {count, plural, =1 {1 colección} other {# colecciones}}",
+    "card": {
+      "petCount": "{count, plural, =1 {1 mascota} other {# mascotas}}",
+      "siteLink": "Sitio",
+      "byOwner": "por {name}"
+    },
+    "kindLabel": {
+      "franchise": "Franquicia",
+      "category": "Categoría",
+      "categorySub": "Temática",
+      "other": "Curada"
+    }
   },
   "profile": {
     "creatorBadge": "Creador Petdex",

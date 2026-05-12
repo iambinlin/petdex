@@ -1747,9 +1747,48 @@
     "dismissAria": "忽略",
     "closeAria": "关闭"
   },
+  "collectionsPage": {
+    "metadata": {
+      "title": "精选合集",
+      "description": "按系列、类别或主题浏览 Petdex 合集。搜索、排序和筛选，找到你的一套。"
+    },
+    "hero": {
+      "eyebrow": "精选合集 Featured collections",
+      "title": "找到你的一套，一行命令安装",
+      "description": "Petdex 目录中的 {count} 个合集。按系列、类别或主题浏览。"
+    }
+  },
   "collectionsBrowser": {
     "searchAria": "搜索合集",
-    "sortAria": "排序合集"
+    "sortAria": "排序合集",
+    "filters": {
+      "all": "全部 All",
+      "franchise": "系列 Franchises",
+      "category": "类别 Categories",
+      "categorySub": "主题 Themed",
+      "other": "精选 Curated"
+    },
+    "sort": {
+      "size": "最大 Largest",
+      "title": "A → Z"
+    },
+    "sortPrefix": "排序 Sort:",
+    "searchPlaceholder": "试试 'pokemon' 或 'cozy cat' 或 'developer'",
+    "showingCount": "显示 {visible} / {total}",
+    "empty": "没有合集匹配这些筛选。",
+    "loadingMore": "加载更多 ...",
+    "endOfResults": "已到末尾 · {count} 个合集",
+    "card": {
+      "petCount": "{count} 个宠物",
+      "siteLink": "网站 Site",
+      "byOwner": "by {name}"
+    },
+    "kindLabel": {
+      "franchise": "系列 Franchise",
+      "category": "类别 Category",
+      "categorySub": "主题 Themed",
+      "other": "精选 Curated"
+    }
   },
   "profile": {
     "creatorBadge": "Petdex 创作者",

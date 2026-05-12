@@ -1510,9 +1510,48 @@
     "dismissAria": "Dismiss",
     "closeAria": "Close"
   },
+  "collectionsPage": {
+    "metadata": {
+      "title": "Featured collections",
+      "description": "Browse Petdex collections by franchise, category, or theme. Search, sort, and filter to find your set."
+    },
+    "hero": {
+      "eyebrow": "Featured collections",
+      "title": "Find your set, install in one line",
+      "description": "{count, plural, =1 {1 collection} other {# collections}} from across the Petdex catalog. Browse by franchise, category, or themed mood."
+    }
+  },
   "collectionsBrowser": {
     "searchAria": "Search collections",
-    "sortAria": "Sort collections"
+    "sortAria": "Sort collections",
+    "filters": {
+      "all": "All",
+      "franchise": "Franchises",
+      "category": "Categories",
+      "categorySub": "Themed",
+      "other": "Curated"
+    },
+    "sort": {
+      "size": "Largest",
+      "title": "A → Z"
+    },
+    "sortPrefix": "Sort:",
+    "searchPlaceholder": "Try 'pokemon' or 'cozy cat' or 'developer'",
+    "showingCount": "Showing {visible} of {total}",
+    "empty": "No collections match those filters.",
+    "loadingMore": "Loading more...",
+    "endOfResults": "End of results · {count, plural, =1 {1 collection} other {# collections}}",
+    "card": {
+      "petCount": "{count, plural, =1 {1 pet} other {# pets}}",
+      "siteLink": "Site",
+      "byOwner": "by {name}"
+    },
+    "kindLabel": {
+      "franchise": "Franchise",
+      "category": "Category",
+      "categorySub": "Themed",
+      "other": "Curated"
+    }
   },
   "profile": {
     "creatorBadge": "Petdex creator",

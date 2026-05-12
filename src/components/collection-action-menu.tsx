@@ -178,6 +178,7 @@ export function CollectionActionMenu({ collection }: Props) {
                     : t("copyInstallAll")
                 }
                 hint={installHint}
+                showCopyIcon={copied !== "install"}
                 onClick={() => copyText(installCmd, "install")}
               />
             ) : null}
@@ -193,6 +194,7 @@ export function CollectionActionMenu({ collection }: Props) {
                 copied === "link" ? t("copiedLink") : t("copyCollectionLink")
               }
               hint={collectionUrl.replace(/^https?:\/\//, "")}
+              showCopyIcon={copied !== "link"}
               onClick={() => copyText(collectionUrl, "link")}
             />
             <Item
@@ -221,11 +223,13 @@ function Item({
   icon,
   label,
   hint,
+  showCopyIcon,
   onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   hint?: string;
+  showCopyIcon?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -248,7 +252,7 @@ function Item({
             </span>
           ) : null}
         </span>
-        {label.startsWith("Copy") ? (
+        {showCopyIcon ? (
           <Copy className="ml-auto size-3.5 text-stone-300 dark:text-stone-600" />
         ) : null}
       </button>
