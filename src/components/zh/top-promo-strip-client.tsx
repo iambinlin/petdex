@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ChevronRight } from "lucide-react";
 
@@ -41,16 +41,39 @@ const COPY: Record<
 
 const SCROLL_THRESHOLD_PX = 16;
 
-export function TopPromoStripClient({ items, intervalMs = 8000 }: Props) {
+export function TopPromoStripClient({ items, intervalMs = 4000 }: Props) {
   const [index, setIndex] = useState(0);
   const [atTop, setAtTop] = useState(true);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (items.length <= 1) return;
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % items.length);
-    }, intervalMs);
-    return () => clearInterval(id);
+
+    function startInterval() {
+      intervalRef.current = setInterval(() => {
+        if (!document.hidden) {
+          setIndex((i) => (i + 1) % items.length);
+        }
+      }, intervalMs);
+    }
+
+    function handleVisibility() {
+      if (document.hidden) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      } else {
+        startInterval();
+      }
+    }
+
+    startInterval();
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [items.length, intervalMs]);
 
   useEffect(() => {
@@ -91,14 +114,16 @@ export function TopPromoStripClient({ items, intervalMs = 8000 }: Props) {
     <div className={baseClasses}>
       <Link
         href={href}
-        className="group flex items-center gap-1 text-xs font-medium text-white hover:text-amber-400 transition-colors"
+        className="group flex min-h-[44px] items-center gap-1 px-3 text-xs font-medium text-white hover:text-amber-400 transition-colors sm:min-h-0 sm:px-0"
       >
         <span>{copy.emoji}</span>
         <span className="text-amber-400">{copy.label}</span>
         <span className="text-white/40 mx-1">·</span>
-        <span className="font-semibold">{current.name}</span>
-        <span className="text-white/40 mx-1">·</span>
-        <span className="text-white/70">{copy.tail}</span>
+        <span className="max-w-[6rem] truncate font-semibold sm:max-w-none">
+          {current.name}
+        </span>
+        <span className="hidden text-white/40 mx-1 sm:inline">·</span>
+        <span className="hidden text-white/70 sm:inline">{copy.tail}</span>
         <ChevronRight className="w-3 h-3 ml-0.5 text-white/60 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
       </Link>
     </div>
