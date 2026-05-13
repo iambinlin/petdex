@@ -120,6 +120,9 @@ export async function PATCH(
 
     void refreshSimilarityFor(id).catch(() => {});
     await invalidateAggregates(AGGREGATE_KEYS.variantIndex);
+    // Flushes both Upstash + Next page tags (pet:${slug}, pet:list)
+    // so the public detail page picks up the new copy without
+    // waiting on the 24h revalidate ceiling.
     await invalidatePetCaches(updated.slug);
 
     void createNotification({

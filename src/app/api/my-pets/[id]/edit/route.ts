@@ -328,6 +328,10 @@ export async function PATCH(
 
       void refreshSimilarityFor(id).catch(() => {});
       await invalidateAggregates(AGGREGATE_KEYS.variantIndex);
+      // Auto-approve writes through to the live row —
+      // invalidatePetCaches flushes both Upstash + Next page tags
+      // (pet:${slug}, pet:list) so the new copy shows up without
+      // waiting on the 24h revalidate ceiling.
       await invalidatePetCaches(row.slug);
 
       void createNotification({

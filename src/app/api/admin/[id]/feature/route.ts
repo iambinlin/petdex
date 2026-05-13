@@ -74,9 +74,10 @@ export async function PATCH(
       featured: row.featured,
       by: userId,
     });
-  } else {
-    await invalidatePetCaches(row.slug);
   }
+
+  // Flushes both Upstash + Next page tags (pet:${slug}, pet:list).
+  await invalidatePetCaches(row.slug);
 
   return NextResponse.json({ ok: true, featured: row.featured });
 }
