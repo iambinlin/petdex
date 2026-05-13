@@ -4,6 +4,8 @@ import Link from "next/link";
 
 import { SignInButton, useAuth } from "@clerk/nextjs";
 
+import { Button } from "@/components/ui/button";
+
 type SubmitCTAProps = {
   className?: string;
   children?: React.ReactNode;
@@ -27,16 +29,26 @@ export function SubmitCTA({
         forceRedirectUrl={href}
         signUpForceRedirectUrl={href}
       >
-        <button type="button" className={className}>
+        <Button
+          variant="petdex-cta"
+          size="petdex-pill"
+          className={className}
+          render={<button type="button" />}
+        >
           {children}
-        </button>
+        </Button>
       </SignInButton>
     );
   }
 
   return (
-    <Link href={href} className={className}>
+    <Button
+      variant="petdex-cta"
+      size="petdex-pill"
+      className={className}
+      render={<Link href={href} />}
+    >
       {children}
-    </Link>
+    </Button>
   );
 }

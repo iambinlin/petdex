@@ -6,6 +6,7 @@ import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { GithubIcon } from "@/components/github-icon";
+import { Button } from "@/components/ui/button";
 
 const REPO_API = "https://api.github.com/repos/crafter-station/petdex";
 const CACHE_KEY = "petdex_gh_stars_v1";
@@ -79,16 +80,28 @@ export function GithubStarsLink({
   const iconSize = size === "mobile" ? "size-5" : "size-4";
 
   return (
-    <a
-      href="https://github.com/crafter-station/petdex"
-      target="_blank"
-      rel="noreferrer"
+    <Button
+      variant="ghost"
+      size="sm"
       aria-label={
         stars !== null
           ? t("githubRepoAriaWithStars", { stars })
           : t("githubRepoAria")
       }
-      className={`inline-flex items-center gap-1.5 transition hover:text-foreground ${className}`}
+      className={`gap-1.5 transition hover:text-foreground ${className}`}
+      render={
+        // biome-ignore lint/a11y/useAnchorContent: children are injected by Button via render prop merging
+        <a
+          href="https://github.com/crafter-station/petdex"
+          target="_blank"
+          rel="noreferrer"
+          aria-label={
+            stars !== null
+              ? t("githubRepoAriaWithStars", { stars })
+              : t("githubRepoAria")
+          }
+        />
+      }
     >
       <GithubIcon className={iconSize} />
       <span className="inline-flex min-w-[3ch] items-center gap-0.5 font-mono text-[11px] text-muted-2">
@@ -102,6 +115,6 @@ export function GithubStarsLink({
           />
         )}
       </span>
-    </a>
+    </Button>
   );
 }
