@@ -1,6 +1,11 @@
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
+import {
+  AGGREGATE_KEYS,
+  invalidateAggregates,
+  invalidatePetCaches,
+} from "@/lib/db/cached-aggregates";
 import type { SubmittedPet } from "@/lib/db/schema";
 import * as schema from "@/lib/db/schema";
 import { renderSubmissionApprovedEmail } from "@/lib/email-templates/submission-approved";
@@ -97,6 +102,17 @@ export async function applySubmissionAction(
     return { ok: false, status: 400, body: { error: "nothing_to_update" } };
   }
 
+  const current = await db.query.submittedPets.findFirst({
+    columns: {
+      slug: true,
+      status: true,
+    },
+    where: eq(schema.submittedPets.id, id),
+  });
+  if (!current) {
+    return { ok: false, status: 404, body: { error: "not_found" } };
+  }
+
   const [updated] = await db
     .update(schema.submittedPets)
     .set(update)
@@ -117,6 +133,30 @@ export async function applySubmissionAction(
     (body.action === "approve" || body.action === "reject")
   ) {
     await notifySubmissionOwner(row);
+  }
+
+  // Any status flip changes the set of approved pets, so the cached
+  // facets / counts / metrics summary become stale.
+  if (
+    body.action === "approve" ||
+    body.action === "reject" ||
+    body.action === "pending"
+  ) {
+    await invalidateAggregates(
+      AGGREGATE_KEYS.facets,
+      AGGREGATE_KEYS.approvedCount,
+      AGGREGATE_KEYS.metricsSummary,
+      AGGREGATE_KEYS.batches,
+      AGGREGATE_KEYS.variantIndex,
+    );
+    await invalidatePetCaches(current.slug, row.slug);
+  } else if (current.status === "approved" && body.action === "edit") {
+    const aggregateKeys: string[] = [AGGREGATE_KEYS.variantIndex];
+    if (current.slug !== row.slug) {
+      aggregateKeys.push(AGGREGATE_KEYS.metricsSummary);
+    }
+    await invalidateAggregates(...aggregateKeys);
+    await invalidatePetCaches(current.slug, row.slug);
   }
 
   return { ok: true, row };
@@ -163,6 +203,8 @@ async function runPostApprovalEffects(
             colorFamily: classifyColorFamily(dominantColor),
           })
           .where(eq(schema.submittedPets.id, row.id));
+        await invalidateAggregates(AGGREGATE_KEYS.facets);
+        await invalidatePetCaches(row.slug);
       } catch (e) {
         console.error("color extract failed", e);
       }

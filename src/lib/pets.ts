@@ -7,6 +7,11 @@ import { cache } from "react";
 
 import { and, desc, eq, sql } from "drizzle-orm";
 
+import {
+  AGGREGATE_KEYS,
+  cachedAggregate,
+  petCacheKey,
+} from "@/lib/db/cached-aggregates";
 import { db, schema } from "@/lib/db/client";
 import {
   getMetricsBySlugs,
@@ -23,15 +28,71 @@ const EMPTY_METRICS: Metrics = {
   likeCount: 0,
 };
 
+const PET_CACHE_TTL_SECONDS = 300;
+
+type PetRow = Pick<
+  typeof schema.submittedPets.$inferSelect,
+  | "id"
+  | "slug"
+  | "displayName"
+  | "description"
+  | "spritesheetUrl"
+  | "petJsonUrl"
+  | "zipUrl"
+  | "soundUrl"
+  | "featured"
+  | "kind"
+  | "vibes"
+  | "tags"
+  | "dominantColor"
+  | "colorFamily"
+  | "creditName"
+  | "creditUrl"
+  | "creditImage"
+  | "source"
+  | "approvedAt"
+  | "createdAt"
+>;
+
+const petColumns = {
+  id: true,
+  slug: true,
+  displayName: true,
+  description: true,
+  spritesheetUrl: true,
+  petJsonUrl: true,
+  zipUrl: true,
+  soundUrl: true,
+  featured: true,
+  kind: true,
+  vibes: true,
+  tags: true,
+  dominantColor: true,
+  colorFamily: true,
+  creditName: true,
+  creditUrl: true,
+  creditImage: true,
+  source: true,
+  approvedAt: true,
+  createdAt: true,
+} as const;
+
 export const getPet = cache(
   async (slug: string): Promise<PetdexPet | undefined> => {
-    const row = await db.query.submittedPets.findFirst({
-      where: and(
-        eq(schema.submittedPets.slug, slug),
-        eq(schema.submittedPets.status, "approved"),
-      ),
-    });
-    return row ? rowToPet(row) : undefined;
+    const pet = await cachedAggregate<PetdexPet | null>(
+      { key: petCacheKey(slug), ttlSeconds: PET_CACHE_TTL_SECONDS },
+      async () => {
+        const row = await db.query.submittedPets.findFirst({
+          columns: petColumns,
+          where: and(
+            eq(schema.submittedPets.slug, slug),
+            eq(schema.submittedPets.status, "approved"),
+          ),
+        });
+        return row ? rowToPet(row) : null;
+      },
+    );
+    return pet ?? undefined;
   },
 );
 
@@ -154,16 +215,19 @@ export async function getApprovedPetsWithMetrics(): Promise<PetWithMetrics[]> {
 }
 
 export async function getApprovedPetCount(): Promise<number> {
-  const row = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(schema.submittedPets)
-    .where(eq(schema.submittedPets.status, "approved"));
-  return row[0]?.n ?? 0;
+  return cachedAggregate(
+    { key: AGGREGATE_KEYS.approvedCount, ttlSeconds: 60 },
+    async () => {
+      const row = await db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(schema.submittedPets)
+        .where(eq(schema.submittedPets.status, "approved"));
+      return row[0]?.n ?? 0;
+    },
+  );
 }
 
-export function rowToPet(
-  row: typeof schema.submittedPets.$inferSelect,
-): PetdexPet {
+export function rowToPet(row: PetRow): PetdexPet {
   const submittedBy = row.creditName
     ? {
         name: row.creditName,

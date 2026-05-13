@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { and, eq, gte, sql } from "drizzle-orm";
 
+import {
+  AGGREGATE_KEYS,
+  invalidateAggregates,
+  invalidatePetCaches,
+} from "@/lib/db/cached-aggregates";
 import { db, schema } from "@/lib/db/client";
 import { decideAutoAccept } from "@/lib/edit-policy";
 import {
@@ -322,6 +327,8 @@ export async function PATCH(
         .where(eq(schema.submittedPets.id, id));
 
       void refreshSimilarityFor(id).catch(() => {});
+      await invalidateAggregates(AGGREGATE_KEYS.variantIndex);
+      await invalidatePetCaches(row.slug);
 
       void createNotification({
         userId: row.ownerId,

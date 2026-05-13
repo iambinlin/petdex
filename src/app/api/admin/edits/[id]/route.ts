@@ -5,6 +5,11 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
+import {
+  AGGREGATE_KEYS,
+  invalidateAggregates,
+  invalidatePetCaches,
+} from "@/lib/db/cached-aggregates";
 import { db, schema } from "@/lib/db/client";
 import { renderEditApprovedEmail } from "@/lib/email-templates/edit-approved";
 import { renderEditRejectedEmail } from "@/lib/email-templates/edit-rejected";
@@ -114,6 +119,8 @@ export async function PATCH(
     }
 
     void refreshSimilarityFor(id).catch(() => {});
+    await invalidateAggregates(AGGREGATE_KEYS.variantIndex);
+    await invalidatePetCaches(updated.slug);
 
     void createNotification({
       userId: updated.ownerId,
