@@ -101,6 +101,22 @@ export const submittedPets = pgTable(
       withTimezone: true,
     }),
     pendingRejectionReason: text("pending_rejection_reason"),
+    // Asset columns for pending sprite/json/zip swaps. These require
+    // admin re-approval (full dhash + dupe scan) before going live.
+    pendingSpritesheetUrl: text("pending_spritesheet_url"),
+    pendingPetJsonUrl: text("pending_pet_json_url"),
+    pendingZipUrl: text("pending_zip_url"),
+    pendingSpritesheetWidth: integer("pending_spritesheet_width"),
+    pendingSpritesheetHeight: integer("pending_spritesheet_height"),
+    pendingDhash: text("pending_dhash"),
+    pendingReviewId: text("pending_review_id"),
+    pendingAutoApprovedAt: timestamp("pending_auto_approved_at", {
+      withTimezone: true,
+    }),
+    // Edit frequency tracking. Used by the auto-accept policy to enforce
+    // the 24h edit-count cap (max 3 auto-accepted edits per day).
+    editCount: integer("edit_count").notNull().default(0),
+    lastEditAt: timestamp("last_edit_at", { withTimezone: true }),
     // Owner-controlled order on /u/<handle>. Lower comes first. Ties
     // (typical: every row is 0 by default) fall back to dex/created_at
     // order from the query side. Owners reorder via dnd-kit; non-owners
@@ -810,3 +826,28 @@ export const telemetryEvents = pgTable(
 
 export type TelemetryEvent = typeof telemetryEvents.$inferSelect;
 export type NewTelemetryEvent = typeof telemetryEvents.$inferInsert;
+
+export const wechatQrUploads = pgTable(
+  "wechat_qr_uploads",
+  {
+    id: serial("id").primaryKey(),
+    uploadedBy: text("uploaded_by").notNull(),
+    blobUrl: text("blob_url").notNull(),
+    historyKey: text("history_key").notNull(),
+    validationResult: jsonb("validation_result").notNull(),
+    status: text("status").notNull().default("active"),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => ({
+    statusIdx: index("wechat_qr_uploads_status_idx").on(
+      table.status,
+      table.uploadedAt,
+    ),
+  }),
+);
+
+export type WechatQrUpload = typeof wechatQrUploads.$inferSelect;
+export type NewWechatQrUpload = typeof wechatQrUploads.$inferInsert;

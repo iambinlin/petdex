@@ -10,6 +10,11 @@ export type ArchRow = { arch: string; count: number };
 export type VersionRow = { binary_version: string; count: number };
 export type AgentRow = { agent: string; count: number };
 export type CountryRow = { country: string; count: number };
+export type VersionAdoptionRow = {
+  day: string;
+  version: string;
+  installs: number;
+};
 
 export type TelemetrySummary = {
   totalInstalls: number;
@@ -225,4 +230,33 @@ export async function getTelemetrySummary(): Promise<TelemetrySummary> {
       startToFirstPct: pct(fFirst, fStart),
     },
   };
+}
+
+export async function versionAdoptionOverTime(): Promise<VersionAdoptionRow[]> {
+  const result = await db.execute(sql`
+    SELECT
+      to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+      binary_version AS version,
+      COUNT(DISTINCT install_id) AS installs
+    FROM telemetry_events
+    WHERE
+      event = 'cli_install_desktop_success'
+      AND created_at >= NOW() - INTERVAL '60 days'
+    GROUP BY 1, 2
+    ORDER BY 1
+  `);
+
+  return (
+    (
+      result as unknown as {
+        rows: Array<{ day: string; version: string | null; installs: unknown }>;
+      }
+    ).rows ?? []
+  )
+    .filter((r) => r.version !== null && r.version !== "")
+    .map((r) => ({
+      day: r.day,
+      version: r.version as string,
+      installs: toNum(r.installs),
+    }));
 }

@@ -9,13 +9,15 @@ import { useTranslations } from "next-intl";
 import {
   type CollectionKind,
   collectionKind,
-  KIND_LABEL,
+  KIND_SLUG,
 } from "@/lib/collection-kind";
 import type { OwnerCredit } from "@/lib/owner-credit";
 import type { PetWithMetrics } from "@/lib/pets";
 
 import { CollectionActionMenu } from "@/components/collection-action-menu";
 import { CollectionCover } from "@/components/collection-cover";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
@@ -27,6 +29,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
 
 type CollectionItem = {
   slug: string;
@@ -41,20 +44,25 @@ type CollectionItem = {
 
 type SortKey = "size" | "title";
 
-const KIND_FILTERS: { value: "all" | CollectionKind; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "franchise", label: "Franchises" },
-  { value: "category", label: "Categories" },
-  { value: "category-sub", label: "Themed" },
-  { value: "other", label: "Curated" },
+type KindFilterValue = "all" | CollectionKind;
+
+const KIND_FILTER_KEYS: KindFilterValue[] = [
+  "all",
+  "franchise",
+  "category",
+  "category-sub",
+  "other",
 ];
 
-const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: "size", label: "Largest" },
-  { value: "title", label: "A → Z" },
-];
+const SORT_KEYS: SortKey[] = ["size", "title"];
 
-const PAGE_SIZE = 12;
+// First-paint window covers the average screen above the fold. The
+// previous PAGE_SIZE=12 forced the IntersectionObserver to wake up
+// three times before the user even scrolled (each wake mounts a fresh
+// batch of CollectionCard + CollectionCover + 6 PetSprite instances,
+// which racked up ~500 mounts in idle and dropped FPS to 3-30 during
+// scroll). 24 covers the common viewport without needing a tick.
+const PAGE_SIZE = 24;
 
 export function CollectionsBrowser({
   collections,
@@ -65,7 +73,7 @@ export function CollectionsBrowser({
 }) {
   const t = useTranslations("collectionsBrowser");
   const [query, setQuery] = useState("");
-  const [kind, setKind] = useState<"all" | CollectionKind>("all");
+  const [kind, setKind] = useState<KindFilterValue>("all");
   const [sort, setSort] = useState<SortKey>("size");
   const [pageCount, setPageCount] = useState(1);
 
@@ -90,16 +98,31 @@ export function CollectionsBrowser({
       );
     });
     list = [...list];
+
+    // Hand-picked slugs that should always lead the list, mirroring
+    // the home page Featured Collections strip. Anything in this set
+    // outranks the user-selected sort; collections outside this set
+    // fall through to the requested sort.
+    const PRIORITY_SLUGS = [
+      "franchise-pokemon",
+      "franchise-league-of-legends",
+      "franchise-jojos-bizarre-adventure",
+    ];
+    const priorityIndex = new Map(PRIORITY_SLUGS.map((s, i) => [s, i]));
+
     list.sort((a, b) => {
+      const ai = priorityIndex.get(a.slug);
+      const bi = priorityIndex.get(b.slug);
+      if (ai !== undefined && bi !== undefined) return ai - bi;
+      if (ai !== undefined) return -1;
+      if (bi !== undefined) return 1;
       if (sort === "size") return b.petCount - a.petCount;
       return a.title.localeCompare(b.title);
     });
     return list;
   }, [collections, query, kind, sort]);
 
-  // Reset paginator whenever the filtered set changes — otherwise users
-  // who scrolled deep into "Themed" then switched to "Franchises" would
-  // see N pages of franchises pre-rendered without scrolling.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional reset on filter/query/sort change
   useEffect(() => {
     setPageCount(1);
   }, [query, kind, sort]);
@@ -115,20 +138,28 @@ export function CollectionsBrowser({
     if (!hasMore) return;
     const el = sentinelRef.current;
     if (!el) return;
+    // Throttle: ignore re-intersections within 400ms of the last tick.
+    // Without this, the observer fires once when mounted (sentinel is
+    // already inside the rootMargin window), pageCount goes 1 -> 2,
+    // re-renders the grid, the sentinel moves down, still inside the
+    // window, fires again, repeats until hasMore goes false. Result is
+    // a cascade of mounts in idle. The throttle lets the scroll position
+    // settle before we accept the next intersection.
+    let lastTick = 0;
     const obs = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) setPageCount((p) => p + 1);
+        if (!entries[0]?.isIntersecting) return;
+        const now = Date.now();
+        if (now - lastTick < 400) return;
+        lastTick = now;
+        setPageCount((p) => p + 1);
       },
-      { rootMargin: "600px" },
+      { rootMargin: "200px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, [hasMore]);
 
-  // Stable handlers so the kind-filter chips and search input do not
-  // hand fresh function refs to their children on every paginator
-  // re-render. setQuery/setKind/setSort are already stable identity
-  // from useState; we just close over them.
   const handleQueryChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value),
     [],
@@ -137,9 +168,22 @@ export function CollectionsBrowser({
     if (v) setSort(v);
   }, []);
   const handleKindClick = useCallback(
-    (value: "all" | CollectionKind) => setKind(value),
+    (value: KindFilterValue) => setKind(value),
     [],
   );
+
+  const kindFilterLabel = (value: KindFilterValue): string => {
+    if (value === "all") return t("filters.all");
+    if (value === "franchise") return t("filters.franchise");
+    if (value === "category") return t("filters.category");
+    if (value === "category-sub") return t("filters.categorySub");
+    return t("filters.other");
+  };
+
+  const sortLabel = (value: SortKey): string => {
+    if (value === "size") return t("sort.size");
+    return t("sort.title");
+  };
 
   return (
     <div className="space-y-6">
@@ -153,7 +197,7 @@ export function CollectionsBrowser({
               type="search"
               value={query}
               onChange={handleQueryChange}
-              placeholder="Try 'pokemon' or 'cozy cat' or 'developer'"
+              placeholder={t("searchPlaceholder")}
               aria-label={t("searchAria")}
               className="text-sm placeholder:text-muted-3"
             />
@@ -163,44 +207,47 @@ export function CollectionsBrowser({
               aria-label={t("sortAria")}
               className="w-full shrink-0 sm:w-auto sm:min-w-[180px]"
             >
-              <span className="text-muted-3">Sort:</span>
+              <span className="text-muted-3">{t("sortPrefix")}</span>
               <span className="text-foreground">
-                {SORT_OPTIONS.find((o) => o.value === sort)?.label}
+                {SORT_KEYS.find((k) => k === sort) ? sortLabel(sort) : null}
               </span>
             </SelectTrigger>
             <SelectContent align="end">
-              {SORT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
+              {SORT_KEYS.map((key) => (
+                <SelectItem key={key} value={key}>
+                  {sortLabel(key)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          {KIND_FILTERS.map((f) => {
-            const c = counts[f.value] ?? 0;
-            const active = kind === f.value;
+          {KIND_FILTER_KEYS.map((value) => {
+            const c =
+              counts[value === "category-sub" ? "category-sub" : value] ?? 0;
             return (
               <KindChip
-                key={f.value}
-                value={f.value}
-                label={f.label}
+                key={value}
+                value={value}
+                label={kindFilterLabel(value)}
                 count={c}
-                active={active}
+                active={kind === value}
                 onClick={handleKindClick}
               />
             );
           })}
           <span className="ml-auto text-xs text-muted-3">
-            Showing {visibleSlice.length} of {visible.length}
+            {t("showingCount", {
+              visible: visibleSlice.length,
+              total: visible.length,
+            })}
           </span>
         </div>
       </div>
 
       {visible.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border-base bg-surface/60 p-10 text-center text-sm text-muted-2">
-          No collections match those filters.
+          {t("empty")}
         </div>
       ) : (
         <div className="grid auto-rows-fr gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -217,11 +264,11 @@ export function CollectionsBrowser({
           aria-hidden="true"
           className="flex h-24 items-center justify-center text-xs text-muted-3"
         >
-          Loading more…
+          {t("loadingMore")}
         </div>
       ) : visible.length > PAGE_SIZE ? (
         <p className="pt-2 text-center text-xs text-muted-3">
-          End of results · {visible.length} collections
+          {t("endOfResults", { count: visible.length })}
         </p>
       ) : null}
     </div>
@@ -235,32 +282,23 @@ const KindChip = memo(function KindChip({
   active,
   onClick,
 }: {
-  value: "all" | CollectionKind;
+  value: KindFilterValue;
   label: string;
   count: number;
   active: boolean;
-  onClick: (value: "all" | CollectionKind) => void;
+  onClick: (value: KindFilterValue) => void;
 }) {
   const handleClick = useCallback(() => onClick(value), [onClick, value]);
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition ${
-        active
-          ? "border-brand bg-brand text-on-inverse"
-          : "border-border-base bg-transparent text-muted-2 hover:border-border-strong hover:text-foreground"
-      }`}
-    >
+    <Toggle variant="chip" size="chip" pressed={active} onClick={handleClick}>
       {label}
-      <span
-        className={`rounded-full px-1.5 text-[10px] font-mono tracking-wider ${
-          active ? "bg-on-inverse/15" : "bg-surface text-muted-3"
-        }`}
+      <Badge
+        variant="secondary"
+        className="ml-0.5 rounded-full px-1.5 font-mono text-[10px] tracking-wider"
       >
         {count}
-      </span>
-    </button>
+      </Badge>
+    </Toggle>
   );
 });
 
@@ -271,9 +309,22 @@ const CollectionCard = memo(function CollectionCard({
   collection: CollectionItem;
   owner: OwnerCredit | null;
 }) {
+  const t = useTranslations("collectionsBrowser");
   const k = collectionKind(c.slug);
+  const kindKey = KIND_SLUG[k] as
+    | "franchise"
+    | "category"
+    | "categorySub"
+    | "other";
   return (
-    <article className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 has-[[aria-expanded=true]]:z-30">
+    // Same surface treatment as PetCard: neutral border, bg-surface/76,
+    // backdrop-blur, small shadow, hover lifts + goes white/stone.
+    // The has-[[aria-expanded=true]]:z-30 selector is preserved so the
+    // CollectionActionMenu dropdown escapes stacking context siblings.
+    <article
+      data-slot="card"
+      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-black/10 bg-surface/76 shadow-sm shadow-blue-950/5 backdrop-blur transition has-[[aria-expanded=true]]:z-30 hover:-translate-y-0.5 hover:bg-white hover:shadow-xl hover:shadow-blue-950/10 dark:border-white/10 dark:hover:bg-stone-800"
+    >
       <Link href={`/collections/${c.slug}`} className="block">
         <CollectionCover
           pets={c.pets}
@@ -292,43 +343,47 @@ const CollectionCard = memo(function CollectionCard({
           }}
         />
       </div>
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col gap-2 border-t border-black/[0.06] px-5 pt-4 pb-5 dark:border-white/[0.06]">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center rounded-full bg-brand-tint px-2 py-0.5 font-mono text-[9px] tracking-[0.18em] text-brand-deep uppercase dark:bg-brand-tint-dark dark:text-brand-light">
-                {KIND_LABEL[k]}
+                {t(`kindLabel.${kindKey}`)}
               </span>
               <span className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-                {c.petCount} pets
+                {t("card.petCount", { count: c.petCount })}
               </span>
             </div>
-            <h2 className="mt-2 text-xl font-semibold tracking-tight">
+            <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
               <Link href={`/collections/${c.slug}`}>{c.title}</Link>
-            </h2>
+            </h3>
           </div>
           {c.externalUrl ? (
-            <Link
-              href={c.externalUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border-base bg-surface px-2.5 text-[11px] font-medium text-muted-2 transition hover:border-border-strong"
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              render={
+                <Link href={c.externalUrl} target="_blank" rel="noreferrer" />
+              }
             >
               <ExternalLink className="size-3" />
-              Site
-            </Link>
+              {t("card.siteLink")}
+            </Button>
           ) : null}
         </div>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-2">
+        <p className="line-clamp-2 text-sm leading-6 text-muted-2">
           {c.description}
         </p>
         {owner ? (
-          <Link
-            href={`/u/${owner.handle}`}
-            className="mt-auto inline-flex pt-3 text-xs font-medium text-brand hover:underline"
-          >
-            by {owner.name}
-          </Link>
+          <div className="mt-auto border-t border-black/[0.05] pt-2 dark:border-white/[0.05]">
+            <Link
+              href={`/u/${owner.handle}`}
+              className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase hover:text-foreground"
+            >
+              {t("card.byOwner", { name: owner.name })}
+            </Link>
+          </div>
         ) : null}
       </div>
     </article>

@@ -144,6 +144,38 @@ export default async function AdminEditsPage() {
                 </div>
 
                 <div className="space-y-3">
+                  {r.pendingSpritesheetUrl ? (
+                    <div className="rounded-2xl border border-border-base bg-surface/80 p-3">
+                      <p className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase">
+                        Spritesheet
+                      </p>
+                      <div className="mt-2 grid gap-2 md:grid-cols-2">
+                        <div className="space-y-1">
+                          <p className="text-[10px] text-muted-4">Before</p>
+                          <img
+                            src={r.spritesheetUrl}
+                            alt="current spritesheet"
+                            className="max-h-40 rounded-lg border border-chip-danger-fg/20 object-contain"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] text-muted-4">After</p>
+                          <img
+                            src={r.pendingSpritesheetUrl}
+                            alt="pending spritesheet"
+                            className="max-h-40 rounded-lg border border-chip-success-fg/20 object-contain"
+                          />
+                        </div>
+                      </div>
+                      {r.pendingSpritesheetWidth &&
+                      r.pendingSpritesheetHeight ? (
+                        <p className="mt-1 font-mono text-[10px] text-muted-4">
+                          {r.pendingSpritesheetWidth}x
+                          {r.pendingSpritesheetHeight}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {r.pendingDisplayName ? (
                     <DiffField
                       label="Display name"
@@ -163,7 +195,8 @@ export default async function AdminEditsPage() {
                   ) : null}
                   {!r.pendingDisplayName &&
                   !r.pendingDescription &&
-                  !pendingTags ? (
+                  !pendingTags &&
+                  !r.pendingSpritesheetUrl ? (
                     <p className="text-sm italic text-muted-4">
                       Edit submitted but no changes detected. Reject to clear.
                     </p>

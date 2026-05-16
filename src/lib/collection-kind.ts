@@ -20,9 +20,9 @@ export function collectionKind(slug: string): CollectionKind {
   return "other";
 }
 
-export const KIND_LABEL: Record<CollectionKind, string> = {
-  franchise: "Franchise",
-  category: "Category",
-  "category-sub": "Themed",
-  other: "Curated",
+export const KIND_SLUG: Record<CollectionKind, string> = {
+  franchise: "franchise",
+  category: "category",
+  "category-sub": "categorySub",
+  other: "other",
 };

@@ -26,6 +26,7 @@ const agent_assets = [_]AgentAsset{
     .{ .name = "codex.svg", .bytes = @embedFile("assets/agents/codex.svg") },
     .{ .name = "gemini.svg", .bytes = @embedFile("assets/agents/gemini.svg") },
     .{ .name = "opencode.svg", .bytes = @embedFile("assets/agents/opencode.svg") },
+    .{ .name = "antigravity.svg", .bytes = @embedFile("assets/agents/antigravity.svg") },
     .{ .name = "fallback.svg", .bytes = @embedFile("assets/agents/fallback.svg") },
 };
 
@@ -287,6 +288,7 @@ const html_tail =
     \\    'codex': 'agents/codex.svg',
     \\    'gemini': 'agents/gemini.svg',
     \\    'opencode': 'agents/opencode.svg',
+    \\    'antigravity': 'agents/antigravity.svg',
     \\  };
     \\  function agentAvatarSrc(source) {
     \\    return AGENT_AVATARS[source] || 'agents/fallback.svg';
@@ -576,6 +578,7 @@ const html_tail =
     \\  // — a fixed-position card, no animations.
     \\  let lastUpdateStatus = '';
     \\  let updateCard = null;
+    \\  let needsInitFlag = false;
     \\  function ensureUpdateCard() {
     \\    if (updateCard) return updateCard;
     \\    updateCard = document.createElement('div');
@@ -622,6 +625,7 @@ const html_tail =
     \\  }
     \\  function renderUpdate(info) {
     \\    const card = ensureUpdateCard();
+    \\    if (needsInitFlag) { card.style.display = 'none'; return; }
     \\    if (info.status === 'idle' || (!info.available && info.status !== 'error' && info.status !== 'done')) {
     \\      card.style.display = 'none';
     \\      return;
@@ -652,6 +656,57 @@ const html_tail =
     \\  }
     \\  setInterval(pollUpdate, 5000);
     \\  pollUpdate();
+    \\  // Init banner. Shown when ~/.petdex/bin/petdex.js does not exist,
+    \\  // meaning the user launched the .app without running `petdex init`.
+    \\  // Takes priority over the update banner (new users need init first).
+    \\  let initCard = null;
+    \\  let initToastTimer = null;
+    \\  function ensureInitCard() {
+    \\    if (initCard) return initCard;
+    \\    initCard = document.createElement('div');
+    \\    initCard.id = 'init-card';
+    \\    initCard.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;padding:6px 9px;border-radius:9px;background:#ffffff;color:#111;font:600 11px system-ui,-apple-system,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.30);display:none;cursor:pointer;pointer-events:auto;line-height:1.25;text-align:center;';
+    \\    initCard.addEventListener('click', async () => {
+    \\      try {
+    \\        await navigator.clipboard.writeText('npx petdex init');
+    \\      } catch (e) {}
+    \\      showInitToast('Comando copiado. Pegalo en tu terminal.');
+    \\    });
+    \\    document.body.appendChild(initCard);
+    \\    return initCard;
+    \\  }
+    \\  function showInitToast(msg) {
+    \\    if (initToastTimer) { clearTimeout(initToastTimer); initToastTimer = null; }
+    \\    const card = ensureInitCard();
+    \\    const prev = card.textContent;
+    \\    card.textContent = msg;
+    \\    initToastTimer = setTimeout(() => {
+    \\      card.textContent = prev;
+    \\      initToastTimer = null;
+    \\    }, 3000);
+    \\  }
+    \\  function renderInitBanner(needsInit) {
+    \\    needsInitFlag = needsInit;
+    \\    const card = ensureInitCard();
+    \\    if (needsInit) {
+    \\      card.textContent = 'Run `petdex init` to wire your agents';
+    \\      card.style.display = 'block';
+    \\      const uc = document.getElementById('update-card');
+    \\      if (uc) uc.style.display = 'none';
+    \\    } else {
+    \\      card.style.display = 'none';
+    \\    }
+    \\  }
+    \\  async function pollInitStatus() {
+    \\    if (!(window.zero && window.zero.invoke)) return;
+    \\    try {
+    \\      const info = await window.zero.invoke('petdex.read_init_status', {});
+    \\      if (!info || typeof info !== 'object') return;
+    \\      renderInitBanner(info.needsInit === true);
+    \\    } catch (e) {}
+    \\  }
+    \\  setInterval(pollInitStatus, 5000);
+    \\  pollInitStatus();
     \\  // Sidecar watchdog. The sidecar dies via parent watchdog when
     \\  // we exit, but it can also crash mid-flight (Node OOM, an
     \\  // unhandled error in the HTTP handler) leaving us alive with
@@ -1174,7 +1229,7 @@ const PetdexState = struct {
     // having to re-resolve sidecar_dir or rebuild the env map.
     sidecar_dir: []u8,
     env_map: *std.process.Environ.Map,
-    bridge_handlers: [10]zero_native.BridgeHandler = undefined,
+    bridge_handlers: [11]zero_native.BridgeHandler = undefined,
 
     fn deinit(self: *PetdexState) void {
         self.allocator.free(self.config_dir);
@@ -1193,6 +1248,7 @@ const PetdexState = struct {
             .{ .name = "petdex.read_incoming_url", .context = self, .invoke_fn = readIncomingUrlCmd },
             .{ .name = "petdex.install_pet", .context = self, .invoke_fn = installPetCmd },
             .{ .name = "petdex.read_update_info", .context = self, .invoke_fn = readUpdateInfoCmd },
+            .{ .name = "petdex.read_init_status", .context = self, .invoke_fn = readInitStatusCmd },
             .{ .name = "petdex.trigger_update", .context = self, .invoke_fn = triggerUpdateCmd },
             .{ .name = "petdex.respawn_sidecar", .context = self, .invoke_fn = respawnSidecarCmd },
             .{ .name = "petdex.set_mascot_state", .context = self, .invoke_fn = setMascotStateCmd },
@@ -1393,6 +1449,24 @@ const PetdexState = struct {
         return output[0..read];
     }
 
+    fn readInitStatusCmd(context: *anyopaque, invocation: zero_native.bridge.Invocation, output: []u8) anyerror![]const u8 {
+        _ = invocation;
+        const self: *PetdexState = @ptrCast(@alignCast(context));
+        const path = try std.fs.path.join(self.allocator, &.{ self.config_dir, "runtime", "init-status.json" });
+        defer self.allocator.free(path);
+        var file = std.Io.Dir.openFileAbsolute(self.io, path, .{}) catch {
+            return std.fmt.bufPrint(output, "{{\"needsInit\":false,\"reason\":null,\"checkedAt\":0}}", .{});
+        };
+        defer file.close(self.io);
+        const stat = try file.stat(self.io);
+        const size: usize = @intCast(stat.size);
+        if (size == 0 or size > output.len) {
+            return std.fmt.bufPrint(output, "{{\"needsInit\":false,\"reason\":null,\"checkedAt\":0}}", .{});
+        }
+        const read = try file.readPositionalAll(self.io, output[0..size], 0);
+        return output[0..read];
+    }
+
     fn triggerUpdateCmd(context: *anyopaque, invocation: zero_native.bridge.Invocation, output: []u8) anyerror![]const u8 {
         _ = invocation;
         const self: *PetdexState = @ptrCast(@alignCast(context));
@@ -1555,6 +1629,7 @@ const petdex_command_policies = [_]zero_native.BridgeCommandPolicy{
     .{ .name = "petdex.read_incoming_url", .origins = &petdex_origins },
     .{ .name = "petdex.install_pet", .origins = &petdex_origins },
     .{ .name = "petdex.read_update_info", .origins = &petdex_origins },
+    .{ .name = "petdex.read_init_status", .origins = &petdex_origins },
     .{ .name = "petdex.trigger_update", .origins = &petdex_origins },
     .{ .name = "petdex.respawn_sidecar", .origins = &petdex_origins },
     .{ .name = "petdex.set_mascot_state", .origins = &petdex_origins },

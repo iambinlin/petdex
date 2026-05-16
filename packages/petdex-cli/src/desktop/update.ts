@@ -25,6 +25,7 @@ import path from "node:path";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 
+import { emit } from "../telemetry.js";
 import {
   appBundleRootFor,
   commitDesktopAssets,
@@ -64,11 +65,9 @@ const VERSION_FILE = path.join(homedir(), ".petdex", "version");
  * the caller falls back to waitForPortRelease — that's the safety
  * net for any case the handoff can't cover.
  */
-export async function requestSidecarHandoff(options: {
-  port?: number;
-  timeoutMs?: number;
-  tokenPath?: string;
-} = {}): Promise<boolean> {
+export async function requestSidecarHandoff(
+  options: { port?: number; timeoutMs?: number; tokenPath?: string } = {},
+): Promise<boolean> {
   const port = options.port ?? SIDECAR_PORT;
   const timeoutMs = options.timeoutMs ?? 2_000;
   const tokenPath = options.tokenPath ?? UPDATE_TOKEN_PATH;
@@ -82,14 +81,11 @@ export async function requestSidecarHandoff(options: {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(
-      `http://127.0.0.1:${port}/update/handoff`,
-      {
-        method: "POST",
-        headers: { [UPDATE_TOKEN_HEADER]: token },
-        signal: controller.signal,
-      },
-    );
+    const res = await fetch(`http://127.0.0.1:${port}/update/handoff`, {
+      method: "POST",
+      headers: { [UPDATE_TOKEN_HEADER]: token },
+      signal: controller.signal,
+    });
     return res.ok;
   } catch {
     return false;
@@ -107,7 +103,11 @@ function readInstalledVersion(): string | null {
   }
 }
 
-export async function runUpdate(args: string[] = []): Promise<void> {
+export async function runUpdate(
+  args: string[] = [],
+  cliVersion?: string,
+): Promise<void> {
+  const updateStartedAt = Date.now();
   const force = args.includes("--force");
   // --silent skips the @clack/prompts UI (intro/spinner/outro) and uses
   // plain console.log instead. Designed to be invoked by the desktop
@@ -225,9 +225,15 @@ export async function runUpdate(args: string[] = []): Promise<void> {
     // Skip the bare-binary phases below; jump straight to the version
     // file write + restart logic by setting a sentinel staged value.
     await writeFile(VERSION_FILE, `${release.tag_name}\n`);
+    emit("cli_update_applied", {
+      cli_version: cliVersion,
+      from_version: installed ?? undefined,
+      to_version: release.tag_name,
+      duration_ms: Date.now() - updateStartedAt,
+    });
     await runHookRefresh(info, warn, silent);
     const note = installed
-      ? `${installed}  →  ${release.tag_name}`
+      ? `${installed}  ->  ${release.tag_name}`
       : release.tag_name;
     outro(
       silent
@@ -353,10 +359,17 @@ export async function runUpdate(args: string[] = []): Promise<void> {
     }
   }
 
+  emit("cli_update_applied", {
+    cli_version: cliVersion,
+    from_version: installed ?? undefined,
+    to_version: release.tag_name,
+    duration_ms: Date.now() - updateStartedAt,
+  });
+
   await runHookRefresh(info, warn, silent);
 
   const note = installed
-    ? `${installed}  →  ${release.tag_name}`
+    ? `${installed}  ->  ${release.tag_name}`
     : release.tag_name;
   outro(silent ? note : `${pc.green("✓")} ${note}`);
 }

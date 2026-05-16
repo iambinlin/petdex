@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { StateQueue, type StateEvent } from "./state-queue";
+import { type StateEvent, StateQueue } from "./state-queue";
 
 // All tests use a fixed `now` counter so we don't depend on
 // timing or sleep. The queue is pure — receivedAt and tick(now)

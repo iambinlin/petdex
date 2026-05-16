@@ -20,6 +20,7 @@ import { CollectionCover } from "@/components/collection-cover";
 import { CommandLine } from "@/components/command-line";
 import { DiscordLink } from "@/components/discord-link";
 import { DownloadDesktopCTA } from "@/components/download-desktop-cta";
+import { DiscordIcon } from "@/components/icons/wechat-icon";
 import { JsonLd } from "@/components/json-ld";
 import { PetGallery } from "@/components/pet-gallery";
 import { PetSprite } from "@/components/pet-sprite";
@@ -27,18 +28,24 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SubmitCTA } from "@/components/submit-cta";
 import { SurprisePetCard } from "@/components/surprise-pet-card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from "@/components/ui/card";
+import { WechatCommunityDialog } from "@/components/wechat-community-dialog";
 
 import { hasLocale, locales } from "@/i18n/config";
 
-// ISR. The home page used to be force-dynamic because it pulled the
-// visitor's shuffle seed cookie and caught-slug set. Both moved to
-// the client: PetGallery re-fetches /api/pets/search after hydration
-// (which picks up the cookie) and /api/me/caught-slugs feeds the
-// "caught" highlight. The server now renders an alpha-ordered, anon
-// shell that the edge can cache for 60s — enough to keep new pets
-// surfacing without waking a function on every visit.
+// ISR. The home page renders an alpha-ordered, anon shell — the
+// visitor's shuffle seed and caught-slug set are pulled client-side
+// (PetGallery re-fetches /api/pets/search; /api/me/caught-slugs feeds
+// the "caught" highlight). With a 24h ceiling and tag-based
+// invalidation on submit/feature/withdraw, the page stays fresh for
+// editorial changes without burning a function on every visit.
 export const dynamic = "force-static";
-export const revalidate = 60;
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,
@@ -54,7 +61,6 @@ export async function generateMetadata({
   };
 }
 const SITE_URL = "https://petdex.crafter.run";
-
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
@@ -93,6 +99,7 @@ export default async function Home({
     ]);
   const totalPets = initialSearch.total;
   const formattedTotalPets = formatLocalizedNumber(totalPets, locale);
+  const showWechatCommunity = isZh;
 
   // Plain-object so the server -> client serializer doesn't choke on a
   // Map. Same source of truth either way.
@@ -182,12 +189,20 @@ export default async function Home({
             <SubmitCTA className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-inverse px-6 text-sm font-medium text-on-inverse transition hover:bg-inverse-hover">
               {t("submitCta")}
             </SubmitCTA>
-            {process.env.NEXT_PUBLIC_DISCORD_INVITE_URL ? (
+            {showWechatCommunity ? (
+              <WechatCommunityDialog
+                source="hero_secondary"
+                className="h-12 bg-[#07C160]/10 px-6 text-[#07C160] hover:bg-[#07C160]/16"
+              >
+                {t("joinWeChat")}
+              </WechatCommunityDialog>
+            ) : process.env.NEXT_PUBLIC_DISCORD_INVITE_URL && !isZh ? (
               <DiscordLink
                 href={process.env.NEXT_PUBLIC_DISCORD_INVITE_URL}
                 source="hero_secondary"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border-base bg-surface/70 px-6 text-sm font-medium text-foreground backdrop-blur transition hover:bg-surface"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#5865F2]/25 bg-[#5865F2]/10 px-6 text-sm font-medium text-[#5865F2] backdrop-blur transition hover:bg-[#5865F2]/16"
               >
+                <DiscordIcon className="size-4" />
                 {t("joinDiscord")}
               </DiscordLink>
             ) : (
@@ -259,9 +274,9 @@ async function FeaturedCollections({
       >
         {collections.map((collection) => {
           return (
-            <article
+            <Card
               key={collection.slug}
-              className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-border-base bg-surface/80 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10 has-[[aria-expanded=true]]:z-30"
+              className="group relative flex h-full flex-col gap-0 overflow-hidden rounded-3xl border border-border-base bg-surface/80 py-0 ring-0 transition hover:border-border-strong hover:shadow-xl hover:shadow-blue-950/10 has-[[aria-expanded=true]]:z-30"
             >
               <Link href={`/collections/${collection.slug}`} className="block">
                 <CollectionCover
@@ -270,19 +285,19 @@ async function FeaturedCollections({
                   max={5}
                   scale={0.5}
                 />
-                <div className="flex flex-1 flex-col p-5">
+                <CardContent className="flex flex-1 flex-col p-5">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="truncate text-lg font-semibold tracking-tight text-foreground">
+                    <CardTitle className="truncate text-lg font-semibold tracking-tight text-foreground">
                       {collection.title}
-                    </h3>
+                    </CardTitle>
                     <span className="shrink-0 font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
-                      {collection.pets.length} pets
+                      {t("petsCount", { count: collection.pets.length })}
                     </span>
                   </div>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-2">
+                  <CardDescription className="mt-2 line-clamp-2 text-sm leading-6 text-muted-2">
                     {collection.description}
-                  </p>
-                </div>
+                  </CardDescription>
+                </CardContent>
               </Link>
               <div className="absolute top-3 right-3 z-20">
                 <CollectionActionMenu
@@ -294,7 +309,7 @@ async function FeaturedCollections({
                   }}
                 />
               </div>
-            </article>
+            </Card>
           );
         })}
       </div>

@@ -176,23 +176,23 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
       >
         <nav
           className={cn(
-            "mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-5 md:px-8",
+            "mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 px-4 sm:gap-3 sm:px-5 md:px-8",
             scrolled ? "py-2.5" : "py-4",
           )}
         >
-          <div className="flex items-center gap-6">
+          <div className="flex min-w-0 items-center gap-4 lg:gap-6">
             <PetdexLogo
               href={href("/")}
               ariaLabel={common("petdexHome")}
               markClassName={cn(
                 "transition-[width,height] duration-200",
-                scrolled ? "size-7" : "size-10",
+                scrolled ? "size-7" : "size-8 sm:size-10",
               )}
               className={cn(
                 "transition-[font-size,gap] duration-200",
                 scrolled
                   ? "gap-2 [&>span]:text-base"
-                  : "gap-3 [&>span]:text-xl",
+                  : "gap-2 [&>span]:hidden [&>span]:text-xl sm:[&>span]:inline sm:gap-3 sm:[&>span]:text-xl",
               )}
             />
 
@@ -249,26 +249,30 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
             </NavigationMenu>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {hideSubmitCta ? null : (
-              <SubmitCTA
-                href={href("/submit")}
-                className={cn(
-                  buttonVariants({ variant: "petdex-cta" }),
-                  "hidden items-center justify-center px-4 font-medium transition-[height,font-size] duration-200 md:inline-flex",
-                  scrolled ? "h-9 text-xs" : "h-11 text-sm",
-                )}
-              >
-                {t("submitCta")}
-              </SubmitCTA>
+              <div className="hidden md:contents">
+                <SubmitCTA
+                  href={href("/submit")}
+                  className={cn(
+                    buttonVariants({ variant: "petdex-cta" }),
+                    "inline-flex items-center justify-center px-4 font-medium transition-[height,font-size] duration-200",
+                    scrolled ? "h-9 text-xs" : "h-11 text-sm",
+                  )}
+                >
+                  {t("submitCta")}
+                </SubmitCTA>
+              </div>
             )}
-            <GithubStarsLink
-              className={cn(
-                buttonVariants({ variant: "petdex-pill" }),
-                "hidden items-center gap-1.5 px-3 transition-[height] duration-200 md:inline-flex",
-                scrolled ? "h-9" : "h-11",
-              )}
-            />
+            <div className="hidden lg:contents">
+              <GithubStarsLink
+                className={cn(
+                  buttonVariants({ variant: "petdex-pill" }),
+                  "inline-flex items-center gap-1.5 px-3 transition-[height] duration-200",
+                  scrolled ? "h-9" : "h-11",
+                )}
+              />
+            </div>
             <Button
               type="button"
               variant="petdex-pill"
@@ -276,7 +280,7 @@ export function SiteHeader({ hideSubmitCta = false }: SiteHeaderProps) {
               aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
               className={cn(
-                "p-0 transition-[width,height] duration-200 lg:hidden",
+                "shrink-0 p-0 transition-[width,height] duration-200 lg:hidden",
                 scrolled ? "size-9" : "size-11",
               )}
             >

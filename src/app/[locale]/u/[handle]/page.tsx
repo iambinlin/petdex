@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { asc, desc, sql as dsql, eq } from "drizzle-orm";
 import { Heart, TerminalSquare, Trophy } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { isAdmin } from "@/lib/admin";
 import { getCatchProgress, getLikedPetsForUser } from "@/lib/catch-status";
@@ -90,6 +91,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function UserProfilePage({ params }: PageProps) {
   const { handle, locale } = await params;
+  const t = await getTranslations({ locale, namespace: "profile" });
   const requestedHandle = handle.toLowerCase();
   const ownerId = await userIdForHandle(handle);
   if (!ownerId) notFound();
@@ -319,12 +321,15 @@ export default async function UserProfilePage({ params }: PageProps) {
             <div className="text-center lg:text-left">
               <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                 <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-                  Petdex creator
+                  {t("creatorBadge")}
                 </p>
                 {catchProgress ? (
                   <p className="font-mono text-xs tracking-[0.22em] text-muted-3 uppercase">
-                    YOUR ALBUM: {catchProgress.caught}/{catchProgress.total} (
-                    {catchProgress.pct}%)
+                    {t("yourAlbum", {
+                      caught: catchProgress.caught,
+                      total: catchProgress.total,
+                      pct: catchProgress.pct,
+                    })}
                   </p>
                 ) : null}
                 {isOwnerAdmin ? (
@@ -333,7 +338,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                     title="One of the people who built Petdex"
                   >
                     <Trophy className="size-3" />
-                    Creator of Petdex
+                    {t("creatorOfPetdex")}
                   </span>
                 ) : rank ? (
                   <Link
@@ -361,9 +366,7 @@ export default async function UserProfilePage({ params }: PageProps) {
 
               {/* Stats row */}
               <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase lg:justify-start">
-                <span>
-                  {pets.length} {pets.length === 1 ? "pet" : "pets"}
-                </span>
+                <span>{t("petsCount", { count: pets.length })}</span>
                 {totalLikes > 0 ? (
                   <span className="inline-flex items-center gap-1.5">
                     <Heart className="size-3" />
@@ -373,15 +376,22 @@ export default async function UserProfilePage({ params }: PageProps) {
                 {totalInstalls > 0 ? (
                   <span className="inline-flex items-center gap-1.5">
                     <TerminalSquare className="size-3" />
-                    {formatLocalizedNumber(totalInstalls, locale)} installs
+                    {t("installs", {
+                      count: formatLocalizedNumber(totalInstalls, locale),
+                    })}
                   </span>
                 ) : null}
                 {memberSince ? (
                   <span>
-                    joined{" "}
-                    {new Date(memberSince).toLocaleDateString(undefined, {
-                      month: "short",
-                      year: "numeric",
+                    {t("joined", {
+                      date: new Date(memberSince).toLocaleDateString(
+                        locale === "zh"
+                          ? "zh-Hans-CN"
+                          : locale === "es"
+                            ? "es"
+                            : "en",
+                        { month: "long", year: "numeric" },
+                      ),
                     })}
                   </span>
                 ) : null}
@@ -446,7 +456,11 @@ export default async function UserProfilePage({ params }: PageProps) {
               </div>
               {featuredPets.length === 1 ? (
                 <div className="relative">
-                  <FeaturedPin pet={featuredPets[0]} locale={locale} />
+                  <FeaturedPin
+                    pet={featuredPets[0]}
+                    locale={locale}
+                    installsLabel={(count: string) => t("installs", { count })}
+                  />
                   {isOwner ? (
                     <div className="absolute top-4 right-4 z-40">
                       <ProfilePinButton
@@ -514,7 +528,15 @@ export default async function UserProfilePage({ params }: PageProps) {
   );
 }
 
-function FeaturedPin({ pet, locale }: { pet: PetWithMetrics; locale: string }) {
+function FeaturedPin({
+  pet,
+  locale,
+  installsLabel,
+}: {
+  pet: PetWithMetrics;
+  locale: string;
+  installsLabel: (count: string) => string;
+}) {
   return (
     <Link
       href={`/pets/${pet.slug}`}
@@ -549,7 +571,9 @@ function FeaturedPin({ pet, locale }: { pet: PetWithMetrics; locale: string }) {
           {pet.metrics.installCount > 0 ? (
             <span className="inline-flex items-center gap-1.5">
               <TerminalSquare className="size-3" />
-              {formatLocalizedNumber(pet.metrics.installCount, locale)} installs
+              {installsLabel(
+                formatLocalizedNumber(pet.metrics.installCount, locale),
+              )}
             </span>
           ) : null}
           <span>{pet.kind}</span>

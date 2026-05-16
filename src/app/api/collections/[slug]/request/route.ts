@@ -18,6 +18,7 @@ import {
 } from "@/lib/keyword-blocklist";
 import { submitRatelimit } from "@/lib/ratelimit";
 import { requireSameOrigin } from "@/lib/same-origin";
+import { containsUrl, URL_BLOCKED_REASON } from "@/lib/url-blocklist";
 
 export const runtime = "nodejs";
 
@@ -56,6 +57,18 @@ export async function POST(
     return NextResponse.json({ error: "invalid_pet_slug" }, { status: 400 });
   }
   const note = body.note?.toString().trim().slice(0, 500) || null;
+
+  const noteUrlHit = containsUrl(["note", note]);
+  if (noteUrlHit) {
+    return NextResponse.json(
+      {
+        error: "url_in_field",
+        field: noteUrlHit.field,
+        message: URL_BLOCKED_REASON,
+      },
+      { status: 422 },
+    );
+  }
 
   if (containsBlockedKeyword(note, petSlug)) {
     return NextResponse.json(

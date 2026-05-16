@@ -12,6 +12,7 @@ import {
   MoreHorizontal,
   Terminal,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { CodexLogo } from "@/components/codex-logo";
 
@@ -35,6 +36,7 @@ type Props = {
 type Copied = "install" | "link" | null;
 
 export function CollectionActionMenu({ collection }: Props) {
+  const t = useTranslations("collectionActionMenu");
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<Copied>(null);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -72,8 +74,11 @@ export function CollectionActionMenu({ collection }: Props) {
   const installCmd = `npx petdex install ${installSlugs.join(" ")}`;
   const collectionUrl = `${SITE_URL}/collections/${collection.slug}`;
   const installHint = truncated
-    ? `${installSlugs.length} of ${slugs.length} pets · paste rest manually`
-    : `${slugs.length} pet${slugs.length === 1 ? "" : "s"}`;
+    ? t("installHintTruncated", {
+        shown: installSlugs.length,
+        total: slugs.length,
+      })
+    : t("installHint", { count: slugs.length });
 
   const copyText = async (text: string, kind: Exclude<Copied, null>) => {
     try {
@@ -85,7 +90,7 @@ export function CollectionActionMenu({ collection }: Props) {
   };
 
   const onShareX = () => {
-    const text = `${collection.title} pet collection on Petdex — install with one line`;
+    const text = t("shareXText", { title: collection.title });
     const url = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(collectionUrl)}`;
     window.open(url, "_blank", "noopener,noreferrer");
     setOpen(false);
@@ -106,7 +111,7 @@ export function CollectionActionMenu({ collection }: Props) {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`More actions for ${collection.title}`}
+        aria-label={t("moreActions", { title: collection.title })}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -129,7 +134,7 @@ export function CollectionActionMenu({ collection }: Props) {
             </span>
             <button
               type="button"
-              aria-label="Close menu"
+              aria-label={t("closeMenu")}
               onClick={(e) => {
                 e.preventDefault();
                 setOpen(false);
@@ -150,9 +155,9 @@ export function CollectionActionMenu({ collection }: Props) {
                 >
                   <CodexLogo className="size-4" />
                   <span className="flex flex-col">
-                    <span>Open in Codex</span>
+                    <span>{t("openInCodex")}</span>
                     <span className="font-mono text-[10px] tracking-tight text-muted-4">
-                      Codex Desktop runs the install
+                      {t("openInCodexDesc")}
                     </span>
                   </span>
                 </a>
@@ -169,10 +174,11 @@ export function CollectionActionMenu({ collection }: Props) {
                 }
                 label={
                   copied === "install"
-                    ? "Copied install command"
-                    : "Copy install all"
+                    ? t("copiedInstall")
+                    : t("copyInstallAll")
                 }
                 hint={installHint}
+                showCopyIcon={copied !== "install"}
                 onClick={() => copyText(installCmd, "install")}
               />
             ) : null}
@@ -184,13 +190,16 @@ export function CollectionActionMenu({ collection }: Props) {
                   <Link2 className="size-4" />
                 )
               }
-              label={copied === "link" ? "Copied link" : "Copy collection link"}
+              label={
+                copied === "link" ? t("copiedLink") : t("copyCollectionLink")
+              }
               hint={collectionUrl.replace(/^https?:\/\//, "")}
+              showCopyIcon={copied !== "link"}
               onClick={() => copyText(collectionUrl, "link")}
             />
             <Item
               icon={<XIcon className="size-4" />}
-              label="Share to X"
+              label={t("shareToX")}
               onClick={onShareX}
             />
             <li>
@@ -200,7 +209,7 @@ export function CollectionActionMenu({ collection }: Props) {
                 className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground dark:border-white/[0.06]"
               >
                 <ExternalLink className="size-4" />
-                <span className="flex-1">View collection</span>
+                <span className="flex-1">{t("viewCollection")}</span>
               </a>
             </li>
           </ul>
@@ -214,11 +223,13 @@ function Item({
   icon,
   label,
   hint,
+  showCopyIcon,
   onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   hint?: string;
+  showCopyIcon?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -241,7 +252,7 @@ function Item({
             </span>
           ) : null}
         </span>
-        {label.startsWith("Copy") ? (
+        {showCopyIcon ? (
           <Copy className="ml-auto size-3.5 text-stone-300 dark:text-stone-600" />
         ) : null}
       </button>

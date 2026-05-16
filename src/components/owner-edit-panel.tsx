@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -30,6 +30,25 @@ function parseTags(input: string): string[] {
   return out;
 }
 
+function readImageDims(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("load_failed"));
+    };
+    img.src = url;
+  });
+}
+
+const MAX_SPRITE_BYTES = 2 * 1024 * 1024;
+const MAX_SPRITE_DIM = 4096;
+
 export function OwnerEditPanel({
   petId,
   currentDisplayName,
@@ -52,9 +71,11 @@ export function OwnerEditPanel({
   const [pending, setPending] = useState<Pending | null>(initialPending);
   const [rejection, setRejection] = useState<string | null>(initialRejection);
   const [busy, setBusy] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "auto_approved" | "queued" | null
+  >(null);
   const [, startTransition] = useTransition();
 
-  // Form state.
   const [displayName, setDisplayName] = useState(
     pending?.displayName ?? currentDisplayName,
   );
@@ -66,19 +87,170 @@ export function OwnerEditPanel({
   );
   const [error, setError] = useState<string | null>(null);
 
+  const [spriteFile, setSpriteFile] = useState<File | null>(null);
+  const [spritePreviewUrl, setSpritePreviewUrl] = useState<string | null>(null);
+  const [spriteError, setSpriteError] = useState<string | null>(null);
+
+  const [metaFile, setMetaFile] = useState<File | null>(null);
+  const [metaError, setMetaError] = useState<string | null>(null);
+
+  const spriteInputRef = useRef<HTMLInputElement>(null);
+  const metaInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!open) {
       setDisplayName(pending?.displayName ?? currentDisplayName);
       setDescription(pending?.description ?? currentDescription);
       setTagsInput((pending?.tags ?? currentTags).join(", "));
       setError(null);
+      setSpriteFile(null);
+      setSpriteError(null);
+      setMetaFile(null);
+      setMetaError(null);
+      setSubmitStatus(null);
+      if (spritePreviewUrl) {
+        URL.revokeObjectURL(spritePreviewUrl);
+        setSpritePreviewUrl(null);
+      }
     }
-  }, [open, pending, currentDisplayName, currentDescription, currentTags]);
+  }, [
+    open,
+    pending,
+    currentDisplayName,
+    currentDescription,
+    currentTags,
+    spritePreviewUrl,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (spritePreviewUrl) URL.revokeObjectURL(spritePreviewUrl);
+    };
+  }, [spritePreviewUrl]);
+
+  async function handleSpriteChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setSpriteFile(null);
+    setSpriteError(null);
+    if (spritePreviewUrl) {
+      URL.revokeObjectURL(spritePreviewUrl);
+      setSpritePreviewUrl(null);
+    }
+    if (!file) return;
+
+    if (file.size > MAX_SPRITE_BYTES) {
+      setSpriteError(t("fileTooBig"));
+      return;
+    }
+
+    let dims: { width: number; height: number };
+    try {
+      dims = await readImageDims(file);
+    } catch {
+      setSpriteError(t("invalidImage"));
+      return;
+    }
+
+    if (dims.width > MAX_SPRITE_DIM || dims.height > MAX_SPRITE_DIM) {
+      setSpriteError(t("invalidImage"));
+      return;
+    }
+
+    setSpriteFile(file);
+    setSpritePreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleMetaChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setMetaFile(null);
+    setMetaError(null);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string);
+        if (
+          typeof parsed !== "object" ||
+          parsed === null ||
+          Array.isArray(parsed)
+        ) {
+          throw new Error("not_object");
+        }
+        setMetaFile(file);
+      } catch {
+        setMetaError(t("invalidJson"));
+      }
+    };
+    reader.onerror = () => setMetaError(t("invalidJson"));
+    reader.readAsText(file);
+  }
 
   async function submit() {
     setBusy(true);
     setError(null);
+    setSubmitStatus(null);
     try {
+      const extraBody: Record<string, unknown> = {};
+
+      if (spriteFile || metaFile) {
+        const spritesheetExt =
+          spriteFile?.type === "image/png" ? "png" : "webp";
+        const presignRes = await fetch(`/api/my-pets/${petId}/edit-presign`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            hasSprite: Boolean(spriteFile),
+            hasMeta: Boolean(metaFile),
+            spritesheetExt,
+          }),
+        });
+        if (!presignRes.ok) {
+          const data = (await presignRes.json().catch(() => ({}))) as Record<
+            string,
+            unknown
+          >;
+          throw new Error(
+            typeof data.message === "string"
+              ? data.message
+              : typeof data.error === "string"
+                ? data.error
+                : "Presign failed",
+          );
+        }
+        const { files } = (await presignRes.json()) as {
+          files: Array<{ role: string; uploadUrl: string; publicUrl: string }>;
+        };
+        const slot = (role: string) => files.find((f) => f.role === role);
+
+        if (spriteFile) {
+          const ss = slot("sprite");
+          if (!ss) throw new Error("Missing sprite slot in presign response");
+          const putRes = await fetch(ss.uploadUrl, {
+            method: "PUT",
+            headers: { "content-type": spriteFile.type },
+            body: spriteFile,
+          });
+          if (!putRes.ok) throw new Error("Spritesheet upload failed");
+          const { width, height } = await readImageDims(spriteFile);
+          extraBody.spritesheetUrl = ss.publicUrl;
+          extraBody.spritesheetWidth = width;
+          extraBody.spritesheetHeight = height;
+        }
+
+        if (metaFile) {
+          const ms = slot("petjson");
+          if (!ms) throw new Error("Missing petjson slot in presign response");
+          const putRes = await fetch(ms.uploadUrl, {
+            method: "PUT",
+            headers: { "content-type": "application/json" },
+            body: metaFile,
+          });
+          if (!putRes.ok) throw new Error("Metadata upload failed");
+          extraBody.petJsonUrl = ms.publicUrl;
+        }
+      }
+
       const tags = parseTags(tagsInput);
       const res = await fetch(`/api/my-pets/${petId}/edit`, {
         method: "PATCH",
@@ -87,20 +259,37 @@ export function OwnerEditPanel({
           displayName: displayName.trim(),
           description: description.trim(),
           tags,
+          ...extraBody,
         }),
       });
       const j = (await res.json().catch(() => null)) as {
         error?: string;
+        status?: string;
         pending?: Pending;
       } | null;
       if (!res.ok) {
         setError(j?.error ?? res.statusText);
         return;
       }
-      setPending(j?.pending ?? null);
+
+      const status = j?.status === "auto_approved" ? "auto_approved" : "queued";
+      setSubmitStatus(status);
+      if (status === "auto_approved") {
+        setPending(null);
+      } else {
+        setPending(j?.pending ?? null);
+      }
       setRejection(null);
+      setSpriteFile(null);
+      setMetaFile(null);
+      if (spritePreviewUrl) {
+        URL.revokeObjectURL(spritePreviewUrl);
+        setSpritePreviewUrl(null);
+      }
       setOpen(false);
       startTransition(() => router.refresh());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setBusy(false);
     }
@@ -171,6 +360,20 @@ export function OwnerEditPanel({
         </div>
       ) : null}
 
+      {submitStatus ? (
+        <div
+          className={`mb-4 rounded-2xl border px-3 py-2 text-xs ${
+            submitStatus === "auto_approved"
+              ? "border-emerald-200 bg-chip-success-bg text-chip-success-fg dark:border-emerald-800/60"
+              : "border-amber-200 bg-chip-warning-bg text-chip-warning-fg dark:border-amber-800/60"
+          }`}
+        >
+          {submitStatus === "auto_approved"
+            ? t("autoApproved")
+            : t("queuedForReview")}
+        </div>
+      ) : null}
+
       {!open ? (
         <button
           type="button"
@@ -195,7 +398,10 @@ export function OwnerEditPanel({
           }}
           tabIndex={-1}
         >
-          <div className="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-xl">
+          <div
+            className="w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl"
+            style={{ maxHeight: "calc(100vh - 2rem)" }}
+          >
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-medium tracking-tight">
@@ -277,6 +483,103 @@ export function OwnerEditPanel({
                 </p>
               </div>
 
+              <div className="border-t border-border-base pt-4">
+                <label
+                  htmlFor="edit-sprite"
+                  className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
+                >
+                  {t("spritesheetLabel")}
+                </label>
+                <p className="mt-0.5 text-[11px] text-muted-4">
+                  {t("spritesheetHelp")}
+                </p>
+                <input
+                  ref={spriteInputRef}
+                  id="edit-sprite"
+                  type="file"
+                  accept="image/webp,image/png"
+                  onChange={(e) => void handleSpriteChange(e)}
+                  className="mt-2 w-full cursor-pointer rounded-xl border border-border-base bg-surface px-3 py-2 text-xs text-muted-3 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-surface-muted file:px-3 file:py-1 file:text-xs file:font-medium file:text-foreground"
+                />
+                {spriteError ? (
+                  <p className="mt-1 text-[11px] text-chip-danger-fg">
+                    {spriteError}
+                  </p>
+                ) : null}
+                {spritePreviewUrl ? (
+                  <div className="mt-2 flex items-center gap-3">
+                    {/* biome-ignore lint/performance/noImgElement: blob: URL from local file pick, next/image can't optimize it */}
+                    <img
+                      src={spritePreviewUrl}
+                      alt="Sprite preview"
+                      className="h-16 w-16 rounded-lg border border-border-base object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSpriteFile(null);
+                        setSpriteError(null);
+                        if (spritePreviewUrl) {
+                          URL.revokeObjectURL(spritePreviewUrl);
+                          setSpritePreviewUrl(null);
+                        }
+                        if (spriteInputRef.current) {
+                          spriteInputRef.current.value = "";
+                        }
+                      }}
+                      className="text-[11px] text-muted-4 hover:text-foreground"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="edit-meta"
+                  className="font-mono text-[10px] tracking-[0.12em] text-muted-3 uppercase"
+                >
+                  {t("metaLabel")}
+                </label>
+                <p className="mt-0.5 text-[11px] text-muted-4">
+                  {t("metaHelp")}
+                </p>
+                <input
+                  ref={metaInputRef}
+                  id="edit-meta"
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={handleMetaChange}
+                  className="mt-2 w-full cursor-pointer rounded-xl border border-border-base bg-surface px-3 py-2 text-xs text-muted-3 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-surface-muted file:px-3 file:py-1 file:text-xs file:font-medium file:text-foreground"
+                />
+                {metaError ? (
+                  <p className="mt-1 text-[11px] text-chip-danger-fg">
+                    {metaError}
+                  </p>
+                ) : null}
+                {metaFile && !metaError ? (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className="text-[11px] text-muted-3">
+                      {metaFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMetaFile(null);
+                        setMetaError(null);
+                        if (metaInputRef.current) {
+                          metaInputRef.current.value = "";
+                        }
+                      }}
+                      className="text-[11px] text-muted-4 hover:text-foreground"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
               {error ? (
                 <p className="rounded-xl bg-chip-danger-bg px-3 py-2 text-xs text-chip-danger-fg">
                   {error.replace(/_/g, " ")}
@@ -293,11 +596,11 @@ export function OwnerEditPanel({
                 </button>
                 <button
                   type="submit"
-                  disabled={busy}
+                  disabled={busy || Boolean(spriteError) || Boolean(metaError)}
                   className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-stone-800 disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
-                  {t("actions.submit")}
+                  {busy ? t("uploading") : t("actions.submit")}
                 </button>
               </div>
             </form>

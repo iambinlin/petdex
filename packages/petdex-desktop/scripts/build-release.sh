@@ -51,7 +51,7 @@ build_arch() {
   cp sidecar/server.js "$APP/Contents/Resources/sidecar/server.js"
   cp assets/Info.plist.template "$APP/Contents/Info.plist"
   echo "APPL????" > "$APP/Contents/PkgInfo"
-  find /Applications/Petdex.app/Contents/Resources -name "*.icns" -exec cp {} "$APP/Contents/Resources/" \; 2>/dev/null || true
+  cp assets/icon.icns "$APP/Contents/Resources/AppIcon.icns"
 
   # Sign bundle with entitlements
   local ENT=/tmp/petdex.entitlements.plist

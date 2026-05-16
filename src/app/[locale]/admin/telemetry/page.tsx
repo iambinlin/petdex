@@ -7,9 +7,13 @@ import {
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
-import { getTelemetrySummary } from "@/lib/telemetry/queries";
+import {
+  getTelemetrySummary,
+  versionAdoptionOverTime,
+} from "@/lib/telemetry/queries";
 
 import { AdminAdoptionChart } from "@/components/admin-adoption-chart";
+import { AdminVersionAdoptionChart } from "@/components/admin-version-adoption-chart";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -34,7 +38,10 @@ export default async function AdminTelemetryPage({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "admin.telemetry" });
 
-  const summary = await getTelemetrySummary();
+  const [summary, adoptionOverTime] = await Promise.all([
+    getTelemetrySummary(),
+    versionAdoptionOverTime(),
+  ]);
 
   return (
     <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-16 md:px-8">
@@ -181,6 +188,27 @@ export default async function AdminTelemetryPage({
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <p className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] text-brand uppercase">
+            <BarChart2 className="size-3" />
+            Version adoption
+          </p>
+          <CardTitle className="text-base md:text-lg">
+            Version adoption over time
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AdminVersionAdoptionChart
+            data={adoptionOverTime}
+            emptyLabel={t("noData")}
+          />
+          <p className="mt-3 text-[10px] text-muted-3">
+            Watch v0.2.0 reach 50% of installs
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

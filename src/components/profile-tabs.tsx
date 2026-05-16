@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Heart, Layers, PawPrint } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { petStates } from "@/lib/pet-states";
 import type { PetWithMetrics } from "@/lib/pets";
@@ -103,6 +103,7 @@ export function ProfileTabs(props: ProfileTabsProps) {
     : Boolean(collection) || (ownerCollections && ownerCollections.length > 0);
   const showLikedTab = likedPets.length > 0;
 
+  const t = useTranslations("profile");
   const [tab, setTab] = useState<TabKey>("pets");
   const isZh = useLocale() === "zh";
 
@@ -133,7 +134,7 @@ export function ProfileTabs(props: ProfileTabsProps) {
           active={tab === "pets"}
           onClick={() => setTab("pets")}
           icon={<PawPrint className="size-3.5" />}
-          label="Pets"
+          label={t("petsTab")}
           count={totalPets}
         />
         {showLikedTab ? (
@@ -141,7 +142,7 @@ export function ProfileTabs(props: ProfileTabsProps) {
             active={tab === "liked"}
             onClick={() => setTab("liked")}
             icon={<Heart className="size-3.5" />}
-            label="Liked"
+            label={t("likedTab")}
             count={likedPets.length}
           />
         ) : null}
@@ -150,7 +151,7 @@ export function ProfileTabs(props: ProfileTabsProps) {
             active={tab === "collections"}
             onClick={() => setTab("collections")}
             icon={<Layers className="size-3.5" />}
-            label="Collections"
+            label={t("collectionsTab")}
             count={collection ? 1 : 0}
           />
         ) : null}
@@ -159,7 +160,7 @@ export function ProfileTabs(props: ProfileTabsProps) {
             href="/submit"
             className="ml-auto inline-flex h-9 items-center gap-2 rounded-full bg-inverse px-4 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
           >
-            Submit pet
+            {t("submitPet")}
           </Link>
         ) : null}
       </div>
@@ -176,6 +177,7 @@ export function ProfileTabs(props: ProfileTabsProps) {
           pinnedCount={pinnedCount}
           maxPins={pinning?.maxPins ?? null}
           isZh={isZh}
+          approvedLabel={(count: number) => t("approvedSection", { count })}
         />
       ) : null}
 
@@ -209,6 +211,7 @@ function PetsPanel({
   pinnedCount,
   maxPins,
   isZh,
+  approvedLabel,
 }: {
   isOwner: boolean;
   publicHandle: string;
@@ -220,6 +223,7 @@ function PetsPanel({
   pinnedCount: number;
   maxPins: number | null;
   isZh: boolean;
+  approvedLabel: (count: number) => string;
 }) {
   if (
     approvedPets.length === 0 &&
@@ -258,7 +262,7 @@ function PetsPanel({
           (pendingSubmissions.length > 0 || rejectedSubmissions.length > 0) ? (
             <header>
               <p className="font-mono text-[11px] tracking-[0.22em] text-chip-success-fg uppercase">
-                Approved ({approvedPets.length})
+                {approvedLabel(approvedPets.length)}
               </p>
             </header>
           ) : null}

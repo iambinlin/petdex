@@ -12,6 +12,10 @@ const VALID_EVENTS = new Set([
   "cli_hooks_install_success",
   "cli_desktop_start_success",
   "desktop_first_state_received",
+  "cli_update_applied",
+  "cli_init_started",
+  "cli_up_invoked",
+  "cli_edit_invoked",
 ]);
 
 const VALID_OS = new Set(["darwin", "linux", "win32"]);
@@ -147,6 +151,8 @@ function clipString(value: unknown, max: number): string | null {
     : null;
 }
 
+const MAX_DURATION_MS = 3_600_000;
+
 function validate(body: unknown):
   | {
       ok: true;
@@ -160,6 +166,9 @@ function validate(body: unknown):
         agents: string[] | null;
         state: string | null;
         agentSource: string | null;
+        fromVersion: string | null;
+        toVersion: string | null;
+        durationMs: number | null;
       };
     }
   | { ok: false; error: string } {
@@ -212,6 +221,24 @@ function validate(body: unknown):
   const state = clipString(body.state, MAX_STATE_LEN);
   const agentSource = clipString(body.agent_source, MAX_AGENT_SOURCE_LEN);
 
+  const fromVersionRaw = clipString(body.from_version, MAX_VERSION_LEN);
+  const fromVersion =
+    fromVersionRaw && SEMVER_RE.test(fromVersionRaw) ? fromVersionRaw : null;
+
+  const toVersionRaw = clipString(body.to_version, MAX_VERSION_LEN);
+  const toVersion =
+    toVersionRaw && SEMVER_RE.test(toVersionRaw) ? toVersionRaw : null;
+
+  const durationMsRaw =
+    typeof body.duration_ms === "number" ? body.duration_ms : null;
+  const durationMs =
+    durationMsRaw !== null &&
+    Number.isFinite(durationMsRaw) &&
+    durationMsRaw >= 0 &&
+    durationMsRaw <= MAX_DURATION_MS
+      ? Math.round(durationMsRaw)
+      : null;
+
   return {
     ok: true,
     data: {
@@ -224,6 +251,9 @@ function validate(body: unknown):
       agents,
       state,
       agentSource,
+      fromVersion,
+      toVersion,
+      durationMs,
     },
   };
 }

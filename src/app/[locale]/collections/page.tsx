@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { getCollectionsForListing } from "@/lib/collections";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
 import { resolveOwnerCredits } from "@/lib/owner-credit";
@@ -10,9 +12,10 @@ import { SiteHeader } from "@/components/site-header";
 import { hasLocale } from "@/i18n/config";
 
 // /collections is fully public — no auth, no cookies, no per-visitor
-// data. ISR with 5 minute revalidation lets featured-collection
-// rotations show up quickly without waking a function on every visit.
-export const revalidate = 300;
+// data. 24h ceiling + revalidateTag('collection:list') from admin
+// write paths keeps the page fresh on actual changes without burning
+// a function on every visit.
+export const revalidate = 86400;
 
 const SITE_URL = "https://petdex.crafter.run";
 const MIN_PETS = 4;
@@ -23,10 +26,13 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const t = await getTranslations({
+    locale: hasLocale(locale) ? locale : "en",
+    namespace: "collectionsPage",
+  });
   return {
-    title: "Featured collections",
-    description:
-      "Browse Petdex collections by franchise, category, or theme. Search, sort, and filter to find your set.",
+    title: t("metadata.title"),
+    description: t("metadata.description"),
     alternates: buildLocaleAlternates(
       "/collections",
       hasLocale(locale) ? locale : undefined,
@@ -34,7 +40,16 @@ export async function generateMetadata({
   };
 }
 
-export default async function CollectionsPage() {
+export default async function CollectionsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({
+    locale: hasLocale(locale) ? locale : "en",
+    namespace: "collectionsPage",
+  });
   const collections = await getCollectionsForListing(MIN_PETS, 6);
 
   const ownerIds = collections
@@ -85,14 +100,13 @@ export default async function CollectionsPage() {
         <div className="relative mx-auto flex w-full max-w-[1440px] flex-col px-5 pb-10 md:px-8">
           <div className="mt-12 max-w-2xl md:mt-16">
             <p className="font-mono text-xs tracking-[0.22em] text-brand uppercase">
-              Featured collections
+              {t("hero.eyebrow")}
             </p>
             <h1 className="mt-3 text-balance text-[40px] leading-[1] font-semibold tracking-tight md:text-[64px]">
-              Find your set, install in one line
+              {t("hero.title")}
             </h1>
             <p className="mt-5 text-balance text-base leading-7 text-muted-1 md:text-lg">
-              {collections.length} collections from across the Petdex catalog.
-              Browse by franchise, category, or themed mood.
+              {t("hero.description", { count: collections.length })}
             </p>
           </div>
         </div>

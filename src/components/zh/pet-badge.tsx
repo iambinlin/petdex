@@ -2,7 +2,15 @@
 
 import { cn } from "@/lib/utils";
 
-type BadgeVariant = "hot" | "new" | "limited" | "verified" | "top-creator";
+import { Badge } from "@/components/ui/badge";
+
+type BadgeVariant =
+  | "hot"
+  | "new"
+  | "limited"
+  | "verified"
+  | "top-creator"
+  | "featured";
 type BadgePosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
 
 interface PetBadgeProps {
@@ -24,6 +32,13 @@ const VARIANT_STYLES: Record<
   },
   verified: { bg: "bg-blue-500", text: "text-white", label: "✓" },
   "top-creator": { bg: "bg-yellow-400", text: "text-[#0a0e1f]", label: "⭐" },
+  // Featured: solid amber on both light + dark for AA contrast. Brand-blue
+  // gradient washed out on the dark navy hero / dark gallery surface.
+  featured: {
+    bg: "bg-amber-500 dark:bg-amber-400",
+    text: "text-[#0a0e1f]",
+    label: "★ FEATURED",
+  },
 };
 
 const POSITION_STYLES: Record<BadgePosition, string> = {
@@ -42,17 +57,17 @@ export function PetBadge({
   const isSmall = variant === "verified" || variant === "top-creator";
 
   return (
-    <span
+    <Badge
       className={cn(
         POSITION_STYLES[position],
         bg,
         text,
-        "font-bold rounded-md shadow-sm leading-none",
+        "h-auto rounded-md border-transparent font-bold shadow-sm leading-none",
         isSmall ? "text-[9px] px-1 py-0.5" : "text-[10px] px-1.5 py-0.5",
         className,
       )}
     >
       {label}
-    </span>
+    </Badge>
   );
 }

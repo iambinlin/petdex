@@ -1,18 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { eq, inArray } from "drizzle-orm";
 import { Layers, Shuffle, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { getCollectionsContainingPet } from "@/lib/collections";
-import { db, schema } from "@/lib/db/client";
-import { getMetricsForSlug, getMetricsSummary } from "@/lib/db/metrics";
-import { formatDexNumber, getDexNumberMap } from "@/lib/dex";
-import { formatLocalizedNumber } from "@/lib/format-number";
+import { formatDexNumber, getDexEntryMap } from "@/lib/dex";
 import { buildLocaleAlternates } from "@/lib/locale-routing";
-import { resolveStoredOwnerCreditFor } from "@/lib/owner-credit";
-import { computeStatsFromSummary } from "@/lib/pet-stats";
+import { resolveStoredOwnerCreditForSlug } from "@/lib/owner-credit";
 import { getPet, getStaticPetSlugs } from "@/lib/pets";
 import { getVariantsFor } from "@/lib/variants";
 
@@ -27,9 +22,10 @@ import {
   PetActionMenu,
   PetTakedownReportButton,
 } from "@/components/pet-action-menu";
+import { PetCountersBar } from "@/components/pet-counters-bar";
 import { PetFloater } from "@/components/pet-floater";
 import { PetKeyboardNav } from "@/components/pet-keyboard-nav";
-import { PetRadar } from "@/components/pet-radar";
+import { PetRadarClient } from "@/components/pet-radar-client";
 import { PetSoundButton } from "@/components/pet-sound-button";
 import { PetSprite } from "@/components/pet-sprite";
 import { PetStateViewer } from "@/components/pet-state-viewer";
@@ -52,7 +48,11 @@ type PageProps = {
 };
 
 export const dynamicParams = true;
-export const revalidate = 60;
+// Long ISR window — the shell is byte-stable (metrics fetched
+// client-side), so the page only needs to regenerate when its
+// editorial fields change. Write paths call revalidateTag('pet:${slug}')
+// to flush immediately on edit/withdraw/claim/feature.
+export const revalidate = 86400;
 
 type DexNavPet = {
   slug: string;
@@ -123,7 +123,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function PetPage({ params }: PageProps) {
-  const { slug, locale } = await params;
+  const { slug } = await params;
   const pet = await getPet(slug);
   const tPet = await getTranslations("pet");
 
@@ -131,93 +131,43 @@ export default async function PetPage({ params }: PageProps) {
     notFound();
   }
 
-  const dexMap = await getDexNumberMap();
-  const currentDexNumber = dexMap.get(slug) ?? null;
+  const dexMap = await getDexEntryMap();
+  const currentDexNumber = dexMap.get(slug)?.dexNumber ?? null;
 
   let prevSlug: string | null = null;
   let nextSlug: string | null = null;
   if (currentDexNumber != null) {
-    for (const [entrySlug, dexNumber] of dexMap.entries()) {
-      if (dexNumber === currentDexNumber - 1) prevSlug = entrySlug;
-      if (dexNumber === currentDexNumber + 1) nextSlug = entrySlug;
+    for (const [entrySlug, entry] of dexMap.entries()) {
+      if (entry.dexNumber === currentDexNumber - 1) prevSlug = entrySlug;
+      if (entry.dexNumber === currentDexNumber + 1) nextSlug = entrySlug;
     }
   }
 
-  const neighborSlugs = [prevSlug, nextSlug].filter((value): value is string =>
-    Boolean(value),
-  );
-  const neighborRows =
-    neighborSlugs.length > 0
-      ? await db
-          .select({
-            slug: schema.submittedPets.slug,
-            displayName: schema.submittedPets.displayName,
-          })
-          .from(schema.submittedPets)
-          .where(inArray(schema.submittedPets.slug, neighborSlugs))
-      : [];
-  const neighborNameMap = new Map(
-    neighborRows.map((row) => [row.slug, row.displayName]),
-  );
-  const prevDexNumber = prevSlug ? dexMap.get(prevSlug) : undefined;
-  const nextDexNumber = nextSlug ? dexMap.get(nextSlug) : undefined;
+  const prevEntry = prevSlug ? dexMap.get(prevSlug) : undefined;
+  const nextEntry = nextSlug ? dexMap.get(nextSlug) : undefined;
   const prevPet =
-    prevSlug && prevDexNumber !== undefined
+    prevSlug && prevEntry
       ? {
           slug: prevSlug,
-          displayName: neighborNameMap.get(prevSlug) ?? prevSlug,
-          dexNumber: prevDexNumber,
+          displayName: prevEntry.displayName,
+          dexNumber: prevEntry.dexNumber,
         }
       : null;
   const nextPet =
-    nextSlug && nextDexNumber !== undefined
+    nextSlug && nextEntry
       ? {
           slug: nextSlug,
-          displayName: neighborNameMap.get(nextSlug) ?? nextSlug,
-          dexNumber: nextDexNumber,
+          displayName: nextEntry.displayName,
+          dexNumber: nextEntry.dexNumber,
         }
       : null;
 
-  const [metrics, metricsSummary, ownerRow, variants, memberOfCollections] =
-    await Promise.all([
-      getMetricsForSlug(slug),
-      getMetricsSummary(),
-      db.query.submittedPets.findFirst({
-        where: eq(schema.submittedPets.slug, slug),
-      }),
-      getVariantsFor(slug),
-      getCollectionsContainingPet(slug),
-    ]);
-  const stats = computeStatsFromSummary(
-    {
-      importedAt: pet.importedAt,
-      metrics,
-    },
-    metricsSummary,
-  );
-
-  // Resolve public credit from local data so the ISR shell is not blocked by
-  // a per-request Clerk lookup. Profile sync keeps userProfiles fresh enough.
-  const ownerCredit = ownerRow
-    ? await resolveStoredOwnerCreditFor({
-        ownerId: ownerRow.ownerId,
-        creditName: ownerRow.creditName,
-        creditUrl: ownerRow.creditUrl,
-        // Discovered rows can carry a stale credit_image from the seed
-        // import that belongs to a *different* user (the importer's
-        // primary login or whichever Clerk profile was active during
-        // the bulk insert). Drop it for discovered rows so we never
-        // show another person's avatar; we still show the right name +
-        // GitHub url because those came from the seed enrichment.
-        creditImage:
-          ownerRow.source === "discover" ? null : ownerRow.creditImage,
-        // For 'discover' rows the ownerId is the admin who imported
-        // on the author's behalf, NOT the author. Use stored credit_*
-        // exclusively so the author keeps the byline. Claimed/submit rows
-        // use stored credit plus local userProfiles so this route stays ISR.
-        ownerIsProxy: ownerRow.source === "discover",
-      })
-    : null;
+  const [ownerCreditResult, variants, memberOfCollections] = await Promise.all([
+    resolveStoredOwnerCreditForSlug(slug),
+    getVariantsFor(slug),
+    getCollectionsContainingPet(slug),
+  ]);
+  const ownerCredit = ownerCreditResult?.credit ?? null;
 
   const url = `${SITE_URL}/pets/${pet.slug}`;
   const jsonLd = [
@@ -242,15 +192,6 @@ export default async function PetPage({ params }: PageProps) {
                 ? { url: ownerCredit.externals[0].url }
                 : {}),
               ...(ownerCredit.imageUrl ? { image: ownerCredit.imageUrl } : {}),
-            },
-          }
-        : {}),
-      ...(metrics.likeCount > 0
-        ? {
-            interactionStatistic: {
-              "@type": "InteractionCounter",
-              interactionType: "https://schema.org/LikeAction",
-              userInteractionCount: metrics.likeCount,
             },
           }
         : {}),
@@ -411,7 +352,7 @@ export default async function PetPage({ params }: PageProps) {
 
               {/* Quick actions row + stats. */}
               <div className="flex flex-wrap items-center gap-3 pt-1">
-                <LikeButton slug={pet.slug} initialCount={metrics.likeCount} />
+                <LikeButton slug={pet.slug} />
                 {pet.soundUrl ? (
                   <PetSoundButton
                     soundUrl={pet.soundUrl}
@@ -432,12 +373,7 @@ export default async function PetPage({ params }: PageProps) {
                 <PetTakedownReportButton
                   pet={{ slug: pet.slug, displayName: pet.displayName }}
                 />
-                <span className="font-mono text-[11px] tracking-[0.18em] text-muted-3 uppercase">
-                  {formatLocalizedNumber(metrics.installCount, locale)} installs
-                  {" · "}
-                  {formatLocalizedNumber(metrics.zipDownloadCount, locale)}{" "}
-                  downloads
-                </span>
+                <PetCountersBar slug={pet.slug} />
               </div>
 
               {/* Tags + collections collapsed into compact metadata. */}
@@ -524,7 +460,7 @@ export default async function PetPage({ params }: PageProps) {
         {ownerCredit ? (
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <SubmittedBy credit={ownerCredit} />
-            {ownerRow?.source === "discover" ? (
+            {ownerCreditResult?.ownerIsProxy ? (
               <ClaimCTA
                 petName={pet.displayName}
                 authorLabel={ownerCredit.name}
@@ -550,8 +486,9 @@ export default async function PetPage({ params }: PageProps) {
             icon={<Sparkles className="size-4" />}
           >
             <div className="flex items-center justify-center py-2">
-              <PetRadar
-                {...stats}
+              <PetRadarClient
+                slug={pet.slug}
+                importedAt={pet.importedAt}
                 ariaLabel={tPet("stats.ariaLabel")}
                 labels={{
                   vibrance: tPet("stats.vibrance"),

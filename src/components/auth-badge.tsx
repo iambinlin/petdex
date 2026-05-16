@@ -9,6 +9,7 @@ import {
   GearSixIcon,
   IdentificationCardIcon,
   InfoIcon,
+  QrCodeIcon,
   ShieldCheckIcon,
   ShieldWarningIcon,
   SignOutIcon,
@@ -17,7 +18,7 @@ import { ChatCircleDotsIcon } from "@phosphor-icons/react/dist/ssr";
 import { ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { isAdminClientSafe } from "@/lib/admin";
+import { canEditWeChatQrClientSafe, isAdminClientSafe } from "@/lib/admin";
 import { withLocale } from "@/lib/locale-routing";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +92,11 @@ function UserDropdown({ compact = false }: { compact?: boolean }) {
   const { user, isLoaded } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const showAdmin = isAdminClientSafe(user?.id);
+  // Collaborator entry surfaces tools the user can actually edit
+  // (currently /collaborator/wechat-qr for Henry + admins). We show it
+  // for admins too — they get both Admin (full dashboard) and the
+  // Collaborator shortcut so they don't have to navigate through admin.
+  const showCollaborator = canEditWeChatQrClientSafe(user?.id);
   const unread = useHeaderState().state.feedback.count;
   const t = useTranslations("header");
   const locale = useLocale();
@@ -204,6 +210,14 @@ function UserDropdown({ compact = false }: { compact?: boolean }) {
             <DropdownMenuItem render={<Link href="/admin" />}>
               <ShieldCheckIcon weight="duotone" className="size-4" />
               {t("admin")}
+            </DropdownMenuItem>
+          ) : null}
+          {showCollaborator ? (
+            <DropdownMenuItem
+              render={<Link href={href("/collaborator/wechat-qr")} />}
+            >
+              <QrCodeIcon weight="duotone" className="size-4" />
+              {t("collaborator")}
             </DropdownMenuItem>
           ) : null}
         </DropdownMenuGroup>

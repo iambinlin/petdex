@@ -5,10 +5,16 @@ import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 import { isAdmin } from "@/lib/admin";
+import {
+  AGGREGATE_KEYS,
+  invalidateAggregates,
+  invalidatePetCaches,
+} from "@/lib/db/cached-aggregates";
 import { db, schema } from "@/lib/db/client";
 import { renderEditApprovedEmail } from "@/lib/email-templates/edit-approved";
 import { renderEditRejectedEmail } from "@/lib/email-templates/edit-rejected";
 import { createNotification } from "@/lib/notifications";
+import { deleteR2Objects, keyFromR2Url } from "@/lib/r2";
 import { requireSameOrigin } from "@/lib/same-origin";
 import { refreshSimilarityFor } from "@/lib/similarity";
 import { getPreferredLocaleForUser } from "@/lib/user-locale";
@@ -64,10 +70,39 @@ export async function PATCH(
       pendingTags: null,
       pendingSubmittedAt: null,
       pendingRejectionReason: null,
+      pendingSpritesheetUrl: null,
+      pendingPetJsonUrl: null,
+      pendingZipUrl: null,
+      pendingSpritesheetWidth: null,
+      pendingSpritesheetHeight: null,
+      pendingDhash: null,
+      pendingReviewId: null,
+      editCount: (row.editCount ?? 0) + 1,
+      lastEditAt: new Date(),
     };
     if (row.pendingDisplayName) update.displayName = row.pendingDisplayName;
     if (row.pendingDescription) update.description = row.pendingDescription;
     if (row.pendingTags) update.tags = row.pendingTags;
+
+    // Asset edits: swap live URLs and GC old R2 objects.
+    const oldSpritesheetKey = row.pendingSpritesheetUrl
+      ? keyFromR2Url(row.spritesheetUrl)
+      : null;
+    const oldPetJsonKey = row.pendingPetJsonUrl
+      ? keyFromR2Url(row.petJsonUrl)
+      : null;
+    const oldZipKey = row.pendingZipUrl ? keyFromR2Url(row.zipUrl) : null;
+
+    if (row.pendingSpritesheetUrl) {
+      update.spritesheetUrl = row.pendingSpritesheetUrl;
+      if (row.pendingSpritesheetWidth)
+        update.spritesheetWidth = row.pendingSpritesheetWidth;
+      if (row.pendingSpritesheetHeight)
+        update.spritesheetHeight = row.pendingSpritesheetHeight;
+    }
+    if (row.pendingPetJsonUrl) update.petJsonUrl = row.pendingPetJsonUrl;
+    if (row.pendingZipUrl) update.zipUrl = row.pendingZipUrl;
+    if (row.pendingDhash) update.dhash = row.pendingDhash;
 
     const [updated] = await db
       .update(schema.submittedPets)
@@ -75,10 +110,21 @@ export async function PATCH(
       .where(eq(schema.submittedPets.id, id))
       .returning();
 
-    // Refresh embedding/similarity since text changed.
-    void refreshSimilarityFor(id).catch(() => {});
+    // GC old R2 keys after the DB is updated (best-effort, non-fatal).
+    const keysToDelete = [oldSpritesheetKey, oldPetJsonKey, oldZipKey].filter(
+      (k): k is string => k !== null,
+    );
+    if (keysToDelete.length > 0) {
+      void deleteR2Objects(keysToDelete).catch(() => {});
+    }
 
-    // In-app notification.
+    void refreshSimilarityFor(id).catch(() => {});
+    await invalidateAggregates(AGGREGATE_KEYS.variantIndex);
+    // Flushes both Upstash + Next page tags (pet:${slug}, pet:list)
+    // so the public detail page picks up the new copy without
+    // waiting on the 24h revalidate ceiling.
+    await invalidatePetCaches(updated.slug);
+
     void createNotification({
       userId: updated.ownerId,
       kind: "edit_approved",
@@ -89,7 +135,6 @@ export async function PATCH(
       href: `/pets/${updated.slug}`,
     }).catch(() => {});
 
-    // Notify owner.
     if (process.env.RESEND_API_KEY && updated.ownerEmail) {
       try {
         const resend = new Resend(process.env.RESEND_API_KEY);
@@ -125,11 +170,17 @@ export async function PATCH(
       pendingTags: null,
       pendingSubmittedAt: null,
       pendingRejectionReason: reason,
+      pendingSpritesheetUrl: null,
+      pendingPetJsonUrl: null,
+      pendingZipUrl: null,
+      pendingSpritesheetWidth: null,
+      pendingSpritesheetHeight: null,
+      pendingDhash: null,
+      pendingReviewId: null,
     })
     .where(eq(schema.submittedPets.id, id))
     .returning();
 
-  // In-app notification.
   void createNotification({
     userId: updated.ownerId,
     kind: "edit_rejected",
@@ -141,7 +192,6 @@ export async function PATCH(
     href: `/pets/${updated.slug}`,
   }).catch(() => {});
 
-  // Notify owner with reason. Best-effort; falls back to Clerk primary email.
   let toEmail = updated.ownerEmail ?? null;
   if (!toEmail && updated.ownerId) {
     try {

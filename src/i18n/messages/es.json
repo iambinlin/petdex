@@ -79,6 +79,7 @@
     "myProfile": "Mi perfil",
     "myFeedback": "Mi feedback",
     "admin": "Admin",
+    "collaborator": "Colaborador",
     "manageAccount": "Gestionar cuenta",
     "signOut": "Cerrar sesión"
   },
@@ -110,6 +111,7 @@
     "submitCta": "Enviar",
     "browseGallery": "Ver galería",
     "joinDiscord": "Unirse al Discord",
+    "joinWeChat": "Unirse a WeChat",
     "openPet": "Abrir {name}",
     "petAnimated": "{name} animado",
     "petParadeAria": "Mascotas destacadas",
@@ -128,7 +130,50 @@
     "featuredCollections": {
       "eyebrow": "Colecciones destacadas",
       "title": "Colecciones destacadas para instalar",
-      "viewAll": "Ver todas"
+      "viewAll": "Ver todas",
+      "petsCount": "{count, plural, =1 {1 mascota} other {# mascotas}}"
+    }
+  },
+  "community": {
+    "metadata": {
+      "title": "Comunidad de Petdex",
+      "description": "Únete a creadores, coleccionistas y al equipo de Petdex para ver creadores destacados, feedback de trabajos en progreso y builds semanales."
+    },
+    "eyebrow": "Comunidad Petdex",
+    "title": "Crea pixel pets en buena compañía",
+    "description": "La comunidad de Petdex reúne a creadores, coleccionistas y al equipo detrás de la galería. Recibe feedback de WIP, sigue builds semanales y conoce creadores destacados.",
+    "joinDiscord": "Unirse al Discord",
+    "joinWeChat": "Unirse a WeChat",
+    "starGithub": "Dar star en GitHub",
+    "sections": {
+      "spotlight": {
+        "title": "Los creadores destacados tienen foco",
+        "body": "GRAYCRAFT, Scientific Minds, Crafter Originals. Cada colección tiene una persona real detrás, y la comunidad es donde reciben feedback y deciden qué sale después."
+      },
+      "channels": {
+        "title": "Canales para shippear, no solo para conversar",
+        "body": "#wip para sprites en progreso, #cli-feedback para bugs, #ideas sincronizado con el wishlist público y #ship-or-sink para competencias de fin de semana."
+      },
+      "roles": {
+        "title": "Roles que ganas participando",
+        "body": "@Creator se desbloquea cuando aprueban tu primera mascota. @Collector con tres mascotas capturadas. @Featured Creator cuando tu set entra como colección curada."
+      },
+      "voice": {
+        "title": "Salas de voz con actividad real",
+        "body": "Co-working para foco silencioso, pixel-jam para collabs de sprite art en vivo y office-hours con el equipo de Petdex los viernes a las 4pm GMT-5."
+      }
+    },
+    "rules": {
+      "eyebrow": "Reglas",
+      "title": "Sé amable, sé específico, shippea algo",
+      "items": {
+        "respect": "Nada de racismo, sexismo o hate speech. Baneo inmediato.",
+        "spam": "Nada de spam, solicitud por DM o NFT shilling.",
+        "critique": "Critica sprites, no creadores. Honesto, amable, específico.",
+        "languages": "Canales en inglés, español y chino son bienvenidos. Elige el tuyo.",
+        "ip": "La IP de cada mascota pertenece a su creador original. Siempre da crédito.",
+        "modlog": "El mod log de Petdex Team es público en #bot-logs. Sin secretos."
+      }
     }
   },
   "gallery": {
@@ -1130,9 +1175,9 @@
       "withdraw": "Retirar",
       "rejected": "Edición rechazada",
       "tryAgain": "Intentar de nuevo",
-      "open": "Editar nombre y descripción",
-      "modalTitle": "Editar metadatos de la mascota",
-      "modalBody": "Esto vuelve a pasar por revisión de admin. Aquí no se pueden cambiar los sprites ni el zip: para eso hace falta un /submit nuevo para que corra otra vez la deduplicación y el escaneo.",
+      "open": "Editar mascota",
+      "modalTitle": "Editar mascota",
+      "modalBody": "Los cambios de texto pueden autoaprobarse si cumplen todos los criterios. Los cambios de assets siempre van a revision manual.",
       "fields": {
         "displayName": "Nombre visible",
         "description": "Descripción",
@@ -1143,7 +1188,17 @@
       "actions": {
         "cancel": "Cancelar",
         "submit": "Enviar edición para revisión"
-      }
+      },
+      "spritesheetLabel": "Spritesheet",
+      "spritesheetHelp": "Reemplaza el sprite actual. Va a revision manual.",
+      "metaLabel": "Metadatos (pet.json)",
+      "metaHelp": "Reemplaza los metadatos actuales. Va a revision manual.",
+      "fileTooBig": "El archivo supera los 2 MB",
+      "invalidImage": "Archivo de imagen no valido",
+      "invalidJson": "Archivo JSON no valido",
+      "autoApproved": "Edicion aplicada",
+      "queuedForReview": "Edicion enviada para revision",
+      "uploading": "Subiendo..."
     },
     "eyebrow": "Dashboard",
     "submissionCount": "{count, plural, =0 {sin envíos} =1 {1 envío} other {# envíos}}",
@@ -1514,9 +1569,63 @@
     "later": "Más tarde",
     "refresh": "Actualizar"
   },
+  "collectionsPage": {
+    "metadata": {
+      "title": "Colecciones destacadas",
+      "description": "Explora colecciones de Petdex por franquicia, categoría o temática. Busca, ordena y filtra para encontrar tu set."
+    },
+    "hero": {
+      "eyebrow": "Colecciones destacadas",
+      "title": "Encuentra tu set, instala en una línea",
+      "description": "{count, plural, =1 {1 colección} other {# colecciones}} del catálogo Petdex. Explora por franquicia, categoría o temática."
+    }
+  },
   "collectionsBrowser": {
     "searchAria": "Buscar colecciones",
-    "sortAria": "Ordenar colecciones"
+    "sortAria": "Ordenar colecciones",
+    "filters": {
+      "all": "Todas",
+      "franchise": "Franquicias",
+      "category": "Categorías",
+      "categorySub": "Temáticas",
+      "other": "Curadas"
+    },
+    "sort": {
+      "size": "Más grandes",
+      "title": "A → Z"
+    },
+    "sortPrefix": "Orden:",
+    "searchPlaceholder": "Prueba 'pokemon' o 'gato acogedor' o 'developer'",
+    "showingCount": "Mostrando {visible} de {total}",
+    "empty": "Ninguna colección coincide con esos filtros.",
+    "loadingMore": "Cargando más...",
+    "endOfResults": "Fin de resultados · {count, plural, =1 {1 colección} other {# colecciones}}",
+    "card": {
+      "petCount": "{count, plural, =1 {1 mascota} other {# mascotas}}",
+      "siteLink": "Sitio",
+      "byOwner": "por {name}"
+    },
+    "kindLabel": {
+      "franchise": "Franquicia",
+      "category": "Categoría",
+      "categorySub": "Temática",
+      "other": "Curada"
+    }
+  },
+  "profile": {
+    "creatorBadge": "Creador Petdex",
+    "creatorOfPetdex": "Creador de Petdex",
+    "yourAlbum": "TU ÁLBUM: {caught}/{total} ({pct}%)",
+    "editProfile": "Editar perfil",
+    "petsTab": "Mascotas",
+    "likedTab": "Favoritos",
+    "collectionsTab": "Colecciones",
+    "submitPet": "Enviar mascota",
+    "approvedSection": "Aprobadas ({count})",
+    "editOrder": "Editar orden",
+    "joined": "se unió {date}",
+    "installs": "{count} instalaciones",
+    "petsCount": "{count, plural, =1 {1 mascota} other {# mascotas}}"
   },
   "galleryReorder": {
     "dragInstruction": "Arrastra cualquier mascota para reordenar. Los cambios se guardan al hacer clic en Listo."
@@ -1544,8 +1653,13 @@
     "namePlaceholder": "Nombre de la mascota",
     "descriptionPlaceholder": "Descripción",
     "editAria": "Editar mascota",
+    "automationEvidence": "Evidencia automática",
+    "noSummary": "Sin resumen.",
+    "confidence": "Confianza: {confidence}%.",
     "evidenceAssets": "Archivos",
-    "evidencePolicy": "Política"
+    "evidencePolicy": "Política",
+    "evidenceVisualText": "Texto visual",
+    "evidenceVisualSignals": "Señales visuales"
   },
   "sticker": {
     "ctaWeChat": "Guardar para WeChat",
@@ -1570,5 +1684,39 @@
     "howToWhatsApp": "WhatsApp: importa el zip con Sticker Maker",
     "desktopNote": "WhatsApp Desktop muestra solo el primer frame · en celular se anima",
     "errorGeneric": "Algo salió mal, intenta de nuevo"
+  },
+  "collaboratorWechatQr": {
+    "panelTitle": "Gestión de QR de WeChat",
+    "currentQr": "QR actual",
+    "expiresIn": "Expira en {days} días",
+    "expired": "Expirado",
+    "uploadCta": "Subir nuevo QR",
+    "dropZoneHint": "Arrastra JPG / PNG aquí, máx 200KB",
+    "validating": "Validando con IA...",
+    "validationFailed": "Validación fallida",
+    "uploadSuccess": "¡Subida exitosa!",
+    "history": "Historial de subidas",
+    "historyEmpty": "Sin subidas aún",
+    "statusActive": "Activo",
+    "statusReplaced": "Reemplazado",
+    "statusRejected": "Rechazado",
+    "uploadedBy": "Subido por",
+    "rotateNow": "Rotar ahora",
+    "viewOnPublic": "Ver en página pública"
+  },
+  "collectionActionMenu": {
+    "moreActions": "Más acciones para {title}",
+    "closeMenu": "Cerrar menú",
+    "openInCodex": "Abrir en Codex",
+    "openInCodexDesc": "Codex Desktop ejecuta la instalación",
+    "copyInstallAll": "Copiar instalar todo",
+    "copiedInstall": "Comando copiado",
+    "copyCollectionLink": "Copiar enlace de la colección",
+    "copiedLink": "Enlace copiado",
+    "shareToX": "Compartir en X",
+    "viewCollection": "Ver colección",
+    "installHint": "{count, plural, =1 {1 mascota} other {# mascotas}}",
+    "installHintTruncated": "{shown} de {total} mascotas · pega el resto manual",
+    "shareXText": "Colección {title} de mascotas en Petdex - instala con una línea"
   }
 }

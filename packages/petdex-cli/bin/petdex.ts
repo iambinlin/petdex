@@ -8,6 +8,7 @@ import JSZip from "jszip";
 import pc from "picocolors";
 
 import { ClerkCliAuth } from "../src/cli-auth/index.js";
+import { runDoctor } from "../src/desktop/doctor.js";
 import {
   desktopBinPath,
   isTrustedAssetUrl,
@@ -21,7 +22,6 @@ import {
   startDesktop,
   stopDesktop,
 } from "../src/desktop/process.js";
-import { runDoctor } from "../src/desktop/doctor.js";
 import { runUpdate } from "../src/desktop/update.js";
 import { runInstall as runHooksInstall } from "../src/hooks/install.js";
 import {
@@ -107,7 +107,7 @@ async function getAuth(): Promise<ClerkCliAuth> {
   return _auth;
 }
 
-const VERSION = "0.3.9";
+const VERSION = "0.4.0";
 
 // ─── entrypoint ────────────────────────────────────────────────────────────
 main().catch((err) => {
@@ -127,6 +127,15 @@ async function main() {
   if (cmd === "bubble") {
     const { runBubble } = await import("../src/hooks/bubble-runner");
     await runBubble(args.slice(1));
+    return;
+  }
+
+  // `petdex mcp-server` is also a hot path run as a subprocess by
+  // Antigravity. Any stdout output (telemetry notice, help text)
+  // before the client sends `initialize` breaks the MCP handshake.
+  if (cmd === "mcp-server") {
+    const { runMcpServer } = await import("../src/hooks/mcp-server.js");
+    await runMcpServer();
     return;
   }
 
@@ -159,6 +168,9 @@ async function main() {
     case "submit":
       await cmdSubmit(args.slice(1));
       break;
+    case "edit":
+      await cmdEdit(args.slice(1));
+      break;
     case "install":
       await cmdInstall(args.slice(1));
       break;
@@ -184,7 +196,7 @@ async function main() {
       await cmdToggle();
       break;
     case "update":
-      await runUpdate(args.slice(1));
+      await runUpdate(args.slice(1), VERSION);
       break;
     case "doctor":
       await runDoctor();
@@ -221,9 +233,11 @@ function printHelp() {
       `    ${pc.bold("logout")}             Clear stored credentials`,
       `    ${pc.bold("whoami")}             Show signed-in user`,
       `    ${pc.bold("submit")} <path>      Submit a pet folder, zip, or parent of pets (bulk)`,
+      `    ${pc.bold("edit")} <slug>        Edit a pet you own (--desc, --displayName, --sprite, --meta, --zip)`,
       `    ${pc.bold("install")} <slug...>  Install one or more pets into ~/.petdex/pets and ~/.codex/pets`,
       `    ${pc.bold("install desktop")}    Install the petdex-desktop binary (alternative to the .dmg)`,
       `    ${pc.bold("list")}               List approved pets`,
+      `    ${pc.bold("mcp-server")}          Start the MCP protocol server for Antigravity integration`,
       `    ${pc.bold("hooks install")}      Wire petdex-desktop into your coding agents`,
       `    ${pc.bold("toggle")}             One-shot wake/sleep. Flips the mascot on or off depending on current state`,
       `    ${pc.bold("up")}                 Force-wake the mascot. Enables hooks AND launches petdex-desktop`,
@@ -396,7 +410,11 @@ async function cmdInstall(args: string[]) {
   const slugs = Array.from(new Set(args));
 
   const s = p.spinner();
-  s.start(slugs.length === 1 ? `Resolving ${slugs[0]}` : `Resolving ${slugs.length} pets`);
+  s.start(
+    slugs.length === 1
+      ? `Resolving ${slugs[0]}`
+      : `Resolving ${slugs.length} pets`,
+  );
 
   let manifest: ManifestPet[];
   try {
@@ -688,6 +706,169 @@ async function cmdSubmit(args: string[]) {
     ].join("\n"),
   );
   if (failed > 0) process.exit(1);
+}
+
+// ─── edit ──────────────────────────────────────────────────────────────────
+
+async function cmdEdit(args: string[]): Promise<void> {
+  const positionals = args.filter((a) => !a.startsWith("--"));
+  const slug = positionals[0];
+  if (!slug) {
+    p.cancel(
+      `Usage: ${pc.cyan('petdex edit <slug> [--desc "..."] [--displayName "..."] [--sprite ./new.webp] [--meta ./pet.json] [--zip ./pet.zip]')}`,
+    );
+    process.exit(1);
+  }
+
+  const auth = await getAuth();
+  let token: string;
+  try {
+    const t = await auth.getAccessToken();
+    if (!t) {
+      p.cancel(`Not signed in. Run ${pc.cyan("petdex login")}.`);
+      process.exit(1);
+    }
+    token = t;
+  } catch {
+    p.cancel(`Not signed in. Run ${pc.cyan("petdex login")}.`);
+    process.exit(1);
+  }
+
+  function flagValue(flag: string): string | null {
+    const idx = args.findIndex((a) => a === flag);
+    if (idx === -1) return null;
+    const val = args[idx + 1];
+    return typeof val === "string" && !val.startsWith("--") ? val : null;
+  }
+
+  const descArg = flagValue("--desc");
+  const displayNameArg = flagValue("--displayName");
+  const spritePath = flagValue("--sprite");
+  const metaPath = flagValue("--meta");
+  const zipPath = flagValue("--zip");
+
+  if (!descArg && !displayNameArg && !spritePath && !metaPath && !zipPath) {
+    p.cancel("Nothing to edit. Provide at least one flag.");
+    process.exit(1);
+  }
+
+  p.intro(pc.bgMagenta(pc.white(" petdex edit ")));
+  const s = p.spinner();
+  s.start(`Resolving ${slug}`);
+
+  const petRes = await fetch(`${PETDEX_URL}/api/pets/${slug}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!petRes.ok) {
+    s.stop(pc.red("not found"));
+    p.cancel(`Pet "${slug}" not found or you don't own it.`);
+    process.exit(1);
+  }
+  const petData = (await petRes.json()) as { id?: string };
+  const petId = petData.id;
+  if (!petId) {
+    s.stop(pc.red("could not resolve pet id"));
+    process.exit(1);
+  }
+  s.stop(`Found ${pc.cyan(slug)}`);
+
+  const body: Record<string, unknown> = {};
+  if (descArg) body.description = descArg;
+  if (displayNameArg) body.displayName = displayNameArg;
+
+  if (spritePath || metaPath || zipPath) {
+    s.start("Uploading assets");
+    const presignRes = await fetch(`${PETDEX_URL}/api/cli/edit-presign`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        petId,
+        hasSprite: Boolean(spritePath),
+        hasMeta: Boolean(metaPath),
+        hasZip: Boolean(zipPath),
+      }),
+    });
+    if (presignRes.ok) {
+      const presigned = (await presignRes.json()) as {
+        files?: Array<{
+          role: "sprite" | "petjson" | "zip";
+          uploadUrl: string;
+          publicUrl: string;
+        }>;
+      };
+      const slot = (role: "sprite" | "petjson" | "zip") =>
+        presigned.files?.find((f) => f.role === role) ?? null;
+
+      if (spritePath) {
+        const buf = await import("node:fs/promises").then((m) =>
+          m.readFile(spritePath),
+        );
+        const ext = spritePath.endsWith(".png") ? "image/png" : "image/webp";
+        const ss = slot("sprite");
+        if (ss) {
+          await putR2(ss.uploadUrl, buf, ext);
+          const { width, height } = parseImageDims(buf);
+          body.spritesheetUrl = ss.publicUrl;
+          if (width) body.spritesheetWidth = width;
+          if (height) body.spritesheetHeight = height;
+        }
+      }
+      if (metaPath) {
+        const buf = await import("node:fs/promises").then((m) =>
+          m.readFile(metaPath),
+        );
+        const ms = slot("petjson");
+        if (ms) {
+          await putR2(ms.uploadUrl, buf, "application/json");
+          body.petJsonUrl = ms.publicUrl;
+        }
+      }
+      if (zipPath) {
+        const buf = await import("node:fs/promises").then((m) =>
+          m.readFile(zipPath),
+        );
+        const zs = slot("zip");
+        if (zs) {
+          await putR2(zs.uploadUrl, buf, "application/zip");
+          body.zipUrl = zs.publicUrl;
+        }
+      }
+      s.stop("Assets uploaded");
+    } else {
+      s.stop(pc.yellow("presign endpoint unavailable, skipping asset upload"));
+    }
+  }
+
+  s.start("Submitting edit");
+  const editRes = await fetch(`${PETDEX_URL}/api/my-pets/${petId}/edit`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Origin: PETDEX_URL,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!editRes.ok) {
+    const text = await editRes.text().catch(() => "");
+    s.stop(pc.red(`edit failed: ${editRes.status}`));
+    p.cancel(text.slice(0, 120));
+    process.exit(1);
+  }
+
+  const result = (await editRes.json()) as { status?: string };
+  s.stop(
+    result.status === "auto_approved"
+      ? `${pc.green("✓")} Edit auto-approved and live`
+      : `${pc.yellow("·")} Edit queued for admin review`,
+  );
+
+  emit("cli_edit_invoked", { cli_version: VERSION });
+  p.outro(`Gallery: ${pc.underline(`${PETDEX_URL}/pets/${slug}`)}`);
 }
 
 // ─── candidate collection ──────────────────────────────────────────────────
@@ -1273,6 +1454,12 @@ function cmdHooksKillswitch(sub: "toggle" | "on" | "off" | "status"): void {
 // staring at instructions to "open your agent and run /petdex" with
 // no mascot ever appearing because nobody had launched the desktop.
 async function cmdInit(): Promise<void> {
+  emit("cli_init_started", {
+    cli_version: VERSION,
+    os: process.platform,
+    arch: process.arch,
+  });
+
   // Detect what's already on disk. desktopBinPath() returns the .app
   // path when present (any of /Applications/Petdex.app or
   // ~/Applications/Petdex.app), otherwise the bare ~/.petdex/bin/
@@ -1315,12 +1502,6 @@ async function cmdInit(): Promise<void> {
   }
 
   const { installedAgents } = await runHooksInstall();
-  if (installedAgents.length > 0) {
-    emit("cli_hooks_install_success", {
-      cli_version: VERSION,
-      agents: installedAgents,
-    });
-  }
 
   // Auto-start the mascot. Skipping this used to leave the user with
   // a working hook chain but no visible mascot — they'd run /petdex
@@ -1328,12 +1509,13 @@ async function cmdInit(): Promise<void> {
   // setup failed. Idempotent via desktopStatus check.
   const status = desktopStatus();
   if (status.state === "running") {
-    console.log(
-      `${pc.green("●")} Desktop already running (pid ${status.pid})`,
-    );
+    console.log(`${pc.green("●")} Desktop already running (pid ${status.pid})`);
   } else {
     const result = await startDesktop();
     if (result.ok) {
+      if (!result.alreadyRunning) {
+        emit("cli_desktop_start_success", { cli_version: VERSION });
+      }
       console.log(
         result.alreadyRunning
           ? `${pc.dim("•")} Desktop already running (pid ${result.pid})`
@@ -1376,19 +1558,22 @@ function tildeify(p: string): string {
 // command is idempotent — safe to call when desktop is already up,
 // or when hooks were already enabled.
 async function cmdUp(): Promise<void> {
+  emit("cli_up_invoked", { cli_version: VERSION });
+
   setKillswitchState("on");
   console.log(`${pc.green("●")} Hooks ${pc.bold("ENABLED")}`);
 
   const status = desktopStatus();
   if (status.state === "running") {
-    console.log(
-      `${pc.green("●")} Desktop already running (pid ${status.pid})`,
-    );
+    console.log(`${pc.green("●")} Desktop already running (pid ${status.pid})`);
     return;
   }
   // Either stopped or stale — startDesktop handles both.
   const result = await startDesktop();
   if (result.ok) {
+    if (!result.alreadyRunning) {
+      emit("cli_desktop_start_success", { cli_version: VERSION });
+    }
     console.log(
       result.alreadyRunning
         ? `${pc.dim("•")} Desktop already running (pid ${result.pid})`

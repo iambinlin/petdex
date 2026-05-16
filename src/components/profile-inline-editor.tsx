@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Loader2, Pencil, Pin, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { MAX_PINNED_PETS } from "@/lib/profiles";
 
@@ -29,6 +30,7 @@ export function ProfileInlineEditor({
   initialFeaturedSlugs: string[];
   approvedPets: ApprovedPet[];
 }) {
+  const t = useTranslations("profile");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
@@ -88,7 +90,7 @@ export function ProfileInlineEditor({
         className="inline-flex h-9 items-center gap-1.5 rounded-full bg-inverse px-3 text-xs font-medium text-on-inverse transition hover:bg-inverse-hover"
       >
         <Pencil className="size-3.5" />
-        Edit profile
+        {t("editProfile")}
       </button>
 
       {open ? (

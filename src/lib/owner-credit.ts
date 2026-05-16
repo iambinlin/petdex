@@ -15,8 +15,13 @@
 import { cache } from "react";
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
+import {
+  cachedAggregate,
+  petOwnerCreditCacheKey,
+  publicProfileCacheKey,
+} from "@/lib/db/cached-aggregates";
 import { db, schema } from "@/lib/db/client";
 
 export type OwnerExternal = {
@@ -55,6 +60,19 @@ export type RowCreditFallback = {
    */
   ownerIsProxy?: boolean;
 };
+
+export type StoredOwnerCredit = {
+  credit: OwnerCredit;
+  ownerIsProxy: boolean;
+};
+
+type StoredPublicProfile = {
+  displayName: string | null;
+  handle: string | null;
+};
+
+const PUBLIC_PROFILE_TTL_SECONDS = 300;
+const PET_OWNER_CREDIT_TTL_SECONDS = 300;
 
 function fallbackHandle(userId: string): string {
   return userId.slice(-8).toLowerCase();
@@ -272,18 +290,7 @@ export async function resolveStoredOwnerCreditFor(
     null;
 
   if (!row.ownerIsProxy) {
-    try {
-      const [storedProfile] = await db
-        .select({
-          displayName: schema.userProfiles.displayName,
-          handle: schema.userProfiles.handle,
-        })
-        .from(schema.userProfiles)
-        .where(inArray(schema.userProfiles.userId, [row.ownerId]));
-      profile = storedProfile ?? null;
-    } catch {
-      profile = null;
-    }
+    profile = await getStoredPublicProfile(row.ownerId);
   }
 
   const externals: OwnerExternal[] = [];
@@ -312,4 +319,69 @@ export async function resolveStoredOwnerCreditFor(
     externals,
     imageUrl: row.creditImage,
   };
+}
+
+export async function resolveStoredOwnerCreditForSlug(
+  slug: string,
+): Promise<StoredOwnerCredit | null> {
+  const row = await cachedAggregate<RowCreditFallback | null>(
+    {
+      key: petOwnerCreditCacheKey(slug),
+      ttlSeconds: PET_OWNER_CREDIT_TTL_SECONDS,
+    },
+    async () => {
+      const stored = await db.query.submittedPets.findFirst({
+        columns: {
+          ownerId: true,
+          creditName: true,
+          creditUrl: true,
+          creditImage: true,
+          source: true,
+        },
+        where: and(
+          eq(schema.submittedPets.slug, slug),
+          eq(schema.submittedPets.status, "approved"),
+        ),
+      });
+      if (!stored) return null;
+      return {
+        ownerId: stored.ownerId,
+        creditName: stored.creditName,
+        creditUrl: stored.creditUrl,
+        creditImage: stored.source === "discover" ? null : stored.creditImage,
+        ownerIsProxy: stored.source === "discover",
+      };
+    },
+  );
+
+  if (!row) return null;
+  return {
+    credit: await resolveStoredOwnerCreditFor(row),
+    ownerIsProxy: Boolean(row.ownerIsProxy),
+  };
+}
+
+async function getStoredPublicProfile(
+  userId: string,
+): Promise<StoredPublicProfile | null> {
+  return cachedAggregate(
+    {
+      key: publicProfileCacheKey(userId),
+      ttlSeconds: PUBLIC_PROFILE_TTL_SECONDS,
+    },
+    async () => {
+      try {
+        const [storedProfile] = await db
+          .select({
+            displayName: schema.userProfiles.displayName,
+            handle: schema.userProfiles.handle,
+          })
+          .from(schema.userProfiles)
+          .where(inArray(schema.userProfiles.userId, [userId]));
+        return storedProfile ?? { displayName: null, handle: null };
+      } catch {
+        return null;
+      }
+    },
+  );
 }

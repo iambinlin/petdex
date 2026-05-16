@@ -79,3 +79,7 @@ HANDOFF.md
 *.p12
 *.cer
 *.certSigningRequest
+
+# Petdex Desktop release artifacts (uploaded to GH releases, not commited)
+packages/petdex-desktop/Petdex-*.dmg
+packages/petdex-desktop/petdex-desktop-darwin-*

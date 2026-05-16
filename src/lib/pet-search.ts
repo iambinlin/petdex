@@ -17,6 +17,7 @@ import {
 } from "drizzle-orm";
 
 import { COLOR_FAMILIES, type ColorFamily } from "@/lib/color-families";
+import { AGGREGATE_KEYS, cachedAggregate } from "@/lib/db/cached-aggregates";
 import { db, schema } from "@/lib/db/client";
 import { getAvailableBatches } from "@/lib/dex-batch.server";
 import { PETDEX_EMBEDDING_MODEL } from "@/lib/embeddings";
@@ -338,6 +339,21 @@ function rowToSchema(
       : null,
     pendingRejectionReason:
       (row.pending_rejection_reason as string | null) ?? null,
+    pendingSpritesheetUrl:
+      (row.pending_spritesheet_url as string | null) ?? null,
+    pendingPetJsonUrl: (row.pending_pet_json_url as string | null) ?? null,
+    pendingZipUrl: (row.pending_zip_url as string | null) ?? null,
+    pendingSpritesheetWidth:
+      (row.pending_spritesheet_width as number | null) ?? null,
+    pendingSpritesheetHeight:
+      (row.pending_spritesheet_height as number | null) ?? null,
+    pendingDhash: (row.pending_dhash as string | null) ?? null,
+    pendingReviewId: (row.pending_review_id as string | null) ?? null,
+    pendingAutoApprovedAt: row.pending_auto_approved_at
+      ? new Date(row.pending_auto_approved_at as string)
+      : null,
+    editCount: (row.edit_count as number | null) ?? 0,
+    lastEditAt: row.last_edit_at ? new Date(row.last_edit_at as string) : null,
     galleryPosition: (row.gallery_position as number | null) ?? 0,
   };
 }
@@ -384,7 +400,7 @@ function orderForSort(
   }
 }
 
-const loadFacets = withNextDataCache(
+const computeFacets = withNextDataCache(
   async (): Promise<SearchFacets> => {
     const [kindRows, vibeRows, batches] = await Promise.all([
       db
@@ -441,6 +457,15 @@ const loadFacets = withNextDataCache(
   ["petdex-facets"],
   { tags: ["petdex:facets"], revalidate: 300 },
 );
+
+// Two-tier cache for the facet aggregate. Upstash sits in front of the
+// Next per-instance cache so cross-lambda fan-out doesn't recompute
+// the same `GROUP BY` query on every cold instance.
+const loadFacets = (): Promise<SearchFacets> =>
+  cachedAggregate(
+    { key: AGGREGATE_KEYS.facets, ttlSeconds: 300 },
+    computeFacets,
+  );
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n));

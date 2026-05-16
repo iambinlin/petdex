@@ -49,7 +49,11 @@ type TelemetryConfig = {
 export type TelemetryEvent =
   | "cli_install_desktop_success"
   | "cli_hooks_install_success"
-  | "cli_desktop_start_success";
+  | "cli_desktop_start_success"
+  | "cli_update_applied"
+  | "cli_init_started"
+  | "cli_up_invoked"
+  | "cli_edit_invoked";
 
 export type TelemetryPayload = {
   cli_version?: string;
@@ -57,6 +61,9 @@ export type TelemetryPayload = {
   os?: string;
   arch?: string;
   agents?: string[];
+  from_version?: string;
+  to_version?: string;
+  duration_ms?: number;
 };
 
 // Three-state read result so callers can distinguish "no config yet"

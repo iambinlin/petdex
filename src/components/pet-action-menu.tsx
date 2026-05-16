@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { track } from "@vercel/analytics";
 import {
@@ -32,6 +32,13 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const SITE_URL = "https://petdex.crafter.run";
 const TAKEDOWN_ISSUE_URL =
@@ -193,7 +200,6 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
   // is auth-cookie gated and private, no-store — anonymous viewers
   // get false instantly.
   const [canDelete, setCanDelete] = useState<boolean | null>(null);
-  const ref = useRef<HTMLDivElement | null>(null);
 
   const installCmd = `npx petdex install ${pet.slug}`;
   const pageUrl = `${SITE_URL}/pets/${pet.slug}`;
@@ -222,24 +228,6 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
       cancelled = true;
     };
   }, [open, canDelete, pet.slug]);
-
-  // Click outside / Esc closes the menu.
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (!ref.current) return;
-      if (!ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [open]);
 
   const copyText = useCallback(
     async (text: string, kind: "install" | "link") => {
@@ -381,20 +369,11 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
       ? "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border-base bg-surface px-4 text-sm font-medium text-muted-2 transition hover:border-border-strong"
       : "inline-flex size-8 items-center justify-center rounded-full border border-border-base bg-surface/90 text-muted-2 transition hover:border-border-strong hover:text-foreground";
 
-  // Both variants open downward — the trigger lives in the top of its row,
-  // so down has more room than up. Card variant aligns the menu's right
-  // edge to the trigger's right edge (cards are wide). Detail variant
-  // aligns the menu's left edge to the trigger so the menu opens to the
-  // right and doesn't get clipped by the viewport's left edge.
-  const menuPositionClassName =
-    variant === "detail"
-      ? "absolute left-0 top-full mt-2"
-      : "absolute right-0 top-full mt-2";
+  const menuAlign = variant === "detail" ? "start" : "end";
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation wrapper for card-anchor + escape, not an interactive role
+    // biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation wrapper for card-anchor, not an interactive role
     <div
-      ref={ref}
       // While open, lift the wrapper above sibling cards. Sibling cards
       // create their own stacking context via backdrop-blur, so a plain
       // z-50 on the menu still gets occluded by the next card. Raising
@@ -403,36 +382,28 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
       className={variant === "card" ? "relative" : "relative inline-flex"}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
-        // Stop card-level navigation when this lives inside an <a> wrapper.
         if (e.key === "Enter" || e.key === " ") e.stopPropagation();
       }}
     >
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={t("moreActions", { name: pet.displayName })}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        className={triggerClassName}
-      >
-        {variant === "detail" ? (
-          <>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTriggerButton
+          className={triggerClassName}
+          aria-label={t("moreActions", { name: pet.displayName })}
+        >
+          {variant === "detail" ? (
+            <>
+              <MoreHorizontal className="size-4" />
+              {t("share")}
+            </>
+          ) : (
             <MoreHorizontal className="size-4" />
-            {t("share")}
-          </>
-        ) : (
-          <MoreHorizontal className="size-4" />
-        )}
-      </button>
+          )}
+        </DropdownMenuTriggerButton>
 
-      {open ? (
-        <div
-          role="menu"
-          className={`${menuPositionClassName} z-[60] w-60 overflow-hidden rounded-2xl border border-border-base bg-surface shadow-xl shadow-blue-950/15`}
+        <DropdownMenuContent
+          align={menuAlign}
+          sideOffset={6}
+          className="w-60 overflow-hidden rounded-2xl border border-border-base bg-surface p-0 shadow-xl shadow-blue-950/15"
         >
           <div className="flex items-center justify-between border-b border-black/[0.06] px-3 py-2 dark:border-white/[0.06]">
             <span className="font-mono text-[10px] tracking-[0.18em] text-muted-3 uppercase">
@@ -441,101 +412,127 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
             <button
               type="button"
               aria-label={t("closeMenu")}
-              onClick={(e) => {
-                e.preventDefault();
-                setOpen(false);
-              }}
+              onClick={() => setOpen(false)}
               className="grid size-6 place-items-center rounded-full text-muted-4 transition hover:bg-surface-muted hover:text-foreground"
             >
               <CloseIcon className="size-3.5" />
             </button>
           </div>
 
-          <ul className="py-1">
-            <li>
-              <a
-                href={`codex://new?prompt=${encodeURIComponent(`Install this Petdex pet by running: ${installCmd}`)}`}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
-              >
-                <CodexLogo className="size-4" />
-                <span className="flex flex-col">
-                  <span>{t("openInCodex")}</span>
-                  <span className="font-mono text-[10px] tracking-tight text-muted-4">
-                    {t("openInCodexHint")}
-                  </span>
-                </span>
-              </a>
-            </li>
-            <MenuItem
-              icon={
-                copied === "install" ? (
-                  <Check className="size-4 text-emerald-600" />
-                ) : (
-                  <Terminal className="size-4" />
-                )
-              }
-              label={
-                copied === "install" ? t("copiedInstall") : t("copyInstall")
-              }
-              hint={installCmd}
-              onClick={() => copyText(installCmd, "install")}
-            />
-            <MenuItem
-              icon={
-                copied === "link" ? (
-                  <Check className="size-4 text-emerald-600" />
-                ) : (
-                  <Link2 className="size-4" />
-                )
-              }
-              label={copied === "link" ? t("copiedLink") : t("copyPageLink")}
-              hint={pageUrl.replace(/^https?:\/\//, "")}
-              onClick={() => copyText(pageUrl, "link")}
-            />
-            <MenuItem
-              icon={<XIcon className="size-4" />}
-              label={t("shareToX")}
-              onClick={onShareX}
-            />
-            <MenuItem
-              icon={<LinkedInIcon className="size-4" />}
-              label={t("shareToLinkedIn")}
-              onClick={onShareLinkedIn}
-            />
-            {typeof navigator !== "undefined" && "share" in navigator ? (
-              <MenuItem
-                icon={<ExternalLink className="size-4" />}
-                label={t("more")}
-                onClick={onShareNative}
-              />
-            ) : null}
-            {pet.zipUrl ? (
-              <li>
+          <div className="py-1">
+            <DropdownMenuItem
+              render={
+                // biome-ignore lint/a11y/useAnchorContent: content is provided via DropdownMenuItem children (Base UI render prop pattern)
                 <a
-                  href={pet.zipUrl}
-                  download
-                  target="_blank"
-                  rel="noreferrer"
+                  href={`codex://new?prompt=${encodeURIComponent(`Install this Petdex pet by running: ${installCmd}`)}`}
+                />
+              }
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2"
+            >
+              <CodexLogo className="size-4" />
+              <span className="flex flex-col">
+                <span>{t("openInCodex")}</span>
+                <span className="font-mono text-[10px] tracking-tight text-muted-4">
+                  {t("openInCodexHint")}
+                </span>
+              </span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => copyText(installCmd, "install")}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2"
+            >
+              {copied === "install" ? (
+                <Check className="size-4 text-emerald-600" />
+              ) : (
+                <Terminal className="size-4" />
+              )}
+              <span className="flex flex-col">
+                <span>
+                  {copied === "install" ? t("copiedInstall") : t("copyInstall")}
+                </span>
+                <span className="font-mono text-[10px] tracking-tight text-muted-4">
+                  {installCmd}
+                </span>
+              </span>
+              <Copy className="ml-auto size-3.5 text-stone-300 dark:text-stone-600" />
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => copyText(pageUrl, "link")}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2"
+            >
+              {copied === "link" ? (
+                <Check className="size-4 text-emerald-600" />
+              ) : (
+                <Link2 className="size-4" />
+              )}
+              <span className="flex flex-col">
+                <span>
+                  {copied === "link" ? t("copiedLink") : t("copyPageLink")}
+                </span>
+                <span className="font-mono text-[10px] tracking-tight text-muted-4">
+                  {pageUrl.replace(/^https?:\/\//, "")}
+                </span>
+              </span>
+              <Copy className="ml-auto size-3.5 text-stone-300 dark:text-stone-600" />
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={onShareX}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2"
+            >
+              <XIcon className="size-4" />
+              <span>{t("shareToX")}</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={onShareLinkedIn}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2"
+            >
+              <LinkedInIcon className="size-4" />
+              <span>{t("shareToLinkedIn")}</span>
+            </DropdownMenuItem>
+
+            {typeof navigator !== "undefined" && "share" in navigator ? (
+              <DropdownMenuItem
+                onClick={() => void onShareNative()}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted-2"
+              >
+                <ExternalLink className="size-4" />
+                <span>{t("more")}</span>
+              </DropdownMenuItem>
+            ) : null}
+
+            {pet.zipUrl ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  render={
+                    // biome-ignore lint/a11y/useAnchorContent: content is provided via DropdownMenuItem children (Base UI render prop pattern)
+                    <a
+                      href={pet.zipUrl}
+                      download
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
                   onClick={onZipClick}
-                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground dark:border-white/[0.06]"
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-2"
                 >
                   <Download className="size-4" />
                   <span className="flex-1">{t("downloadZip")}</span>
-                </a>
-              </li>
+                </DropdownMenuItem>
+              </>
             ) : null}
+
             {ownerActions?.status === "pending" ? (
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    void onWithdraw();
-                  }}
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => void onWithdraw()}
                   disabled={withdrawing}
-                  className="flex w-full items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-left text-sm text-chip-danger-fg transition hover:bg-chip-danger-bg disabled:opacity-60 dark:border-white/[0.06]"
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-chip-danger-fg"
                 >
                   {withdrawing ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -545,44 +542,44 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
                   <span className="flex-1">
                     {withdrawing ? t("withdrawing") : t("withdrawSubmission")}
                   </span>
-                </button>
-              </li>
+                </DropdownMenuItem>
+              </>
             ) : null}
+
             {ownerActions?.status === "rejected" ? (
-              <li>
-                <Link
-                  href="/submit"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-foreground transition hover:bg-surface-muted dark:border-white/[0.06]"
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  render={<Link href="/submit" />}
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-foreground"
                 >
                   <Plus className="size-4" />
                   <span className="flex-1">{t("submitNewVersion")}</span>
-                </Link>
-              </li>
+                </DropdownMenuItem>
+              </>
             ) : null}
+
             {ownerActions?.status === "approved" ? (
-              <li>
-                <Link
-                  href={`/pets/${pet.slug}#edit`}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-sm text-foreground transition hover:bg-surface-muted dark:border-white/[0.06]"
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  render={<Link href={`/pets/${pet.slug}#edit`} />}
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-foreground"
                 >
                   <Pencil className="size-4" />
                   <span className="flex-1">{t("editDetails")}</span>
-                </Link>
-              </li>
+                </DropdownMenuItem>
+              </>
             ) : null}
+
             {canDelete ? (
-              <li>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    void onDelete();
-                  }}
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => void onDelete()}
                   disabled={deleting}
-                  className="flex w-full items-center gap-2.5 border-t border-black/[0.06] px-3 py-2.5 text-left text-sm text-chip-danger-fg transition hover:bg-chip-danger-bg disabled:opacity-60 dark:border-white/[0.06]"
+                  variant="destructive"
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm"
                 >
                   {deleting ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -592,10 +589,11 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
                   <span className="flex-1">
                     {deleting ? t("removing") : t("removeFromPetdex")}
                   </span>
-                </button>
-              </li>
+                </DropdownMenuItem>
+              </>
             ) : null}
-          </ul>
+          </div>
+
           {deleteError ? (
             <p className="border-t border-black/[0.06] bg-chip-danger-bg px-3 py-2 text-xs text-chip-danger-fg dark:border-white/[0.06]">
               {deleteError}
@@ -606,45 +604,37 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
               {withdrawError}
             </p>
           ) : null}
-        </div>
-      ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
 
-type MenuItemProps = {
-  icon: React.ReactNode;
-  label: string;
-  hint?: string;
-  onClick: () => void;
-};
-
-function MenuItem({ icon, label, hint, onClick }: MenuItemProps) {
+function DropdownMenuTriggerButton({
+  children,
+  className,
+  "aria-label": ariaLabel,
+}: {
+  children: React.ReactNode;
+  className: string;
+  "aria-label": string;
+}) {
   return (
-    <li>
-      <button
-        type="button"
-        role="menuitem"
-        onClick={(e) => {
-          e.preventDefault();
-          onClick();
-        }}
-        className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-muted-2 transition hover:bg-surface-muted hover:text-foreground"
-      >
-        {icon}
-        <span className="flex flex-col">
-          <span>{label}</span>
-          {hint ? (
-            <span className="font-mono text-[10px] tracking-tight text-muted-4">
-              {hint}
-            </span>
-          ) : null}
-        </span>
-        {label.startsWith("Copy") ? (
-          <Copy className="ml-auto size-3.5 text-stone-300 dark:text-stone-600" />
-        ) : null}
-      </button>
-    </li>
+    <DropdownMenuTrigger
+      render={
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          className={className}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        />
+      }
+    >
+      {children}
+    </DropdownMenuTrigger>
   );
 }
 

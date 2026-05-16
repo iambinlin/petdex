@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   Bell,
@@ -14,6 +14,12 @@ import {
 } from "lucide-react";
 
 import { useHeaderState } from "@/components/header-state-provider";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type Kind =
   | "pet_approved"
@@ -129,7 +135,6 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
   const [items, setItems] = useState<Notif[]>([]);
   const [itemsLoaded, setItemsLoaded] = useState(false);
   const [open, setOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement | null>(null);
 
   const setUnread = useCallback(
     (_next: number | ((n: number) => number)) => {
@@ -153,24 +158,6 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
   useEffect(() => {
     if (open && !itemsLoaded) void loadItems();
   }, [open, itemsLoaded, loadItems]);
-
-  // Click outside / Escape closes the panel.
-  useEffect(() => {
-    if (!open) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    function onClick(e: MouseEvent) {
-      if (!popoverRef.current) return;
-      if (!popoverRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("mousedown", onClick);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("mousedown", onClick);
-    };
-  }, [open]);
 
   async function markAll() {
     setUnread(0);
@@ -211,105 +198,112 @@ export function NotificationsBell({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div ref={popoverRef} className="relative">
-      <button
-        type="button"
-        aria-label={
-          unread > 0 ? `${unread} unread notifications` : "Notifications"
-        }
-        onClick={() => setOpen((v) => !v)}
-        className={`relative grid place-items-center rounded-full border border-border-base bg-surface/70 text-muted-2 backdrop-blur transition-[width,height] duration-200 hover:bg-white dark:hover:bg-stone-800 ${compact ? "size-9" : "size-11"}`}
-      >
-        <Bell className="size-4" />
-        {unread > 0 ? (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -top-0.5 -right-0.5 grid size-4 place-items-center rounded-full bg-brand font-mono text-[9px] font-semibold text-white ring-2 ring-white"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={
+              unread > 0 ? `${unread} unread notifications` : "Notifications"
+            }
+            className={`relative rounded-full border border-border-base bg-surface/70 text-muted-2 backdrop-blur transition-[width,height] duration-200 hover:bg-white dark:hover:bg-stone-800 ${compact ? "size-9" : "size-11"}`}
           >
-            {unread > 9 ? "9+" : unread}
-          </span>
-        ) : null}
-      </button>
-
-      {open ? (
-        <div className="absolute right-0 z-[60] mt-2 flex max-h-[min(70vh,520px)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border-base bg-surface shadow-xl shadow-blue-950/15">
-          <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
-            <span className="text-sm font-semibold text-foreground">
-              Notifications
-            </span>
+            <Bell className="size-4" />
             {unread > 0 ? (
-              <button
-                type="button"
-                onClick={() => void markAll()}
-                className="inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.12em] text-brand uppercase hover:underline"
+              <span
+                aria-hidden
+                className="pointer-events-none absolute -top-0.5 -right-0.5 grid size-4 place-items-center rounded-full bg-brand font-mono text-[9px] font-semibold text-white ring-2 ring-white"
               >
-                <Check className="size-3" />
-                Mark all read
-              </button>
+                {unread > 9 ? "9+" : unread}
+              </span>
             ) : null}
-          </div>
+          </Button>
+        }
+      />
 
-          {items.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-muted-3">
-              You're all caught up.
-            </div>
-          ) : (
-            <ul className="min-h-0 flex-1 divide-y divide-black/[0.06] overflow-y-auto dark:divide-white/[0.06]">
-              {items.map((n) => {
-                const meta = KIND_META[n.kind];
-                const { title, sub } = describe(n);
-                const isUnread = !n.readAt;
-                return (
-                  <li key={n.id}>
-                    <Link
-                      href={n.href}
-                      onClick={() => {
-                        if (isUnread) void markOne(n.id);
-                        setOpen(false);
-                      }}
-                      className={`flex items-start gap-3 px-4 py-3 transition hover:bg-stone-50 dark:hover:bg-stone-800/60 ${
-                        isUnread
-                          ? "bg-brand-tint/40 dark:bg-brand-tint-dark/40"
-                          : ""
-                      }`}
-                    >
-                      <span
-                        className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full ring-1 ${meta.tone}`}
-                      >
-                        {meta.icon}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-2">
-                          <p
-                            className={`truncate text-sm ${
-                              isUnread
-                                ? "font-medium text-foreground"
-                                : "text-muted-2"
-                            }`}
-                          >
-                            {title}
-                          </p>
-                          {isUnread ? (
-                            <span className="size-1.5 shrink-0 rounded-full bg-brand" />
-                          ) : null}
-                          <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
-                            {relativeTime(n.createdAt)}
-                          </span>
-                        </div>
-                        {sub ? (
-                          <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-3">
-                            {sub}
-                          </p>
-                        ) : null}
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="flex max-h-[min(70vh,520px)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border-base bg-surface p-0 shadow-xl shadow-blue-950/15"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-black/[0.06] px-4 py-3 dark:border-white/[0.06]">
+          <span className="text-sm font-semibold text-foreground">
+            Notifications
+          </span>
+          {unread > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void markAll()}
+              className="inline-flex items-center gap-1 font-mono text-[10px] tracking-[0.12em] text-brand uppercase hover:underline"
+            >
+              <Check className="size-3" />
+              Mark all read
+            </Button>
+          ) : null}
         </div>
-      ) : null}
-    </div>
+
+        {items.length === 0 ? (
+          <div className="px-4 py-10 text-center text-sm text-muted-3">
+            You're all caught up.
+          </div>
+        ) : (
+          <ul className="min-h-0 flex-1 divide-y divide-black/[0.06] overflow-y-auto dark:divide-white/[0.06]">
+            {items.map((n) => {
+              const meta = KIND_META[n.kind];
+              const { title, sub } = describe(n);
+              const isUnread = !n.readAt;
+              return (
+                <li key={n.id}>
+                  <Link
+                    href={n.href}
+                    onClick={() => {
+                      if (isUnread) void markOne(n.id);
+                      setOpen(false);
+                    }}
+                    className={`flex items-start gap-3 px-4 py-3 transition hover:bg-stone-50 dark:hover:bg-stone-800/60 ${
+                      isUnread
+                        ? "bg-brand-tint/40 dark:bg-brand-tint-dark/40"
+                        : ""
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 grid size-7 shrink-0 place-items-center rounded-full ring-1 ${meta.tone}`}
+                    >
+                      {meta.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-2">
+                        <p
+                          className={`truncate text-sm ${
+                            isUnread
+                              ? "font-medium text-foreground"
+                              : "text-muted-2"
+                          }`}
+                        >
+                          {title}
+                        </p>
+                        {isUnread ? (
+                          <span className="size-1.5 shrink-0 rounded-full bg-brand" />
+                        ) : null}
+                        <span className="ml-auto shrink-0 font-mono text-[10px] tracking-[0.12em] text-muted-4 uppercase">
+                          {relativeTime(n.createdAt)}
+                        </span>
+                      </div>
+                      {sub ? (
+                        <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-3">
+                          {sub}
+                        </p>
+                      ) : null}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
