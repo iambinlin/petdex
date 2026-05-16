@@ -1,4 +1,5 @@
 export const BUILD_VERSION_PATH = "/version.json";
+export const BUILD_VERSION_FETCH_TIMEOUT_MS = 5_000;
 
 const CHUNK_LOAD_FAILURE_PATTERNS = [
   "chunkloaderror",
@@ -25,11 +26,18 @@ export function getBuildVersionFromPayload(payload: unknown): string | null {
 
 export async function fetchBuildVersion(
   fetcher: typeof fetch = fetch,
+  options: { timeoutMs?: number } = {},
 ): Promise<string | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? BUILD_VERSION_FETCH_TIMEOUT_MS,
+  );
+
   try {
     const response = await fetcher(
       `${BUILD_VERSION_PATH}?t=${Date.now().toString()}`,
-      { cache: "no-store" },
+      { cache: "no-store", signal: controller.signal },
     );
 
     if (!response.ok) {
@@ -39,6 +47,8 @@ export async function fetchBuildVersion(
     return getBuildVersionFromPayload(await response.json());
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

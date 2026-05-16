@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  fetchBuildVersion,
   getBuildVersionFromPayload,
   isChunkLoadFailure,
 } from "./build-version-check";
@@ -30,5 +31,24 @@ describe("build version check helpers", () => {
       }),
     ).toBe(true);
     expect(isChunkLoadFailure(new Error("network timeout"))).toBe(false);
+  });
+
+  it("aborts version fetches that do not settle", async () => {
+    let signal: AbortSignal | undefined;
+
+    const hangingFetch = ((_url: RequestInfo | URL, init?: RequestInit) => {
+      signal = init?.signal ?? undefined;
+
+      return new Promise<Response>((_resolve, reject) => {
+        signal?.addEventListener("abort", () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+    }) as typeof fetch;
+
+    const version = await fetchBuildVersion(hangingFetch, { timeoutMs: 1 });
+
+    expect(version).toBeNull();
+    expect(signal?.aborted).toBe(true);
   });
 });

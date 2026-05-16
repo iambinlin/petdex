@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -9,6 +9,7 @@ import {
   fetchBuildVersion,
   isChunkLoadFailure,
 } from "@/lib/build-version-check";
+import { createBuildVersionMonitor } from "@/lib/build-version-monitor";
 
 import { Button } from "@/components/ui/button";
 
@@ -18,9 +19,6 @@ type UpdateReason = "version" | "asset-load";
 
 export function BuildVersionWatcher() {
   const t = useTranslations("buildUpdate");
-  const currentVersionRef = useRef<string | null>(null);
-  const intervalRef = useRef<number | null>(null);
-  const checkingRef = useRef(false);
   const [updateReason, setUpdateReason] = useState<UpdateReason | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
@@ -28,105 +26,29 @@ export function BuildVersionWatcher() {
     setUpdateReason((currentReason) => currentReason ?? reason);
   }, []);
 
-  const checkVersion = useCallback(async () => {
-    if (checkingRef.current || updateReason) {
-      return;
-    }
-
-    checkingRef.current = true;
-
-    try {
-      const latestVersion = await fetchBuildVersion();
-
-      if (!latestVersion) {
-        return;
-      }
-
-      if (!currentVersionRef.current) {
-        currentVersionRef.current = latestVersion;
-        return;
-      }
-
-      if (latestVersion !== currentVersionRef.current) {
-        showUpdatePrompt("version");
-      }
-    } finally {
-      checkingRef.current = false;
-    }
-  }, [showUpdatePrompt, updateReason]);
-
   useEffect(() => {
-    function clearForegroundInterval() {
-      if (intervalRef.current === null) {
-        return;
-      }
+    const monitor = createBuildVersionMonitor({
+      addDocumentListener: (type, listener) =>
+        document.addEventListener(type, listener),
+      addWindowListener: (type, listener) =>
+        window.addEventListener(type, listener),
+      clearInterval: (id) => window.clearInterval(id),
+      fetchVersion: fetchBuildVersion,
+      intervalMs: CHECK_INTERVAL_MS,
+      isChunkLoadFailure,
+      isVisible: () => document.visibilityState === "visible",
+      onUpdate: showUpdatePrompt,
+      removeDocumentListener: (type, listener) =>
+        document.removeEventListener(type, listener),
+      removeWindowListener: (type, listener) =>
+        window.removeEventListener(type, listener),
+      setInterval: (listener, intervalMs) =>
+        window.setInterval(listener, intervalMs),
+    });
 
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    function startForegroundInterval() {
-      if (updateReason || document.visibilityState !== "visible") {
-        return;
-      }
-
-      clearForegroundInterval();
-      intervalRef.current = window.setInterval(() => {
-        void checkVersion();
-      }, CHECK_INTERVAL_MS);
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState !== "visible") {
-        clearForegroundInterval();
-        return;
-      }
-
-      void checkVersion();
-      startForegroundInterval();
-    }
-
-    function handleFocus() {
-      if (document.visibilityState === "visible") {
-        void checkVersion();
-      }
-    }
-
-    void checkVersion();
-    startForegroundInterval();
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
-
+    monitor.start();
     return () => {
-      clearForegroundInterval();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
-    };
-  }, [checkVersion, updateReason]);
-
-  useEffect(() => {
-    function handleError(event: ErrorEvent) {
-      if (isChunkLoadFailure(event)) {
-        showUpdatePrompt("asset-load");
-      }
-    }
-
-    function handleUnhandledRejection(event: PromiseRejectionEvent) {
-      if (isChunkLoadFailure(event)) {
-        showUpdatePrompt("asset-load");
-      }
-    }
-
-    window.addEventListener("error", handleError);
-    window.addEventListener("unhandledrejection", handleUnhandledRejection);
-
-    return () => {
-      window.removeEventListener("error", handleError);
-      window.removeEventListener(
-        "unhandledrejection",
-        handleUnhandledRejection,
-      );
+      monitor.stop();
     };
   }, [showUpdatePrompt]);
 
