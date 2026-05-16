@@ -1647,8 +1647,13 @@
     "namePlaceholder": "Pet display name",
     "descriptionPlaceholder": "Description",
     "editAria": "Edit pet",
+    "automationEvidence": "Automation evidence",
+    "noSummary": "No summary.",
+    "confidence": "Confidence: {confidence}%.",
     "evidenceAssets": "Assets",
-    "evidencePolicy": "Policy"
+    "evidencePolicy": "Policy",
+    "evidenceVisualText": "Visual text",
+    "evidenceVisualSignals": "Visual signals"
   },
   "sticker": {
     "ctaWeChat": "Save for WeChat",

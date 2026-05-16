@@ -1647,8 +1647,13 @@
     "namePlaceholder": "Nombre de la mascota",
     "descriptionPlaceholder": "Descripción",
     "editAria": "Editar mascota",
+    "automationEvidence": "Evidencia automática",
+    "noSummary": "Sin resumen.",
+    "confidence": "Confianza: {confidence}%.",
     "evidenceAssets": "Archivos",
-    "evidencePolicy": "Política"
+    "evidencePolicy": "Política",
+    "evidenceVisualText": "Texto visual",
+    "evidenceVisualSignals": "Señales visuales"
   },
   "sticker": {
     "ctaWeChat": "Guardar para WeChat",

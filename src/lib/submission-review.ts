@@ -13,6 +13,7 @@ import {
   PETDEX_EMBEDDING_MODEL,
 } from "@/lib/embeddings";
 import { decideAutomatedReview } from "@/lib/submission-review-decision";
+import { preparePolicyReviewImage } from "@/lib/submission-review-image";
 import {
   buildPolicyPrompt,
   REVIEW_POLICY_CATEGORIES,
@@ -42,6 +43,11 @@ const FRAME_H = 208;
 const REVIEW_MODEL = "openai/gpt-5-mini";
 const VISUAL_MATCH_CHUNK_SIZE = 250;
 const VISUAL_MATCH_SCAN_LIMIT = 2000;
+const REVIEW_FETCH_TIMEOUT_MS = 10_000;
+const POLICY_MODEL_TIMEOUT_MS = 15_000;
+const POLICY_PET_JSON_TEXT_LIMIT = 240;
+const POLICY_PET_JSON_LIST_LIMIT = 16;
+const POLICY_PET_JSON_STATE_LIMIT = 12;
 
 type DbModule = typeof import("@/lib/db/client");
 
@@ -409,12 +415,12 @@ async function analyzePolicy(
     };
   }
 
-  const imageUrl = await firstFrameDataUrl(assets.spriteBuffer);
-  if (!imageUrl) {
+  const image = await preparePolicyReviewImage(assets.spriteBuffer);
+  if (!image.ok) {
     return {
       decision: "hold",
       confidence: 0,
-      reasons: ["Sprite image could not be prepared for policy review."],
+      reasons: [image.reason],
       flags: [],
     };
   }
@@ -428,10 +434,11 @@ async function analyzePolicy(
           role: "user",
           content: [
             { type: "text", text: buildPolicyUserPrompt(row, assets.petJson) },
-            { type: "image", image: imageUrl },
+            { type: "image", image: image.dataUrl },
           ],
         },
       ],
+      abortSignal: AbortSignal.timeout(POLICY_MODEL_TIMEOUT_MS),
     });
     return validatePolicyResponse(result.text);
   } catch (err) {
@@ -844,7 +851,9 @@ async function fetchAllowedBuffer(
     return { ok: false, reason: `${label} URL is not on the asset allowlist.` };
   }
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(REVIEW_FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) {
       return {
         ok: false,
@@ -871,24 +880,50 @@ async function fetchAllowedBuffer(
   }
 }
 
-function validatePolicyResponse(raw: string): ReviewChecks["policy"] {
+export function validatePolicyResponse(raw: string): ReviewChecks["policy"] {
   try {
-    const parsed = JSON.parse(raw) as {
+    const parsed = parsePolicyJson(raw) as {
       decision?: unknown;
       confidence?: unknown;
       summary?: unknown;
       flags?: unknown;
+      visualText?: unknown;
+      visualSignals?: unknown;
     };
     const flags = normalizePolicyFlags(parsed.flags);
     const holdFlags = flags.filter(shouldHoldForPolicyFlag);
+    const malformedFlagCount =
+      parsed.flags === undefined
+        ? 0
+        : Array.isArray(parsed.flags)
+          ? Math.max(0, parsed.flags.length - flags.length)
+          : 1;
     const confidence = clamp01(Number(parsed.confidence ?? 0));
     const summary =
       typeof parsed.summary === "string" ? parsed.summary.trim() : "";
-    const reasons = holdFlags.map((flag) =>
-      `${flag.category}: ${flag.evidence}`.slice(0, 220),
-    );
-    if (parsed.decision === "pass" && holdFlags.length === 0) {
-      return { decision: "pass", confidence, reasons: [], flags };
+    const visualText = normalizeStringList(parsed.visualText, 12, 120);
+    const visualSignals = normalizeStringList(parsed.visualSignals, 12, 160);
+    const reasons = [
+      ...holdFlags.map((flag) =>
+        `${flag.category}: ${flag.evidence}`.slice(0, 220),
+      ),
+      ...(malformedFlagCount > 0
+        ? ["Policy classifier returned malformed flag evidence."]
+        : []),
+    ];
+    if (
+      parsed.decision === "pass" &&
+      holdFlags.length === 0 &&
+      malformedFlagCount === 0
+    ) {
+      return {
+        decision: "pass",
+        confidence,
+        reasons: [],
+        flags,
+        visualText,
+        visualSignals,
+      };
     }
     return {
       decision: "hold",
@@ -898,6 +933,8 @@ function validatePolicyResponse(raw: string): ReviewChecks["policy"] {
           ? reasons
           : [summary || "Policy model requested review."],
       flags,
+      visualText,
+      visualSignals,
     };
   } catch {
     return {
@@ -909,24 +946,55 @@ function validatePolicyResponse(raw: string): ReviewChecks["policy"] {
   }
 }
 
+function parsePolicyJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) throw new Error("no JSON");
+    return JSON.parse(raw.slice(start, end + 1));
+  }
+}
+
+function normalizeStringList(
+  value: unknown,
+  maxItems: number,
+  maxLength: number,
+): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => item.slice(0, maxLength))
+    .slice(0, maxItems);
+}
+
 function normalizePolicyFlags(flags: unknown): PolicyFlag[] {
   if (!Array.isArray(flags)) return [];
   return flags
     .map((flag) => {
       const item = flag as Record<string, unknown>;
-      const category = String(item.category ?? "unknown").trim();
+      const category =
+        typeof item.category === "string" ? item.category.trim() : "";
+      const evidence =
+        typeof item.evidence === "string" ? item.evidence.trim() : "";
+      const confidence =
+        typeof item.confidence === "number" && Number.isFinite(item.confidence)
+          ? clamp01(item.confidence)
+          : null;
+      if (!category || !evidence || confidence === null) return null;
       const severity = String(item.severity ?? "low").trim();
       return {
         category,
         severity:
           severity === "medium" || severity === "high" ? severity : "low",
-        confidence: clamp01(Number(item.confidence ?? 0)),
-        evidence: String(item.evidence ?? "")
-          .trim()
-          .slice(0, 240),
+        confidence,
+        evidence: evidence.slice(0, 240),
       } satisfies PolicyFlag;
     })
-    .filter((flag) => flag.category && flag.evidence);
+    .filter((flag): flag is PolicyFlag => flag !== null);
 }
 
 function shouldHoldForPolicyFlag(flag: PolicyFlag): boolean {
@@ -937,21 +1005,107 @@ function shouldHoldForPolicyFlag(flag: PolicyFlag): boolean {
   return flag.confidence >= category.holdAboveConfidence;
 }
 
-async function firstFrameDataUrl(spriteBuffer: Buffer): Promise<string | null> {
-  try {
-    const frame = await sharp(spriteBuffer)
-      .extract({ left: 0, top: 0, width: 192, height: 208 })
-      .png()
-      .toBuffer();
-    return `data:image/png;base64,${frame.toString("base64")}`;
-  } catch {
-    return null;
+export function policyPetJsonExcerpt(
+  petJson: unknown,
+): Record<string, unknown> {
+  if (!isPlainRecord(petJson)) return {};
+
+  const excerpt: Record<string, unknown> = {};
+  addTextField(excerpt, petJson, "name");
+  addTextField(excerpt, petJson, "displayName");
+  addTextField(excerpt, petJson, "description");
+  addTextField(excerpt, petJson, "kind");
+  addNumberField(excerpt, petJson, "frameWidth");
+  addNumberField(excerpt, petJson, "frameHeight");
+
+  const tags = normalizeStringList(
+    petJson.tags,
+    POLICY_PET_JSON_LIST_LIMIT,
+    POLICY_PET_JSON_TEXT_LIMIT,
+  );
+  if (tags.length > 0) excerpt.tags = tags;
+
+  const vibes = normalizeStringList(
+    petJson.vibes,
+    POLICY_PET_JSON_LIST_LIMIT,
+    POLICY_PET_JSON_TEXT_LIMIT,
+  );
+  if (vibes.length > 0) excerpt.vibes = vibes;
+
+  const states = summarizePetJsonStates(petJson.states);
+  if (Object.keys(states).length > 0) excerpt.states = states;
+
+  const animations = summarizePetJsonStates(petJson.animations);
+  if (Object.keys(animations).length > 0) excerpt.animations = animations;
+
+  return excerpt;
+}
+
+function addTextField(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+  key: string,
+): void {
+  const value = source[key];
+  if (typeof value !== "string") return;
+  const text = value.trim().slice(0, POLICY_PET_JSON_TEXT_LIMIT);
+  if (text) target[key] = text;
+}
+
+function addNumberField(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+  key: string,
+): void {
+  const value = source[key];
+  if (typeof value === "number" && Number.isFinite(value)) {
+    target[key] = value;
   }
+}
+
+function summarizePetJsonStates(value: unknown): Record<string, unknown> {
+  if (!isPlainRecord(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .slice(0, POLICY_PET_JSON_STATE_LIMIT)
+      .map(([state, metadata]) => [
+        state.slice(0, 48),
+        summarizeState(metadata),
+      ])
+      .filter((entry): entry is [string, Record<string, unknown>] => {
+        const [, metadata] = entry;
+        return Object.keys(metadata).length > 0;
+      }),
+  );
+}
+
+function summarizeState(value: unknown): Record<string, unknown> {
+  if (!isPlainRecord(value)) return {};
+
+  const state: Record<string, unknown> = {};
+  addTextField(state, value, "label");
+  addTextField(state, value, "purpose");
+  addNumberField(state, value, "row");
+  addNumberField(state, value, "frames");
+  addNumberField(state, value, "frameCount");
+  addNumberField(state, value, "durationMs");
+  return state;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.getPrototypeOf(value) === Object.prototype
+  );
 }
 
 function buildPolicyUserPrompt(row: SubmittedPet, petJson: unknown): string {
   return [
     "Review this submitted pet pack.",
+    "The attached image is a contact sheet sampled from multiple animation states and frames. Check the visible art and OCR any embedded text.",
     `Display name: ${row.displayName}`,
     `Description: ${row.description}`,
     `Kind: ${row.kind}`,
@@ -959,7 +1113,7 @@ function buildPolicyUserPrompt(row: SubmittedPet, petJson: unknown): string {
     `Vibes: ${JSON.stringify(row.vibes ?? [])}`,
     `Credit name: ${row.creditName ?? ""}`,
     `Credit URL: ${row.creditUrl ?? ""}`,
-    `pet.json excerpt: ${JSON.stringify(petJson).slice(0, 4000)}`,
+    `pet.json excerpt: ${JSON.stringify(policyPetJsonExcerpt(petJson))}`,
   ].join("\n");
 }
 
