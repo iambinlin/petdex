@@ -1,0 +1,82 @@
+export const BUILD_VERSION_PATH = "/version.json";
+
+const CHUNK_LOAD_FAILURE_PATTERNS = [
+  "chunkloaderror",
+  "loading chunk",
+  "failed to fetch dynamically imported module",
+  "importing a module script failed",
+];
+
+export function getBuildVersionFromPayload(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const version = (payload as { version?: unknown }).version;
+
+  if (typeof version !== "string") {
+    return null;
+  }
+
+  const trimmedVersion = version.trim();
+
+  return trimmedVersion.length > 0 ? trimmedVersion : null;
+}
+
+export async function fetchBuildVersion(
+  fetcher: typeof fetch = fetch,
+): Promise<string | null> {
+  try {
+    const response = await fetcher(
+      `${BUILD_VERSION_PATH}?t=${Date.now().toString()}`,
+      { cache: "no-store" },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return getBuildVersionFromPayload(await response.json());
+  } catch {
+    return null;
+  }
+}
+
+export function isChunkLoadFailure(errorLike: unknown): boolean {
+  const message = getErrorLikeMessage(errorLike).toLowerCase();
+
+  return CHUNK_LOAD_FAILURE_PATTERNS.some((pattern) =>
+    message.includes(pattern),
+  );
+}
+
+function getErrorLikeMessage(errorLike: unknown): string {
+  if (typeof errorLike === "string") {
+    return errorLike;
+  }
+
+  if (errorLike instanceof Error) {
+    return errorLike.message;
+  }
+
+  if (!errorLike || typeof errorLike !== "object") {
+    return "";
+  }
+
+  const maybeMessage = (errorLike as { message?: unknown }).message;
+  if (typeof maybeMessage === "string") {
+    return maybeMessage;
+  }
+
+  const maybeReason = (errorLike as { reason?: unknown }).reason;
+  if (maybeReason !== undefined) {
+    return getErrorLikeMessage(maybeReason);
+  }
+
+  const maybeError = (errorLike as { error?: unknown }).error;
+  if (maybeError !== undefined) {
+    return getErrorLikeMessage(maybeError);
+  }
+
+  return "";
+}
