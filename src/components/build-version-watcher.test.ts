@@ -72,9 +72,11 @@ class BuildVersionHarness {
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 function createMonitorFixture({
+  currentVersion = null,
   versions,
   visible = true,
 }: {
+  currentVersion?: string | null;
   versions: Array<string | null>;
   visible?: boolean;
 }) {
@@ -87,6 +89,7 @@ function createMonitorFixture({
     addDocumentListener: harness.addDocumentListener,
     addWindowListener: harness.addWindowListener,
     clearInterval: harness.clearInterval,
+    currentVersion,
     fetchVersion,
     intervalMs: 60_000,
     isChunkLoadFailure: (event) =>
@@ -106,6 +109,7 @@ function createMonitorFixture({
 describe("BuildVersionWatcher polling behavior", () => {
   it("polls only while visible and shows one prompt when the build changes", async () => {
     const { harness, monitor, updates } = createMonitorFixture({
+      currentVersion: "v1",
       versions: ["v1", "v2", "v3"],
     });
 
@@ -122,6 +126,24 @@ describe("BuildVersionWatcher polling behavior", () => {
 
     await monitor.checkNow();
     expect(updates).toEqual(["version"]);
+  });
+
+  it("compares remote versions against the running build even if the first fetch fails", async () => {
+    const { harness, monitor, updates } = createMonitorFixture({
+      currentVersion: "old-build",
+      versions: [null, "new-build"],
+    });
+
+    monitor.start();
+    await flushPromises();
+
+    expect(updates).toEqual([]);
+
+    harness.runNextInterval();
+    await flushPromises();
+
+    expect(updates).toEqual(["version"]);
+    expect(harness.intervals.size).toBe(0);
   });
 
   it("starts polling when a hidden tab becomes visible and clears it when hidden again", async () => {

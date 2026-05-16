@@ -10,6 +10,7 @@ import {
   isChunkLoadFailure,
 } from "@/lib/build-version-check";
 import { createBuildVersionMonitor } from "@/lib/build-version-monitor";
+import { CURRENT_BUILD_KEY } from "@/lib/current-build";
 
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,7 @@ export function BuildVersionWatcher() {
       addWindowListener: (type, listener) =>
         window.addEventListener(type, listener),
       clearInterval: (id) => window.clearInterval(id),
+      currentVersion: CURRENT_BUILD_KEY,
       fetchVersion: fetchBuildVersion,
       intervalMs: CHECK_INTERVAL_MS,
       isChunkLoadFailure,

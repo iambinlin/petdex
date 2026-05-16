@@ -1,3 +1,5 @@
+import { createBuildVersionToken } from "@/lib/build-version-token";
+
 export const BUILD_VERSION_PATH = "/version.json";
 export const BUILD_VERSION_FETCH_TIMEOUT_MS = 5_000;
 
@@ -8,7 +10,9 @@ const CHUNK_LOAD_FAILURE_PATTERNS = [
   "importing a module script failed",
 ];
 
-export function getBuildVersionFromPayload(payload: unknown): string | null {
+export function getBuildVersionTokenFromPayload(
+  payload: unknown,
+): string | null {
   if (!payload || typeof payload !== "object") {
     return null;
   }
@@ -19,9 +23,12 @@ export function getBuildVersionFromPayload(payload: unknown): string | null {
     return null;
   }
 
-  const trimmedVersion = version.trim();
+  const builtAt = (payload as { builtAt?: unknown }).builtAt;
 
-  return trimmedVersion.length > 0 ? trimmedVersion : null;
+  return createBuildVersionToken({
+    builtAt: typeof builtAt === "string" ? builtAt : null,
+    version,
+  });
 }
 
 export async function fetchBuildVersion(
@@ -44,7 +51,7 @@ export async function fetchBuildVersion(
       return null;
     }
 
-    return getBuildVersionFromPayload(await response.json());
+    return getBuildVersionTokenFromPayload(await response.json());
   } catch {
     return null;
   } finally {

@@ -7,6 +7,7 @@ type BuildVersionMonitorOptions = {
   addDocumentListener: (type: string, listener: Listener) => void;
   addWindowListener: (type: string, listener: Listener) => void;
   clearInterval: (id: IntervalId) => void;
+  currentVersion: string | null;
   fetchVersion: () => Promise<string | null>;
   intervalMs: number;
   isChunkLoadFailure: (event: unknown) => boolean;
@@ -21,6 +22,7 @@ export function createBuildVersionMonitor({
   addDocumentListener,
   addWindowListener,
   clearInterval,
+  currentVersion: initialCurrentVersion,
   fetchVersion,
   intervalMs,
   isChunkLoadFailure,
@@ -31,7 +33,7 @@ export function createBuildVersionMonitor({
   setInterval,
 }: BuildVersionMonitorOptions) {
   let checking = false;
-  let currentVersion: string | null = null;
+  let currentVersion = initialCurrentVersion;
   let intervalId: IntervalId | null = null;
   let stopped = false;
   let updateDetected = false;
