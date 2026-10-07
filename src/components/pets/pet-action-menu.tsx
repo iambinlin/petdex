@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -53,6 +53,37 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
     if (nextOpen) preloadPetActionMenuContent();
     setOpen(nextOpen);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let closeTimeout: number | undefined;
+    const handleScroll = (event: Event) => {
+      // Long menus must remain usable when their own content scrolls.
+      if (
+        event.target instanceof Element &&
+        event.target.closest('[data-slot="dropdown-menu-content"]')
+      ) {
+        return;
+      }
+
+      // Start once so continuous scrolling cannot postpone dismissal.
+      if (closeTimeout === undefined) {
+        closeTimeout = window.setTimeout(() => setOpen(false), 200);
+      }
+    };
+
+    // Capture also observes scrolls in nested page containers.
+    window.addEventListener("scroll", handleScroll, {
+      capture: true,
+      passive: true,
+    });
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      window.clearTimeout(closeTimeout);
+    };
+  }, [open]);
+
   const triggerClassName =
     variant === "detail"
       ? "inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-border-base bg-surface/70 px-3.5 text-[13px] font-medium text-muted-2 backdrop-blur transition hover:bg-surface-muted hover:text-foreground"
@@ -64,7 +95,7 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
       style={open ? { zIndex: 60 } : undefined}
       className={variant === "card" ? "relative" : "relative inline-flex"}
     >
-      <DropdownMenu open={open} onOpenChange={handleOpenChange}>
+      <DropdownMenu modal={false} open={open} onOpenChange={handleOpenChange}>
         <DropdownMenuTrigger
           render={
             <button
