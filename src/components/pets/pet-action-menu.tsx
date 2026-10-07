@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -49,8 +49,18 @@ const PetActionMenuContent = dynamic<PetActionMenuContentProps>(
 export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
   const t = useTranslations("petActions");
   const [open, setOpen] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [scrollDismissal, setScrollDismissal] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const handleOpenChange = useCallback((nextOpen: boolean) => {
-    if (nextOpen) preloadPetActionMenuContent();
+    if (nextOpen) {
+      setScrollDismissal(null);
+      preloadPetActionMenuContent();
+    }
     setOpen(nextOpen);
   }, []);
 
@@ -69,6 +79,16 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
 
       // Start once so continuous scrolling cannot postpone dismissal.
       if (closeTimeout === undefined) {
+        const rect = popupRef.current?.parentElement?.getBoundingClientRect();
+        if (rect) {
+          // Pin the viewport coordinates while fading; the anchor keeps scrolling.
+          setScrollDismissal({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          });
+        }
         closeTimeout = window.setTimeout(() => setOpen(false), 200);
       }
     };
@@ -122,18 +142,34 @@ export function PetActionMenu({ pet, variant = "card", ownerActions }: Props) {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
+          ref={popupRef}
           align={menuAlign}
           sideOffset={6}
-          className="w-64 p-0"
+          positionerProps={{
+            positionMethod: "fixed",
+            style: scrollDismissal
+              ? {
+                  ...scrollDismissal,
+                  right: "auto",
+                  bottom: "auto",
+                  transform: "none",
+                }
+              : undefined,
+          }}
+          style={{
+            opacity: scrollDismissal ? 0 : undefined,
+            maxHeight: scrollDismissal?.height,
+            pointerEvents: scrollDismissal ? "none" : undefined,
+          }}
+          className="w-64 p-0 transition-opacity duration-200 ease-out data-open:animate-none data-closed:animate-none data-starting-style:scale-100 data-ending-style:scale-100"
         >
-          {open ? (
-            <PetActionMenuContent
-              onOpenChange={handleOpenChange}
-              open={open}
-              ownerActions={ownerActions}
-              pet={pet}
-            />
-          ) : null}
+          {/* The portal controls mounting so contents survive the exit transition. */}
+          <PetActionMenuContent
+            onOpenChange={handleOpenChange}
+            open={open}
+            ownerActions={ownerActions}
+            pet={pet}
+          />
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
